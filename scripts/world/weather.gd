@@ -1,20 +1,18 @@
 class_name Weather
 extends RefCounted
-## Clima de la ciudad: soleado, parcialmente nublado, nublado o lluvia. Cambia cada amanecer según la estación (en
-## verano casi siempre hay sol; en invierno llueve más), cubre el cielo de nubes, apaga el sol y hace llover. El
-## kiosco ELDIARIO lo muestra con la temperatura y el pronóstico de mañana. No cambia la economía.
+## Cómo se ve el clima en la ciudad: nubes, cielo cubierto, lluvia y relámpagos. El clima en sí lo decide la
+## simulación (Game.weather, que mueve la demanda de cada negocio); aquí solo se dibuja y se cambia suave.
+## El kiosco ELDIARIO lo muestra con la temperatura y el pronóstico.
 
-const KINDS := [
-	{"name": "Soleado", "icon": "☀", "clouds": 0.15, "overcast": 0.0},
-	{"name": "Parcialmente nublado", "icon": "⛅", "clouds": 0.5, "overcast": 0.15},
-	{"name": "Nublado", "icon": "☁", "clouds": 0.85, "overcast": 0.55},
-	{"name": "Lluvia", "icon": "☂", "clouds": 1.0, "overcast": 0.85},
+# Cómo se ve cada clima de D.WEATHER (mismo orden)
+const LOOKS := [
+	{"clouds": 0.15, "overcast": 0.0, "rain": 0.0},
+	{"clouds": 0.5, "overcast": 0.15, "rain": 0.0},
+	{"clouds": 0.85, "overcast": 0.55, "rain": 0.0},
+	{"clouds": 1.0, "overcast": 0.85, "rain": 1.0},
+	{"clouds": 0.02, "overcast": 0.0, "rain": 0.0},
+	{"clouds": 1.0, "overcast": 1.0, "rain": 1.6},
 ]
-# Probabilidad de cada clima por mes (enero = verano). [sol, parcial, nublado, lluvia]
-const SEASON := [[0.7, 0.2, 0.08, 0.02], [0.65, 0.22, 0.1, 0.03], [0.5, 0.28, 0.14, 0.08], [0.35, 0.3, 0.2, 0.15],
-		[0.25, 0.28, 0.25, 0.22], [0.18, 0.22, 0.28, 0.32], [0.18, 0.2, 0.3, 0.32], [0.22, 0.25, 0.28, 0.25],
-		[0.3, 0.3, 0.22, 0.18], [0.4, 0.3, 0.18, 0.12], [0.5, 0.28, 0.14, 0.08], [0.62, 0.24, 0.1, 0.04]]
-const MAX_TEMP := [29, 28, 25, 21, 17, 14, 13, 15, 18, 21, 24, 27]   # máxima típica de cada mes (°C)
 
 var today := 0
 var tomorrow := 0
@@ -26,9 +24,13 @@ var last_t := -1.0
 var rain_fx: CPUParticles3D
 
 
+var flash := 0.0       # relámpago de la tormenta (0 a 1)
+var show_rain := true  # Gráficos → Imagen: gotas y relámpagos (el clima igual cuenta para la economía)
+
+
 func _init(parent: Node3D) -> void:
 	today = 0
-	tomorrow = _roll()
+	tomorrow = 0
 	rain_fx = CPUParticles3D.new()
 	rain_fx.amount = 1400
 	rain_fx.lifetime = 0.9
@@ -53,41 +55,37 @@ func _init(parent: Node3D) -> void:
 	parent.add_child(rain_fx)
 
 
-func _roll() -> int:
-	var p: Array = SEASON[month % 12]
-	var r := randf()
-	for i in p.size():
-		r -= p[i]
-		if r <= 0.0:
-			return i
-	return 0
-
-
-## t: punto del ciclo del cielo (0 = amanece). Al pasar el amanecer el pronóstico de ayer se vuelve el clima de hoy.
-func update(dt: float, t: float, game_month: int, camera: Camera3D, indoors: bool) -> void:
-	month = game_month
-	if last_t >= 0.0 and t < last_t - 0.5:
-		today = tomorrow
-		tomorrow = _roll()
-	last_t = t
-	var k: Dictionary = KINDS[today]
+## Sigue el clima de la partida (o queda despejado en el menú) y lo cambia suave.
+func update(dt: float, game, camera: Camera3D, indoors: bool) -> void:
+	if game != null:
+		today = game.weather
+		tomorrow = game.weather_next
+		month = game.month_index()
+	else:
+		today = 0
+		tomorrow = 0
+	var k: Dictionary = LOOKS[today]
 	clouds = move_toward(clouds, k.clouds, dt * 0.08)
 	overcast = move_toward(overcast, k.overcast, dt * 0.08)
-	rain = move_toward(rain, 1.0 if today == 3 else 0.0, dt * 0.15)
-	rain_fx.emitting = rain > 0.3 and not indoors
+	rain = move_toward(rain, k.rain, dt * 0.15)
+	rain_fx.emitting = rain > 0.3 and not indoors and show_rain
 	rain_fx.global_position = camera.global_position + Vector3(0, 14, 0)
+	# Relámpagos en la tormenta: un destello de vez en cuando
+	flash = max(0.0, flash - dt * 3.0)
+	if today == 5 and show_rain and randf() < dt * 0.12:
+		flash = 1.0
 
 
 ## Temperatura en °C a cierta hora: más fresco al amanecer, lo más caluroso a las 15:00; las nubes y la lluvia enfrían.
 func temperature(hour: float) -> int:
-	var top: float = MAX_TEMP[month % 12]
+	var top: float = D.MAX_TEMP[month % 12] + (6.0 if today == 4 else 0.0)
 	var curve := 0.5 + 0.5 * cos((hour - 15.0) / 24.0 * TAU)
 	return roundi(top - 9.0 + 9.0 * curve - 3.0 * overcast - 2.0 * rain)
 
 
 func name_of(i: int) -> String:
-	return KINDS[i].name
+	return D.WEATHER[i].name
 
 
 func icon_of(i: int) -> String:
-	return KINDS[i].icon
+	return D.WEATHER[i].icon

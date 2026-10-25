@@ -13,9 +13,8 @@ const CY := TOP + 12.0
 const CW := W - SIDE - 24.0
 const CH := H - TOP - 12.0 - 44.0
 const SLOTS := 3
-# Días de juego por segundo real. Un buen jugador llega al Imperio en unos 700 días: ~40 minutos combinando
-# velocidades (x1: un día dura casi 7 segundos; x2: 2,5 segundos; x3: menos de un segundo).
-# Días de juego por segundo real. Los nombres dicen cuántas veces más rápido que x1 va cada una.
+# Días de juego por segundo real; los nombres dicen cuántas veces más rápido que x1 va cada una (x1: un día dura
+# casi 7 segundos; x2: 3,3 segundos; x4: 1,7 segundos). Un buen jugador llega al Imperio en unos 700 días.
 const SPEEDS := [[0.15, "x1"], [0.3, "x2"], [0.6, "x4"]]
 const TABS := [["resumen", "Resumen"], ["negocios", "Negocios"], ["mercado", "Mercado"], ["finanzas", "Finanzas"],
 		["crecimiento", "Crecimiento"], ["reportes", "Reportes"], ["noticias", "Noticias"], ["conceptos", "Conceptos"]]
@@ -43,8 +42,16 @@ var slot_screen = null        # "new" o "load": pantalla para elegir el espacio 
 var slot_confirm = null       # espacio que se va a sobrescribir o borrar
 var slot_cache := {}
 var pick_mode := false
+var naming := false           # escribiendo el nombre de la empresa (después de elegir el modo)
+var settings_open := false    # ajustes abiertos desde el menú de inicio (los dibuja Overlays)
+var name_mode := "normal"
+var company_name := ""
+const NAME_IDEAS := ["Grupo Horizonte", "Inversiones Faro", "Café & Cía.", "Capital Andina", "Empresas del Sur",
+		"Comercial Las Lomas", "Holding Aurora", "Grupo Puerto", "Alfa Retail", "Corporación Brisa", "Imperio Dorado",
+		"Mercantil del Pacífico"]
 var win_shown := false
 var quit_requested := false
+var unread := 0               # avisos que llegaron y todavía no viste en Noticias
 
 
 static var save_dir := "user://saves"
@@ -73,9 +80,7 @@ func import_python_saves() -> void:
 			continue
 		var text := FileAccess.get_file_as_string(src)
 		if JSON.parse_string(text) is Dictionary:
-			var f := FileAccess.open(slot_path(i + 1), FileAccess.WRITE)
-			f.store_string(text)
-			f.close()
+			write_file(slot_path(i + 1), text)
 
 
 static func sc(x: float) -> String:
@@ -113,6 +118,7 @@ func update(dt: float) -> void:
 		steps += 1
 		if g.game_over:
 			modal = "gameover"
+			save(true)  # la quiebra es definitiva: cerrar el juego no devuelve la partida de antes
 			break
 		if g.won and not win_shown:
 			win_shown = true
@@ -144,12 +150,28 @@ func save(silent := false, to_slot := 0) -> void:
 		return
 	if to_slot:
 		slot = to_slot
-	var f := FileAccess.open(slot_path(slot), FileAccess.WRITE)
-	f.store_string(game.to_json())
-	f.close()
+	if not write_file(slot_path(slot), game.to_json()):
+		say("No se pudo guardar la partida (¿disco lleno o carpeta bloqueada?).", "bad")
+		return
 	slot_cache.erase(slot)
 	if not silent:
 		say("Partida guardada en el espacio %d." % slot, "good")
+
+
+## Escribe primero un archivo temporal y después lo pone en su lugar: si el juego se corta a la mitad, el archivo
+## anterior queda intacto. Devuelve false si no se pudo escribir.
+static func write_file(path: String, text: String) -> bool:
+	var tmp := path + ".tmp"
+	var f := FileAccess.open(tmp, FileAccess.WRITE)
+	if f == null:
+		return false
+	f.store_string(text)
+	var ok := f.get_error() == OK
+	f.close()
+	if not ok:
+		DirAccess.remove_absolute(tmp)
+		return false
+	return DirAccess.rename_absolute(tmp, path) == OK
 
 
 func load_slot(n: int) -> bool:
@@ -197,7 +219,7 @@ func slot_info(n: int):
 	else:
 		var g := Game.from_json(text)
 		var dp := g.date_parts()
-		info = {"mode": D.MODES[g.mode].name, "rank": g.rank_info()[1], "value": g.valuation(), "cash": g.cash,
+		info = {"company": g.company, "mode": D.MODES[g.mode].name, "rank": g.rank_info()[1], "value": g.valuation(), "cash": g.cash,
 				"date": "Día %d de %s, año %d" % dp, "minutes": g.play_seconds / 60.0, "over": g.game_over,
 				"saved": saved}
 	slot_cache[n] = [stamp, info]
@@ -251,32 +273,58 @@ func rank_lo(idx: int) -> float:
 
 # ---------- menú ----------
 func draw_menu() -> void:
+	if naming:
+		draw_naming()
+		return
 	if pick_mode:
 		draw_mode_picker()
 		return
 	if slot_screen != null:
 		draw_slots()
 		return
-	ui.text("CAPITAL", Vector2(W / 2, 170), 110, "accent", true, "center")
-	ui.text("Vende, invierte y construye tu imperio", Vector2(W / 2, 250), 24, "muted", false, "center")
-	var bx := W / 2 - 150
+	# Logo arriba a la izquierda, sobre la ciudad que gira de fondo (como la pantalla de título de un juego)
+	var x := 96.0
+	ui.text("SIMULADOR DE NEGOCIOS", Vector2(x + 4, 92), 15, "muted", true)
+	ui.text("CAPITAL", Vector2(x - 4, 108), 104, "accent", true)
+	ui.rect(Rect2(x, 232, 120, 4), "accent", 2)
+	ui.text("Vende, invierte y construye tu imperio", Vector2(x, 248), 19, Color8(200, 208, 220))
 	var last := latest_slot()
-	if ui.button(Rect2(bx, 300, 300, 50), "Continuar partida", last > 0, "primary", 18,
-			"La última que guardaste (espacio %d)" % last if last else null):
+	var info = slot_info(last) if last else null
+	var y := 318.0
+	var cont_sub := ""
+	if info != null and not info.get("broken", false):
+		cont_sub = "%s · %s · %s" % [info.company, info.rank, Fmt.short(info.value)]
+	if ui.menu_item("continuar", Vector2(x, y), "CONTINUAR", cont_sub, last > 0 and not (info != null and info.get("over", false)), 32):
 		load_slot(last)
-	if ui.button(Rect2(bx, 360, 300, 50), "Nuevo juego", true, "normal", 18):
+	y += 92 if cont_sub else 72
+	if ui.menu_item("nuevo", Vector2(x, y), "NUEVA PARTIDA", "", true, 32):
 		slot_screen = "new"
 		slot_confirm = null
-	if ui.button(Rect2(bx, 420, 300, 50), "Cargar partida", last > 0, "normal", 18):
+	y += 72
+	if ui.menu_item("cargar", Vector2(x, y), "CARGAR PARTIDA", "", last > 0, 32):
 		slot_screen = "load"
 		slot_confirm = null
-	if ui.button(Rect2(bx, 480, 300, 44), "Salir", true, "normal", 17):
+	y += 72
+	if ui.menu_item("ajustes", Vector2(x, y), "AJUSTES", "", true, 32):
+		settings_open = true
+	y += 72
+	if ui.menu_item("salir", Vector2(x, y), "SALIR", "", true, 32, 400.0, false, "red"):
 		quit_requested = true
-	var text := ("Empiezas con un puesto de café y $1.500. Fija precios, contrata personal, maneja inventario, "
-			+ "invierte en marketing y abre nuevas líneas de negocio: panadería, hamburguesas, ropa y electrónica. "
-			+ "Pide préstamos, sobrevive a recesiones e inflación y llega a un valor de $10 millones.")
-	ui.wrap_text(text, Rect2(W / 2 - 360, 560, 720, 200), 16, "muted")
-	draw_toast_line(700)
+	# Tarjeta de la última partida, abajo a la derecha
+	if info != null and not info.get("broken", false):
+		var r := Rect2(W - 420, H - 250, 360, 190)
+		ui.rect(r, Color(0.05, 0.065, 0.09, 0.88), 16)
+		ui.rect(r, Color(ImUI.COL.accent, 0.35), 16, 1)
+		ui.text("ÚLTIMA PARTIDA · ESPACIO %d" % last, r.position + Vector2(22, 18), 12, "muted", true)
+		ui.text(info.company, r.position + Vector2(22, 38), 24, "accent", true, "topleft", r.size.x - 44)
+		ui.text(info.rank, Vector2(r.end.x - 22, r.position.y + 18), 12, "text", true, "topright")
+		var ry := ui.row(r.position.x + 22, r.position.y + 80, r.size.x - 44, "Valor de la empresa", Fmt.short(info.value), "text")
+		ry = ui.row(r.position.x + 22, ry, r.size.x - 44, "Fecha del juego", info.date)
+		ry = ui.row(r.position.x + 22, ry, r.size.x - 44, "Tiempo jugado", "%d min" % roundi(info.minutes))
+		ui.text("Guardada el %s" % info.saved, Vector2(r.position.x + 22, ry + 2), 12, "muted")
+	ui.text("© 2026 Brandon Alvis (NoName-IA)", Vector2(x, H - 34), 12, "muted")
+	ui.text("M: música · F11: pantalla completa", Vector2(W - 60, H - 34), 12, "muted", false, "topright")
+	draw_toast_line(H - 64)
 
 
 func draw_toast_line(y: float) -> void:
@@ -357,6 +405,72 @@ func start_in_slot(n: int) -> void:
 	pick_mode = true
 
 
+## Último paso antes de empezar: el nombre de tu empresa (sale en el HUD, el celular, la oficina y tus locales).
+func draw_naming() -> void:
+	var x := 96.0
+	ui.text("PARTIDA NUEVA · %s" % D.MODES[name_mode].name.to_upper(), Vector2(x + 2, 140), 14, "muted", true)
+	ui.text("¿Cómo se llama tu empresa?", Vector2(x, 160), 48, "text", true)
+	ui.rect(Rect2(x, 230, 120, 4), "accent", 2)
+	ui.text("Aparece en tus locales, tu oficina y en lo que dicen los clientes y los rivales.", Vector2(x, 248), 17, "muted")
+	var field := Rect2(x, 300, 640, 76)
+	ui.rect(field, Color(0.04, 0.05, 0.07, 0.9), 14)
+	ui.rect(field, ImUI.COL.accent, 14, 2)
+	var shown := company_name if company_name else ""
+	var t := ui.text(shown, Vector2(field.position.x + 24, field.get_center().y), 34, "accent", true, "midleft")
+	if not company_name:
+		ui.text("Escribe un nombre…", Vector2(field.position.x + 24, field.get_center().y), 30, Color(1, 1, 1, 0.25), false, "midleft")
+	if int(Time.get_ticks_msec() / 500) % 2 == 0:  # cursor que parpadea
+		var cx: float = t.end.x + 3 if company_name else field.position.x + 24
+		ui.rect(Rect2(cx, field.get_center().y - 20, 3, 40), "accent")
+	ui.text("%d / 24" % company_name.length(), Vector2(field.end.x - 16, field.end.y + 8), 13, "muted", false, "topright")
+	if ui.button(Rect2(x, 410, 200, 42), "Nombre al azar", true, "normal", 15):
+		var idea: String = NAME_IDEAS.pick_random()
+		while idea == company_name:
+			idea = NAME_IDEAS.pick_random()
+		company_name = idea
+	var ok := company_name.strip_edges().length() >= 2
+	if ui.menu_item("empezar", Vector2(x, 500), "EMPEZAR", "Enter", ok, 32, 400.0) :
+		start_named_game()
+		return
+	if ui.menu_item("volver_nombre", Vector2(x, 580), "VOLVER", "Esc", true, 24, 400.0, false, "muted"):
+		naming = false
+		pick_mode = true
+	draw_toast_line(H - 64)
+
+
+func start_named_game() -> void:
+	var name := company_name.strip_edges()
+	if name.length() < 2:
+		say("Escribe un nombre de al menos 2 letras.", "bad")
+		return
+	naming = false
+	new_game(name_mode)
+	game.company = name
+	game.news.clear()
+	game.add_news("Fundaste %s con un puesto de café y %s en caja. ¡A vender!" % [name, Fmt.money(game.cash)], "good")
+	if name_mode == "inversionista":
+		game.add_news("Modo inversionista: tienes capital para crecer rápido. No hay final: llega a Mil millonario.", "info")
+	game.add_news("Consejo: en Mercado puedes ver la curva de precio y el precio que maximiza tu utilidad.", "info")
+
+
+## Teclas mientras escribes el nombre: letras, borrar, Enter para empezar y Esc para volver.
+func type_key(e: InputEventKey) -> void:
+	if not e.pressed:
+		return
+	match e.keycode:
+		KEY_BACKSPACE:
+			company_name = company_name.left(company_name.length() - 1)
+		KEY_ENTER, KEY_KP_ENTER:
+			start_named_game()
+		KEY_ESCAPE:
+			naming = false
+			pick_mode = true
+		_:
+			var ch := char(e.unicode) if e.unicode >= 32 else ""
+			if ch and company_name.length() < 24 and not (ch == " " and company_name.ends_with(" ")) and not (ch == " " and company_name.is_empty()):
+				company_name += ch
+
+
 ## Antes de cada partida nueva: modo normal (con final) o modo inversionista (sin final).
 func draw_mode_picker() -> void:
 	ui.text("¿Cómo quieres jugar?", Vector2(W / 2, 120), 40, "text", true, "center")
@@ -375,7 +489,9 @@ func draw_mode_picker() -> void:
 		ui.wrap_text(c[3], Rect2(r.position.x + 30, r.position.y + 90, r.size.x - 60, 220), 17, "text")
 		if ui.button(Rect2(r.position.x + 30, r.end.y - 80, r.size.x - 60, 50), "Jugar en %s" % c[1].to_lower(), true, "primary", 18):
 			pick_mode = false
-			new_game(c[0])
+			naming = true
+			name_mode = c[0]
+			company_name = ""
 			return
 	ui.text("Se guardará en el espacio %d" % slot, Vector2(W / 2, 610), 15, "muted", false, "center")
 	if ui.button(Rect2(W / 2 - 120, 640, 240, 44), "Volver", true, "normal", 16):
@@ -408,7 +524,7 @@ func draw_top() -> void:
 	var g := game
 	ui.rect(Rect2(0, 0, W, TOP), "panel")
 	ui.line(Vector2(0, TOP), Vector2(W, TOP), "border")
-	ui.text("CAPITAL", Vector2(20, TOP / 2), 28, "accent", true, "midleft")
+	ui.text(game.company.to_upper(), Vector2(20, TOP / 2), 22 if game.company.length() <= 12 else 15, "accent", true, "midleft", 165)
 	var ph: Dictionary = D.PHASES[g.phase]
 	var econ_color := "green" if g.econ_index >= 1.02 else ("red" if g.econ_index < 0.92 else "orange")
 	var items := [
@@ -442,7 +558,10 @@ func draw_side() -> void:
 	ui.rect(Rect2(0, TOP + 1, SIDE, H - TOP), "panel")
 	ui.line(Vector2(SIDE, TOP), Vector2(SIDE, H), "border")
 	for i in TABS.size():
-		if ui.button(Rect2(12, TOP + 16 + i * 46, SIDE - 24, 38), TABS[i][1], true, "normal", 16, null, tab == TABS[i][0]):
+		var label: String = TABS[i][1]
+		if TABS[i][0] == "noticias" and unread and tab != "noticias":
+			label += " (%d)" % mini(unread, 99)
+		if ui.button(Rect2(12, TOP + 16 + i * 46, SIDE - 24, 38), label, true, "normal", 16, null, tab == TABS[i][0]):
 			tab = TABS[i][0]
 			confirm_sell = null
 	var info := g.rank_info()
@@ -535,41 +654,93 @@ func draw_modal() -> void:
 			modal = null
 
 
-## Decisión con riesgo: el juego queda en pausa hasta que elijas.
+## Ícono y color de cada decisión urgente (las de los rivales usan las iniciales y el color del rival).
+const DILEMMA_STYLE := {
+	"soborno": ["coin", Color8(225, 85, 75)], "influencer": ["star", Color8(163, 113, 247)],
+	"aumento": ["person", Color8(88, 166, 255)], "lote": ["box", Color8(219, 140, 60)], "demanda": ["alert", Color8(225, 85, 75)],
+	"oferta": ["coin", Color8(63, 185, 80)], "huelga": ["person", Color8(219, 140, 60)], "franquicia": ["building", Color8(63, 185, 80)],
+	"ciberataque": ["bolt", Color8(225, 85, 75)], "patrocinio": ["heart", Color8(88, 166, 255)],
+	"proveedor": ["box", Color8(219, 140, 60)],
+}
+
+
+func _dilemma_look(c: Dictionary) -> Array:
+	var rival_key = c.data.get("rival")
+	if c.id in ["cartel", "compra_rival"] and rival_key != null:
+		var r := D.rival_by_key(rival_key)
+		var initials := ""
+		for w in r.name.replace("Dr. ", "").replace("Doña ", "").split(" ").slice(0, 2):
+			initials += w[0]
+		return [initials, r.color, true]
+	var st: Array = DILEMMA_STYLE.get(c.id, ["alert", ImUI.COL.orange])
+	return [st[0], st[1], false]
+
+
+## Decisión con riesgo, como las cartas de evento de los juegos de estrategia: encabezado de color con el ícono,
+## el texto y cada opción como una tarjeta que dice si es segura o tiene riesgo. El juego queda en pausa.
 func draw_dilemma() -> void:
 	var g := game
 	var c = g.pending_choice
 	if c == null:
 		modal = null
 		return
-	var bw := 820.0
-	var text_h := ui.wrap_height(c.text, bw - 80, 17)
+	var look := _dilemma_look(c)
+	var accent: Color = look[1]
+	var bw := 880.0
+	var pad := 44.0
+	var text_h := ui.wrap_height(c.text, bw - pad * 2, 17)
 	var details := []
 	var total := 0.0
 	for o in c.options:
-		var dh := ui.wrap_height(o.detail, bw - 100, 14)
+		var dh := ui.wrap_height(o.detail, bw - pad * 2 - 44, 14)
 		details.append(dh)
-		total += 54 + dh
-	var bh := 150 + text_h + total + 40
-	var box := Rect2(W / 2 - bw / 2, max(20.0, H / 2 - bh / 2), bw, bh)
-	ui.panel(box)
-	ui.top_strip(Rect2(box.position, Vector2(box.size.x, 6)), "orange")
-	ui.text("DECISIÓN URGENTE", box.position + Vector2(40, 26), 14, "orange", true)
-	ui.text(c.title, box.position + Vector2(40, 46), 28, "text", true)
-	var y := box.position.y + 96
-	y += ui.wrap_text(c.text, Rect2(box.position.x + 40, y, bw - 80, text_h), 17, "text") + 14
-	ui.text("Caja disponible: %s" % Fmt.money(g.cash), Vector2(box.end.x - 40, box.position.y + 28), 15, sc(g.cash), true, "topright")
+		total += 52 + dh + 12
+	var head := 124.0
+	var bh := head + 24 + text_h + 22 + total + 46
+	var box := Rect2(W / 2 - bw / 2, max(16.0, H / 2 - bh / 2), bw, bh)
+	ui.rect(box.grow(10), Color(0, 0, 0, 0.35), 26)  # sombra
+	ui.rect(box, Color8(18, 22, 30), 20)
+	# Encabezado con degradado del color de la decisión
+	var hr := Rect2(box.position, Vector2(bw, head))
+	ui.top_strip(hr, Color(accent, 0.28), 20)
+	ui.gradient(Rect2(hr.position.x, hr.position.y + 20, bw, head - 20), Color(accent, 0.0), Color8(18, 22, 30, 0), false)
+	ui.rect(box, Color(accent, 0.55), 20, 1.5)
+	var ic := box.position + Vector2(pad + 34, head / 2 + 4)
+	ui.circle(ic, 38, Color(accent, 0.25))
+	ui.circle(ic, 32, accent)
+	if look[2]:  # las iniciales del rival
+		ui.text(look[0], ic + Vector2(0, 1), 26, Color8(16, 20, 30), true, "center")
+	else:
+		Icons.draw(ui, look[0], ic, 40, Color8(16, 20, 30))
+	var tx := ic.x + 56
+	var dp := g.date_parts()
+	ui.text("DECISIÓN URGENTE · DÍA %d DE %s" % [dp[0], String(dp[1]).to_upper()], Vector2(tx, box.position.y + 30), 13,
+			Notifications.light(accent, 0.3), true)
+	ui.text(c.title, Vector2(tx, box.position.y + 50), 30, "text", true, "topleft", box.end.x - tx - pad)
+	var cash_r := Rect2(box.end.x - pad - 200, box.position.y + 22, 200, 30)
+	ui.rect(cash_r, Color(0, 0, 0, 0.3), 15)
+	ui.text("Caja: %s" % Fmt.money(g.cash), cash_r.get_center(), 14, sc(g.cash), true, "center")
+	# Texto
+	var y := box.position.y + head + 24
+	y += ui.wrap_text(c.text, Rect2(box.position.x + pad, y, bw - pad * 2, text_h), 17, Color8(215, 222, 232)) + 22
+	# Opciones como tarjetas
 	for i in c.options.size():
 		var o: Dictionary = c.options[i]
-		if ui.button(Rect2(box.position.x + 40, y, bw - 80, 40), o.label, true, "primary" if i == 0 else "normal", 16):
+		var r := Rect2(box.position.x + pad, y, bw - pad * 2, 52 + details[i])
+		var hot := ui.hover(r)
+		var k := ui.tween("dilema%d" % i, 1.0 if hot else 0.0)
+		ui.rect(r, ImUI.COL.panel2.lerp(Color8(44, 52, 66), k), 12)
+		ui.rect(r, Color(accent, 0.25 + 0.6 * k), 12, 1.0 + k)
+		ui.text(o.label, Vector2(r.position.x + 22, r.position.y + 14), 17, "text", true, "topleft", r.size.x - 44)
+		ui.wrap_text(o.detail, Rect2(r.position.x + 22, r.position.y + 40, r.size.x - 44, details[i]), 14, "muted")
+		if hot and ui.clicked:
 			var res := g.resolve_choice(i)
 			modal = null
 			say(res[1], "good" if res[0] else "bad")
 			return
-		ui.wrap_text(o.detail, Rect2(box.position.x + 60, y + 46, bw - 100, details[i]), 14, "muted")
-		y += 54 + details[i]
+		y += r.size.y + 12
 	ui.text("Lee las probabilidades: el valor esperado y el riesgo no siempre van juntos (ver Conceptos).",
-			Vector2(box.get_center().x, box.end.y - 22), 13, "muted", false, "center")
+			Vector2(box.get_center().x, box.end.y - 28), 13, "muted", false, "center")
 
 
 # ---------- Resumen ----------
@@ -740,8 +911,12 @@ func draw_negocios(g: Game) -> void:
 		var where := ""
 		if Game.plot_of(loc) >= 0:
 			where = " · T%d" % (Game.plot_of(loc) + 1)
-		ui.text("%s #%d%s" % [size.name, i + 1, where], Vector2(x0, cy), 15, "text", true, "midleft", 135)
-		ui.tooltip(Rect2(x0, ry, 135, rows), "Inversión total: %s. Valor en libros: %s. Productividad: %s %s por empleado al día." % [Fmt.money(loc.invested), Fmt.money(g.asset_book(loc.asset_ids)), Fmt.num(prod, 1), d.unit])
+		ui.text("%s #%d%s" % [size.name, i + 1, where], Vector2(x0, cy - 8), 14, "text", true, "midleft", 135)
+		var st := Game.stars_of(loc)
+		for k in 5:
+			Icons.draw(ui, "star", Vector2(x0 + 6 + k * 13, cy + 9), 12, Color8(240, 190, 60) if k < floori(st + 0.25) else Color8(70, 75, 85))
+		ui.text(Fmt.num(st, 1), Vector2(x0 + 72, cy + 9), 12, "muted", false, "midleft")
+		ui.tooltip(Rect2(x0, ry, 135, rows), "Estrellas: %s de 5 (con 5 vende 15%% más que con 3; suben atendiendo a todos, con buena reputación, calidad y precio justo). Inversión total: %s. Valor en libros: %s. Productividad: %s %s por empleado al día." % [Fmt.num(st, 1), Fmt.money(loc.invested), Fmt.money(g.asset_book(loc.asset_ids)), Fmt.num(prod, 1), d.unit])
 		if ui.button(Rect2(x0 + 140, cy - 13, 26, 26), "−", loc.employees > 0 and not p.manager, "normal", 15,
 				"Despedir: pagas %d días de salario de indemnización." % int(D.SEVERANCE_DAYS)):
 			act(g.fire(loc))
@@ -1014,8 +1189,9 @@ func draw_finanzas(g: Game) -> void:
 			break
 		ui.text("%s al %s · %d cuotas de %s" % [Fmt.money(loan.principal), Fmt.pct(loan.rate), loan.months_left, Fmt.money(loan.payment)],
 				Vector2(x, y + 4), 14, "text")
-		if ui.button(Rect2(x + w - 90, y, 90, 26), "Prepagar", g.cash >= loan.principal, "normal", 13,
-				"Pagas todo el saldo hoy y te ahorras los intereses futuros."):
+		var payoff := g.prepay_amount(loan)
+		if ui.button(Rect2(x + w - 90, y, 90, 26), "Prepagar", g.cash >= payoff, "normal", 13,
+				"Pagas hoy %s (el saldo más el interés de los días que van del mes) y te ahorras los intereses futuros." % Fmt.money(payoff)):
 			act(g.prepay_loan(loan))
 		y += 32
 
@@ -1264,6 +1440,7 @@ func draw_reportes(g: Game) -> void:
 
 # ---------- Noticias ----------
 func draw_noticias(g: Game) -> void:
+	unread = 0
 	ui.panel(Rect2(CX, CY, CW, CH), "Noticias y eventos")
 	var area := Rect2(CX + 10, CY + 44, CW - 20, CH - 54)
 	var rows := 30.0

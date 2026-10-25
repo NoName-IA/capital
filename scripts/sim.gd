@@ -62,6 +62,11 @@ var strategy_ready_day := 0
 var market_today := 0.0
 var rank_log := {}       # título -> [día, segundos de juego] en que se consiguió
 var rival_plots := {}    # "índice de terreno" -> negocio del rival que lo compró
+var company := "Mi Empresa"   # nombre que le pone el jugador al empezar
+var weather := 1              # clima de hoy (índice de D.WEATHER)
+var weather_next := 1         # pronóstico: el clima que viene
+var weather_days := 3         # días que faltan para que cambie
+var weather_noticed := -99    # último día en que el clima salió como aviso (no se guarda)
 
 # Lo que se guarda en el archivo de partida (todo lo anterior menos el generador aleatorio)
 const SAVED := ["day", "cash", "bonds", "products", "locations", "loans", "assets", "next_id", "phase",
@@ -69,7 +74,8 @@ const SAVED := ["day", "cash", "bonds", "products", "locations", "loans", "asset
 		"loss_carry", "overdraft_days", "game_over", "won", "rank", "ledger", "history", "series", "news",
 		"pending_choice", "next_choice_day", "profit_streak", "best_day", "last_record_day", "taunted",
 		"wardrobe", "owned_items", "look", "hq_level", "fund", "play_seconds", "win_seconds", "mode",
-		"strategy_ready_day", "market_today", "rank_log", "rival_plots"]
+		"strategy_ready_day", "market_today", "rank_log", "rival_plots", "company",
+		"weather", "weather_next", "weather_days"]
 
 
 static func new_ledger() -> Dictionary:
@@ -100,7 +106,7 @@ static func statement(led: Dictionary) -> Dictionary:
 static func make_location(id: int, product: String, size: int, employees := 1) -> Dictionary:
 	return {"id": id, "product": product, "size": size, "employees": employees, "asset_ids": [], "invested": 0.0,
 			"demand": 0.0, "ema_demand": 0.0, "capacity": 0.0, "sold": 0.0, "month_contrib": 0.0,
-			"last_contrib": null, "month_revenue": 0.0, "plot": null, "owner": false}
+			"last_contrib": null, "month_revenue": 0.0, "plot": null, "owner": false, "stars": 3.0}
 
 
 static func make_product(key: String) -> Dictionary:
@@ -245,7 +251,54 @@ func demand_at(p: Dictionary, loc: Dictionary, price: float, n_locs := -1) -> fl
 	var base: float = d.demand * D.SIZES[loc.size].traffic
 	if plot_of(loc) in D.BEACH_PLOTS:
 		base *= D.BEACH_BONUS  # turistas de la playa
-	return base * price_f * econ_f * season(p.key) * rep_f * mkt_f * comp_f * cannibal * p.demand_shock
+	var stars_f: float = 1.0 + D.STAR_DEMAND * (float(loc.get("stars", 3.0)) - 3.0)
+	return (base * price_f * econ_f * season(p.key) * rep_f * mkt_f * comp_f * cannibal * p.demand_shock
+			* weather_factor(p.key, loc) * stars_f)
+
+
+## Cuánto mueve el clima de hoy la demanda de una sucursal.
+func weather_factor(key: String, loc: Dictionary) -> float:
+	var fx: Dictionary = D.WEATHER[weather].effects
+	var f: float = fx.get(key, 1.0)
+	if loc.size < 2:  # las megatiendas están techadas: la lluvia no espanta a sus clientes
+		f *= fx.get("all", 1.0)
+	if loc.size == 0:
+		f *= fx.get("stall", 1.0)
+	if plot_of(loc) in D.BEACH_PLOTS:
+		f *= fx.get("beach", 1.0)
+	return f
+
+
+## Estrellas de un local (1 a 5).
+static func stars_of(loc: Dictionary) -> float:
+	return float(loc.get("stars", 3.0))
+
+
+func _roll_weather() -> int:
+	var probs: Array = D.WEATHER_SEASON[(month_index() + 1) % 12]   # el pronóstico es para los próximos días
+	var r := rng.randf()
+	for i in probs.size():
+		r -= probs[i]
+		if r <= 0.0:
+			return i
+	return 0
+
+
+## Una vez al día: cuenta los días del clima y, cuando toca, entra el que estaba pronosticado.
+func _weather_day() -> void:
+	weather_days -= 1
+	if weather_days > 0:
+		return
+	weather = weather_next
+	weather_next = _roll_weather()
+	weather_days = rng.randi_range(2, 5) if weather < 4 else rng.randi_range(2, 3)   # olas de calor y tormentas duran poco
+	var w: Dictionary = D.WEATHER[weather]
+	# Solo avisan los climas que mueven el negocio (lluvia, calor, tormenta) y no más de uno cada 15 días;
+	# el resto queda en Noticias y en el chip del HUD.
+	var notice := weather in [3, 4, 5] and day - weather_noticed >= 15
+	if notice:
+		weather_noticed = day
+	add_news(w.news, "bad" if weather in [3, 5] else ("warn" if weather == 4 else "info"), "weather" if notice else "quiet", weather)
 
 
 func asset_book(ids: Array) -> float:
@@ -409,13 +462,20 @@ func sell_value(loc: Dictionary) -> float:
 func sell_location(loc: Dictionary) -> Array:
 	var book := asset_book(loc.asset_ids)
 	var proceeds := 0.5 * book
-	var severance: float = loc.employees * D.SEVERANCE_DAYS * wage_daily()
+	_close_location(loc, proceeds)
+	return [true, "Vendiste la sucursal por %s (valor en libros %s)." % [Fmt.money(proceeds), Fmt.money(book)]]
+
+
+## Cierra una sucursal vendida por `proceeds`: indemniza a los empleados y deja de comprar inventario para ella.
+func _close_location(loc: Dictionary, proceeds: float) -> void:
+	var book := asset_book(loc.asset_ids)
 	cash += proceeds
 	ledger.perdida_activos += book - proceeds
-	_spend(severance, "indemnizaciones", loc.product)
+	_spend(loc.employees * D.SEVERANCE_DAYS * wage_daily(), "indemnizaciones", loc.product)
 	_drop_assets(loc.asset_ids)
 	locations.erase(loc)
-	return [true, "Vendiste la sucursal por %s (valor en libros %s)." % [Fmt.money(proceeds), Fmt.money(book)]]
+	var p: Dictionary = products[loc.product]
+	p.ema_sales = max(0.0, p.ema_sales - min(loc.ema_demand, capacity(loc)))
 
 
 func hire(loc: Dictionary) -> Array:
@@ -555,17 +615,30 @@ func take_loan(amount: float, months: int) -> Array:
 		return [false, "El banco no te presta tanto."]
 	var rate := loan_rate(amount)
 	loans.append({"id": _id(), "principal": amount, "original": amount, "rate": rate, "months_left": months,
-			"payment": loan_payment(amount, months, rate)})
+			"payment": loan_payment(amount, months, rate), "accrued": 0.0})
 	cash += amount
 	return [true, "Préstamo de %s al %s anual." % [Fmt.money(amount), Fmt.pct(rate)]]
 
 
+## Lo que cuesta pagar el préstamo hoy: el capital más el interés de los días que van del mes.
+func prepay_amount(loan: Dictionary) -> float:
+	return loan.principal + _accrued(loan)
+
+
+## Interés acumulado desde el último cierre de mes (las partidas viejas no lo guardaban: se estima por la fecha).
+func _accrued(loan: Dictionary) -> float:
+	return float(loan.get("accrued", loan.principal * loan.rate / 360.0 * (day % 30)))
+
+
 func prepay_loan(loan: Dictionary) -> Array:
-	if cash < loan.principal:
-		return [false, "Necesitas %s en caja." % Fmt.money(loan.principal)]
-	cash -= loan.principal
+	var interest := _accrued(loan)
+	var total: float = loan.principal + interest
+	if cash < total:
+		return [false, "Necesitas %s en caja." % Fmt.money(total)]
+	cash -= total
+	ledger.intereses += interest
 	loans.erase(loan)
-	return [true, "Préstamo pagado por completo."]
+	return [true, "Préstamo pagado por completo (%s de intereses del mes)." % Fmt.money(interest)]
 
 
 func buy_bonds(amount: float) -> Array:
@@ -795,6 +868,7 @@ func step_day() -> void:
 	var before: float = statement(ledger).ebitda
 	var rev_before: float = ledger.ingresos
 	_macro()
+	_weather_day()
 	_events()
 	_maybe_dilemma()
 	for key in D.PRODUCT_ORDER:
@@ -828,6 +902,9 @@ func step_day() -> void:
 		var interest := -cash * (policy_rate + 0.18) / 365.0
 		cash -= interest
 		ledger.intereses += interest
+	# Los préstamos acumulan interés cada día (30 días = la cuota de interés del mes); se paga al cerrar el mes.
+	for loan in loans:
+		loan.accrued = _accrued(loan) + loan.principal * loan.rate / 360.0
 
 	if cash < -overdraft_limit():
 		overdraft_days += 1
@@ -843,7 +920,7 @@ func step_day() -> void:
 		overdraft_days = 0
 
 	var rev: float = ledger.ingresos - rev_before
-	if rev > best_day:
+	if rev > best_day + 0.01:  # un centavo: que el redondeo no invente récords
 		if best_day > 0 and day >= 20 and day - last_record_day >= 15:
 			last_record_day = day
 			add_news("¡Récord de ventas en un día: %s!" % Fmt.money(rev), "good", "record", rev)
@@ -887,7 +964,9 @@ func _run_product(p: Dictionary) -> void:
 				fire(loc)
 		p.stock_days = 1 if d.spoil >= 0.1 else (2 if d.spoil >= 0.03 else 4)
 
-	# Compra de inventario al inicio del día para cubrir los días objetivo.
+	# Compra de inventario al inicio del día para cubrir los días objetivo (sin sucursales no se compra nada).
+	if ls.is_empty():
+		p.ema_sales = 0.0
 	var cost := unit_cost(p)
 	var buy: float = max(0.0, p.stock_days * p.ema_sales - p.stock)
 	if buy > 0:
@@ -929,7 +1008,7 @@ func _run_product(p: Dictionary) -> void:
 		sold_total += loc.sold
 	p.stock = max(0.0, p.stock - sold_total)
 
-	var spoiled: float = p.stock * d.spoil
+	var spoiled: float = p.stock * d.spoil * float(D.WEATHER[weather].effects.get("spoil", 1.0))
 	p.stock -= spoiled
 	ledger.mermas += spoiled * p.avg_cost
 	pl.contribucion -= spoiled * p.avg_cost
@@ -949,6 +1028,9 @@ func _run_product(p: Dictionary) -> void:
 	p.last_demand = total_demand
 	p.last_sold = sold_total
 	p.last_capacity = cap_total
+
+	for loc in ls:
+		_update_stars(p, loc)
 
 	# Reputación: calidad, nivel de servicio y precio justo.
 	if ls:
@@ -981,6 +1063,32 @@ func _run_product(p: Dictionary) -> void:
 		p.demand_shock_days -= 1
 		if p.demand_shock_days == 0:
 			p.demand_shock = 1.0
+
+
+## Las estrellas de un local se mueven despacio hacia lo que merece: si atiende a todos (y si atiendes tú), la
+## reputación de la marca, la calidad y si el precio es justo. Cruzar una estrella entera sale en las noticias.
+func _update_stars(p: Dictionary, loc: Dictionary) -> void:
+	var service: float = loc.sold / loc.demand if loc.demand > 0 else 1.0
+	var ratio: float = p.price / ref_price(p)
+	var score := 0.4 * clampf((service - 0.55) / 0.4, 0.0, 1.0)
+	score += 0.3 * p.reputation / 100.0
+	score += 0.15 * p.quality / 2.0
+	score += 0.15 * clampf(1.6 - ratio, 0.0, 1.0)
+	if loc.get("owner", false):
+		score += 0.1   # el dueño atendiendo en persona
+	var target := 1.0 + 4.0 * clampf(score, 0.0, 1.0)
+	var before := stars_of(loc)
+	var now := before + (target - before) * 0.04
+	loc.stars = now
+	var name := "%s de %s" % [D.SIZES[loc.size].name.to_lower(), D.PRODUCTS[loc.product].name.to_lower()]
+	if floori(now) > floori(before) and floori(now) >= 2:
+		add_news("Tu %s subió a %d estrellas." % [name, floori(now)], "good", "stars", [loc.id, floori(now), true])
+		if floori(now) == 5:
+			p.awareness = min(1.0, p.awareness + 0.1)
+			add_news("¡La guía de la ciudad recomienda tu %s! Más gente conoce tu marca." % name, "good", "quiet")
+	elif floori(now) < floori(before):
+		add_news("Tu %s bajó a %d %s: revisa la atención, el precio o la calidad." % [name, max(1, floori(now)), "estrella" if floori(now) <= 1 else "estrellas"],
+				"bad", "stars", [loc.id, max(1, floori(now)), false])
 
 
 func _events() -> void:
@@ -1055,7 +1163,8 @@ func _end_month() -> void:
 	assets = assets.filter(func(a): return a.book > 0.01)
 
 	for loan in loans.duplicate():
-		var interest: float = loan.principal * loan.rate / 12.0
+		var interest := _accrued(loan)
+		loan.accrued = 0.0
 		var principal: float = loan.principal if loan.months_left <= 1 else min(loan.principal, loan.payment - interest)
 		cash -= interest + principal
 		L.intereses += interest
@@ -1205,14 +1314,18 @@ func _scale() -> float:
 	return max(800.0 * price_index, total)
 
 
-const DILEMMAS := ["soborno", "influencer", "aumento", "lote", "demanda", "cartel", "oferta", "compra_rival"]
+const DILEMMAS := ["soborno", "influencer", "aumento", "lote", "demanda", "cartel", "oferta", "compra_rival",
+		"huelga", "franquicia", "ciberataque", "patrocinio", "proveedor"]
 
 
 func _maybe_dilemma() -> void:
 	if pending_choice != null or day < next_choice_day or locations.is_empty():
 		return
 	next_choice_day = day + rng.randi_range(35, 70)
-	var builders := ["soborno", "influencer", "aumento", "lote", "demanda"]
+	var builders := ["soborno", "influencer", "aumento", "lote", "demanda", "huelga", "ciberataque", "patrocinio",
+			"proveedor"]
+	if day >= 90:
+		builders.append("franquicia")  # tu marca ya es conocida
 	if products.values().any(func(p): return p.unlocked and p.competitors > 0):
 		builders.append("cartel")
 	if locations.size() > 1:
@@ -1441,10 +1554,7 @@ func _r_oferta(opt: int, d: Dictionary) -> Array:
 	if opt == 1 or loc == null:
 		return ["Rechazaste la oferta: la sucursal sigue siendo tuya.", "info"]
 	var book := asset_book(loc.asset_ids)
-	cash += d.offer
-	ledger.perdida_activos += book - d.offer
-	_drop_assets(loc.asset_ids)
-	locations.erase(loc)
+	_close_location(loc, d.offer)
 	return ["Vendiste la sucursal por %s: %s más que su valor en libros." % [Fmt.money(d.offer), Fmt.money(d.offer - book)], "good"]
 
 
@@ -1478,16 +1588,157 @@ func _r_compra_rival(opt: int, d: Dictionary) -> Array:
 			return ["%s: «Como quieras.» Compró el terreno %d para abrir cerca de ti." % [r.name, plot + 1], "bad"]
 		return ["%s: «Ya cambiarás de opinión.» El local sigue siendo tuyo." % r.name, "info"]
 	var plot := plot_of(loc)
-	var book := asset_book(loc.asset_ids)
-	cash += d.offer
-	ledger.perdida_activos += book - d.offer
-	_drop_assets(loc.asset_ids)
-	locations.erase(loc)
+	_close_location(loc, d.offer)
 	if plot >= 0:
 		_rival_takes(d.product, plot)
 	else:
 		products[d.product].competitors += 1
 	return ["Vendiste el local a %s por %s. Ahora es de la competencia." % [r.company, Fmt.money(d.offer)], "good"]
+
+
+func _active_products() -> Array:
+	return products.values().filter(func(p): return p.unlocked and not locs(p.key).is_empty())
+
+
+func _d_huelga() -> Dictionary:
+	var loc: Dictionary = locations[0]
+	for l in locations:
+		if l.employees > loc.employees:
+			loc = l
+	var pname: String = D.PRODUCTS[loc.product].name.to_lower()
+	var raise := 0.12 * _scale()
+	return {"id": "huelga", "title": "Tus empleados amenazan con una huelga",
+			"text": "El sindicato de tus locales de %s dice que los sueldos no alcanzan con la inflación. Piden un bono de %s para todos. «Si no, mañana nadie abre la cortina.»" % [pname, Fmt.money(raise)],
+			"options": [_opt("Pagar el bono (%s)" % Fmt.money(raise), "Se acaba el conflicto y el equipo queda contento: +4 de reputación."),
+					_opt("Negarte", "50%%: se echan para atrás. 50%%: huelga de 7 días: la demanda de %s cae a la mitad y −8 de reputación." % pname)],
+			"data": {"product": loc.product, "raise": raise}}
+
+
+func _r_huelga(opt: int, d: Dictionary) -> Array:
+	if opt == 0:
+		_spend(d.raise, "salarios", d.product)
+		_rep(d.product, 4)
+		return ["Firmaron el acuerdo. Tus empleados vuelven a trabajar con ganas (+4 reputación).", "good"]
+	if rng.randf() < 0.5:
+		return ["El sindicato se echó para atrás. Por ahora no hay huelga.", "info"]
+	var p: Dictionary = products[d.product]
+	p.demand_shock = 0.5
+	p.demand_shock_days = 7
+	_rep(d.product, -8)
+	return ["¡HUELGA! Tus locales de %s atienden a medias por 7 días (−8 reputación)." % D.PRODUCTS[d.product].name.to_lower(), "bad"]
+
+
+func _d_franquicia() -> Dictionary:
+	var loc: Dictionary = _pick_loc()[0]
+	var pname: String = D.PRODUCTS[loc.product].name.to_lower()
+	var fee := 0.5 * _scale()
+	return {"id": "franquicia", "title": "Quieren comprar una franquicia",
+			"text": "Un empresario de otra ciudad quiere abrir locales de %s con tu marca. Te paga %s por la franquicia y él pone todo lo demás. Nadie sabe qué tan bien los va a manejar." % [pname, Fmt.money(fee)],
+			"options": [_opt("Vender la franquicia (+%s)" % Fmt.money(fee), "Recibes el dinero hoy. 35%: atiende mal y tu marca sufre (−12 de reputación)."),
+					_opt("No, la marca es solo mía", "Nada cambia.")],
+			"data": {"product": loc.product, "fee": fee}}
+
+
+func _r_franquicia(opt: int, d: Dictionary) -> Array:
+	if opt == 1:
+		return ["Rechazaste la franquicia. Tu marca sigue siendo solo tuya.", "info"]
+	cash += d.fee
+	ledger.ingresos += d.fee
+	_pl(d.product).ingresos += d.fee
+	_pl(d.product).contribucion += d.fee
+	if rng.randf() < 0.35:
+		_rep(d.product, -12)
+		return ["Cobraste %s, pero el franquiciado atiende pésimo y los clientes lo confunden contigo (−12 reputación)." % Fmt.money(d.fee), "bad"]
+	return ["¡Franquicia vendida por %s! Tu marca llega a otra ciudad." % Fmt.money(d.fee), "good"]
+
+
+func _d_ciberataque() -> Dictionary:
+	var ransom := 0.2 * _scale()
+	return {"id": "ciberataque", "title": "Hackearon tus computadoras",
+			"text": "Un virus bloqueó las cajas y el sistema de inventario de todos tus locales. En la pantalla aparece un mensaje: pagas %s en criptomonedas o borran todo." % Fmt.money(ransom),
+			"options": [_opt("Pagar el rescate (%s)" % Fmt.money(ransom), "Recuperas el sistema. 20%: igual filtran los datos de tus clientes (−10 de reputación en todo)."),
+					_opt("No pagar y llamar a un técnico", "50%%: el técnico lo arregla por %s. 50%%: pierdes 40%% del inventario y 3 días de ventas lentas." % Fmt.money(0.05 * _scale()))],
+			"data": {"ransom": ransom, "tech": 0.05 * _scale()}}
+
+
+func _r_ciberataque(opt: int, d: Dictionary) -> Array:
+	if opt == 0:
+		_spend(d.ransom, "corporativo")
+		if rng.randf() < 0.2:
+			for p in _active_products():
+				_rep(p.key, -10)
+			return ["Pagaste, pero los hackers igual publicaron los datos de tus clientes (−10 reputación).", "bad"]
+		return ["Pagaste el rescate y el sistema volvió. Mejor no contarle a nadie.", "warn"]
+	if rng.randf() < 0.5:
+		_spend(d.tech, "corporativo")
+		return ["¡El técnico era un genio! Limpió el virus por %s y no perdiste nada." % Fmt.money(d.tech), "good"]
+	for p in _active_products():
+		var lost: float = p.stock * 0.4
+		p.stock -= lost
+		ledger.mermas += lost * p.avg_cost
+		_pl(p.key).contribucion -= lost * p.avg_cost
+		p.demand_shock = min(p.demand_shock, 0.8)
+		p.demand_shock_days = max(p.demand_shock_days, 3)
+	return ["El virus borró todo: perdiste 40% del inventario y las cajas andan lentas por 3 días.", "bad"]
+
+
+func _d_patrocinio() -> Dictionary:
+	var k := _scale()
+	return {"id": "patrocinio", "title": "El club del barrio busca auspiciador",
+			"text": "Deportivo Las Lomas, el equipo de fútbol del barrio, está por jugar la final del campeonato regional y no tiene plata para camisetas. El presidente del club te pide ayuda.",
+			"options": [_opt("Auspicio chico (%s)" % Fmt.money(0.12 * k), "Tu logo en la manga: +5 de reputación en todos tus negocios."),
+					_opt("Auspicio grande (%s)" % Fmt.money(0.3 * k), "Tu logo en el pecho. 55%: ganan la final: +12 de reputación y +15% de demanda por 10 días. 45%: pierden: +3 de reputación."),
+					_opt("No auspiciar", "No gastas nada. Algunos vecinos lo notan (−2 de reputación).")],
+			"data": {"small": 0.12 * k, "big": 0.3 * k}}
+
+
+func _r_patrocinio(opt: int, d: Dictionary) -> Array:
+	var active := _active_products()
+	if opt == 0:
+		_spend(d.small, "marketing")
+		for p in active:
+			_rep(p.key, 5)
+		return ["El equipo salió a la cancha con tu logo. El barrio te quiere un poco más (+5 reputación).", "good"]
+	if opt == 2:
+		for p in active:
+			_rep(p.key, -2)
+		return ["El club consiguió otro auspiciador. En el barrio comentan que no ayudaste (−2 reputación).", "warn"]
+	_spend(d.big, "marketing")
+	if rng.randf() < 0.55:
+		for p in active:
+			_rep(p.key, 12)
+			p.demand_shock = max(p.demand_shock, 1.15)
+			p.demand_shock_days = max(p.demand_shock_days, 10)
+		return ["¡CAMPEONES! Tu logo salió en todas las fotos de la celebración: +12 reputación y +15% de demanda por 10 días.", "good"]
+	for p in active:
+		_rep(p.key, 3)
+	return ["Perdieron la final por penales. Al menos el barrio agradece el apoyo (+3 reputación).", "warn"]
+
+
+func _d_proveedor() -> Dictionary:
+	var loc: Dictionary = _pick_loc()[0]
+	var pname: String = D.PRODUCTS[loc.product].name.to_lower()
+	return {"id": "proveedor", "title": "Un proveedor ofrece exclusividad",
+			"text": "Un distribuidor nuevo te ofrece la mercadería de %s 15%% más barata durante 60 días si le compras solo a él. Es una empresa chica y no tiene mucha experiencia." % pname,
+			"options": [_opt("Firmar la exclusividad", "Tu costo unitario baja 15% por 60 días. 25%: no cumple una entrega: pierdes la mitad del inventario y −8 de reputación."),
+					_opt("Seguir con tus proveedores de siempre", "Nada cambia.")],
+			"data": {"product": loc.product}}
+
+
+func _r_proveedor(opt: int, d: Dictionary) -> Array:
+	if opt == 1:
+		return ["Seguiste con tus proveedores de siempre.", "info"]
+	var p: Dictionary = products[d.product]
+	p.cost_shock = min(p.cost_shock, 0.85)
+	p.cost_shock_days = max(p.cost_shock_days, 60)
+	if rng.randf() < 0.25:
+		var lost: float = p.stock * 0.5
+		p.stock -= lost
+		ledger.mermas += lost * p.avg_cost
+		_pl(d.product).contribucion -= lost * p.avg_cost
+		_rep(d.product, -8)
+		return ["El proveedor nuevo falló la primera entrega: perdiste la mitad del inventario y hubo quejas (−8 reputación). Al menos el precio bajó 15%.", "bad"]
+	return ["Contrato firmado: tu mercadería de %s cuesta 15%% menos por 60 días." % D.PRODUCTS[d.product].name.to_lower(), "good"]
 
 
 ## Devuelve [ok, mensaje].
@@ -1528,7 +1779,7 @@ static func from_json(text: String) -> Game:
 
 
 const INT_KEYS := ["day", "next_id", "phase_months_left", "overdraft_days", "rank", "next_choice_day",
-		"profit_streak", "last_record_day", "hq_level", "strategy_ready_day"]
+		"profit_streak", "last_record_day", "hq_level", "strategy_ready_day", "weather", "weather_next", "weather_days"]
 
 
 ## JSON guarda todos los números como decimales: los que son índices o contadores vuelven a ser enteros.
@@ -1539,6 +1790,7 @@ func _fix_types() -> void:
 	for loc in locations:
 		for k in ["id", "size", "employees"]:
 			loc[k] = int(loc[k])
+		loc["stars"] = float(loc.get("stars", 3.0))
 		if loc.get("plot") != null:
 			loc.plot = int(loc.plot)
 		loc.asset_ids = loc.asset_ids.map(func(i): return int(i))

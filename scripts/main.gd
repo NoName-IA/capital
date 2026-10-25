@@ -58,6 +58,12 @@ func _notification(what: int) -> void:
 		get_tree().quit()
 
 
+func _exit_tree() -> void:
+	# Las interfaces dibujan directo en el RenderingServer: hay que liberar lo que crearon.
+	ui.free_items()
+	city.hud.ui.free_items()
+
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:

@@ -6,7 +6,7 @@ extends RefCounted
 # Bancas del parque (las mismas de WorldBuilder._park): [x, z, eje del sendero]
 const BENCHES := [[-2.6, -16, "z"], [2.6, -16, "z"], [-2.6, -24, "z"], [2.6, -24, "z"], [-10, -31.6, "x"],
 		[10, -31.6, "x"], [-10, -36.4, "x"], [10, -36.4, "x"], [-2.6, -44, "z"], [2.6, -52, "z"]]
-const PARK := Rect2(-21, -55, 42, 42)   # donde andan los perros sueltos (x, z)
+const PARK := Rect2(-19, -55, 38, 42)   # donde andan los perros sueltos (x, z)
 
 var city
 var dogs := []

@@ -4,6 +4,9 @@ extends RefCounted
 ## sale (6:00), cruza el cielo y se pone en el mar (20:00); de ahí a 1 sale la luna y hace su recorrido hasta el
 ## amanecer.
 
+var user_exposure := 1.0     # brillo elegido en Gráficos → Imagen
+var user_saturation := 1.0   # saturación elegida en Gráficos → Imagen
+var night_lights := true     # faroles y locales iluminados de noche
 var env: Environment
 var sun: DirectionalLight3D
 var sky_mat: ShaderMaterial
@@ -136,10 +139,10 @@ func set_time(t: float) -> void:
 	# Noche: luz de cielo azulada y el ojo que se acostumbra a la oscuridad (más exposición), como en Eclipse
 	env.ambient_light_color = env.ambient_light_color.lerp(Color(0.24, 0.3, 0.48), night_amount)
 	env.ambient_light_energy = lerpf(env.ambient_light_energy, 0.75, night_amount)
-	env.tonemap_exposure = lerpf(0.72, 1.2, night_amount)
+	env.tonemap_exposure = lerpf(0.72, 1.2, night_amount) * user_exposure
 	Mats.water.set_shader_parameter("moon_light", night_amount * (0.35 + 0.65 * full))
 	# Visión nocturna (efecto Purkinje): de noche los colores se apagan y todo tira a azul
-	env.adjustment_saturation = lerpf(1.3, 0.65, night_amount)
+	env.adjustment_saturation = lerpf(1.3, 0.65, night_amount) * user_saturation
 	env.fog_light_color = horizon.lerp(Color(0.25, 0.32, 0.55), night_amount * 0.5)
 	for m in [Mats.glass, Mats.glass_glow, Mats.windows, Mats.shop_glass]:
 		m.set_shader_parameter("sun_dir", -dir)  # hacia el sol
@@ -150,7 +153,7 @@ func set_time(t: float) -> void:
 	night = elev < 0.3
 	Mats.set_night(night_amount)
 	Mats.emissive.albedo_color = Color(1, 1, 1) * (0.7 + 0.8 * night_amount)
-	Mats.set_lights(1.7 * smoothstep(0.0, 1.0, (0.42 - elev) / 0.2))  # faroles y locales: se prenden al atardecer
+	Mats.set_lights(1.7 * smoothstep(0.0, 1.0, (0.42 - elev) / 0.2) * (1.0 if night_lights else 0.0))  # se prenden al atardecer
 	# Adentro: de día más fuerte (el ojo está acostumbrado a la luz de afuera), de noche un poco menos
 	Mats.indoor_light.set_shader_parameter("energy", lerpf(1.5, 1.2, night_amount))
 

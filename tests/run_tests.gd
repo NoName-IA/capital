@@ -10,7 +10,8 @@ func _ready() -> void:
 	for t in ["test_equity_change_equals_net_income", "test_every_dilemma_outcome_is_booked",
 			"test_save_and_load_continue", "test_wardrobe", "test_modes", "test_fund_hq_and_sweep",
 			"test_strategies", "test_rivals_buy_empty_plots", "test_selling_to_a_rival", "test_beach_plots",
-			"test_formats"]:
+			"test_formats", "test_no_stock_without_stores", "test_loan_interest_accrues",
+			"test_weather_moves_demand", "test_stars"]:
 		var before := failures
 		call(t)
 		print(("OK    " if failures == before else "FALLA ") + t)
@@ -226,3 +227,89 @@ func test_formats() -> void:
 	check(Fmt.short(45000.0) == "$45 k", Fmt.short(45000.0))
 	check(Fmt.short(1.5e9) == "$1.500 M", Fmt.short(1.5e9))
 	check(Fmt.pct(0.125) == "12,5%", Fmt.pct(0.125))
+
+
+## Si vendes todas las sucursales de un negocio, no se sigue comprando inventario para él.
+func test_no_stock_without_stores() -> void:
+	var g := Game.new(1)
+	g.cash = 500000.0
+	g.unlock("pan")
+	g.open_location("pan", 1, 3)
+	for i in 40:
+		g.step_day()
+	g.sell_location(g.locs("pan")[0])
+	for i in 5:
+		g.step_day()
+	var p: Dictionary = g.products.pan
+	near(p.ema_sales, 0.0, 0.001, "sin sucursales no hay ventas esperadas")
+	var stock: float = p.stock
+	g.step_day()
+	check(p.stock <= stock, "no compra inventario sin sucursales")
+
+
+## El interés de un préstamo corre por día: prepagarlo antes del cierre no lo hace gratis.
+func test_loan_interest_accrues() -> void:
+	var g := Game.new(2)
+	g.cash = 100000.0
+	check(g.take_loan(4000, 12)[0], "el banco presta")
+	var loan: Dictionary = g.loans[0]
+	for i in 10:
+		g.step_day()
+	var expected: float = 4000.0 * loan.rate / 360.0 * 10
+	near(g.prepay_amount(loan), 4000.0 + expected, 0.01, "saldo + 10 días de interés")
+	var before: float = g.ledger.intereses
+	check(g.prepay_loan(loan)[0], "se puede prepagar")
+	near(g.ledger.intereses - before, expected, 0.01, "el interés queda en el estado de resultados")
+	check(g.loans.is_empty(), "el préstamo se borra")
+
+
+## El clima mueve la demanda: la lluvia vacía la playa y dispara el café; la megatienda techada no pierde gente.
+func test_weather_moves_demand() -> void:
+	var g := Game.new(5)
+	var cafe: Dictionary = g.products.cafe
+	var beach := Game.make_location(90, "cafe", 1)
+	beach.plot = D.BEACH_PLOTS[0]
+	var street := Game.make_location(91, "cafe", 1)
+	street.plot = 2
+	var mega := Game.make_location(92, "cafe", 2)
+	mega.plot = 3
+	g.weather = 0
+	var sun_beach := g.demand_at(cafe, beach, cafe.price)
+	g.weather = 3
+	check(g.demand_at(cafe, beach, cafe.price) < sun_beach * 0.7, "con lluvia la playa vende menos")
+	near(g.weather_factor("cafe", street), 0.88 * 1.18, 0.0001, "café en la calle con lluvia")
+	near(g.weather_factor("cafe", mega), 1.18, 0.0001, "la megatienda no pierde gente con lluvia")
+	g.weather = 4
+	check(g.weather_factor("burger", beach) > 1.5, "ola de calor: hamburguesas en la playa")
+	# El pronóstico se cumple y el clima cambia solo
+	var h := Game.new(6)
+	var seen := {}
+	for i in 400:
+		var before := h.weather_next
+		var days := h.weather_days
+		h.step_day()
+		if days == 1:
+			check(h.weather == before, "entra el clima pronosticado")
+		seen[h.weather] = true
+	check(seen.size() >= 3, "a lo largo del año hay varios climas")
+
+
+## Las estrellas de un local suben con buena atención y mueven su demanda.
+func test_stars() -> void:
+	var g := Game.new(8)
+	g.cash = 200000
+	var loc: Dictionary = g.locations[0]
+	g.products.cafe.quality = 2
+	g.products.cafe.price = g.ref_price(g.products.cafe)   # precio justo: la demanda cabe en el puesto
+	loc.employees = 2
+	for i in 120:
+		g.step_day()
+	check(Game.stars_of(loc) > 3.3, "atendiendo bien y con calidad premium suben las estrellas (%.2f)" % Game.stars_of(loc))
+	var p: Dictionary = g.products.cafe
+	loc.stars = 5.0
+	var five := g.demand_at(p, loc, p.price)
+	loc.stars = 1.0
+	var one := g.demand_at(p, loc, p.price)
+	near(five / one, (1.0 + 2 * D.STAR_DEMAND) / (1.0 - 2 * D.STAR_DEMAND), 0.0001, "5 estrellas venden más que 1")
+	var b := Game.from_json(g.to_json())
+	near(Game.stars_of(b.locations[0]), 1.0, 0.0001, "las estrellas se guardan")

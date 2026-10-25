@@ -19,7 +19,8 @@ Alt soltar o capturar el mouse. La lista completa está en Pausa → Controles.
 Todo lo de la versión de Python, con gráficos de Godot:
 
 - **Economía idéntica** (`scripts/sim.gd`, traducción de `sim.py`): productos, sucursales, inventario, precios,
-  calidad, marketing, préstamos, bonos, fondo de inversión, impuestos, ciclo económico, dilemas, rivales que compran
+  calidad, marketing, préstamos, bonos, fondo de inversión, impuestos, ciclo económico, 13 decisiones urgentes (soborno,
+  influencer, huelga, franquicia, ciberataque, auspicio del club del barrio, proveedor exclusivo...), rivales que compran
   terrenos y te ofrecen comprar tus locales, rangos y modos normal e inversionista.
 - **Celular** con las 8 pestañas (Resumen, Negocios, Mercado, Finanzas, Crecimiento, Reportes, Noticias, Conceptos),
   menú, 3 espacios de guardado y ventanas de decisión.
@@ -41,10 +42,33 @@ Todo lo de la versión de Python, con gráficos de Godot:
   del cielo y del sol, y de noche el camino de luz de la luna. Se puede caminar por la arena, meterse al mar hasta la
   cintura y caminar (y saltar) hasta la punta del muelle. La avenida baja en rampa hasta el mar y los autos salen de ahí.
 - **Tutorial** la primera vez que empiezas una partida (7 páginas con capturas del juego; meta: que la empresa valga
-  $1.000.000). Se vuelve a ver en Pausa → Controles. Las imágenes salen de `tests/make_tutorial_images.gd`.
-- **Clima** (`scripts/world/weather.gd`): soleado, parcialmente nublado, nublado o lluvia, según la estación; cambia
-  cada amanecer. El kiosco **ELDIARIO**, al lado de tu oficina, lo muestra con la temperatura, la hora y el pronóstico, y
-  los peatones le compran el diario.
+  $10 millones). Se vuelve a ver en Pausa → Controles. Las imágenes salen de `tests/make_tutorial_images.gd`.
+- **Clima que cambia la economía** (`data.gd` → `WEATHER`, `scripts/world/weather.gd`): soleado, parcialmente nublado,
+  nublado, lluvia, ola de calor y tormenta, según la estación; cada clima dura unos días y hay pronóstico. Con sol la
+  playa se llena; con lluvia hay menos gente en la calle pero el café se dispara y la playa y los puestos al aire libre
+  venden menos (las megatiendas techadas no pierden clientes); con calor lo perecedero se echa a perder más rápido; la
+  tormenta casi vacía la calle y trae relámpagos. El chip del HUD dice cuánto mueve cada negocio, y el kiosco
+  **ELDIARIO** muestra el clima, la temperatura, la hora y el pronóstico.
+- **Estrellas de cada local** (1 a 5): suben si atiendes a todos, con buena reputación, calidad y precio justo (y si
+  atiendes tú). Con 5 estrellas un local vende 15% más que con 3 y la guía de la ciudad lo recomienda; las estrellas
+  saltan sobre el local cuando suben o bajan (quedan anotadas en Noticias).
+- **Íconos dibujados** (`scripts/ui/icons.gd`): clima, estrellas, apps de los avisos y decisiones usan íconos hechos
+  con formas, no emojis; se dibujan una vez en una textura y después cuestan casi nada.
+- **Cada local es distinto por dentro** (`Blueprints._varied`): distribución (repisas en las dos paredes, repisa y
+  mesas o vitrinas, repisas al fondo con exhibición adelante; góndolas en distinta cantidad en las megatiendas),
+  mostrador corrido, colores, piso con o sin baldosas, plantas, cuadros, reloj, pizarras, maniquíes, carritos y
+  lámparas, a veces en espejo. Los locales de la competencia también.
+- **Clientes que conversan** (`scripts/world/customer.gd`): con el producto en la mano le preguntan a otro cliente si
+  comprarlo, llaman por teléfono, miran el precio, comparan, se sacan fotos o le piden consejo al empleado, y según la
+  respuesta lo compran o lo devuelven a la repisa. En la calle los peatones conversan de tus locales, del clima, de
+  la competencia o del diario, miran vitrinas, sacan el paraguas o corren con la lluvia, y hay comentarios en la fila.
+- **Empleados que trabajan** (`scripts/world/store.gd`): 2 cajas por local y 3 por megatienda; los cajeros solo se
+  mueven al cobrar y nunca se sientan. Los demás ordenan repisas, revisan el inventario, barren, trapean, limpian mesas
+  y vitrinas, traen cajas de la bodega y reponen, y cada tanto se sientan a descansar en la banca del fondo. Caminan
+  por una grilla (AStarGrid2D) que esquiva paredes, repisas, mesones, mesas y a los otros empleados.
+- **Tu empresa tiene nombre**: lo eligen al empezar la partida y sale en los letreros, la oficina, el HUD y lo que
+  dicen los clientes.
+- **Teclas configurables** en Pausa → Controles (clic en la tecla y aprieta la nueva).
 - **Vida en la ciudad** (`scripts/world/life.gd`, `dog.gd`): perritos con correa y sueltos en el parque, palomas que
   vuelan si te acercas, gaviotas en la playa y gente sentada en las bancas.
 - **Velocidades** x1, x2 y x4 de verdad; el cielo también se acelera.
@@ -56,7 +80,13 @@ Todo lo de la versión de Python, con gráficos de Godot:
   hamburguesa, bolsa de ropa o caja de electrónica) y el cliente se va con lo que compró.
 - Clientes que hacen fila, pagan o se van enojados; autos que te pueden atropellar; oficina con computadora, pizarra
   de estrategia, pantalla de la bolsa, vitrina de trofeos, asistente y armario con fotos de cada prenda.
-- Avisos, alarma de quiebra, confeti, música que se pone tensa en peligro, menú de pausa con ajustes.
+- **Interfaz de videojuego**: pantalla de inicio con el logo y el menú sobre la ciudad que gira de fondo y la
+  tarjeta de tu última partida; menú de pausa con las opciones a la izquierda y Ajustes, Gráficos, Controles y Guardar
+  a la derecha; tarjeta de la empresa arriba a la izquierda (caja, valor, rango con barra, racha y reputación) y
+  decisiones urgentes como cartas de evento, con cada opción marcada como segura o con riesgo.
+- **Avisos como notificaciones del celular** (arriba a la derecha, con el ícono de cada "app": Banco, Noticias,
+  Mensajes de los rivales, Decisiones...), carteles grandes al centro para los hitos (rango, récord, racha), alerta
+  fija de quiebra y contador de no leídos junto al celular. Alarma de quiebra, confeti, música que se pone tensa en peligro, menú de pausa con ajustes.
 
 ## Rendimiento
 

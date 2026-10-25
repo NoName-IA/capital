@@ -3,19 +3,6 @@ extends RefCounted
 ## Ventanas que se abren encima de la ciudad: el celular (administración), la compra de un terreno, el menú de
 ## pausa con sus ajustes y controles, el armario, la vitrina de trofeos y la reunión de estrategia.
 
-const CONTROLS := [
-	["MOVERTE", [["W A S D", "Caminar"], ["Shift", "Correr (mantener apretado)"], ["Espacio", "Saltar"],
-			["Mouse", "Mirar alrededor"], ["Rueda", "Acercar o alejar la cámara; muy cerca pasa a primera persona"],
-			["V", "Cambiar entre primera y tercera persona"]]],
-	["ACCIONES", [["E", "Interactuar: comprar terrenos, atender el mostrador, administrar un local, usar la computadora o el armario. También cierra ventanas"],
-			["Tab", "Abrir o cerrar el celular con todas las pantallas de administración"],
-			["O", "Ir a la oficina central"],
-			["Armario", "Arrastra con el clic para girar al personaje, rueda para acercar o alejar, clic derecho para subir o bajar la vista, A/D para girar y R para centrar"]]],
-	["JUEGO", [["Esc", "Menú de pausa (y volver atrás)"], ["P", "Pausa rápida, sin menú"],
-			["1  2  3", "Velocidad del tiempo: normal, rápida y muy rápida"],
-			["Alt", "Soltar o capturar el mouse (apriétala y suéltala sola)"], ["M", "Música sí / no"],
-			["H", "Mostrar u ocultar la ayuda en pantalla"], ["F11", "Pantalla completa"]]],
-]
 const TIERS := [["Bronce", Color8(205, 127, 50)], ["Bronce", Color8(205, 127, 50)], ["Plata", Color8(205, 210, 222)],
 		["Plata", Color8(205, 210, 222)], ["Oro", Color8(245, 192, 60)], ["Oro", Color8(245, 192, 60)],
 		["Diamante", Color8(120, 220, 245)], ["Diamante", Color8(120, 220, 245)], ["Diamante", Color8(120, 220, 245)],
@@ -36,7 +23,7 @@ var tutorial_tex := {}
 const TUTORIAL := [
 	["meta", "Bienvenido a Capital", "Empiezas con un poco de plata y tu propia empresa. Vende, invierte y crece.
 
-Tu meta: que tu empresa llegue a valer $1.000.000. Arriba a la izquierda ves cuánto vale y cuánto te falta."],
+Tu meta: que tu empresa llegue a valer $10 millones (el rango Imperio). Arriba a la izquierda ves cuánto vale y cuánto te falta."],
 	["moverse", "Muévete por la ciudad", "W A S D para caminar · Shift para correr · Espacio para saltar.
 Mueve el mouse para mirar y usa la rueda para acercar o alejar la cámara.
 Alt suelta el mouse para hacer clic en los botones."],
@@ -83,8 +70,11 @@ func draw() -> void:
 	match mode:
 		"admin":
 			if app.view == "menu" or app.game == null:
-				ui.rect(Rect2(0, 0, W, H), Color(0.05, 0.067, 0.09, 0.82))
-				app.draw_menu()
+				menu_backdrop(app.slot_screen == null and not app.pick_mode and not app.naming and not app.settings_open)
+				if app.settings_open:
+					draw_menu_settings()
+				else:
+					app.draw_menu()
 			else:
 				draw_tablet_frame()
 				app.draw_game()
@@ -95,7 +85,6 @@ func draw() -> void:
 			ui.rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.35))
 			draw_lot()
 		"pausa":
-			ui.rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.35))
 			draw_pause()
 		"personaje":
 			draw_custom()
@@ -108,6 +97,17 @@ func draw() -> void:
 		"tutorial":
 			ui.rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.55))
 			draw_tutorial()
+
+
+## Fondo de los menús de pantalla completa: la ciudad se ve a la derecha y la izquierda se oscurece para el texto.
+## Cubre toda la ventana aunque sea más ancha que la pantalla virtual. `open` deja ver más la ciudad.
+func menu_backdrop(open := true) -> void:
+	var dark := Color(0.025, 0.03, 0.045, 0.94)
+	var far := 4000.0
+	ui.rect(Rect2(-far, -far, far, H + far * 2), dark)
+	ui.gradient(Rect2(0, -far, W * 0.62, H + far * 2), dark, Color(dark, 0.55 if open else 0.8))
+	ui.rect(Rect2(W * 0.62, -far, W * 0.38 + far, H + far * 2), Color(dark, 0.55 if open else 0.8))
+	ui.gradient(Rect2(-far, H - 160, W + far * 2, 160), Color(dark, 0.0), Color(dark, 0.6), false)
 
 
 ## Marco de la tablet: borde negro redondeado con la cámara arriba y un brillo en el canto.
@@ -164,77 +164,238 @@ func draw_lot() -> void:
 
 
 # ---------- menú de pausa ----------
-## Ajustes y opciones. La ciudad se ve (desenfocada) detrás.
-func draw_pause() -> void:
-	var s: Dictionary = city.settings
-	var box := Rect2(W / 2 - 470, H / 2 - 330, 940, 660)
-	glass_box(box)
-	if pause_page == "controles":
-		draw_controls(box)
-		return
-	if pause_page == "graficos":
-		draw_graphics(box)
-		return
-	ui.text("Pausa", box.position + Vector2(40, 28), 34, "accent", true)
-	ui.text("El juego está detenido. Los ajustes se guardan solos.", box.position + Vector2(42, 76), 15, "muted")
-	var x := box.position.x + 40
-	var w := 470.0
-	var y := box.position.y + 120
-	ui.text("SONIDO", Vector2(x, y), 13, "muted", true)
-	y = slider(x, y + 24, w, "Música", "music", 0, 1, func(v): return "%d%%" % roundi(v * 100))
-	y = slider(x, y, w, "Efectos de sonido", "effects", 0, 1, func(v): return "%d%%" % roundi(v * 100))
-	ui.text("CÁMARA Y CONTROLES", Vector2(x, y + 6), 13, "muted", true)
-	y = slider(x, y + 30, w, "Sensibilidad del mouse", "sensitivity", 0.3, 2.5, func(v): return Fmt.num(v, 1) + "x")
-	y = slider(x, y, w, "Campo de visión", "fov", 55, 100, func(v): return "%d°" % roundi(v))
-	y = toggle(x, y, w, "Invertir el mouse vertical", "invert_y")
-	ui.text("PANTALLA Y JUEGO", Vector2(x, y + 6), 13, "muted", true)
-	y = toggle(x, y + 30, w, "Pantalla completa (F11)", "fullscreen", city.toggle_fullscreen)
-	y = toggle(x, y, w, "Ciclo de día y noche", "day_night")
-	y = toggle(x, y, w, "Comentarios de los clientes", "comments")
-	y = toggle(x, y, w, "Mostrar la ayuda de controles al empezar", "help")
+const PAUSE_PAGES := [["main", "AJUSTES"], ["graficos", "GRÁFICOS"], ["controles", "CONTROLES"]]
+const ROW_H := 46.0
+var row_desc = null         # descripción de la fila bajo el mouse (se muestra abajo, como en los juegos grandes)
+var binding = null          # acción de Controles que espera una tecla nueva
+var settings_scroll := 0.0
 
-	var rx := box.position.x + 580
-	var rw := 320.0
-	var ry := box.position.y + 120
-	if ui.button(Rect2(rx, ry, rw, 50), "Continuar (Esc)", true, "primary", 18):
+
+## Como en los videojuegos: la lista de opciones grande a la izquierda y la sección elegida a la derecha, sin
+## recuadro: filas a lo ancho con el nombre a la izquierda y el control a la derecha.
+func draw_pause() -> void:
+	menu_backdrop(true)
+	var g: Game = app.game
+	var x := 70.0
+	ui.text("JUEGO EN PAUSA", Vector2(x + 2, 52), 14, "muted", true)
+	ui.text("PAUSA", Vector2(x - 2, 66), 64, "accent", true)
+	ui.rect(Rect2(x, 146, 90, 4), "accent", 2)
+	if g != null:
+		var info := g.rank_info()
+		ui.text(g.company, Vector2(x, 162), 18, "text", true, "topleft", 300)
+		ui.text("%s · %s" % [info[1], Fmt.short(info[3])], Vector2(x, 188), 14, "muted", false, "topleft", 300)
+	var y := 240.0
+	if ui.menu_item("p:continuar", Vector2(x, y), "CONTINUAR", "", true, 24, 310.0):
 		city.close_pause()
 		return
-	if ui.button(Rect2(rx, ry + 60, rw, 44), "Ir a la oficina (O)", true, "normal", 16):
-		city.close_pause()
-		city.go_to_office()
-		return
-	if ui.button(Rect2(rx, ry + 112, rw / 2 - 5, 44), "Controles", true, "normal", 16):
-		pause_page = "controles"
-		return
-	if ui.button(Rect2(rx + rw / 2 + 5, ry + 112, rw / 2 - 5, 44), "Gráficos", true, "normal", 16):
-		pause_page = "graficos"
-		return
-	# Guardar en cualquiera de los 3 espacios; el elegido pasa a ser el de esta partida (y del autoguardado)
-	ui.text("Guardar en  (ahora: espacio %d)" % app.slot, Vector2(rx, ry + 162), 13, "muted", true)
-	for i in Admin.SLOTS:
-		var n := i + 1
-		if ui.button(Rect2(rx + i * 110, ry + 182, 100, 36), "Espacio %d" % n, true, "normal", 14,
-				"Ocupado: se sobrescribe" if n != app.slot and app.slot_info(n) != null else null, app.slot == n):
-			app.save(true, n)
-			city.toast("Partida guardada en el espacio %d." % n, "good")
-			saved_at = Time.get_ticks_msec()
-	if Time.get_ticks_msec() - saved_at < 2500:
-		ui.text("¡Guardada!", Vector2(rx + rw / 2, ry + 220), 14, "green", true, "midtop")
-	if ui.button(Rect2(rx, ry + 236, rw, 44), "Menú principal (guarda)", true, "normal", 16):
+	y += 54
+	for page in PAUSE_PAGES:
+		if ui.menu_item("p:" + page[0], Vector2(x, y), page[1], "", true, 24, 310.0, pause_page == page[0]):
+			pause_page = page[0]
+			binding = null
+			settings_scroll = 0.0
+		y += 54
+	var just_saved := Time.get_ticks_msec() - saved_at < 2500
+	if ui.menu_item("p:guardar", Vector2(x, y), "GUARDAR PARTIDA", "¡Guardada en el espacio %d!" % app.slot if just_saved else "",
+			true, 24, 310.0, false, "green" if just_saved else "accent"):
+		app.save(true)
+		city.toast("Partida guardada en el espacio %d." % app.slot, "good")
+		saved_at = Time.get_ticks_msec()
+	y += 74 if just_saved else 54
+	if ui.menu_item("p:menu", Vector2(x, y), "MENÚ PRINCIPAL", "", true, 24, 310.0):
 		city.close_pause()
 		app.save(true)
 		app.view = "menu"
 		show("admin")
 		return
-	if ui.button(Rect2(rx, ry + 288, rw, 44), "Salir del juego (guarda)", true, "danger", 16):
+	y += 54
+	if ui.menu_item("p:salir", Vector2(x, y), "SALIR DEL JUEGO", "", true, 24, 310.0, false, "red"):
 		city.close_pause()
 		city.quit_game()
 		return
-	ui.text("Velocidad del juego", Vector2(rx, ry + 352), 15, "text")
-	for i in Admin.SPEEDS.size():
-		if ui.button(Rect2(rx + i * 110, ry + 376, 100, 36), Admin.SPEEDS[i][1], true, "normal", 15, null, app.speed == i):
-			app.speed = i
-	toggle(rx, ry + 432, rw, "Desenfocar el fondo en menús", "blur")
+	ui.text("Esc: volver al juego · se guarda al salir", Vector2(x, H - 40), 13, "muted")
+	# Panel derecho: una línea vertical lo separa del menú, sin recuadro
+	ui.gradient(Rect2(420, 40, 1, H - 80), Color(1, 1, 1, 0.0), Color(1, 1, 1, 0.12), false)
+	var area := Rect2(470, 40, W - 520, H - 80)
+	row_desc = null
+	match pause_page:
+		"graficos":
+			draw_graphics(area)
+		"controles":
+			draw_controls(area)
+		_:
+			draw_settings(area)
+	_draw_row_desc(area)
+
+
+## Ajustes desde el menú de inicio: las mismas secciones que en la pausa.
+func draw_menu_settings() -> void:
+	var x := 70.0
+	ui.text("CAPITAL", Vector2(x + 2, 52), 14, "muted", true)
+	ui.text("AJUSTES", Vector2(x - 2, 66), 56, "accent", true)
+	ui.rect(Rect2(x, 140, 90, 4), "accent", 2)
+	var y := 240.0
+	for page in PAUSE_PAGES:
+		if ui.menu_item("m:" + page[0], Vector2(x, y), page[1], "", true, 24, 310.0, pause_page == page[0]):
+			pause_page = page[0]
+			binding = null
+		y += 54
+	if ui.menu_item("m:volver", Vector2(x, y + 20), "VOLVER", "Esc", true, 24, 310.0):
+		close_menu_settings()
+		return
+	ui.gradient(Rect2(420, 40, 1, H - 80), Color(1, 1, 1, 0.0), Color(1, 1, 1, 0.12), false)
+	var area := Rect2(470, 40, W - 520, H - 80)
+	row_desc = null
+	match pause_page:
+		"graficos":
+			draw_graphics(area)
+		"controles":
+			draw_controls(area)
+		_:
+			draw_settings(area)
+	_draw_row_desc(area)
+
+
+func close_menu_settings() -> void:
+	app.settings_open = false
+	pause_page = "main"
+	binding = null
+	city.save_settings()
+
+
+## Título de la sección arriba del panel derecho.
+func section_title(area: Rect2, title: String, sub: String) -> float:
+	ui.text(title.to_upper(), area.position + Vector2(0, 12), 34, "text", true)
+	ui.text(sub, area.position + Vector2(2, 58), 14, "muted", false, "topleft", area.size.x)
+	return area.position.y + 96
+
+
+func group_title(area: Rect2, y: float, title: String) -> float:
+	ui.text(title, Vector2(area.position.x + 16, y + 12), 13, "accent", true)
+	ui.rect(Rect2(area.position.x + 16 + ui.text_size(title, 13, true).x + 12, y + 20, area.size.x - 32 - ui.text_size(title, 13, true).x - 12, 1),
+			Color(1, 1, 1, 0.08))
+	return y + 38
+
+
+## Fondo de una fila: se ilumina con una barra de color al pasar el mouse. Devuelve si está bajo el mouse.
+func row_bg(area: Rect2, y: float, key: String, desc: String) -> bool:
+	var r := Rect2(area.position.x, y, area.size.x, ROW_H - 4)
+	var hot := ui.hover(r) and binding == null
+	var k := ui.tween("row:" + key, 1.0 if hot else 0.0)
+	ui.rect(r, Color(1, 1, 1, 0.035 + 0.05 * k), 8)
+	if k > 0.01:
+		ui.gradient(r, Color(ImUI.COL.accent, 0.12 * k), Color(ImUI.COL.accent, 0.0))
+		ui.rect(Rect2(r.position.x, r.position.y + 6, 3, r.size.y - 12), Color(ImUI.COL.accent, k), 2)
+	if hot:
+		row_desc = desc
+	return hot
+
+
+func row_label(area: Rect2, y: float, label: String) -> void:
+	ui.text(label, Vector2(area.position.x + 20, y + (ROW_H - 4) / 2), 17, "text", false, "midleft")
+
+
+## Fila con barra deslizante.
+func row_slider(area: Rect2, y: float, label: String, key: String, lo: float, hi: float, fmt: Callable, desc: String) -> float:
+	var s: Dictionary = city.settings
+	row_bg(area, y, key, desc)
+	row_label(area, y, label)
+	var w: float = min(260.0, area.size.x * 0.4)   # en media columna, la barra es más corta
+	var x := area.end.x - 80 - w
+	var cy := y + (ROW_H - 4) / 2
+	var bar := Rect2(x, cy - 3, w, 6)
+	if ui.hover(Rect2(x - 10, y, w + 20, ROW_H - 4)) and (ui.clicked or ui.down):
+		s[key] = lo + clampf((ui.mouse.x - x) / w, 0, 1) * (hi - lo)
+		city.apply_settings()
+	var frac: float = (s[key] - lo) / (hi - lo)
+	ui.rect(bar, Color(1, 1, 1, 0.12), 3)
+	ui.rect(Rect2(x, bar.position.y, max(6.0, w * frac), 6), "accent", 3)
+	ui.circle(Vector2(x + w * frac, cy), 9, Color.WHITE)
+	ui.text(fmt.call(s[key]), Vector2(area.end.x - 20, cy), 16, "accent", true, "midright")
+	return y + ROW_H
+
+
+## Fila con selector de flechas (izquierda, valor, derecha): un clic en la fila pasa al siguiente.
+func row_choice(area: Rect2, y: float, label: String, key: String, labels: Array, current: int, pick: Callable, desc: String) -> float:
+	var hot := row_bg(area, y, key, desc)
+	row_label(area, y, label)
+	var cy := y + (ROW_H - 4) / 2
+	var w := 260.0
+	var x := area.end.x - 20 - w
+	var left := Rect2(x, cy - 15, 30, 30)
+	var right := Rect2(x + w - 30, cy - 15, 30, 30)
+	var lh := ui.hover(left)
+	var rh := ui.hover(right)
+	Icons.draw(ui, "arrow_left", left.get_center(), 16, ImUI.COL.accent if lh else ImUI.COL.muted)
+	Icons.draw(ui, "arrow_right", right.get_center(), 16, ImUI.COL.accent if rh else ImUI.COL.muted)
+	ui.text(labels[current], Vector2(x + w / 2, cy), 17, "text", true, "center")
+	# puntitos con la posición del valor
+	for i in labels.size():
+		ui.circle(Vector2(x + w / 2 + (i - (labels.size() - 1) / 2.0) * 12, cy + 15), 2.5,
+				ImUI.COL.accent if i == current else Color(1, 1, 1, 0.2))
+	if ui.clicked and hot:
+		var n := (current + (labels.size() - 1 if lh else 1)) % labels.size()
+		pick.call(n)
+		city.apply_settings()
+	return y + ROW_H
+
+
+## Fila con interruptor (Sí / No).
+func row_toggle(area: Rect2, y: float, label: String, key: String, desc: String, action = null) -> float:
+	var s: Dictionary = city.settings
+	var hot := row_bg(area, y, key, desc)
+	row_label(area, y, label)
+	var cy := y + (ROW_H - 4) / 2
+	var on: bool = s[key]
+	var r := Rect2(area.end.x - 20 - 52, cy - 13, 52, 26)
+	var k := ui.tween("tog:" + key, 1.0 if on else 0.0, 0.3)
+	ui.rect(r, Color(1, 1, 1, 0.14).lerp(ImUI.COL.green, k), 13)
+	ui.circle(Vector2(lerpf(r.position.x + 13, r.end.x - 13, k), cy), 10, Color.WHITE)
+	ui.text("Sí" if on else "No", Vector2(r.position.x - 12, cy), 15, "green" if on else "muted", true, "midright")
+	if ui.clicked and hot:
+		if action != null:
+			action.call()
+		else:
+			s[key] = not on
+		city.apply_settings()
+	return y + ROW_H
+
+
+## Descripción de la fila bajo el mouse, abajo del panel (como en los juegos de consola).
+func _draw_row_desc(area: Rect2) -> void:
+	var r := Rect2(area.position.x, area.end.y - 54, area.size.x, 54)
+	ui.rect(Rect2(r.position.x, r.position.y, r.size.x, 1), Color(1, 1, 1, 0.08))
+	if row_desc == null:
+		ui.text("Pasa el mouse sobre una opción para ver qué hace.", Vector2(r.position.x + 16, r.get_center().y + 2), 14, "muted", false, "midleft")
+		return
+	ui.circle(Vector2(r.position.x + 26, r.get_center().y + 2), 11, ImUI.COL.accent)
+	ui.text("i", Vector2(r.position.x + 26, r.get_center().y + 3), 14, Color8(16, 20, 30), true, "center")
+	ui.wrap_text(row_desc, Rect2(r.position.x + 48, r.position.y + 10, r.size.x - 60, 44), 14, "text")
+
+
+## Sonido, cámara y pantalla.
+func draw_settings(area: Rect2) -> void:
+	var y := section_title(area, "Ajustes", "Los cambios se guardan solos.")
+	var pct := func(v): return "%d%%" % roundi(v * 100)
+	y = group_title(area, y, "SONIDO")
+	y = row_slider(area, y, "Música", "music", 0, 1, pct, "Volumen de la música. La música se pone tensa cuando estás cerca de la quiebra.")
+	y = row_slider(area, y, "Efectos de sonido", "effects", 0, 1, pct, "Monedas, clientes enojados, avisos y el latido del peligro.")
+	y = group_title(area, y, "CÁMARA Y MOUSE")
+	y = row_slider(area, y, "Sensibilidad del mouse", "sensitivity", 0.3, 2.5, func(v): return Fmt.num(v, 1) + "x",
+			"Qué tan rápido gira la cámara al mover el mouse.")
+	y = row_slider(area, y, "Campo de visión", "fov", 55, 100, func(v): return "%d°" % roundi(v),
+			"Cuánto se ve a los lados. Más alto se ve más ciudad, pero las cosas se ven más chicas.")
+	y = row_toggle(area, y, "Invertir el mouse vertical", "invert_y", "Mover el mouse hacia arriba mira hacia abajo, como en los simuladores de vuelo.")
+	y = group_title(area, y, "PANTALLA Y JUEGO")
+	var half := Rect2(area.position.x, y, area.size.x / 2 - 8, 0)
+	var half2 := Rect2(area.position.x + area.size.x / 2 + 8, y, area.size.x / 2 - 8, 0)
+	city.settings.fullscreen = city.is_fullscreen()   # lo que muestra el interruptor es lo que hay de verdad
+	row_toggle(half, y, "Pantalla completa", "fullscreen", "Ocupa toda la pantalla (también con %s)." % Keys.label("fullscreen"), city.toggle_fullscreen)
+	row_toggle(half2, y, "Desenfocar menús", "blur", "La ciudad se ve borrosa detrás de los menús.")
+	var speed_labels: Array = Admin.SPEEDS.map(func(sp): return sp[1])
+	if app.view == "game":
+		row_choice(half, y + ROW_H, "Velocidad", "speed", speed_labels, app.speed, func(i): app.speed = i,
+			"Qué tan rápido pasan los días. También con %s, %s y %s." % [Keys.label("speed1"), Keys.label("speed2"), Keys.label("speed3")])
 
 
 # ---------- tutorial ----------
@@ -278,113 +439,146 @@ func draw_tutorial() -> void:
 		tutorial_next()
 
 
-## Página «Controles» del menú de pausa: cada tecla con una descripción breve.
-func draw_controls(box: Rect2) -> void:
-	ui.text("Controles", box.position + Vector2(40, 28), 34, "accent", true)
-	ui.text("Las teclas solas: con Ctrl, Alt o Windows apretadas el juego no reacciona (así Alt+Tab no abre nada).",
-			box.position + Vector2(42, 76), 14, "muted")
-	var cols := [[box.position.x + 40, CONTROLS.slice(0, 2)], [box.position.x + 490, CONTROLS.slice(2)]]
-	for c in cols:
-		var cx: float = c[0]
-		var y := box.position.y + 118
-		for section in c[1]:
-			ui.text(section[0], Vector2(cx, y), 13, "muted", true)
-			y += 26
-			for row in section[1]:
-				var kw: float = max(56.0, ui.text_size(row[0], 14, true).x + 22)
-				var chip := Rect2(cx, y, kw, 28)
-				ui.rect(chip, "panel2", 7)
-				ui.rect(chip, "border", 7, 1)
-				ui.text(row[0], chip.get_center(), 14, "text", true, "center")
-				var h := ui.wrap_text(row[1], Rect2(cx + kw + 14, y + 4, 410 - kw - 14, 60), 14, "text", false, 1)
-				y += max(36.0, h + 10)
-			y += 10
-	if ui.button(Rect2(box.position.x + 40, box.end.y - 70, 220, 46), "Ver el tutorial", true, "normal", 16):
+## Página «Controles»: cada acción con su tecla; un clic en la tecla la cambia.
+func draw_controls(area: Rect2) -> void:
+	var y := section_title(area, "Controles", "Haz clic en una tecla y aprieta la nueva. Si otra acción la usaba, se intercambian.")
+	if ui.button(Rect2(area.end.x - 380, area.position.y + 14, 170, 36), "Restablecer teclas", true, "normal", 14):
+		Keys.map = Keys.defaults()
+		city.save_settings()
+	if app.view == "game" and ui.button(Rect2(area.end.x - 200, area.position.y + 14, 200, 36), "Ver el tutorial", true, "normal", 14):
 		pause_page = "main"
 		city.close_pause()
 		city.open_tutorial()
 		return
-	if ui.button(Rect2(box.get_center().x - 140, box.end.y - 70, 280, 46), "Volver (Esc)", true, "primary", 17):
-		pause_page = "main"
+	var col_w := area.size.x / 2 - 8
+	var cols := {"MOVERTE": 0, "ACCIONES": 1, "JUEGO": 1}
+	var ys := [y, y]
+	var last_group := ["", ""]
+	for a in Keys.ACTIONS:
+		var c: int = cols[a[3]]
+		var sub := Rect2(area.position.x + c * (col_w + 16), 0, col_w, 0)
+		if last_group[c] != a[3]:
+			ys[c] = group_title(sub, ys[c], a[3])
+			last_group[c] = a[3]
+		var ry: float = ys[c]
+		var waiting: bool = binding == a[0]
+		var hot := row_bg(sub, ry, "key:" + a[0], "Clic para cambiar la tecla de «%s»." % a[1])
+		ui.text(a[1], Vector2(sub.position.x + 20, ry + (ROW_H - 4) / 2), 15, "text", false, "midleft", col_w - 140)
+		var label := "Aprieta una tecla…" if waiting else Keys.label(a[0])
+		var kw: float = max(54.0, ui.text_size(label, 14, true).x + 22)
+		var chip := Rect2(sub.end.x - 16 - kw, ry + (ROW_H - 4) / 2 - 15, kw, 30)
+		ui.rect(chip, ImUI.COL.accent if waiting else Color(1, 1, 1, 0.1), 7)
+		ui.rect(chip, Color(1, 1, 1, 0.25) if hot else Color(1, 1, 1, 0.12), 7, 1)
+		ui.text(label, chip.get_center(), 14, Color8(16, 20, 30) if waiting else Color.WHITE, true, "center")
+		if hot and ui.clicked:
+			binding = a[0]
+		ys[c] = ry + ROW_H
+	# Lo que no se cambia: el mouse y las teclas fijas
+	var sub := Rect2(area.position.x, 0, col_w, 0)
+	var fy := group_title(sub, ys[0], "FIJAS")
+	for row in [["Esc", "Menú de pausa"], ["Alt", "Soltar o capturar el mouse"], ["Mouse", "Mirar · rueda: acercar la cámara"]]:
+		ui.text(row[1], Vector2(sub.position.x + 20, fy + 12), 14, "muted")
+		ui.text(row[0], Vector2(sub.end.x - 20, fy + 12), 14, "muted", true, "topright")
+		fy += 30
+	if binding != null:
+		row_desc = "Aprieta la tecla nueva para «%s». Esc cancela." % Keys.name_of(binding)
 
 
-## Página «Gráficos»: un nivel listo (Bajo, Medio, Alto) o cada opción por separado (Personalizado).
-func draw_graphics(box: Rect2) -> void:
+## Termina de cambiar una tecla (la llama la ciudad con la tecla apretada).
+func finish_binding(e: InputEventKey) -> void:
+	if e.keycode == KEY_ESCAPE or e.physical_keycode == KEY_NONE:
+		binding = null
+		return
+	var action: String = binding
+	binding = null
+	var swapped := Keys.assign(action, e.physical_keycode)
+	if e.physical_keycode in Keys.FIXED:
+		city.toast("Esa tecla no se puede usar.", "bad")
+		return
+	city.save_settings()
+	if swapped:
+		city.toast("«%s» ahora usa %s." % [Keys.name_of(swapped), Keys.label(swapped)], "info")
+
+
+## Página «Gráficos», con pestañas como en los juegos grandes: Calidad (el nivel y cada efecto), Imagen (brillo,
+## contraste, color, niebla, lluvia, luces) y Rendimiento (FPS, sincronía vertical, distancia de visión, gente).
+var gfx_tab := "calidad"
+const GFX_TABS := [["calidad", "Calidad"], ["imagen", "Imagen"], ["rendimiento", "Rendimiento"]]
+
+
+func draw_graphics(area: Rect2) -> void:
 	var s: Dictionary = city.settings
 	Graphics.show_preset(s)
-	ui.text("Gráficos", box.position + Vector2(40, 28), 34, "accent", true)
-	ui.text("%d cuadros por segundo" % Engine.get_frames_per_second(), box.position + Vector2(box.size.x - 40, 40), 16,
-			"muted", false, "topright")
-	ui.text("Alto imita el shader Eclipse: sombras nítidas hasta lejos y rincones oscurecidos por la oclusión ambiental.",
-			box.position + Vector2(42, 76), 15, "muted")
-	var x := box.position.x + 40
-	var w := box.size.x - 80
-	var y := box.position.y + 122
-	ui.text("CALIDAD", Vector2(x, y), 13, "muted", true)
-	y = choice(x, y + 24, w, Graphics.LEVELS, s.quality, func(i): s.quality = i)
-	ui.text("PERSONALIZADO  (al cambiar algo pasa a Personalizado)", Vector2(x, y + 10), 13, "muted", true)
-	y += 40
-	ui.text("Sombras", Vector2(x, y + 3), 16, "text")
-	y = choice(x + 260, y - 6, w - 260, Graphics.SHADOWS, s.g_shadows, func(i): set_custom("g_shadows", i))
-	ui.text("Bordes suaves (MSAA)", Vector2(x, y + 3), 16, "text")
-	y = choice(x + 260, y - 6, w - 260, Graphics.AA, s.g_aa, func(i): set_custom("g_aa", i))
-	y = toggle(x, y + 4, w, "Oclusión ambiental (rincones y bases oscurecidas, cuesta bastante)", "g_ao",
-			func(): set_custom("g_ao", not s.g_ao))
-	y = toggle(x, y, w, "Resplandor alrededor de luces y del sol", "g_glow",
-			func(): set_custom("g_glow", not s.g_glow))
-	y = toggle(x, y, w, "Destello del sol en la cámara", "g_flare",
-			func(): set_custom("g_flare", not s.g_flare))
-	ui.wrap_text("Lo que más cuesta en tarjetas sencillas son los bordes suaves y la oclusión ambiental; las sombras " +
-			"altas dibujan más lejos y más nítido. Si el juego va lento, prueba Medio.", Rect2(x, y + 8, w, 60), 14, "muted")
-	if ui.button(Rect2(box.get_center().x - 140, box.end.y - 70, 280, 46), "Volver (Esc)", true, "primary", 17):
-		pause_page = "main"
+	var y := section_title(area, "Gráficos", "Alto imita el shader Eclipse: sombras nítidas hasta lejos y rincones oscurecidos.")
+	var fps := Engine.get_frames_per_second()
+	var fr := Rect2(area.end.x - 110, area.position.y + 16, 110, 34)
+	ui.rect(fr, Color(1, 1, 1, 0.06), 17)
+	ui.text("%d FPS" % fps, fr.get_center(), 16, "green" if fps >= 40 else ("orange" if fps >= 25 else "red"), true, "center")
+	# pestañas
+	var tx := area.position.x
+	for t in GFX_TABS:
+		var tw: float = ui.text_size(t[1], 15, true).x + 36
+		var tr := Rect2(tx, y - 2, tw, 34)
+		var on: bool = gfx_tab == t[0]
+		var hot := ui.hover(tr)
+		ui.rect(tr, ImUI.COL.accent if on else Color(1, 1, 1, 0.1 if hot else 0.05), 17)
+		ui.text(t[1], tr.get_center(), 15, Color8(16, 20, 30) if on else ImUI.COL.text, true, "center")
+		if hot and ui.clicked:
+			gfx_tab = t[0]
+		tx += tw + 10
+	y += 46
+	var half := Rect2(area.position.x, 0, area.size.x / 2 - 8, 0)
+	var half2 := Rect2(area.position.x + area.size.x / 2 + 8, 0, area.size.x / 2 - 8, 0)
+	match gfx_tab:
+		"calidad":
+			y = row_choice(area, y, "Nivel de gráficos", "quality", Graphics.LEVELS, s.quality, func(i): s.quality = i,
+					"Bajo va más rápido; Alto se ve mejor. Si cambias Sombras, Bordes, Oclusión, Resplandor o Destello pasa a Personalizado.")
+			y = group_title(area, y, "SOMBRAS")
+			y = row_choice(area, y, "Calidad de sombras", "g_shadows", Graphics.SHADOWS, s.g_shadows, func(i): set_custom("g_shadows", i),
+					"Las sombras altas se dibujan más nítidas y en más tramos, pero cuestan más.")
+			y = row_choice(area, y, "Distancia de sombras", "g_shadow_dist", Graphics.SHADOW_DIST, int(s.g_shadow_dist), func(i): s.g_shadow_dist = i,
+					"Hasta dónde se ven sombras. Más cerca se ven más nítidas y van más rápido.")
+			y = row_choice(area, y, "Borde de las sombras", "g_shadow_soft", Graphics.SHADOW_SOFT, int(s.g_shadow_soft), func(i): s.g_shadow_soft = i,
+					"Sombras duras o difuminadas. Las muy suaves cuestan un poco más.")
+			y = group_title(area, y, "EFECTOS")
+			y = row_choice(area, y, "Bordes suaves (MSAA)", "g_aa", Graphics.AA, s.g_aa, func(i): set_custom("g_aa", i),
+					"Quita los dientes de sierra de los bordes. Es lo que más cuesta en tarjetas sencillas.")
+			row_toggle(half, y, "Oclusión ambiental", "g_ao", "Oscurece rincones y bases de los objetos. Se ve más real, pero cuesta bastante.",
+					func(): set_custom("g_ao", not s.g_ao))
+			y = row_toggle(half2, y, "Destello del sol", "g_flare", "Reflejo en la cámara al mirar el sol.",
+					func(): set_custom("g_flare", not s.g_flare))
+			row_toggle(half, y, "Resplandor", "g_glow", "Brillo suave alrededor de las luces y el sol.",
+					func(): set_custom("g_glow", not s.g_glow))
+			row_slider(half2, y, "Intensidad", "g_glow_amt", 0.2, 2.0, func(v): return "%d%%" % roundi(v * 100),
+					"Cuánto brillan las luces y el sol cuando el resplandor está prendido.")
+		"imagen":
+			y = group_title(area, y, "COLOR Y LUZ")
+			var pct := func(v): return "%d%%" % roundi(v * 100)
+			y = row_slider(area, y, "Brillo", "g_bright", 0.6, 1.6, pct, "Más claro o más oscuro (de día y de noche).")
+			y = row_slider(area, y, "Contraste", "g_contrast", 0.8, 1.3, pct, "Diferencia entre las zonas claras y las oscuras.")
+			y = row_slider(area, y, "Saturación", "g_sat", 0.4, 1.6, pct, "Qué tan vivos son los colores.")
+			y = row_choice(area, y, "Tono de color", "g_tonemap", Graphics.TONEMAPS, int(s.g_tonemap), func(i): s.g_tonemap = i,
+					"Cómo se convierte la luz en colores de pantalla. AgX es el del juego; Fílmico y ACES se ven más de cine.")
+			y = group_title(area, y, "AMBIENTE")
+			row_toggle(half, y, "Niebla a lo lejos", "g_fog", "Neblina suave en la distancia, más espesa con lluvia.")
+			y = row_toggle(half2, y, "Lluvia y relámpagos", "g_rain", "Las gotas y los destellos de la tormenta. El clima igual cuenta para tus ventas.")
+			row_toggle(half, y, "Luces de noche", "g_night_lights", "Faroles, vitrinas y locales que iluminan la calle de noche.")
+		"rendimiento":
+			y = group_title(area, y, "CUADROS POR SEGUNDO")
+			y = row_choice(area, y, "Límite de FPS", "g_fps_limit", Graphics.FPS_LIMITS, int(s.g_fps_limit), func(i): s.g_fps_limit = i,
+					"Cuántos cuadros por segundo dibuja como máximo. Un límite más bajo calienta menos la tarjeta.")
+			y = row_toggle(area, y, "Sincronía vertical (VSync)", "g_vsync", "Evita que la imagen se corte en dos al moverse. Puede sumar un poco de retraso.")
+			y = group_title(area, y, "MUNDO")
+			y = row_choice(area, y, "Distancia de visión", "g_view", Graphics.VIEWS, int(s.g_view), func(i): s.g_view = i,
+					"Hasta dónde se dibuja la ciudad. Más corta va más rápido.")
+			y = row_choice(area, y, "Gente en la ciudad", "g_crowd", Graphics.CROWDS, int(s.g_crowd), func(i): s.g_crowd = i,
+					"Cuántos peatones y clientes hay a la vez. No cambia tus ventas: solo lo que se ve.")
+			y = row_toggle(area, y, "Mostrar FPS en pantalla", "g_show_fps", "Un contador de cuadros por segundo arriba a la derecha.")
 
 
 func set_custom(key: String, value) -> void:
 	city.settings[key] = value
 	city.settings.quality = Graphics.CUSTOM
-
-
-## Fila de botones donde uno queda elegido. Devuelve la altura siguiente.
-func choice(x: float, y: float, w: float, labels: Array, current: int, pick: Callable) -> float:
-	var bw := (w - 10.0 * (labels.size() - 1)) / labels.size()
-	for i in labels.size():
-		if ui.button(Rect2(x + i * (bw + 10), y, bw, 40), labels[i], true, "normal", 15, null, current == i) and current != i:
-			pick.call(i)
-			city.apply_settings()
-	return y + 54
-
-
-func slider(x: float, y: float, w: float, label: String, key: String, lo: float, hi: float, fmt: Callable) -> float:
-	var s: Dictionary = city.settings
-	ui.text(label, Vector2(x, y), 16, "text")
-	ui.text(fmt.call(s[key]), Vector2(x + w, y), 16, "accent", true, "topright")
-	var bar := Rect2(x, y + 32, w, 8)
-	if ui.hover(bar.grow_individual(8, 13, 8, 13)) and (ui.clicked or ui.down):
-		s[key] = lo + clampf((ui.mouse.x - x) / w, 0, 1) * (hi - lo)
-		city.apply_settings()
-	var frac: float = (s[key] - lo) / (hi - lo)
-	ui.rect(bar, "panel2", 4)
-	ui.rect(Rect2(x, bar.position.y, max(8.0, w * frac), 8), "accent", 4)
-	ui.circle(Vector2(x + w * frac, bar.get_center().y), 10, "text")
-	ui.circle(Vector2(x + w * frac, bar.get_center().y), 6, "accent")
-	return y + 58
-
-
-func toggle(x: float, y: float, w: float, label: String, key: String, action = null) -> float:
-	var s: Dictionary = city.settings
-	ui.text(label, Vector2(x, y + 3), 16, "text")
-	var r := Rect2(x + w - 54, y, 54, 28)
-	var on: bool = s[key]
-	ui.rect(r, "green" if on else "border", 14)
-	ui.circle(Vector2(r.end.x - 14 if on else r.position.x + 14, r.get_center().y), 11, Color.WHITE)
-	if ui.hover(Rect2(x, y - 4, w, 36)) and ui.clicked:
-		if action != null:
-			action.call()
-		else:
-			s[key] = not on
-		city.apply_settings()
-	return y + 40
 
 
 # ---------- armario ----------
@@ -634,9 +828,9 @@ func draw_strategy() -> void:
 		ui.text("Costo: %s" % Fmt.money(cost), Vector2(r.position.x + 18, r.end.y - 96), 16, "accent", true)
 		if ui.button(Rect2(r.position.x + 18, r.end.y - 62, r.size.x - 36, 44), "Elegir", not wait and g.cash >= cost, "primary", 16):
 			var res := g.run_strategy(st[0])
-			city.hud.notes.push_side("Reunión de estrategia", "Pizarra de la oficina", res[1],
-					Color8(46, 170, 90) if res[0] else Color8(225, 85, 75), "✓" if res[0] else "!", "",
-					"good" if res[0] else "angry")
+			city.sfx.play("good" if res[0] else "angry")  # la noticia de la reunión llega como aviso de la oficina
+			if not res[0]:
+				city.toast(res[1], "bad")
 			hide()
 			return
 	if ui.button(Rect2(box.get_center().x - 130, box.end.y - 70, 260, 44), "Cerrar (E)", true, "normal", 16):

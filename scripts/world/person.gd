@@ -44,10 +44,12 @@ func _init(shirt_color = null, pants_color = null, with_apron := false, person_l
 		var mi := MeshInstance3D.new()
 		mi.material_override = Mats.smooth
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF  # piernas y brazos: la sombra del cuerpo basta
+		mi.visibility_range_end = 45.0   # de lejos no se notan: no se dibujan
 		pivot.add_child(mi)
 		limb_meshes.append(mi)
 	body = MeshInstance3D.new()
 	body.material_override = Mats.smooth
+	body.visibility_range_end = 90.0
 	add_child(body)
 	restyle(person_look)
 
@@ -140,18 +142,28 @@ func restyle(new_look = null) -> void:
 			b.box(Vector3(0.08, 1.25, 0.178), Vector3(0.02, 0.6, 0.01), Color8(190, 190, 195))
 
 	# ---- pelo ----
+	# Las prendas se acomodan entre sí: con sombrero el pelo queda debajo del ala (la cresta se aplasta), con capucha
+	# el pelo largo va adentro, y con mochila o bufanda el pelo largo termina más arriba para no atravesarlas.
 	var hs: String = L.hair_style
-	if hs in ["corto", "largo"]:
-		b.box(Vector3(0, 2.1, -0.03), Vector3(0.43, 0.12, 0.45), hair)
+	var hat: String = L.hat
+	var hat_bottom: float = {"ninguno": 2.16, "gorra": 2.085, "lana": 2.03, "vaquero": 2.08, "copa": 2.07, "corona": 2.1}.get(hat, 2.16)
+	if hs in ["corto", "largo"] or (hs == "cresta" and hat != "ninguno"):
+		if hat_bottom > 2.05:
+			b.box(Vector3(0, (2.04 + hat_bottom) / 2, -0.03), Vector3(0.43, hat_bottom - 2.04, 0.45), hair)
 	if hs == "largo":
-		b.box(Vector3(0, 1.8, -0.2), Vector3(0.44, 0.62, 0.08), hair)
+		var bottom := 1.49
+		if L.backpack:
+			bottom = 1.57
+		if L.scarf:
+			bottom = 1.71
+		if jacket != "sudadera":  # con capucha, el pelo de atrás va adentro
+			b.box(Vector3(0, (bottom + 2.11) / 2, -0.2), Vector3(0.44, 2.11 - bottom, 0.08), hair)
 		for sx in [-0.21, 0.21]:
 			b.box(Vector3(sx, 1.92, -0.04), Vector3(0.04, 0.36, 0.34), hair)
-	elif hs == "cresta":
+	elif hs == "cresta" and hat == "ninguno":
 		b.box(Vector3(0, 2.18, -0.02), Vector3(0.11, 0.24, 0.44), hair)
 
 	# ---- sombreros ----
-	var hat: String = L.hat
 	var gold: Color = Blueprints.PALETTE.gold
 	if hat == "gorra":
 		b.box(Vector3(0, 2.15, -0.02), Vector3(0.45, 0.13, 0.45), lighten(shirt, -0.25))
@@ -162,8 +174,8 @@ func restyle(new_look = null) -> void:
 		b.box(Vector3(0, 2.29, -0.02), Vector3(0.13, 0.11, 0.13), Color8(245, 245, 245))
 	elif hat == "vaquero":
 		b.box(Vector3(0, 2.1, 0), Vector3(0.82, 0.04, 0.72), Color8(140, 95, 55))
-		b.box(Vector3(0, 2.27, 0), Vector3(0.42, 0.3, 0.4), Color8(140, 95, 55))
-		b.box(Vector3(0, 2.15, 0), Vector3(0.43, 0.06, 0.41), Color8(60, 40, 25))
+		b.box(Vector3(0, 2.27, 0), Vector3(0.46, 0.3, 0.47), Color8(140, 95, 55))   # tapa todo el pelo
+		b.box(Vector3(0, 2.15, 0), Vector3(0.47, 0.06, 0.48), Color8(60, 40, 25))
 	elif hat == "copa":
 		b.box(Vector3(0, 2.09, 0), Vector3(0.62, 0.04, 0.62), Color8(25, 25, 30))
 		b.box(Vector3(0, 2.37, 0), Vector3(0.38, 0.52, 0.38), Color8(25, 25, 30))
@@ -177,13 +189,17 @@ func restyle(new_look = null) -> void:
 		b.box(Vector3(0, 2.17, 0.235), Vector3(0.09, 0.08, 0.02), Color8(200, 30, 50))
 
 	# ---- accesorios ----
-	if L.tie:
-		b.box(Vector3(0, 1.3, 0.172), Vector3(0.08, 0.5, 0.02), Color8(170, 30, 40))
-		b.box(Vector3(0, 1.57, 0.173), Vector3(0.13, 0.08, 0.03), Color8(170, 30, 40))
+	if L.tie:  # con bufanda el nudo queda debajo de ella
+		var knot := 1.5 if L.scarf else 1.57
+		b.box(Vector3(0, (1.05 + knot) / 2, 0.172), Vector3(0.08, knot - 1.05, 0.02), Color8(170, 30, 40))
+		b.box(Vector3(0, knot, 0.173), Vector3(0.13, 0.08, 0.03), Color8(170, 30, 40))
 	if L.glasses:
 		b.box(Vector3(0, 1.9, 0.212), Vector3(0.38, 0.11, 0.02), Color8(12, 12, 15))
-	if L.beard:
-		b.box(Vector3(0, 1.7, 0.17), Vector3(0.41, 0.18, 0.08), hair)
+	if L.beard:  # con bufanda la barba queda encima de ella
+		if L.scarf:
+			b.box(Vector3(0, 1.76, 0.17), Vector3(0.41, 0.12, 0.08), hair)
+		else:
+			b.box(Vector3(0, 1.7, 0.17), Vector3(0.41, 0.18, 0.08), hair)
 	if L.watch:
 		limb.call(2, Vector3(0, -0.82, 0), Vector3(1.22, 0.12, 1.22), gold)
 	if L.chain:
@@ -193,8 +209,8 @@ func restyle(new_look = null) -> void:
 	if L.backpack:
 		b.box(Vector3(0, 1.25, -0.27), Vector3(0.46, 0.56, 0.2), Color8(60, 90, 140))
 		b.box(Vector3(0, 1.1, -0.38), Vector3(0.34, 0.2, 0.04), Color8(50, 75, 120))
-		for sx in [-0.16, 0.16]:
-			b.box(Vector3(sx, 1.38, 0.18), Vector3(0.06, 0.42, 0.02), Color8(40, 60, 100))
+		for sx in [-0.215, 0.215]:  # correas por fuera de la cadena y la corbata
+			b.box(Vector3(sx, 1.38, 0.19), Vector3(0.06, 0.42, 0.02), Color8(40, 60, 100))
 	if L.scarf:
 		b.box(Vector3(0, 1.64, 0), Vector3(0.48, 0.12, 0.4), Color8(200, 60, 60))
 		b.box(Vector3(0.1, 1.43, 0.215), Vector3(0.12, 0.34, 0.04), Color8(200, 60, 60))
@@ -238,6 +254,7 @@ func hold(key: String, variant := -1) -> void:
 		item.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		item.position = Vector3(0, -0.72, 0.06)
 		item.scale = Vector3.ONE * 1.6  # un poco más grande que en la vida real, para que se note
+		item.visibility_range_end = 35.0
 		arms[1].add_child(item)
 	item.mesh = Actors.product_item(key, variant if variant >= 0 else randi() % Actors.variants(key))
 
@@ -247,6 +264,21 @@ func set_reach(amount: float) -> void:
 	arms[1].rotation.x = deg_to_rad(-80.0 * amount)
 	if item:
 		item.rotation.x = -arms[1].rotation.x
+
+
+## Sentado (0 a 1): baja el cuerpo hasta el asiento y estira las piernas hacia adelante. Va después de animate().
+func sit(k: float) -> void:
+	if k <= 0.001 and position.y == 0.0:
+		return
+	legs[0].rotation.x = deg_to_rad(-88.0 * k)
+	legs[1].rotation.x = deg_to_rad(-88.0 * k)
+	position.y = -0.36 * k
+
+
+## Lejos de la cámara no vale la pena mostrar globos de diálogo.
+func camera_far() -> bool:
+	var cam := get_viewport().get_camera_3d()
+	return cam != null and cam.global_position.distance_to(global_position) > 45.0
 
 
 func set_visible_parts(v: bool) -> void:

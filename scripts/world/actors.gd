@@ -43,7 +43,7 @@ static func rep_color(value: float) -> Color:
 static func competitor(parent: Node3D, key: String, plot: Array) -> Dictionary:
 	var r := D.rival_for(key)
 	var bld := Building.new(parent, plot, 1, Blueprints.PRODUCT_COLORS[key], "COMPETENCIA",
-			"%s · %s" % [r.company, D.PRODUCTS[key].name], 17)
+			"%s · %s" % [r.company, D.PRODUCTS[key].name], 17, absi(int(plot[0] * 13 + plot[1] * 7)) + 500, key)
 	var w := 14.0
 	var h := 4.5
 	var z0 := 2.0
@@ -51,21 +51,13 @@ static func competitor(parent: Node3D, key: String, plot: Array) -> Dictionary:
 	var zc := (z0 + z1) / 2
 	var red := Color8(235, 45, 45)
 	var e := Boxes.new()
-	for sx in [-1, 1]:
-		for z in [z0, z1]:
-			e.box(Vector3(sx * (w / 2 + 0.05), (h + 0.35) / 2, z), Vector3(0.3, h + 0.35, 0.3), red)
-	for bx in [[Vector3(0, h + 0.35, z0), Vector3(w + 0.4, 0.3, 0.3)], [Vector3(0, h + 0.35, z1), Vector3(w + 0.4, 0.3, 0.3)],
-			[Vector3(-w / 2 - 0.05, h + 0.35, zc), Vector3(0.3, 0.3, z1 - z0)], [Vector3(w / 2 + 0.05, h + 0.35, zc), Vector3(0.3, 0.3, z1 - z0)],
-			# subrayado en el suelo alrededor del local
-			[Vector3(0, 0.05, z0 - 0.8), Vector3(w + 1.8, 0.05, 0.3)], [Vector3(0, 0.05, z1 + 0.8), Vector3(w + 1.8, 0.05, 0.3)],
-			[Vector3(-w / 2 - 0.9, 0.05, zc), Vector3(0.3, 0.05, z1 - z0 + 1.9)], [Vector3(w / 2 + 0.9, 0.05, zc), Vector3(0.3, 0.05, z1 - z0 + 1.9)],
-			# marco del letrero
-			[Vector3(0, 6.08, z0 - 0.06), Vector3(8.4, 0.16, 0.32)], [Vector3(0, 4.72, z0 - 0.06), Vector3(8.4, 0.16, 0.32)],
-			[Vector3(-4.12, 5.4, z0 - 0.06), Vector3(0.16, 1.5, 0.32)], [Vector3(4.12, 5.4, z0 - 0.06), Vector3(0.16, 1.5, 0.32)]]:
+	# Solo una franja roja en el suelo alrededor del local (el edificio queda sin marco)
+	for bx in [[Vector3(0, 0.05, z0 - 0.8), Vector3(w + 1.8, 0.05, 0.3)], [Vector3(0, 0.05, z1 + 0.8), Vector3(w + 1.8, 0.05, 0.3)],
+			[Vector3(-w / 2 - 0.9, 0.05, zc), Vector3(0.3, 0.05, z1 - z0 + 1.9)], [Vector3(w / 2 + 0.9, 0.05, zc), Vector3(0.3, 0.05, z1 - z0 + 1.9)]]:
 		e.box(bx[0], bx[1], red)
 	e.node(bld.root, Mats.emissive, false)
-	Store.stock_shelves(bld.root, 1, key)   # sus repisas también están llenas
-	Store.add_registers(bld.root, 1)
+	Store.stock_shelves(bld.root, 1, key, bld.local)   # sus repisas también están llenas
+	Store.add_registers(bld.root, 1, bld.local)
 	var staff := []
 	for i in min(2, bld.spots.staff.size()):
 		var p := Person.new(r.color, null, true)
@@ -184,7 +176,7 @@ static func cash_register() -> Mesh:
 ## malla queda en la palma de la mano.
 ## Cuántos modelos hay de cada producto (todos valen lo mismo; solo se ven distintos).
 static func variants(key: String) -> int:
-	return {"pan": 5, "cafe": 3, "burger": 2, "ropa": 4, "tech": 3}.get(key, 1)
+	return {"pan": 5, "cafe": 3, "burger": 2, "ropa": 4, "tech": 3, "paraguas": 4}.get(key, 1)
 
 
 static func product_item(key: String, variant := 0) -> Mesh:
@@ -235,6 +227,29 @@ static func product_item(key: String, variant := 0) -> Mesh:
 		"caja":  # caja de mercadería de la bodega, con cinta
 			b.box(Vector3(0, -0.12, 0.05), Vector3(0.42, 0.3, 0.32), Color8(176, 132, 82))
 			b.box(Vector3(0, 0.032, 0.05), Vector3(0.43, 0.01, 0.07), Color8(220, 200, 150))
+		"escoba":  # escoba: el palo sube desde la mano y el cepillo queda en el suelo, adelante
+			b.box(Vector3(0, -0.35, 0.18), Vector3(0.035, 1.0, 0.035), Color8(150, 110, 70))
+			b.box(Vector3(0, -0.86, 0.32), Vector3(0.36, 0.08, 0.12), Color8(60, 60, 66))
+			b.box(Vector3(0, -0.93, 0.32), Vector3(0.34, 0.07, 0.1), Color8(220, 190, 110))
+		"trapeador":  # trapeador: palo y mopa de tiras en el suelo
+			b.box(Vector3(0, -0.35, 0.18), Vector3(0.035, 1.0, 0.035), Color8(200, 200, 205))
+			b.box(Vector3(0, -0.88, 0.32), Vector3(0.32, 0.1, 0.18), Color8(235, 235, 225))
+			b.box(Vector3(0, -0.94, 0.32), Vector3(0.36, 0.05, 0.24), Color8(215, 215, 205))
+		"trapo":  # paño de limpieza
+			b.box(Vector3(0, -0.06, 0.04), Vector3(0.16, 0.03, 0.12), Color8(90, 160, 220))
+		"tabla":  # tabla con hojas para revisar el inventario
+			b.box(Vector3(0, -0.04, 0.06), Vector3(0.24, 0.3, 0.02), Color8(150, 110, 70))
+			b.box(Vector3(0, -0.06, 0.072), Vector3(0.2, 0.24, 0.005), Color8(245, 245, 240))
+			b.box(Vector3(0, 0.1, 0.075), Vector3(0.1, 0.03, 0.01), Color8(170, 170, 175))
+		"celular":  # teléfono en la mano, con la pantalla prendida
+			b.box(Vector3(0, -0.06, 0.02), Vector3(0.08, 0.16, 0.015), Color8(30, 32, 38))
+			b.box(Vector3(0, -0.06, 0.029), Vector3(0.068, 0.14, 0.002), Color8(120, 190, 255))
+		"paraguas":  # paraguas abierto: el palo sube desde la mano y la tela queda sobre la cabeza
+			b.box(Vector3(0, 0.55, 0), Vector3(0.03, 1.1, 0.03), Color8(50, 50, 55))
+			b.box(Vector3(0, 1.1, 0), Vector3(1.05, 0.06, 1.05), [Color8(200, 50, 60), Color8(40, 90, 170), Color8(240, 200, 60),
+					Color8(40, 40, 45)][variant % 4])
+			b.box(Vector3(0, 1.16, 0), Vector3(0.7, 0.06, 0.7), [Color8(220, 70, 80), Color8(60, 110, 190), Color8(250, 215, 90),
+					Color8(60, 60, 66)][variant % 4])
 		"diario":  # diario doblado
 			b.box(Vector3(0, -0.12, 0), Vector3(0.05, 0.3, 0.22), Color8(238, 235, 225))
 			b.box(Vector3(0.027, -0.05, 0), Vector3(0.005, 0.06, 0.18), Color8(40, 40, 45))

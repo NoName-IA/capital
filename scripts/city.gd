@@ -18,7 +18,12 @@ static var config_path := "user://config.json"
 const DEFAULT_SETTINGS := {"music": 0.7, "effects": 0.8, "sensitivity": 1.0, "fov": 70.0, "invert_y": false,
 		"fullscreen": false, "day_night": true, "comments": true, "help": true, "blur": true,
 		"tutorial_seen": false,
-		"quality": 1, "g_shadows": 2, "g_ao": false, "g_glow": true, "g_aa": 0, "g_flare": true}  # gráficos: ver Graphics
+		"quality": 1, "g_shadows": 2, "g_ao": false, "g_glow": true, "g_aa": 0, "g_flare": true,  # gráficos: ver Graphics
+		"keys": {},   # teclas cambiadas en Controles (ver Keys)
+		# Gráficos extra (no cambian el nivel): ver Graphics.apply
+		"g_shadow_dist": 1, "g_shadow_soft": 0, "g_glow_amt": 1.0, "g_bright": 1.0, "g_contrast": 1.0, "g_sat": 1.0,
+		"g_tonemap": 0, "g_fog": true, "g_rain": true, "g_night_lights": true, "g_fps_limit": 1, "g_vsync": true,
+		"g_view": 3, "g_crowd": 1, "g_show_fps": false}
 
 var main
 var app: Admin
@@ -41,6 +46,8 @@ var lots := {}       # índice de terreno -> {root, manage}
 var comps := {}      # "c3" (local fijo de los extremos) o "p5" (terreno que compró el rival) -> competidor
 var customers := []
 var pops := []
+var bubbles := []        # globos de diálogo de los NPC (ver say)
+var cars_frozen := false  # en pausa los autos se quedan quietos y chocan como obstáculos
 var cars := []
 var player: Person
 var serving = null
@@ -90,6 +97,7 @@ func _init(owner_main) -> void:
 
 
 func _ready() -> void:
+	Icons.setup(self)
 	Mats.setup()
 	settings = load_settings()
 	builder = WorldBuilder.new(self)
@@ -125,8 +133,7 @@ func setup_ui(admin: Admin, ui: ImUI, hud_parent: RID) -> void:
 	overlays = Overlays.new(self, ui, admin)
 	hud = Hud.new(self, hud_parent)
 	apply_settings()
-	if settings.fullscreen:
-		settings.fullscreen = false
+	if settings.fullscreen and not is_fullscreen():
 		toggle_fullscreen()
 	overlays.show("admin")
 
@@ -140,12 +147,19 @@ func load_settings() -> Dictionary:
 		for k in data:
 			if s.has(k) and typeof(data[k]) in [TYPE_FLOAT, TYPE_INT, TYPE_BOOL]:
 				s[k] = data[k]
+		if data.get("keys") is Dictionary:
+			s.keys = data.keys
+	# Siempre activos (ya no se pueden apagar): ciclo de día y noche, comentarios de los clientes y ayuda al empezar
+	s.day_night = true
+	s.comments = true
+	s.help = true
+	Keys.load_from(s.keys)
 	return s
 
 
 func save_settings() -> void:
-	var f := FileAccess.open(config_path, FileAccess.WRITE)
-	f.store_string(JSON.stringify(settings, "  "))
+	settings.keys = Keys.map.duplicate()
+	Admin.write_file(config_path, JSON.stringify(settings, "  "))
 
 
 func apply_settings() -> void:
@@ -153,11 +167,25 @@ func apply_settings() -> void:
 	sfx.effects_volume = settings.effects
 	camera.fov = settings.fov
 	Graphics.apply(settings, get_viewport(), sky, ao, flare)
+	camera.far = Graphics.VIEW_DIST[int(settings.g_view)]
+	weather.show_rain = settings.g_rain
 
 
+## Cuánta gente anda por la ciudad según el ajuste de Rendimiento: [peatones, clientes como máximo].
+func crowd() -> Array:
+	return [[5, 16], [10, 30], [16, 42]][int(settings.get("g_crowd", 1))]
+
+
+func is_fullscreen() -> bool:
+	return DisplayServer.window_get_mode() in [DisplayServer.WINDOW_MODE_FULLSCREEN, DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN]
+
+
+## Cambia según cómo está la ventana de verdad (antes seguía una variable que se podía desfasar, por ejemplo al
+## salir con Alt+Tab, y entonces F11 no sacaba la pantalla completa).
 func toggle_fullscreen() -> void:
-	settings.fullscreen = not settings.fullscreen
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if settings.fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
+	var go_full := not is_fullscreen()
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if go_full else DisplayServer.WINDOW_MODE_WINDOWED)
+	settings.fullscreen = go_full
 
 
 # ---------- mouse ----------
@@ -190,7 +218,9 @@ func _build_office() -> void:
 	screen.box(sp + Vector3(0, 0, -0.03), Vector3(1.3, 0.77, 0.02), Color8(40, 70, 120))
 	var mi := screen.node(hq.root, Mats.emissive, false)
 	mi.name = "Pantalla"
-	Building.label(hq.root, "CAPITAL", sp + Vector3(0, 0.08, -0.05), 7, Blueprints.PALETTE.gold)
+	var screen_brand := Building.label(hq.root, "CAPITAL", sp + Vector3(0, 0.08, -0.05), 7, Blueprints.PALETTE.gold)
+	screen_brand.set_meta("size", screen_brand.pixel_size)
+	hq.brand.append(screen_brand)
 	Building.label(hq.root, "Presiona E", sp + Vector3(0, -0.14, -0.05), 4, Color.WHITE, false)
 
 
@@ -250,7 +280,7 @@ func ask_assistant() -> void:
 		tips = ["Todo en orden, jefe. Este mes llevamos %s de utilidad." % Fmt.money(Game.statement(g.ledger).utilidad_neta)]
 	var text: String = tips[tip_i % tips.size()]
 	tip_i += 1
-	hud.notes.push_side("Sofía · tu asistente", "Recepción de la oficina central", text, Color8(70, 140, 230), "", "SO", "ring")
+	hud.notes.push("oficina", "Sofía · tu asistente", text, {"initials": "SO", "sound": "ring"})
 
 
 func manage_market(key: String) -> void:
@@ -422,7 +452,7 @@ func quit_game() -> void:
 
 func save_on_exit() -> void:
 	save_settings()
-	if app and app.game != null and not app.game.game_over:
+	if app and app.game != null:
 		for loc in app.game.locations:
 			loc.owner = false
 		app.save(true)
@@ -448,6 +478,38 @@ func pop(pos: Vector3, text: String, kind: String, size := 16.0, life := 1.2) ->
 	add_child(l)
 	l.position = pos + Vector3(0, 2.5, 0)
 	pops.append([l, life])
+
+
+## Globo de diálogo sobre la cabeza de alguien (lo sigue mientras camina). Uno por persona: el nuevo reemplaza al
+## anterior. `kind` es el color: white, green, orange, red o gold.
+func say(person: Node3D, text: String, kind := "white", life := 2.4) -> void:
+	if not is_instance_valid(person) or not settings.comments:
+		return
+	if person.camera_far():
+		return
+	var old = person.get_meta("bubble") if person.has_meta("bubble") else null
+	if old != null and is_instance_valid(old):
+		old.queue_free()
+	var cols := {"green": Color8(150, 255, 150), "red": Color8(255, 120, 110), "orange": Color8(255, 190, 90),
+			"gold": Color8(255, 215, 90), "white": Color.WHITE}
+	var l := Label3D.new()
+	l.text = text
+	l.font = Building.title_font
+	l.font_size = 40
+	l.pixel_size = 0.0068
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.outline_size = 12
+	l.outline_modulate = Color(0.05, 0.06, 0.09, 0.85)
+	l.modulate = cols.get(kind, Color.WHITE)
+	l.width = 420
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.position = Vector3(0, 2.3, 0)
+	l.no_depth_test = false
+	person.add_child(l)
+	person.set_meta("bubble", l)
+	person.set_meta("bubble_t", life)
+	bubbles.append(l)
+	l.set_meta("life", life)
 
 
 ## Volumen según la distancia a la cámara: lo que pasa lejos casi no se oye.
@@ -481,6 +543,16 @@ func pay(store: Store, pos: Vector3) -> void:
 	if lines and settings.comments and randf() < 0.3:
 		var line: Array = lines.pick_random()
 		pop(pos + Vector3(0, 0.55, 0), line[0], line[1], 10, 1.8)
+
+
+## Qué tan probable es que un cliente que duda termine comprando en este local: mejor con más estrellas, precio
+## bajo, buena calidad y buena reputación (se usa en las conversaciones de los clientes).
+func buy_chance(store) -> float:
+	var p: Dictionary = game.products[store.loc.product]
+	var ratio: float = p.price / game.ref_price(p)
+	var chance: float = 0.55 + 0.1 * (Game.stars_of(store.loc) - 3.0) + 0.5 * (1.0 - ratio) + 0.06 * (p.quality - 1)
+	chance += 0.15 * (p.reputation - 50.0) / 50.0
+	return clampf(chance, 0.08, 0.95)
 
 
 func complain(pos: Vector3, store) -> void:
@@ -519,54 +591,60 @@ func react(n: Dictionary) -> void:
 	var gold := Color8(240, 175, 40)
 	var green := Color8(46, 170, 90)
 	var red := Color8(225, 85, 75)
-	var blue := Color8(70, 140, 230)
 	var orange := Color8(240, 140, 50)
 	match fx:
 		"rank":
-			notes.push_top("¡Subiste de rango!", "Ahora eres %s. ¡Sigue así!" % v, gold, "★", "fanfare", 140)
+			notes.push_hero("NUEVO RANGO", v, "Tu empresa vale %s. ¡Sigue así!" % Fmt.money(game.valuation()), gold, "fanfare", 140)
 		"win":
 			if game.mode == "normal":
-				notes.push_top("¡Construiste un imperio!", "En %d minutos. ¡Fin de la partida!" % roundi(game.win_seconds / 60.0), gold, "♛", "fanfare", 180)
+				notes.push_hero("IMPERIO", "¡Construiste un imperio!", "En %d minutos de juego" % roundi(game.win_seconds / 60.0), gold, "fanfare", 180, null, "crown")
 			else:
-				notes.push_top("¡Eres mil millonario!", "Llegaste al título más alto del juego", gold, "♛", "fanfare", 180)
+				notes.push_hero("MIL MILLONARIO", "¡Llegaste a la cima!", "El título más alto del juego", gold, "fanfare", 180, null, "crown")
 		"record":
-			notes.push_top("¡Nuevo récord de ventas!", "Vendiste {} en un solo día", green, "↑", "record", 50, v)
+			notes.push_hero("RÉCORD DE VENTAS", "{}", "vendidos en un solo día", green, "record", 50, v, "chart")
 		"streak":
-			notes.push_top("¡%d meses seguidos ganando!" % v, "Tu racha de meses con utilidad sigue viva. ¡No la sueltes!", orange, "♥", "good", 40)
+			notes.push_hero("RACHA", "¡%d meses ganando!" % v, "Tu racha de meses con utilidad sigue viva", orange, "good", 40, null, "heart")
 		"streak_lost":
-			notes.push_top("Se cortó tu racha", "Llevabas %d meses seguidos con utilidad. ¡Puedes empezar otra!" % v, red, "♥", "bad")
+			notes.push("banco", "Se cortó tu racha", "Llevabas %d meses seguidos con utilidad. ¡Puedes empezar otra!" % v, {"col": red, "sound": "bad"})
 		"month":
 			var title: String = n.text.split(":")[0]
 			if v >= 0:
-				notes.push_top(title, "Ganaste {} este mes", green, "$", "month", 0, v)
+				notes.push("banco", title, "Ganaste {} este mes.", {"count": v, "sound": "month"})
 			else:
-				notes.push_top(title, "Este mes perdiste {}", red, "$", "bad", 0, v)
+				notes.push("banco", title, "Este mes perdiste {}.", {"count": v, "col": red, "sound": "bad"})
 		"danger":
-			notes.push_top("¡Cuidado, peligro de quiebra!", "Tienes 20 días para volver dentro del límite de sobregiro", red, "!", "bad")
+			notes.push("alerta", "¡Cuidado, peligro de quiebra!", "Tienes 20 días para volver dentro del límite de sobregiro.", {"sound": "bad"})
 		"outcome":
-			var dp: Array = game.date_parts()
-			var when := "Resultado de tu decisión · Día %d de %s" % [dp[0], dp[1]]
-			if v == "good":
-				notes.push_side("¡Salió bien!", when, n.text, green, "✓", "", "good", 60)
-			elif v == "bad":
-				notes.push_side("Salió mal...", when, n.text, red, "✗", "", "bad")
-			else:
-				notes.push_side("Decisión tomada", when, n.text, blue if v == "info" else orange, "✎")
+			var spec: Array = {"good": ["¡Salió bien!", green, "good"], "bad": ["Salió mal...", red, "bad"]}.get(v, ["Decisión tomada", orange, null])
+			notes.push("decision", spec[0], n.text, {"col": spec[1], "sound": spec[2]})
 		"dilemma":
 			sfx.play("ring", 0.8)
-			notes.push_news(n.text, "warn")
+			notes.push("decision", n.text.trim_prefix("Decisión urgente: "), "Decisión urgente: el juego espera tu respuesta.")
 		"rival":
 			var r := D.rival_by_key(v)
 			var initials := ""
 			for w in r.name.replace("Dr. ", "").replace("Doña ", "").split(" ").slice(0, 2):
 				initials += w[0]
 			var said: String = n.text.split(": «", true, 1)[-1].trim_suffix("»")
-			notes.push_side(r.name, r.company, said, r.color, "", initials, "rival", 0, true)
+			notes.push("mensajes", "%s · %s" % [r.name, r.company], "«%s»" % said, {"col": r.color, "initials": initials, "sound": "rival", "low": true})
+		"weather":
+			var wd: Dictionary = D.WEATHER[v]
+			var nxt: Dictionary = D.WEATHER[game.weather_next]
+			notes.push("clima", wd.name, "%s Pronóstico: %s en %d días." % [n.text, nxt.name.to_lower(), game.weather_days],
+					{"col": Color8(255, 120, 60) if v == 4 else (Color8(225, 85, 75) if v == 5 else Color8(90, 170, 230)), "icon": Icons.weather(v)})
+		"stars":  # sin aviso: las estrellas saltan sobre el local (y queda en Noticias)
+			var up: bool = v[2]
+			for st in stores.values():
+				if int(st.loc.id) == int(v[0]):
+					st.star_burst(up)
+		"quiet":
+			pass
 		"gameover":
 			sfx.play("bad")
-			notes.push_news(n.text, "bad")
+			notes.push("alerta", "Quiebra", n.text)
 		null:
-			notes.push_news(n.text, n.kind)
+			var col: Color = {"good": green, "bad": red, "warn": orange}.get(n.kind, Color8(70, 140, 230))
+			notes.push("noticias", n.text, "", {"col": col})
 
 
 # ---------- luz y día ----------
@@ -607,6 +685,7 @@ func reset_world(g) -> void:
 	serving = null
 	if hud:
 		hud.notes.clear()
+	app.unread = 0
 	for c in comps.values():
 		Actors.free_competitor(c)
 	comps = {}
@@ -616,6 +695,7 @@ func reset_world(g) -> void:
 		for loc in g.locations:
 			loc.owner = false
 		seen_news = g.news[-1] if g.news else null
+		hq.set_brand(g.company)
 		g.look = Wardrobe.full_look(g.look)
 		player.restyle(g.look)
 		knock = null
@@ -670,7 +750,7 @@ func sync(g: Game) -> void:
 		var s: Store = stores[i]
 		s.loc = by_plot[i]
 		s.sync_staff()
-		s.sync_rep(g.products[s.loc.product].reputation)
+		s.sync_stars()
 	sync_competitors(g)
 	sync_office(g)
 
@@ -742,12 +822,13 @@ func spawn(dt: float) -> void:
 	for c in customers:
 		if c.store == null:
 			walkers += 1
-	if walkers < 10 and randf() < dt * 0.7:
+	var limits := crowd()
+	if walkers < limits[0] and randf() < dt * 0.7:
 		customers.append(Customer.new(self))
 	for store in stores.values():
 		var loc: Dictionary = store.loc
 		store.acc += clampf(loc.sold / 160.0, 0.04, 0.5) * dt
-		if store.acc >= 1 and customers.size() < MAX_CUSTOMERS:
+		if store.acc >= 1 and customers.size() < limits[1]:
 			store.acc -= 1
 			var lost: float = (loc.demand - loc.sold) / loc.demand if loc.demand > 0 else 0.0
 			customers.append(Customer.new(self, store, randf() < clampf(lost, 0, 0.8)))
@@ -760,6 +841,12 @@ func all_rects() -> Array:
 		out.append(s.rects)
 	for c in comps.values():
 		out.append(c.rects)
+	if cars_frozen:  # detenidos en pausa no atropellan, pero tampoco se pueden atravesar: son como una pared
+		var car_rects := []
+		for car in cars:
+			var p: Vector3 = car.position
+			car_rects.append([p.x - 2.05, p.x + 2.05, p.z - 0.95, p.z + 0.95, 1.6])
+		out.append(car_rects)
 	return out
 
 
@@ -826,18 +913,49 @@ func ceiling_over(pos: Vector3) -> Array:
 
 
 ## Qué tan lejos puede ir la cámara desde `target` en la dirección `back` sin meterse en una pared,
-## atravesar el techo del edificio donde estás o bajar del suelo.
+## atravesar el techo del edificio donde estás o bajar del suelo. Se calcula de una vez dónde el rayo choca con cada
+## caja (antes se avanzaba de a 20 cm revisando todas las paredes en cada paso, y costaba varios milisegundos).
 func camera_distance(target: Vector3, back: Vector3, want: float) -> float:
+	var hit := want + 0.35
+	if back.y < -0.0001:  # el suelo (la cámara no baja de 20 cm)
+		hit = min(hit, (0.2 - target.y) / back.y)
 	var roof := ceiling_over(target)
-	var dist := 0.3
-	while dist < want:
-		var pt := target + back * (dist + 0.25)
-		if pt.y < 0.2 or inside_wall(pt):
-			break
-		if not roof.is_empty() and pt.y > roof[4] - 0.3 and roof[0] - 0.6 < pt.x and pt.x < roof[1] + 0.6 and roof[2] - 0.6 < pt.z and pt.z < roof[3] + 0.6:
-			break
-		dist += 0.2
-	return max(0.3, min(want, dist - 0.1))
+	if not roof.is_empty() and back.y > 0.0001:
+		var t: float = (roof[4] - 0.3 - target.y) / back.y
+		var px := target.x + back.x * t
+		var pz := target.z + back.z * t
+		if t >= 0 and roof[0] - 0.6 < px and px < roof[1] + 0.6 and roof[2] - 0.6 < pz and pz < roof[3] + 0.6:
+			hit = min(hit, t)
+	var reach := want + 1.0
+	for rects in all_rects():
+		for q in rects:
+			# solo las cajas cerca del camino de la cámara
+			if q[1] + 0.2 < min(target.x, target.x + back.x * reach) or q[0] - 0.2 > max(target.x, target.x + back.x * reach):
+				continue
+			if q[3] + 0.2 < min(target.z, target.z + back.z * reach) or q[2] - 0.2 > max(target.z, target.z + back.z * reach):
+				continue
+			var t := _ray_box(target, back, Vector3(q[0] - 0.2, -1.0, q[2] - 0.2), Vector3(q[1] + 0.2, q[4] + 0.3, q[3] + 0.2))
+			if t < hit:
+				hit = t
+	return max(0.3, min(want, hit - 0.35))
+
+
+## Distancia a la que un rayo entra a una caja (0 si ya está adentro, INF si no la toca).
+static func _ray_box(o: Vector3, d: Vector3, lo: Vector3, hi: Vector3) -> float:
+	var t0 := -INF
+	var t1 := INF
+	for i in 3:
+		if absf(d[i]) < 0.000001:
+			if o[i] < lo[i] or o[i] > hi[i]:
+				return INF
+		else:
+			var a := (lo[i] - o[i]) / d[i]
+			var b := (hi[i] - o[i]) / d[i]
+			t0 = max(t0, min(a, b))
+			t1 = min(t1, max(a, b))
+	if t1 < max(t0, 0.0):
+		return INF
+	return max(t0, 0.0)
 
 
 # ---------- atropello ----------
@@ -906,8 +1024,8 @@ func move_player(dt: float) -> void:
 		return
 	var fwd := Vector3(sin(deg_to_rad(yaw)), 0, cos(deg_to_rad(yaw)))
 	var right := Vector3(-fwd.z, 0, fwd.x)
-	var f := float(Input.is_physical_key_pressed(KEY_W)) - float(Input.is_physical_key_pressed(KEY_S))
-	var s := float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A))
+	var f := float(Keys.pressed("forward")) - float(Keys.pressed("back"))
+	var s := float(Keys.pressed("right")) - float(Keys.pressed("left"))
 	var move := fwd * f + right * s
 	if serving:
 		if move.length() > 0:
@@ -918,7 +1036,7 @@ func move_player(dt: float) -> void:
 	var speed := 0.0
 	if move.length() > 0:
 		move = move.normalized()
-		speed = 12.0 if Input.is_physical_key_pressed(KEY_SHIFT) else 5.0
+		speed = 12.0 if Keys.pressed("run") else 5.0
 		var nx := p.position.x + move.x * speed * dt
 		var nz := p.position.z + move.z * speed * dt
 		if not blocked(nx, p.position.z, 0.38, p.position.y):
@@ -993,10 +1111,13 @@ func _custom_camera(dt: float) -> void:
 		custom_idle = 0.0
 	else:
 		custom_idle += dt
-		if custom_idle > 5:  # si no lo tocas, vuelve a girar despacio
-			p.rotation.y += dt * 0.3
+		if custom_idle > 2.0:  # si no lo tocas un rato, vuelve suave a mirar al frente
+			var k := min(1.0, dt * 2.5)
+			p.rotation.y = lerp_angle(p.rotation.y, deg_to_rad(custom_yaw) + PI, k)
+			custom_pitch = lerpf(custom_pitch, 8.0, k)
+			custom_lift = lerpf(custom_lift, 0.0, k)
 	mouse_delta = Vector2.ZERO
-	var turn := float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A))
+	var turn := float(Keys.pressed("right")) - float(Keys.pressed("left"))
 	if turn:
 		p.rotation.y += turn * dt * 2.0
 		custom_idle = 0.0
@@ -1020,7 +1141,7 @@ func update_zone() -> void:
 		z = ["Distrito Financiero", "Rascacielos y tu oficina central"]
 	elif p.x > 110:
 		z = ["Paseo de la Playa", "Terrenos frente al mar: +20% de clientes por los turistas"]
-	elif absf(p.x) < 25 and p.z < -9:
+	elif absf(p.x) < 22 and p.z < -9:
 		z = ["Parque Central", "La fuente, la laguna y los juegos"]
 	elif absf(p.z) > 27:
 		z = ["Barrio Las Lomas", "Donde viven tus clientes"]
@@ -1096,7 +1217,7 @@ func update(dt: float) -> void:
 				best = it
 				best_d = dd
 		prompt_action = best
-		hud.prompt = "[E] %s" % best[1] if best != null else ""
+		hud.prompt = "[%s] %s" % [Keys.label("interact"), best[1]] if best != null else ""
 		update_zone()
 	for st in stores.values():
 		st.update(dt)
@@ -1105,12 +1226,27 @@ func update(dt: float) -> void:
 		if c.done:
 			c.destroy()
 			customers.erase(c)
+	var frozen: bool = g != null and (app.paused or app.modal != null)  # en pausa los autos también se detienen
+	cars_frozen = frozen
 	for car in cars:
+		if frozen:
+			continue
 		Actors.drive(car, dt, cars)
 		var p := player.position
 		if (g != null and knock == null and not overlays.open() and p.y < 1.4 and absf(p.x - car.position.x) < 2.3
 				and absf(p.z - car.position.z) < 1.15):
 			hit_by_car(car)
+	for b in bubbles.duplicate():
+		if not is_instance_valid(b):
+			bubbles.erase(b)
+			continue
+		var left: float = b.get_meta("life") - dt
+		b.set_meta("life", left)
+		b.modulate.a = clampf(left / 0.4, 0, 1)
+		b.outline_modulate.a = clampf(left / 0.4, 0, 1) * 0.85
+		if left <= 0:
+			b.queue_free()
+			bubbles.erase(b)
 	for item in pops.duplicate():
 		item[1] -= dt
 		item[0].position.y += dt * 0.9
@@ -1134,7 +1270,7 @@ func update(dt: float) -> void:
 	# El destello solo se dibuja con el sol de día y delante de la cámara: tapa la pantalla y cuesta aunque no se vea
 	flare.visible = (Graphics.current(settings).g_flare and sky.night_amount < 0.99
 			and -camera.global_transform.basis.z.dot(sky.to_sun) > 0.45)
-	weather.update(dt, day_fraction(), game.month_index() if game != null else 0, camera, camera_indoors())
+	weather.update(dt, game, camera, camera_indoors())
 	sky.clouds = weather.clouds
 	sky.overcast = weather.overcast
 	sky.set_time(day_fraction() if settings.day_night or sky_lock != null else 0.34)
@@ -1164,15 +1300,12 @@ func update_diario() -> void:
 	var dl: Dictionary = builder.diario
 	var hour := SkyLight.hour_of(day_fraction())
 	var w := weather
-	var icon := w.icon_of(w.today)
-	if w.today == 0 and sky.night_amount > 0.5:
-		icon = "☾"  # de noche despejado: luna
-	dl.icon.text = icon
-	dl.icon.modulate = Color8(255, 210, 80) if w.today <= 1 else Color8(190, 205, 225)
+	dl.icon.region_rect = Icons.region(Icons.weather(w.today, sky.night_amount > 0.5))
 	dl.temp.text = "%d°C" % w.temperature(hour)
 	dl.kind.text = w.name_of(w.today)
 	dl.hour.text = "%02d:%02d" % [int(hour), int(fmod(hour, 1.0) * 60)]
-	dl.tomorrow.text = "Mañana: %s %s" % [w.icon_of(w.tomorrow), w.name_of(w.tomorrow)]
+	var days: int = game.weather_days if game != null else 1
+	dl.tomorrow.text = "En %d día%s: %s" % [days, "" if days == 1 else "s", w.name_of(w.tomorrow)]
 
 
 func open_tutorial() -> void:
@@ -1203,6 +1336,11 @@ func input_event(event: InputEvent) -> void:
 
 
 func _key(e: InputEventKey) -> void:
+	# Cambiando una tecla en Controles: la próxima tecla que apretes queda asignada (Esc cancela)
+	if overlays.binding != null:
+		if e.pressed and not e.echo:
+			overlays.finish_binding(e)
+		return
 	if e.keycode == KEY_ALT:
 		if e.pressed:
 			alt_combo = false
@@ -1219,12 +1357,21 @@ func _key(e: InputEventKey) -> void:
 		alt_combo = true
 		return
 	var key := e.keycode
-	if key == KEY_F11:
+	if app.naming:  # escribiendo el nombre de la empresa: las teclas van al nombre
+		app.type_key(e)
+		return
+	if app.settings_open and app.view == "menu" and key == KEY_ESCAPE:   # ajustes del menú de inicio
+		if overlays.pause_page != "main":
+			overlays.pause_page = "main"
+		else:
+			overlays.close_menu_settings()
+		return
+	if Keys.is_event(e, "fullscreen"):
 		toggle_fullscreen()
 		return
-	if key == KEY_M and not (overlays.open() and app.view == "menu"):
+	if Keys.is_event(e, "music") and not (overlays.open() and app.view == "menu"):
 		sfx.music_on = not sfx.music_on
-		toast("Música activada." if sfx.music_on else "Música en silencio (M para volver).", "info")
+		toast("Música activada." if sfx.music_on else "Música en silencio (%s para volver)." % Keys.label("music"), "info")
 		return
 	if overlays.mode == "tutorial":
 		if key == KEY_ESCAPE:
@@ -1247,36 +1394,35 @@ func _key(e: InputEventKey) -> void:
 			close_pause()
 		return
 	if overlays.open():
-		if key in [KEY_ESCAPE, KEY_TAB, KEY_E] and app.view == "game" and app.modal == null:
+		if (key == KEY_ESCAPE or Keys.is_event(e, "phone") or Keys.is_event(e, "interact")) and app.view == "game" and app.modal == null:
 			overlays.hide()
 		return
 	if game == null:
 		return
-	match key:
-		KEY_TAB:
-			overlays.show("admin")
-		KEY_E:
-			if prompt_action != null:
-				prompt_action[2].call()
-		KEY_V:
-			first_person = not first_person
-			if not first_person:
-				zoom_target = max(zoom_target, 3.0)
-				zoom = zoom_target
-		KEY_P:
-			app.paused = not app.paused
-		KEY_1, KEY_2, KEY_3:
-			app.speed = key - KEY_1
-			app.paused = false
-		KEY_SPACE:
-			if absf(player.position.y - floor_at(player.position.x, player.position.z, player.position.y)) < 0.02 and serving == null:
-				vy = 8.0
-		KEY_ESCAPE:
-			open_pause()
-		KEY_O:
-			go_to_office()
-		KEY_H:
-			hud.help_timer = 0.0 if hud.help_timer > 0 else 30.0
+	if key == KEY_ESCAPE:
+		open_pause()
+	elif Keys.is_event(e, "phone"):
+		overlays.show("admin")
+	elif Keys.is_event(e, "interact"):
+		if prompt_action != null:
+			prompt_action[2].call()
+	elif Keys.is_event(e, "camera"):
+		first_person = not first_person
+		if not first_person:
+			zoom_target = max(zoom_target, 3.0)
+			zoom = zoom_target
+	elif Keys.is_event(e, "pause_quick"):
+		app.paused = not app.paused
+	elif Keys.is_event(e, "speed1") or Keys.is_event(e, "speed2") or Keys.is_event(e, "speed3"):
+		app.speed = 0 if Keys.is_event(e, "speed1") else (1 if Keys.is_event(e, "speed2") else 2)
+		app.paused = false
+	elif Keys.is_event(e, "jump"):
+		if absf(player.position.y - floor_at(player.position.x, player.position.z, player.position.y)) < 0.02 and serving == null:
+			vy = 8.0
+	elif Keys.is_event(e, "office"):
+		go_to_office()
+	elif Keys.is_event(e, "help"):
+		hud.help_timer = 0.0 if hud.help_timer > 0 else 30.0
 
 
 func _mouse_button(e: InputEventMouseButton) -> void:
@@ -1308,6 +1454,10 @@ func _mouse_button(e: InputEventMouseButton) -> void:
 	elif e.button_index == MOUSE_BUTTON_LEFT and not mouse_captured():
 		if hud.ui.hover(hud.hq_button_rect()):
 			go_to_office()
+		elif hud.ui.hover(hud.phone_rect):
+			if app.unread:
+				app.tab = "noticias"
+			overlays.show("admin")
 		elif hud.sky_button_at() != null:
 			set_sky_lock(hud.sky_button_at())
 		else:

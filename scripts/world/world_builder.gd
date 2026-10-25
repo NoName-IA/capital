@@ -16,6 +16,7 @@ var boats := []
 var beacon: MeshInstance3D
 var lamp_node: MeshInstance3D
 var lamp_spots := []             # dónde cuelga la luz de cada farol
+var park_spots := []             # (x, z) de bancas, faroles y adornos del parque: los árboles no se ponen encima
 var diario := {}                 # textos de la pantalla del clima del kiosco ELDIARIO
 var diario_seller: Person
 const DIARIO_BUY := Vector3(-69.2, 0, 10.9)   # donde se paran los que compran el diario
@@ -76,11 +77,19 @@ func _eldiario() -> void:
 	rects.append([x - w / 2, x + w / 2, z0, z0 + d, 3.4])
 	Building.label(city, "ELDIARIO", Vector3(x, 3.76, z0 - 0.04), 15, Color.WHITE, true, false).rotation.y = PI
 	var screen_z := z0 + 0.33
-	diario.icon = Building.label(city, "☀", Vector3(x - 1.25, 5.85, screen_z), 30, Color8(255, 210, 80), true, false)
+	var icon := Sprite3D.new()   # ícono del clima (sale del atlas de Icons)
+	icon.texture = Icons.atlas.get_texture()
+	icon.region_enabled = true
+	icon.region_rect = Icons.region("sun")
+	icon.pixel_size = 0.013
+	icon.shaded = false
+	icon.position = Vector3(x - 1.25, 5.85, screen_z)
+	city.add_child(icon)
+	diario.icon = icon
 	diario.temp = Building.label(city, "24°C", Vector3(x + 0.55, 6.15, screen_z), 17, Color.WHITE, true, false)
 	diario.kind = Building.label(city, "Soleado", Vector3(x + 0.55, 5.62, screen_z), 7, Color8(200, 220, 245), false, false)
 	diario.hour = Building.label(city, "12:00", Vector3(x - 1.25, 4.85, screen_z), 6, Color8(200, 220, 245), false, false)
-	diario.tomorrow = Building.label(city, "Mañana: ☁ 18°", Vector3(x + 0.55, 4.95, screen_z), 6, Color8(255, 210, 80), true, false)
+	diario.tomorrow = Building.label(city, "En 3 días: Nublado", Vector3(x + 0.55, 4.95, screen_z), 6, Color8(255, 210, 80), true, false)
 	for l in diario.values():
 		l.rotation.y = PI
 	var title := Building.label(city, "EL CLIMA HOY", Vector3(x, 6.7, screen_z), 6, Color8(255, 255, 255, 200), true, false)
@@ -313,8 +322,9 @@ func _disc(radius: float, pos: Vector3, mat: Material) -> MeshInstance3D:
 
 ## Parque Central: en medio de la avenida, con entrada desde la vereda.
 func _park() -> void:
-	var px0 := -24.0
-	var px1 := 24.0
+	# ±21 m: deja un pasillo con los locales de los terrenos vecinos (x = ±33), aunque sean megatiendas
+	var px0 := -21.0
+	var px1 := 21.0
 	var pz0 := -9.6
 	var pz1 := -58.0
 	_plane(Vector2(px1 - px0, pz0 - pz1), Mats.textured(Mats.grass, 0.95, Color8(92, 145, 66), Vector3(10, 10, 1)),
@@ -407,14 +417,26 @@ func _park() -> void:
 			[10, -31.6, "x"], [-10, -36.4, "x"], [10, -36.4, "x"], [-2.6, -44, "z"], [2.6, -52, "z"]]:
 		bench(bspec[0], bspec[1], bspec[2])
 	_park_decor()
-	# Árboles del parque, lejos de los senderos, la laguna, la fuente y los juegos
+	# Árboles del parque, lejos de los senderos, la laguna, la fuente, los juegos y de todo lo que ya hay (bancas,
+	# faroles, basureros, jardineras, el carrito de helados): antes podían quedar encima
+	var taken: Array = park_spots.duplicate()
 	var placed := 0
-	while placed < 14:
+	var tries := 0
+	while placed < 12 and tries < 400:
+		tries += 1
 		var x := rng.randf_range(px0 + 2.5, px1 - 2.5)
-		var z := rng.randf_range(pz1 + 2.5, pz0 - 3)
+		var z := rng.randf_range(pz1 + 2.5, pz0 - 3.5)
 		if (absf(x) < 3.8 or absf(z + 34) < 3.5 or Vector2(x - lx, z - lz).length() < lr + 3
-				or Vector2(x - fx, z - fz).length() < 7.5 or Vector2(x - sx, z - sz - 2).length() < 6):
+				or Vector2(x - fx, z - fz).length() < 7.5 or Vector2(x - sx, z - sz - 2).length() < 6.5):
 			continue
+		var clear := true
+		for t in taken:
+			if Vector2(x, z).distance_to(t) < 3.2:
+				clear = false
+				break
+		if not clear:
+			continue
+		taken.append(Vector2(x, z))
 		tree(Vector3(x, 0, z))
 		placed += 1
 
@@ -437,10 +459,12 @@ func _park_decor() -> void:
 		lamps.box(p + Vector3(0, 2.98, 0), Vector3(0.38, 0.46, 0.38), Color8(255, 235, 190))   # farol de vidrio
 		props.box(p + Vector3(0, 2.72, 0), Vector3(0.44, 0.06, 0.44), green)
 		lamp_spots.append(p + Vector3(0, 2.9, 0))
+		park_spots.append(Vector2(p.x, p.z))
 		rects.append([p.x - 0.2, p.x + 0.2, p.z - 0.2, p.z + 0.2, 3.4])
 	# Basureros al lado de algunas bancas
 	for b in [[-2.6, -18.0], [2.6, -26.0], [-10.0, -29.6], [10.0, -38.4], [-2.6, -46.0]]:
 		var bp := Vector3(b[0], 0, b[1])
+		park_spots.append(Vector2(bp.x, bp.z))
 		props.box(bp + Vector3(0, 0.42, 0), Vector3(0.45, 0.84, 0.45), Color8(45, 95, 60))
 		props.box(bp + Vector3(0, 0.86, 0), Vector3(0.5, 0.06, 0.5), Color8(30, 30, 34))
 		rects.append([bp.x - 0.25, bp.x + 0.25, bp.z - 0.25, bp.z + 0.25, 0.9])
@@ -448,6 +472,7 @@ func _park_decor() -> void:
 	var flowers := [Color8(230, 70, 80), Color8(250, 200, 60), Color8(240, 240, 245), Color8(180, 90, 200)]
 	for sx in [-1, 1]:
 		var c := Vector3(sx * 4.5, 0, -11.6)
+		park_spots.append(Vector2(c.x, c.z))
 		props.box(c + Vector3(0, 0.3, 0), Vector3(3.2, 0.6, 1.2), Color8(170, 160, 145))
 		props.box(c + Vector3(0, 0.62, 0), Vector3(3.0, 0.06, 1.0), Color8(90, 60, 40))
 		for i in 9:
@@ -456,6 +481,7 @@ func _park_decor() -> void:
 		rects.append([c.x - 1.6, c.x + 1.6, c.z - 0.6, c.z + 0.6, 0.7])
 	# Carrito de helados con quitasol
 	var cp := Vector3(5.5, 0, -39.5)
+	park_spots.append(Vector2(cp.x, cp.z))
 	props.box(cp + Vector3(0, 0.75, 0), Vector3(1.6, 0.9, 0.9), Color8(245, 245, 240))
 	props.box(cp + Vector3(0, 0.75, 0.46), Vector3(1.4, 0.3, 0.02), Color8(240, 120, 160))
 	for wx in [-0.6, 0.6]:
@@ -479,6 +505,7 @@ func bench(x: float, z: float, along: String) -> void:
 	var sz := 2.2 if along == "z" else 0.6
 	var back := Vector3(0.3 * (1 if x > 0 else -1), 0, 0) if along == "z" else Vector3(0, 0, 0.3 * (1 if z < -34 else -1))
 	var wood := Color8(140, 95, 60)
+	park_spots.append(Vector2(x, z))
 	props.box(Vector3(x, 0.45, z), Vector3(sx, 0.1, sz), wood)
 	props.box(Vector3(x, 0.8, z) + back, Vector3(0.08 if along == "z" else sx, 0.6, sz if along == "z" else 0.08), wood)
 	for k in [-0.4, 0.4]:

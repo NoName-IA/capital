@@ -125,6 +125,7 @@ static func light_volume(parent: Node3D, pos: Vector3, radius: float, indoor := 
 	mi.scale = Vector3.ONE * radius
 	parent.add_child(mi)
 	if indoor:
+		mi.visibility_range_end = 60.0   # la luz de adentro solo se nota de cerca
 		return mi
 	mi.visible = lamp_light.get_shader_parameter("energy") > 0.01
 	light_nodes = light_nodes.filter(func(n): return is_instance_valid(n))

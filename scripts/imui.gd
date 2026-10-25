@@ -28,6 +28,44 @@ var tip = null
 var font: Font
 var bold: Font
 var styles := {}
+var anim := {}               # estado de las animaciones de tween()
+# Medir y cortar textos cuesta: se recuerdan los resultados (la interfaz se redibuja entera en cada cuadro)
+var _size_cache := {}
+var _fit_cache := {}
+var _lines_cache := {}
+
+
+func _width(s: String, size: int, is_bold: bool) -> float:
+	var key := "%s|%d|%s" % [s, size, is_bold]
+	var w = _size_cache.get(key)
+	if w == null:
+		if _size_cache.size() > 4000:
+			_size_cache.clear()
+		w = (bold if is_bold else font).get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		_size_cache[key] = w
+	return w
+
+
+## El texto recortado con "…" para que quepa en `maxw`.
+func _fit(s: String, size: int, is_bold: bool, maxw: float) -> String:
+	if _width(s, size, is_bold) <= maxw:
+		return s
+	var key := "%s|%d|%s|%d" % [s, size, is_bold, int(maxw)]
+	var out = _fit_cache.get(key)
+	if out == null:
+		if _fit_cache.size() > 2000:
+			_fit_cache.clear()
+		var lo := 0
+		var hi := s.length()
+		while lo < hi:  # búsqueda binaria del largo que cabe
+			var mid := (lo + hi + 1) / 2
+			if _width(s.substr(0, mid) + "…", size, is_bold) <= maxw:
+				lo = mid
+			else:
+				hi = mid - 1
+		out = s.substr(0, lo) + "…"
+		_fit_cache[key] = out
+	return out
 
 
 func _init(parent_item: RID, width := 1280.0, height := 760.0) -> void:
@@ -51,7 +89,7 @@ func _init(parent_item: RID, width := 1280.0, height := 760.0) -> void:
 ## Dibuja (invisible) todas las letras en los tamaños que usa la interfaz, para que Godot las prepare de una vez y no
 ## a la mitad de una animación (la tablet se trababa el primer cuadro que mostraba textos nuevos).
 func prewarm() -> void:
-	var chars := "ABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚabcdefghijklmnñopqrstuvwxyzáéíóúü0123456789$%.,:;·()+-−×=/?¡!¿«»→★☆"
+	var chars := "ABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚabcdefghijklmnñopqrstuvwxyzáéíóúü0123456789$%.,:;·()+-−×=/?¡!¿«»"
 	for size in [11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 40]:
 		for f in [font, bold]:
 			f.draw_string(canvas, Vector2(0, 40), chars, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Color(1, 1, 1, 0.004))
@@ -176,13 +214,47 @@ func _style(color: Color, radius: float, border: float) -> StyleBoxFlat:
 	return styles[key]
 
 
-## Rectángulo relleno (border = 0) o solo el borde, con esquinas redondeadas.
+## Rectángulo relleno (border = 0) o solo el borde, con esquinas redondeadas. Se dibuja como "nine-patch": una
+## textura chica con la esquina suavizada que se estira; es mucho más barato que dibujar la forma en cada cuadro.
 func rect(r: Rect2, color, radius := 0.0, border := 0.0) -> void:
 	var c := col(color)
 	if radius <= 0 and border <= 0:
 		RenderingServer.canvas_item_add_rect(canvas, r, c)
 		return
-	_style(c, radius, border).draw(canvas, r)
+	var rad := int(floorf(min(radius, r.size.x / 2 - 2, r.size.y / 2 - 2)))   # las esquinas siempre caben
+	if rad < 1:
+		if border <= 0:
+			RenderingServer.canvas_item_add_rect(canvas, r, c)
+		return
+	var tex := _corner_tex(rad, int(roundf(border)))
+	var m := Vector2(rad + 2, rad + 2)
+	RenderingServer.canvas_item_add_nine_patch(canvas, r, Rect2(Vector2.ZERO, tex.get_size()), tex.get_rid(), m, m,
+			RenderingServer.NINE_PATCH_STRETCH, RenderingServer.NINE_PATCH_STRETCH, true, c)
+
+
+var _corners := {}
+
+
+## Textura blanca de un rectángulo redondeado (relleno o solo el borde) con el canto suavizado, para el nine-patch.
+func _corner_tex(radius: int, border: int) -> Texture2D:
+	var key := Vector2i(radius, border)
+	if _corners.has(key):
+		return _corners[key]
+	var n := radius * 2 + 6
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	var half := n / 2.0
+	for y in n:
+		for x in n:
+			var p := Vector2(x + 0.5, y + 0.5) - Vector2(half, half)
+			var q := Vector2(absf(p.x), absf(p.y)) - Vector2(half - 1.0 - radius, half - 1.0 - radius)
+			var d: float = Vector2(max(q.x, 0.0), max(q.y, 0.0)).length() + min(max(q.x, q.y), 0.0) - radius
+			var a := clampf(0.5 - d, 0.0, 1.0)
+			if border > 0:
+				a *= clampf(d + border + 0.5, 0.0, 1.0)
+			img.set_pixel(x, y, Color(1, 1, 1, a))
+	var tex := ImageTexture.create_from_image(img)
+	_corners[key] = tex
+	return tex
 
 
 ## Solo las esquinas de arriba redondeadas (franja de color en el borde superior de un panel).
@@ -193,6 +265,25 @@ func top_strip(r: Rect2, color, radius := 10.0) -> void:
 	s.corner_radius_top_right = int(radius)
 	s.anti_aliasing = true
 	s.draw(canvas, r)
+
+
+## Rectángulo con degradado: de `a` a `b` de izquierda a derecha (o de arriba hacia abajo).
+func gradient(r: Rect2, a, b, horizontal := true) -> void:
+	var ca := col(a)
+	var cb := col(b)
+	var cols := PackedColorArray([ca, cb, cb, ca]) if horizontal else PackedColorArray([ca, ca, cb, cb])
+	RenderingServer.canvas_item_add_polygon(canvas, PackedVector2Array([r.position, Vector2(r.end.x, r.position.y),
+			r.end, Vector2(r.position.x, r.end.y)]), cols)
+
+
+## Valor que se acerca suave a `target` cuadro a cuadro (para animar el hover de menús). Se recuerda por `key`.
+func tween(key: String, target: float, speed := 0.22) -> float:
+	var v: float = anim.get(key, target)
+	v = lerpf(v, target, speed)
+	if absf(v - target) < 0.002:
+		v = target
+	anim[key] = v
+	return v
 
 
 func circle(center: Vector2, radius: float, color) -> void:
@@ -233,7 +324,7 @@ func hover(r: Rect2) -> bool:
 # ---------- texto ----------
 func text_size(s: String, size := 16, is_bold := false) -> Vector2:
 	var f := bold if is_bold else font
-	return Vector2(f.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x, f.get_height(size))
+	return Vector2(_width(s, size, is_bold), f.get_height(size))
 
 
 ## Dibuja un texto. `anchor` como en pygame: topleft, topright, midtop, center, midleft, midright, midbottom...
@@ -242,9 +333,8 @@ func text(s, pos: Vector2, size := 16, color = "text", is_bold := false, anchor 
 	var f := bold if is_bold else font
 	s = str(s)
 	if maxw > 0:
-		while f.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > maxw and s.length() > 1:
-			s = s.substr(0, s.length() - 2) + "…"
-	var w := f.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		s = _fit(s, size, is_bold, maxw)
+	var w := _width(s, size, is_bold)
 	var h := f.get_height(size)
 	var x := pos.x
 	var y := pos.y
@@ -261,18 +351,24 @@ func text(s, pos: Vector2, size := 16, color = "text", is_bold := false, anchor 
 
 
 func _lines(s: String, w: float, size: int, is_bold: bool) -> Array:
-	var f := bold if is_bold else font
+	var key := "%s|%d|%d|%s" % [s, int(w), size, is_bold]
+	var cached = _lines_cache.get(key)
+	if cached != null:
+		return cached
+	if _lines_cache.size() > 1500:
+		_lines_cache.clear()
 	var out := []
 	for para in s.split("\n"):
 		var cur := ""
 		for word in para.split(" "):
 			var test := (cur + " " + word).strip_edges()
-			if f.get_string_size(test, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x <= w:
+			if _width(test, size, is_bold) <= w:
 				cur = test
 			else:
 				out.append(cur)
 				cur = word
 		out.append(cur)
+	_lines_cache[key] = out
 	return out
 
 
@@ -340,6 +436,26 @@ func button(r: Rect2, label: String, enabled := true, kind := "normal", size := 
 	text(label, r.get_center(), size, fg, kind == "primary", "center", r.size.x - 8)
 	if tip_text != null and hover(r):
 		tip = tip_text
+	return hot and clicked
+
+
+## Opción de menú como en los videojuegos: texto grande que se corre a la derecha y se ilumina con una barra de
+## color al pasar el mouse. Devuelve true al hacer clic.
+func menu_item(key: String, pos: Vector2, label: String, sub := "", enabled := true, size := 30, w := 400.0,
+		selected := false, color = "accent") -> bool:
+	var h := size + 18.0 + (20.0 if sub else 0.0)
+	var r := Rect2(pos.x - 22, pos.y, w, h)
+	var hot := enabled and hover(r)
+	var k := tween("menu:" + key, 1.0 if hot or selected else 0.0)
+	var c := col(color)
+	if k > 0.01:
+		gradient(r, Color(c, 0.26 * k), Color(c, 0.0))
+		rect(Rect2(r.position.x, r.position.y + 5, 4, h - 10), Color(c, k), 2)
+	var x := pos.x + 16 * k
+	var fg: Color = COL.muted.darkened(0.25) if not enabled else COL.text.lerp(c, k)
+	text(label, Vector2(x, pos.y + 8), size, fg, true)
+	if sub:
+		text(sub, Vector2(x + 2, pos.y + 12 + size), 14, COL.muted if enabled else COL.muted.darkened(0.35), false, "topleft", w - 40)
 	return hot and clicked
 
 

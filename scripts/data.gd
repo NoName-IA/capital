@@ -120,6 +120,35 @@ const BEACH_BONUS := 1.2
 const RIVAL_PLOT_MAX := 4          # los rivales nunca se quedan con más de 4 terrenos
 const RIVAL_LAND_CHANCE := 0.25    # probabilidad mensual de que un rival compre un terreno vacío
 
+# Clima: cambia cada pocos días según la estación (enero = verano) y mueve la demanda de cada negocio.
+# Efectos: multiplicador por negocio, "all" para todos (gente en la calle), "beach" para los terrenos de la playa,
+# "stall" para los puestos al aire libre y "spoil" para lo perecedero (con calor se echa a perder más rápido).
+const WEATHER := [
+	{"name": "Soleado", "icon": "sun", "effects": {"beach": 1.25, "burger": 1.05, "cafe": 0.97},
+	 "news": "Día de sol: la playa se llena y las hamburguesas se venden más."},
+	{"name": "Parcialmente nublado", "icon": "partly", "effects": {},
+	 "news": "Cielo parcialmente nublado: un día normal para vender."},
+	{"name": "Nublado", "icon": "cloud", "effects": {"cafe": 1.08, "beach": 0.85},
+	 "news": "Día nublado: más gente busca un café caliente y la playa está más vacía."},
+	{"name": "Lluvia", "icon": "rain", "effects": {"all": 0.88, "cafe": 1.18, "tech": 1.1, "ropa": 0.85, "beach": 0.5, "stall": 0.75},
+	 "news": "Llueve: hay menos gente en la calle, pero el café se dispara y la playa se vacía. Los puestos al aire libre venden menos."},
+	{"name": "Ola de calor", "icon": "heat", "effects": {"cafe": 0.8, "pan": 0.92, "burger": 1.1, "beach": 1.5, "spoil": 1.6},
+	 "news": "¡Ola de calor! La playa explota de turistas, pero nadie quiere café caliente y lo perecedero se echa a perder más rápido."},
+	{"name": "Tormenta", "icon": "storm", "effects": {"all": 0.7, "cafe": 1.12, "beach": 0.3, "stall": 0.5},
+	 "news": "¡Tormenta! Casi nadie sale a la calle: los puestos y la playa casi no venden. Las megatiendas techadas aguantan mejor."},
+]
+# Probabilidad de cada clima por mes. [sol, parcial, nublado, lluvia, ola de calor, tormenta]
+const WEATHER_SEASON := [[0.55, 0.2, 0.08, 0.02, 0.15, 0.0], [0.55, 0.22, 0.1, 0.03, 0.1, 0.0],
+		[0.5, 0.28, 0.14, 0.06, 0.0, 0.02], [0.35, 0.3, 0.2, 0.12, 0.0, 0.03], [0.25, 0.28, 0.25, 0.17, 0.0, 0.05],
+		[0.18, 0.22, 0.28, 0.24, 0.0, 0.08], [0.18, 0.2, 0.3, 0.24, 0.0, 0.08], [0.22, 0.25, 0.28, 0.2, 0.0, 0.05],
+		[0.3, 0.3, 0.22, 0.15, 0.0, 0.03], [0.4, 0.3, 0.18, 0.1, 0.0, 0.02], [0.47, 0.28, 0.14, 0.06, 0.05, 0.0],
+		[0.5, 0.24, 0.1, 0.04, 0.12, 0.0]]
+const MAX_TEMP := [29, 28, 25, 21, 17, 14, 13, 15, 18, 21, 24, 27]   # máxima típica de cada mes (°C)
+
+# Estrellas de cada local (de 1 a 5): dependen de la atención, la reputación, la calidad y el precio, y mueven la
+# demanda de ese local: con 5 estrellas vende 15% más que con 3; con 1, 15% menos.
+const STAR_DEMAND := 0.075   # demanda extra por cada estrella sobre 3
+
 const CONCEPTS := [
 	["Ingresos", "Precio × unidades vendidas. Es lo que entra por ventas antes de restar cualquier costo."],
 	["Costo de ventas (COGS)", "Lo que te costó la mercancía que vendiste. Se calcula con el costo promedio del inventario."],

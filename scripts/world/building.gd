@@ -10,6 +10,9 @@ var root: Node3D
 var rects := []          # [x0, x1, z0, z1, alto] en el mundo: chocan con el jugador y con la cámara
 var spots := {}          # lugares en coordenadas del mundo (fila, mostrador, etc.)
 var glow: MeshInstance3D # vidrios que se iluminan de noche
+var brand := []          # letreros que dicen el nombre de la empresa (ver set_brand)
+var local := {}          # lugares del plano en coordenadas del local (repisas, cajas, reponedor)
+var blueprint_boxes := []  # las cajas del plano (coordenadas del local): con ellas se arma el camino de los empleados
 
 
 static func fonts() -> void:
@@ -44,10 +47,12 @@ static func label(parent: Node, text: String, pos: Vector3, ursina_scale: float,
 
 
 func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: String, title := "",
-		label_scale := 0.0) -> void:
-	var bp := Blueprints.blueprint(kind)
+		label_scale := 0.0, variant := -1, product := "") -> void:
+	var bp := Blueprints.blueprint(kind, variant, product)
 	var boxes: Array = bp[0]
 	var local_spots: Dictionary = bp[1]
+	local = local_spots
+	blueprint_boxes = boxes
 	var side: float = plot[1]
 	root = Node3D.new()
 	root.position = Vector3(plot[0], 0, side * Blueprints.FRONT)
@@ -58,10 +63,12 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 	var glass_glow := Boxes.new()
 	var lamps := Boxes.new()
 	for b in boxes:
-		var key: String = b[2]
-		var col: Color = product_color if key == "product" else Blueprints.PALETTE[key]
+		var key = b[2]
+		var col: Color = key if key is Color else (product_color if key == "product" else Blueprints.PALETTE[key])
 		var target := parts
-		if key == "glass":
+		if key is Color:
+			pass
+		elif key == "glass":
 			target = glass
 		elif key == "hq_glass":
 			target = glass_glow
@@ -95,10 +102,14 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 	for l in local_spots.get("indoor_lights", []):
 		Mats.light_volume(root, Vector3(l[0], l[1], l[2]), l[3], true)
 	for t in local_spots.get("texts", []):
-		label(root, t[1], t[0], t[2], Blueprints.PALETTE[t[3]])
+		var l := label(root, t[1], t[0], t[2], Blueprints.PALETTE[t[3]])
+		if t[1] == "CAPITAL":
+			l.set_meta("size", l.pixel_size)
+			brand.append(l)
 	for k in local_spots:
 		var v = local_spots[k]
-		if k in ["sign", "texts", "screen", "lights", "indoor_lights", "pick_faces"]:
+		if k in ["sign", "texts", "screen", "lights", "indoor_lights", "pick_faces", "shelf_rows", "levels", "registers",
+				"stall_slots", "restock"]:
 			continue
 		if k == "ceiling":  # [x0, x1, z0, z1, altura] en el mundo
 			var a := Blueprints.to_world(plot, v[0], v[2])
@@ -122,6 +133,17 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 	spots["face_yaw"] = PI if side == 1 else 0.0
 	spots["local_screen"] = local_spots.get("screen")
 	spots["pick_faces"] = local_spots.get("pick_faces", [])
+
+
+## Cambia el nombre de la empresa en los letreros (los nombres largos se achican para que quepan).
+static func set_brand_text(l: Label3D, name: String) -> void:
+	l.text = name.to_upper()
+	l.pixel_size = float(l.get_meta("size", l.pixel_size)) * minf(1.0, 9.0 / max(1, name.length()))
+
+
+func set_brand(name: String) -> void:
+	for l in brand:
+		set_brand_text(l, name)
 
 
 func destroy() -> void:
