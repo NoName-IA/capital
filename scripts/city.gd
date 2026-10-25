@@ -23,7 +23,8 @@ const DEFAULT_SETTINGS := {"music": 0.7, "effects": 0.8, "sensitivity": 1.0, "fo
 		# Gráficos extra (no cambian el nivel): ver Graphics.apply
 		"g_shadow_dist": 1, "g_shadow_soft": 0, "g_glow_amt": 1.0, "g_bright": 1.0, "g_contrast": 1.0, "g_sat": 1.0,
 		"g_tonemap": 0, "g_fog": true, "g_rain": true, "g_night_lights": true, "g_fps_limit": 1, "g_vsync": true,
-		"g_view": 3, "g_crowd": 1, "g_show_fps": false}
+		"g_view": 3, "g_crowd": 1, "g_show_fps": false,
+		"window": []}   # posición y tamaño de la ventana (modo ventana): [x, y, ancho, alto]
 
 var main
 var app: Admin
@@ -133,6 +134,7 @@ func setup_ui(admin: Admin, ui: ImUI, hud_parent: RID) -> void:
 	overlays = Overlays.new(self, ui, admin)
 	hud = Hud.new(self, hud_parent)
 	apply_settings()
+	restore_window()
 	if settings.fullscreen and not is_fullscreen():
 		toggle_fullscreen()
 	overlays.show("admin")
@@ -149,6 +151,8 @@ func load_settings() -> Dictionary:
 				s[k] = data[k]
 		if data.get("keys") is Dictionary:
 			s.keys = data.keys
+		if data.get("window") is Array and data.window.size() == 4:
+			s.window = data.window.map(func(v): return int(v))
 	# Siempre activos (ya no se pueden apagar): ciclo de día y noche, comentarios de los clientes y ayuda al empezar
 	s.day_night = true
 	s.comments = true
@@ -158,6 +162,7 @@ func load_settings() -> Dictionary:
 
 
 func save_settings() -> void:
+	remember_window()
 	settings.keys = Keys.map.duplicate()
 	Admin.write_file(config_path, JSON.stringify(settings, "  "))
 
@@ -184,8 +189,43 @@ func is_fullscreen() -> bool:
 ## salir con Alt+Tab, y entonces F11 no sacaba la pantalla completa).
 func toggle_fullscreen() -> void:
 	var go_full := not is_fullscreen()
+	if go_full:
+		remember_window()
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if go_full else DisplayServer.WINDOW_MODE_WINDOWED)
+	if not go_full:
+		restore_window()
 	settings.fullscreen = go_full
+
+
+## Guarda dónde estaba la ventana y su tamaño (solo en modo ventana normal, no maximizada).
+func remember_window() -> void:
+	if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_WINDOWED:
+		return
+	var pos := DisplayServer.window_get_position()
+	var size := DisplayServer.window_get_size()
+	settings.window = [pos.x, pos.y, size.x, size.y]
+
+
+## Pone la ventana como la dejaste la última vez. Si no hay nada guardado, o ya no cabe (por ejemplo, cambiaste de
+## monitor), usa el 80 % del espacio libre de la pantalla (sin la barra de tareas) y la centra.
+func restore_window() -> void:
+	if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_WINDOWED:
+		return
+	var free := DisplayServer.screen_get_usable_rect(DisplayServer.window_get_current_screen())
+	var w: Array = settings.get("window", [])
+	var rect := Rect2i()
+	if w.size() == 4:
+		rect = Rect2i(w[0], w[1], w[2], w[3])
+	if rect.size.x < 320 or rect.size.y < 200 or not free.intersects(rect):
+		var size := Vector2i(Vector2(free.size) * 0.8)
+		size.x = mini(size.x, size.y * 16 / 9)
+		rect = Rect2i(free.position + (free.size - size) / 2, size)
+	# Que no se salga: el tamaño no pasa del espacio libre (dejando lugar para la barra de título) y el borde superior
+	# queda dentro de la pantalla para poder arrastrarla.
+	rect.size = rect.size.min(free.size - Vector2i(16, 40))
+	rect.position = rect.position.clamp(free.position + Vector2i(0, 32), free.end - rect.size - Vector2i(0, 8))
+	DisplayServer.window_set_size(rect.size)
+	DisplayServer.window_set_position(rect.position)
 
 
 # ---------- mouse ----------
