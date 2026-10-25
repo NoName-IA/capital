@@ -1,0 +1,43 @@
+; Engine configuration file.
+; Capital: simulador de negocios en 3D (versión Godot).
+
+config_version=5
+
+[application]
+
+config/name="Capital"
+config/description="Vende, invierte y construye tu imperio."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[autoload]
+
+D="*res://scripts/data.gd"
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=false
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+
+lights_and_shadows/directional_shadow/size=2048
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=1
+
+[debug]
+
+gdscript/warnings/inference_on_variant=0
+gdscript/warnings/integer_division=0
+gdscript/warnings/narrowing_conversion=0
+gdscript/warnings/unused_parameter=0
+gdscript/warnings/shadowed_global_identifier=0

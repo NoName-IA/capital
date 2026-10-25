@@ -1,0 +1,13 @@
+# Godot
+.godot/
+*.translation
+export/
+export_presets.cfg
+
+# Capturas que generan los escenarios de prueba
+tests/shots/
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store
