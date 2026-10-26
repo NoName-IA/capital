@@ -11,7 +11,7 @@ func _ready() -> void:
 			"test_save_and_load_continue", "test_wardrobe", "test_modes", "test_fund_hq_and_sweep",
 			"test_strategies", "test_rivals_buy_empty_plots", "test_selling_to_a_rival", "test_beach_plots",
 			"test_formats", "test_no_stock_without_stores", "test_loan_interest_accrues",
-			"test_weather_moves_demand", "test_stars"]:
+			"test_weather_moves_demand", "test_stars", "test_city_activities"]:
 		var before := failures
 		call(t)
 		print(("OK    " if failures == before else "FALLA ") + t)
@@ -41,6 +41,9 @@ func net_income(g: Game) -> float:
 ## Hace un poco de todo para tocar todas las cuentas contables.
 func busy_player(g: Game, day: int) -> void:
 	var cafe: Dictionary = g.products.cafe
+	if day % 9 == 0:   # las actividades de la ciudad también tienen que cuadrar en la contabilidad
+		for a in D.ACTIVITIES:
+			g.do_activity(a[0], 18.0)
 	if day == 5:
 		g.take_loan(4000, 12)
 	if day % 20 == 0:
@@ -313,3 +316,31 @@ func test_stars() -> void:
 	near(five / one, (1.0 + 2 * D.STAR_DEMAND) / (1.0 - 2 * D.STAR_DEMAND), 0.0001, "5 estrellas venden más que 1")
 	var b := Game.from_json(g.to_json())
 	near(Game.stars_of(b.locations[0]), 1.0, 0.0001, "las estrellas se guardan")
+
+
+func test_city_activities() -> void:
+	var g := Game.new(4)
+	g.cash += 100000
+	g.open_location("cafe", 1)
+	for i in 3:
+		g.step_day()
+	var aw: float = g.products.cafe.awareness
+	var cash0 := g.cash
+	check(g.do_activity("muestras")[0], "muestras")
+	check(g.products.cafe.awareness > aw, "muestras suben el conocimiento")
+	near(g.cash, cash0 - g.activity_cost("muestras"), 0.01, "muestras cuestan")
+	check(not g.do_activity("muestras")[0], "muestras: hay que esperar")
+	var rep: float = g.products.cafe.reputation
+	check(g.do_activity("encuesta")[0], "encuesta")
+	near(g.products.cafe.reputation, rep + 2, 0.001, "encuesta +2 reputación")
+	check(g.do_activity("voley")[0], "vóley")
+	check(g.beach_boost_days == 7, "vóley: 7 días en la playa")
+	var c1 := g.cash
+	check(g.do_activity("pesca", 6.0)[0], "pesca")
+	check(g.cash > c1, "la pesca da plata")
+	check(not g.do_activity("pesca")[0], "una pesca por día")
+	g.step_day()
+	check(g.do_activity("pesca")[0], "al otro día se puede pescar")
+	check(g.beach_boost_days == 6, "el torneo se acaba solo")
+	var b := Game.from_json(g.to_json())
+	check(b.activity_wait("voley") == g.activity_wait("voley") and b.beach_boost_days == 6, "se guarda")

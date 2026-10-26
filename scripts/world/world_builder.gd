@@ -16,6 +16,9 @@ var boats := []
 var beacon: MeshInstance3D
 var lamp_node: MeshInstance3D
 var lamp_spots := []             # dónde cuelga la luz de cada farol
+var small_lights := []           # otras luces de noche: [posición, nivel] (focos de las casas, muelle, fuente, faro...)
+const VOLLEY := Vector3(146.0, 0.0, -44.0)   # centro de la cancha de vóley de la playa
+var activity_spots := {}         # actividad de la ciudad (D.ACTIVITIES) -> dónde se hace (ver _activities)
 var park_spots := []             # (x, z) de bancas, faroles y adornos del parque: los árboles no se ponen encima
 var diario := {}                 # textos de la pantalla del clima del kiosco ELDIARIO
 var diario_seller: Person
@@ -99,13 +102,18 @@ func _eldiario() -> void:
 	city.add_child(seller)
 	seller.position = Vector3(x + 0.4, 0, z0 + 1.4)
 	seller.rotation.y = PI
-	Mats.light_volume(city, Vector3(x, 2.8, z0 + d / 2), 5.0, true)
+	Mats.add_light(city, Vector3(x, 2.8, z0 + d / 2), 10.0)
 
 
-## Un volumen de luz por farol (ver shaders/lamp_light.gdshader). De día la energía es 0 y no se nota.
+## Una luz por farol (ver Mats.add_light). De día están apagadas.
 func _lamp_lights() -> void:
 	for p in lamp_spots:
-		Mats.light_volume(city, p, 17.0 if p.z > -9.0 else 9.0)  # la avenida entera; en el parque, alrededor del farol
+		Mats.add_light(city, p, 15.0 if p.z > -9.0 else 12.0)  # faroles de la avenida y del parque
+	for l in small_lights:
+		Mats.add_light(city, l[0], l[1])
+	# Reflectores al pie de la oficina central que alumbran la fachada desde abajo
+	for x in [-86.0, -74.0]:
+		Mats.add_light(city, Vector3(x, 0.9, 9.6), 12.0)
 
 
 ## La calle sigue por la arena y se mete al mar: tramos cortos que siguen la pendiente (ver Actors.road_y).
@@ -151,29 +159,29 @@ func _box_node(pos: Vector3, size: Vector3, mat: Material) -> MeshInstance3D:
 # ---------- terreno, mar, calle ----------
 func _terrain() -> void:
 	var ground := _mesh_node(Terrain.build_mesh(), Mats.textured(Mats.grass, 0.95), Vector3.ZERO)
-	ground.material_override.vertex_color_use_as_albedo = true
 	var sea := _plane(Vector2(800, 1100), Mats.water, Vector3(Terrain.COAST + 400, Terrain.SEA_LEVEL, 0))
 	sea.name = "Mar"
 
 
 func _avenue() -> void:
 	# Calle y veredas con textura propia
-	var road := _box_node(Vector3(18, 0.005, 0), Vector3(280, 0.01, 12), Mats.textured(Mats.asphalt, 0.95, Color8(80, 83, 90), Vector3(47, 2, 1)))
+	# La calle va de x = -250 (en el valle de los cerros) a 158 (donde se mete al mar, ver _road_to_sea)
+	var road := _box_node(Vector3(-46, 0.005, 0), Vector3(408, 0.01, 12), Mats.textured(Mats.asphalt, 0.95, Color8(80, 83, 90), Vector3(68, 2, 1)))
 	road.name = "Calle"
 	for side in [-1, 1]:
-		_box_node(Vector3(18, 0.02, side * SIDEWALK), Vector3(280, 0.04, 3), Mats.textured(Mats.tiles, 0.9, Color8(200, 200, 195), Vector3(93, 1, 1)))
+		_box_node(Vector3(-46, 0.02, side * SIDEWALK), Vector3(408, 0.04, 3), Mats.textured(Mats.tiles, 0.9, Color8(200, 200, 195), Vector3(136, 1, 1)))
 	for z in [-0.15, 0.15]:
-		props.box(Vector3(18, 0.015, z), Vector3(280, 0.01, 0.12), Color8(230, 190, 60))
+		props.box(Vector3(-46, 0.015, z), Vector3(408, 0.01, 0.12), Color8(230, 190, 60))
 	for side in [-1, 1]:
-		props.box(Vector3(18, 0.06, side * 6.0), Vector3(280, 0.12, 0.12), Color8(150, 150, 145))
-		for x in range(-110, 154, 8):
+		props.box(Vector3(-46, 0.06, side * 6.0), Vector3(408, 0.12, 0.12), Color8(150, 150, 145))
+		for x in range(-246, 154, 8):
 			props.box(Vector3(x, 0.012, side * 3), Vector3(3, 0.01, 0.15), Color8(220, 220, 220))
 	rng.seed = 9
 	for side in [-1, 1]:
 		for x in [-66, -44, -22, 0, 22, 44, 66, 88, -90]:
 			if not (side == -1 and x == 0):  # ahí está la entrada del parque
 				tree(Vector3(x, 0, side * 9.6))
-		for x in range(-88, 155, 22):
+		for x in range(-154, 155, 22):   # los faroles siguen un poco por el camino a los cerros
 			if side == -1 and x == 0:
 				continue  # frente a la entrada del parque
 			var pos := Vector3(x, 0, side * 6.4)
@@ -251,6 +259,65 @@ func _zones() -> void:
 	_barrio()
 	_park()
 	_beach()
+	_activities()
+
+
+## Lugares de la ciudad donde se hace algo útil para el negocio (ver Game.do_activity): el stand de muestras del
+## parque, el tablón de vecinos del barrio, la cancha de vóley de la playa y la punta del muelle para pescar.
+func _activities() -> void:
+	var wood := Color8(150, 110, 70)
+	var white := Color8(245, 245, 240)
+	# Parque: stand de muestras gratis, al lado de la fuente
+	var sp := Vector3(6.5, 0, -27.5)
+	props.box(sp + Vector3(0, 0.45, 0), Vector3(2.4, 0.9, 0.9), Color8(220, 80, 60))
+	props.box(sp + Vector3(0, 0.93, 0), Vector3(2.6, 0.06, 1.0), white)
+	for dx in [-1.2, 1.2]:
+		props.box(sp + Vector3(dx, 1.5, -0.4), Vector3(0.08, 2.2, 0.08), white)
+	props.box(sp + Vector3(0, 2.62, -0.1), Vector3(2.8, 0.08, 1.4), Color8(240, 200, 70))
+	for k in 5:   # vasitos y bolsitas de muestra
+		props.box(sp + Vector3(-0.9 + k * 0.45, 1.03, 0.1), Vector3(0.14, 0.14, 0.14), [white, Color8(230, 180, 90)][k % 2])
+	var l := Building.label(city, "MUESTRAS GRATIS", sp + Vector3(0, 2.3, -0.42), 9, Color8(40, 40, 44), true, false)
+	l.rotation.y = 0.0
+	rects.append([sp.x - 1.3, sp.x + 1.3, sp.z - 0.5, sp.z + 0.5, 0.95])
+	activity_spots["muestras"] = sp + Vector3(0, 0, 1.2)
+	park_spots.append(Vector2(sp.x, sp.z))
+	# Barrio: tablón de anuncios de los vecinos, a la entrada del pasaje
+	var bp := Vector3(-44, 0, 45)
+	for dx in [-1.0, 1.0]:
+		props.box(bp + Vector3(dx, 1.0, 0), Vector3(0.12, 2.0, 0.12), wood)
+	props.box(bp + Vector3(0, 1.45, 0), Vector3(2.3, 1.1, 0.1), Color8(170, 125, 80))
+	props.box(bp + Vector3(0, 2.05, 0), Vector3(2.5, 0.1, 0.3), Color8(110, 80, 55))
+	for k in 6:   # papelitos clavados
+		props.box(bp + Vector3(-0.8 + (k % 3) * 0.75, 1.65 - (k / 3) * 0.45, -0.07), Vector3(0.45, 0.32, 0.01),
+				[white, Color8(250, 230, 120), Color8(170, 210, 240)][k % 3])
+	l = Building.label(city, "VECINOS", bp + Vector3(0, 1.88, -0.07), 8, Color8(40, 40, 44), true, false)
+	l.rotation.y = PI
+	rects.append([bp.x - 1.15, bp.x + 1.15, bp.z - 0.1, bp.z + 0.1, 2.1])
+	activity_spots["encuesta"] = bp + Vector3(0, 0, -1.2)
+	# Playa: cancha de vóley con la red y el letrero del torneo, en la arena plana antes de la orilla (más cerca del mar
+	# el suelo baja y la cancha quedaba flotando)
+	var vp := VOLLEY
+	for dz in [-3.0, 3.0]:
+		props.box(vp + Vector3(0, 1.2, dz), Vector3(0.1, 2.4, 0.1), white)
+	props.box(vp + Vector3(0, 2.15, 0), Vector3(0.03, 0.7, 6.0), Color8(235, 235, 235))
+	props.box(vp + Vector3(0, 2.48, 0), Vector3(0.05, 0.06, 6.0), Color8(40, 90, 200))
+	for dx in [-4.0, 4.0]:   # líneas de la cancha
+		props.box(vp + Vector3(dx, 0.02, 0), Vector3(0.08, 0.02, 6.0), Color8(40, 90, 200))
+	for dz in [-3.0, 3.0]:
+		props.box(vp + Vector3(0, 0.02, dz), Vector3(8.0, 0.02, 0.08), Color8(40, 90, 200))
+	# Letrero mirando hacia la calle, al lado de la cancha
+	var sg := vp + Vector3(-2.5, 0, 4.6)
+	props.box(sg + Vector3(0, 0.75, 0), Vector3(0.1, 1.5, 0.1), wood)
+	props.box(sg + Vector3(0, 1.75, 0), Vector3(2.4, 0.8, 0.1), Color8(40, 90, 200))
+	Building.label(city, "TORNEO DE VÓLEY", sg + Vector3(0, 1.75, 0.06), 7, Color.WHITE, true, false)
+	rects.append([vp.x - 0.1, vp.x + 0.1, vp.z - 3.1, vp.z + 3.1, 2.5])
+	rects.append([sg.x - 1.2, sg.x + 1.2, sg.z - 0.1, sg.z + 0.1, 2.15])
+	activity_spots["voley"] = sg + Vector3(0, 0, 1.2)
+	# Muelle: balde y caña en la punta, para pescar
+	var fp := Vector3(202.0, 0.42, 24.0)
+	props.box(fp + Vector3(0.6, 0.18, 0.7), Vector3(0.3, 0.36, 0.3), Color8(60, 110, 170))
+	props.box_rot(fp + Vector3(0.9, 0.9, -0.6), Vector3(0.04, 2.2, 0.04), Color8(70, 50, 35), Vector3(0, 0, -35))
+	activity_spots["pesca"] = fp
 
 
 ## Barrio Las Lomas: casas detrás de los locales, a ambos lados de la avenida.
@@ -296,6 +363,11 @@ func house(pos: Vector3, face: int, pastel: Array, roofs: Array) -> void:
 	var dx := (1 if rng.randf() < 0.5 else -1) * w * 0.22
 	props.box(Vector3(pos.x + dx, 1.05, front), Vector3(1.1, 2.1, 0.08), Color8(120, 75, 45))
 	props.box(Vector3(pos.x + dx, 0.1, front + face * 0.6), Vector3(1.6, 0.2, 1.2), Color8(185, 180, 170))
+	# Foco de la entrada: de noche alumbra la puerta y el antejardín
+	var lx := pos.x + dx + 0.95
+	props.box(Vector3(lx, 2.35, front + face * 0.06), Vector3(0.14, 0.14, 0.12), Color8(40, 40, 44))
+	lamps.box(Vector3(lx, 2.2, front + face * 0.14), Vector3(0.2, 0.26, 0.2), Color8(255, 225, 160))
+	small_lights.append([Vector3(lx, 2.2, front + face * 0.4), 10.0])
 	windows.box(Vector3(pos.x - dx, h * 0.55, front), Vector3(1.6, 1.1, 0.06), Color8(170, 205, 230))
 	var back := pos.z - face * (d / 2 + 0.02)
 	for wx in [-w * 0.25, w * 0.25]:
@@ -333,7 +405,8 @@ func _park() -> void:
 	_box_node(Vector3(0, 0.02, (pz0 + pz1) / 2), Vector3(3.2, 0.02, pz0 - pz1), path_mat)
 	_box_node(Vector3(0, 0.021, -34), Vector3(px1 - px0, 0.02, 3), Mats.textured(Mats.tiles, 0.9, Color8(215, 200, 170), Vector3(24, 2, 1)))
 	# Cerco de arbustos (con textura de hojas y matas que sobresalen arriba) con la entrada en el centro, y un arco con
-	# el nombre. Se puede subir encima y cruzarlo saltando.
+	# el nombre. Se puede saltar encima y cruzarlo: el choque llega hasta arriba de las matas (1,05 m), así de costado
+	# no se atraviesa y arriba no se hunden los pies.
 	var hedges := Boxes.new()
 	var segs := []
 	for x in range(int(px0), int(px1) + 1, 2):
@@ -359,10 +432,11 @@ func _park() -> void:
 		props.box(Vector3(x, 1.7, pz0 - 0.3), Vector3(0.6, 3.4, 0.6), Color8(190, 180, 160))
 	props.box(Vector3(0, 3.5, pz0 - 0.3), Vector3(6.4, 0.9, 0.5), Color8(60, 110, 70))
 	Building.label(city, "PARQUE CENTRAL", Vector3(0, 3.5, pz0 - 0.02), 13, Color8(250, 245, 225), true, false)
-	rects += [[px0 - 0.5, -2.2, pz0 - 0.8, pz0 + 0.2, 0.95], [2.2, px1 + 0.5, pz0 - 0.8, pz0 + 0.2, 0.95],
-			[px0 - 0.5, px1 + 0.5, pz1 - 0.2, pz1 + 0.8, 0.95],
-			[px0 - 0.5, px0 + 0.5, pz1, -36, 0.95], [px0 - 0.5, px0 + 0.5, -32, pz0, 0.95],
-			[px1 - 0.5, px1 + 0.5, pz1, -36, 0.95], [px1 - 0.5, px1 + 0.5, -32, pz0, 0.95]]
+	var hh := 1.05
+	rects += [[px0 - 0.5, -2.2, pz0 - 0.8, pz0 + 0.2, hh], [2.2, px1 + 0.5, pz0 - 0.8, pz0 + 0.2, hh],
+			[px0 - 0.5, px1 + 0.5, pz1 - 0.2, pz1 + 0.8, hh],
+			[px0 - 0.5, px0 + 0.5, pz1, -36, hh], [px0 - 0.5, px0 + 0.5, -32, pz0, hh],
+			[px1 - 0.5, px1 + 0.5, pz1, -36, hh], [px1 - 0.5, px1 + 0.5, -32, pz0, hh]]
 	# Fuente en el cruce de senderos
 	var fx := 0.0
 	var fz := -34.0
@@ -375,6 +449,10 @@ func _park() -> void:
 		props.mesh(cyl, Transform3D(Basis.IDENTITY, Vector3(fx, c[2] + c[1] / 2, fz)), Color8(190, 185, 175))
 	_disc(2.95, Vector3(fx, 0.58, fz), Mats.water)
 	rects.append([fx - 3.2, fx + 3.2, fz - 3.2, fz + 3.2, 0.6])
+	for k in 4:   # luces en el borde de la fuente, que la alumbran de noche
+		var a := k * TAU / 4 + PI / 4
+		lamps.box(Vector3(fx + cos(a) * 3.0, 0.64, fz + sin(a) * 3.0), Vector3(0.22, 0.08, 0.22), Color8(255, 225, 160))
+	small_lights.append([Vector3(fx, 1.2, fz), 10.0])
 	var flowers := [Color8(230, 70, 80), Color8(250, 200, 60), Color8(240, 240, 245), Color8(180, 90, 200), Color8(250, 140, 60)]
 	for k in 28:
 		var a := k / 28.0 * TAU
@@ -524,7 +602,10 @@ func _beach() -> void:
 			rects.append([x - 0.3, x + 0.3, side * 9.6 - 0.3, side * 9.6 + 0.3, 6])
 	for side in [-1, 1]:  # y detrás de los terrenos
 		for x in range(112, int(coast) + 4, 7):
-			palm(Vector3(x + rng.randf_range(-2, 2), 0, side * rng.randf_range(30, 56)))
+			var pp := Vector3(x + rng.randf_range(-2, 2), 0, side * rng.randf_range(30, 56))
+			if absf(pp.x - VOLLEY.x) < 7.0 and absf(pp.z - VOLLEY.z) < 7.0:
+				continue   # ahí está la cancha de vóley
+			palm(pp)
 	var colors := [Color8(230, 70, 70), Color8(60, 140, 220), Color8(250, 200, 60), Color8(240, 240, 240)]
 	for z in [-50, -38, -31, 33, 45, 52]:
 		var x := rng.randf_range(coast - 2, coast + 3)
@@ -541,6 +622,13 @@ func _beach() -> void:
 		props.box(Vector3(x + 1.5, 0.35, 24), Vector3(3, 0.14, 2.6), Color8(150, 110, 70))
 		for dz in [-1.2, 1.2]:
 			props.box(Vector3(x, -1.5, 24 + dz), Vector3(0.25, 4, 0.25), Color8(110, 80, 55))
+	for i in 5:   # faroles del muelle, alternando lados
+		var px: float = coast + 4 + i * 9
+		var pz := 24.0 + (1.2 if i % 2 == 0 else -1.2)
+		props.box(Vector3(px, 1.6, pz), Vector3(0.1, 2.5, 0.1), Color8(40, 40, 44))
+		props.box(Vector3(px, 2.9, pz), Vector3(0.34, 0.06, 0.34), Color8(40, 40, 44))
+		lamps.box(Vector3(px, 2.7, pz), Vector3(0.28, 0.34, 0.28), Color8(255, 225, 160))
+		small_lights.append([Vector3(px, 2.6, pz), 12.0])
 	for i in 5:  # veleros que se mecen
 		var b := Boxes.new()
 		b.box(Vector3(0, 0.3, 0), Vector3(1.6, 0.7, 5), Color8(245, 245, 245))
@@ -574,10 +662,10 @@ func _beach() -> void:
 	sphere.radius = 0.75
 	sphere.height = 1.5
 	beacon = _mesh_node(sphere, Mats.emissive, Vector3(hx, hy + 11.2, hz))
+	small_lights.append([Vector3(hx, hy + 11.2, hz), 15.0])
 	beacon.material_override = Mats.textured(null, 0.3, Color8(255, 235, 160))
-	beacon.material_override.emission_enabled = true
-	beacon.material_override.emission = Color8(255, 220, 140)
-	beacon.material_override.emission_energy_multiplier = 0.3
+	beacon.material_override.set_shader_parameter("emission", Color8(255, 220, 140))
+	beacon.material_override.set_shader_parameter("emission_energy", 0.3)
 
 
 ## Palmera: tronco curvo de segmentos y hojas largas inclinadas.

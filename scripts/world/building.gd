@@ -80,7 +80,8 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 			var s: Vector3 = b[1]
 			var a := Blueprints.to_world(plot, c.x - s.x / 2, c.z - s.z / 2)
 			var e := Blueprints.to_world(plot, c.x + s.x / 2, c.z + s.z / 2)
-			rects.append([min(a.x, e.x), max(a.x, e.x), min(a.z, e.z), max(a.z, e.z), c.y + s.y / 2])
+			var top: float = b[3] if b[3] is float else c.y + s.y / 2
+			rects.append([min(a.x, e.x), max(a.x, e.x), min(a.z, e.z), max(a.z, e.z), top])
 	parts.node(root, Mats.standard)
 	if not glass.is_empty():
 		glass.node(root, Mats.shop_glass, false)
@@ -97,10 +98,12 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 			label(root, title, p + Vector3(0, -0.32 * size / 26.0, 0), size * 0.55, Color.WHITE, false)
 	# Luz cálida adentro, que de noche sale por la puerta y las vitrinas: [x, y, z, radio] locales
 	for l in local_spots.get("lights", []):
-		Mats.light_volume(root, Vector3(l[0], l[1], l[2]), l[3])
+		Mats.add_light(root, Vector3(l[0], l[1], l[2]), 11.0)
+	if local_spots.has("indoor_lights") and not local_spots.has("lights"):
+		Mats.add_light(root, Vector3(0, 2.8, 1.2), 11.0)   # la luz de adentro que sale por la puerta a la vereda
 	# Luz de los paneles del techo: adentro siempre está prendida, de día y de noche
 	for l in local_spots.get("indoor_lights", []):
-		Mats.light_volume(root, Vector3(l[0], l[1], l[2]), l[3], true)
+		Mats.add_light(root, Vector3(l[0], l[1], l[2]), 15.0, true)
 	for t in local_spots.get("texts", []):
 		var l := label(root, t[1], t[0], t[2], Blueprints.PALETTE[t[3]])
 		if t[1] == "CAPITAL":

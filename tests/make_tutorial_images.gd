@@ -2,7 +2,7 @@ extends RefCounted
 ## Saca las imágenes del tutorial (images/tutorial/*.png) desde el juego. Volver a correrlo si cambia la ciudad:
 ## Godot --path . -- --scenario=res://tests/make_tutorial_images.gd   (y después --import)
 
-const OUT := "res://images/tutorial/"
+const OUT := "res://assets/imagenes/tutorial/"
 
 
 func save(m, name: String) -> void:

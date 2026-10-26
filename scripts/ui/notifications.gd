@@ -27,6 +27,7 @@ const APPS := {
 	"alerta": ["ALERTA", Color8(225, 85, 75), "alert"],
 	"clima": ["CLIMA", Color8(90, 170, 230), "umbrella"],
 	"resenas": ["RESEÑAS", Color8(240, 190, 60), "star"],
+	"ciudad": ["CIUDAD", Color8(90, 180, 120), "building"],
 }
 
 var city

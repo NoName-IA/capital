@@ -9,12 +9,12 @@ config/name="Capital"
 config/description="Vende, invierte y construye tu imperio."
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://capital.png"
-config/windows_native_icon="res://capital.ico"
+config/icon="res://assets/icono/capital.png"
+config/windows_native_icon="res://assets/icono/capital.ico"
 
 [autoload]
 
-D="*res://scripts/data.gd"
+D="*res://scripts/economy/data.gd"
 
 [display]
 
@@ -45,3 +45,42 @@ gdscript/warnings/integer_division=0
 gdscript/warnings/narrowing_conversion=0
 gdscript/warnings/unused_parameter=0
 gdscript/warnings/shadowed_global_identifier=0
+
+[shader_globals]
+
+city_lights={
+"type": "sampler2D",
+"value": ""
+}
+city_light_grid={
+"type": "sampler3D",
+"value": ""
+}
+city_grid_origin={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+city_grid_size={
+"type": "vec3",
+"value": Vector3(1, 1, 1)
+}
+city_lamps_on={
+"type": "float",
+"value": 0.0
+}
+city_light_count={
+"type": "int",
+"value": 0
+}
+city_room_count={
+"type": "int",
+"value": 0
+}
+city_daylight={
+"type": "float",
+"value": 1.0
+}
+city_block_light={
+"type": "float",
+"value": 3.5
+}
