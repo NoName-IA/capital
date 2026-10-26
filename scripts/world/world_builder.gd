@@ -116,22 +116,31 @@ func _lamp_lights() -> void:
 		Mats.add_light(city, Vector3(x, 0.9, 9.6), 12.0)
 
 
-## La calle sigue por la arena y se mete al mar: tramos cortos que siguen la pendiente (ver Actors.road_y).
+## La calle sigue por la arena y se mete al mar: tramos cortos que siguen la pendiente (ver Actors.road_y). Las
+## veredas y las soleras bajan con ella.
 func _road_to_sea() -> void:
 	var asphalt := Boxes.new()
 	var lines := Boxes.new()
+	var walk := Boxes.new()
 	var x := 157.0
 	while x < Actors.ROAD_END:
 		var y0 := Actors.road_y(x)
 		var y1 := Actors.road_y(x + 2.0)
 		var tilt := rad_to_deg(atan2(y1 - y0, 2.0))
 		var c := Vector3(x + 1.0, (y0 + y1) / 2.0 - 0.02, 0)
-		asphalt.box_rot(c, Vector3(2.05, 0.06, 12), Color8(80, 83, 90), Vector3(0, 0, tilt))
-		for z in [-0.15, 0.15]:
-			lines.box_rot(c + Vector3(0, 0.035, z), Vector3(2.05, 0.01, 0.12), Color8(230, 190, 60), Vector3(0, 0, tilt))
+		asphalt.box_rot(c, Vector3(2.05, 0.06, 12), Color.WHITE, Vector3(0, 0, tilt))
+		for z in [-0.15, 0.15]:   # un poco más arriba que el asfalto: si no, la línea se ve cortada
+			lines.box_rot(c + Vector3(0, 0.045, z), Vector3(2.05, 0.01, 0.12), Color8(230, 190, 60), Vector3(0, 0, tilt))
+		if int(x) % 8 == 1:   # las líneas blancas de los carriles siguen cada 8 m, como en la avenida
+			for z in [-3.0, 3.0]:
+				lines.box_rot(c + Vector3(0, 0.045, z), Vector3(3, 0.01, 0.15), Color8(220, 220, 220), Vector3(0, 0, tilt))
+		for side in [-1, 1]:
+			walk.box_rot(c + Vector3(0, 0.02, side * SIDEWALK), Vector3(2.05, 0.1, 3), Color.WHITE, Vector3(0, 0, tilt))
+			lines.box_rot(c + Vector3(0, 0.07, side * 6.0), Vector3(2.05, 0.12, 0.12), Color8(150, 150, 145), Vector3(0, 0, tilt))
 		x += 2.0
-	asphalt.node(city, Mats.textured(Mats.asphalt, 0.95, Color.WHITE, Vector3(1, 1, 1)), false)
+	asphalt.node(city, Mats.textured(Mats.asphalt, 0.95, Color8(80, 83, 90), Vector3(1, 1, 1)), false)
 	lines.node(city, Mats.standard, false)
+	walk.node(city, Mats.textured(Mats.tiles, 0.9, Color8(200, 200, 195), Vector3(0.67, 0.67, 1)), false)
 
 
 func _mesh_node(mesh: Mesh, material: Material, pos: Vector3, shadows := false) -> MeshInstance3D:
@@ -161,6 +170,47 @@ func _terrain() -> void:
 	var ground := _mesh_node(Terrain.build_mesh(), Mats.textured(Mats.grass, 0.95), Vector3.ZERO)
 	var sea := _plane(Vector2(800, 1100), Mats.water, Vector3(Terrain.COAST + 400, Terrain.SEA_LEVEL, 0))
 	sea.name = "Mar"
+	_tunnel()
+
+
+## Al oeste la avenida entra a un túnel que atraviesa la montaña (ver Terrain.mountain_height). Desde la ciudad se
+## ve la boca con su muro de concreto y las luces de adentro; los autos entran y salen por ahí.
+func _tunnel() -> void:
+	var hill := _mesh_node(Terrain.build_patch(-270.0, -96.0, 106.0, 192.0, 2.0, Terrain.mountain_height,
+			Terrain.mountain_hole), Mats.textured(Mats.grass, 0.95), Vector3.ZERO, true)
+	hill.name = "Montaña"
+	var x := Terrain.TUNNEL_X
+	var half := Terrain.PORTAL_HALF
+	var top := Terrain.PORTAL_TOP
+	var wing := Terrain.PORTAL_WING
+	var high := 7.2      # alto de la entrada
+	var deep := 4.0      # grosor del muro de la boca
+	var tube := 38.0     # largo del túnel que se alcanza a ver; al fondo, oscuro
+	var concrete := Color8(165, 160, 150)
+	var trim := Color8(125, 121, 113)
+	var inside := Color8(85, 85, 88)
+	var t := Boxes.new()
+	for side in [-1, 1]:
+		t.box(Vector3(x - deep / 2, top / 2, side * (half + wing) / 2), Vector3(deep, top, wing - half), concrete)
+		t.box(Vector3(x + 0.1, 0.6, side * (half + 0.4)), Vector3(0.4, 1.2, 0.8), trim)                         # guardacantones
+		t.box(Vector3(x - deep - tube / 2, high / 2, side * (half + 0.2)), Vector3(tube, high, 0.4), inside)    # paredes de adentro
+		for k in 6:   # franjas amarillas y negras a los lados de la entrada
+			t.box(Vector3(x + 0.02, 0.4 + k * 1.0, side * (half + 0.15)), Vector3(0.02, 0.5, 0.3),
+					Color8(240, 190, 40) if k % 2 == 0 else Color8(30, 30, 30))
+		for zz in [half + 0.1, wing - 0.3]:   # pilastras
+			t.box(Vector3(x + 0.2, top / 2, side * zz), Vector3(0.4, top, 0.6), trim)
+	t.box(Vector3(x - deep / 2, (high + top) / 2, 0), Vector3(deep, top - high, half * 2), concrete)          # sobre la entrada
+	t.box(Vector3(x + 0.15, high + 0.3, 0), Vector3(0.3, 0.6, half * 2 + 0.6), trim)                          # dintel
+	t.box(Vector3(x - deep / 2 + 0.2, top + 0.25, 0), Vector3(deep + 0.4, 0.5, wing * 2 + 0.4), trim)         # remate de arriba
+	t.box(Vector3(x - deep - tube / 2 + 1.0, high + 0.2, 0), Vector3(tube + 2.0, 0.4, half * 2 + 0.8), inside)  # techo
+	t.box(Vector3(x - deep - tube, high / 2, 0), Vector3(0.4, high, half * 2), Color8(12, 12, 14))           # al fondo, oscuro
+	t.node(city, Mats.standard)
+	var glow := Boxes.new()   # luces del techo del túnel: prendidas de día y de noche
+	for i in 9:
+		for side in [-1, 1]:
+			glow.box(Vector3(x - 1.5 - i * 4.4, high - 0.08, side * 3.0), Vector3(1.6, 0.12, 0.3), Color8(255, 200, 120))
+	glow.node(city, Mats.emissive, false)
+	small_lights.append([Vector3(x - 4.0, high - 0.6, 0), 10.0])
 
 
 func _avenue() -> void:

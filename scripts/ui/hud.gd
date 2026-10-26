@@ -17,6 +17,8 @@ var alarm_t := 0.0         # segundos desde que se pasó el límite de sobregiro
 const ALARM_INTRO := 8.0   # segundos de alarma fuerte al pasar el límite
 const FINAL_DAYS := 5      # en los últimos días antes de la quiebra la tensión vuelve a subir
 var prompt := ""
+var phone_rect := Rect2()   # botón de la tablet (clic para abrirla)
+var speed_rect := Rect2()   # indicador de velocidad (arriba a la derecha)
 const PANEL_W := 420.0   # tarjeta de la empresa, arriba a la izquierda (el alto depende de cuántos chips haya)
 const SHORT := {"cafe": "Café", "pan": "Pan", "burger": "Burger", "ropa": "Ropa", "tech": "Tech"}
 var panel := Rect2(12, 12, PANEL_W, 196)
@@ -263,11 +265,12 @@ func _draw_panel_buttons(g) -> void:
 	var hot: bool = not city.mouse_captured() and not city.overlays.open() and ui.hover(b)
 	ui.rect(b, Color8(250, 205, 90) if hot else Color8(227, 179, 65), 14)
 	ui.text("Ir a la oficina  [%s]" % Keys.label("office"), b.get_center(), 16, Color8(25, 25, 30), true, "center")
-	# Celular con los avisos que no has leído (se ven en Noticias)
-	var label := "Celular  [%s]" % Keys.label("phone")
+	# Tablet con los avisos que no has leído (se ven en Noticias)
+	var label := "Tablet  [%s]" % Keys.label("phone")
 	var n := str(mini(city.app.unread, 99))
 	var cr := maxf(10.0, ui.text_size(n, 12, true).x / 2 + 5)
 	var pr := Rect2(b.end.x + 8, b.position.y, ui.text_size(label, 15).x + 24 + (cr * 2 + 6 if city.app.unread else 0.0), b.size.y)
+	phone_rect = pr
 	ui.rect(pr, Color(0.05, 0.067, 0.09, 0.72), 16)
 	var lt := ui.text(label, Vector2(pr.position.x + 12, pr.get_center().y), 15, "text", false, "midleft")
 	if city.app.unread:
@@ -281,7 +284,8 @@ func _draw_panel_buttons(g) -> void:
 		speed = "%d FPS  ·  " % Engine.get_frames_per_second() + speed
 	speed += "  ·  %d min de juego" % int(g.play_seconds / 60)
 	var sw := ui.text_size(speed, 18).x + 28
-	ui.rect(Rect2(ui.W - 12 - sw, 12, sw, 34), Color(0.05, 0.067, 0.09, 0.72), 17)
+	speed_rect = Rect2(ui.W - 12 - sw, 12, sw, 34)
+	ui.rect(speed_rect, Color(0.05, 0.067, 0.09, 0.72), 17)
 	ui.text(speed, Vector2(ui.W - 26, 17), 18, "text", false, "topright")
 	# Luz fija para ver la ciudad de día, al atardecer o de noche (se suelta el mouse con Alt para apretarlos)
 	var free: bool = not city.mouse_captured() and not city.overlays.open()
@@ -338,7 +342,7 @@ func _draw_center() -> void:
 		var lines := ["%s%s%s%s: caminar · %s: correr · %s: saltar · Mouse: mirar · Rueda/%s: cámara · %s: música" % [
 				kl.call("forward"), kl.call("left"), kl.call("back"), kl.call("right"), kl.call("run"), kl.call("jump"),
 				kl.call("camera"), kl.call("music")],
-				"%s: interactuar · %s: celular · %s: pausa · %s/%s/%s: velocidad · %s: pantalla completa · Esc: menú · Alt: mouse libre" % [
+				"%s: interactuar · %s: tablet · %s: pausa · %s/%s/%s: velocidad · %s: pantalla completa · Esc: menú · Alt: mouse libre" % [
 				kl.call("interact"), kl.call("phone"), kl.call("pause_quick"), kl.call("speed1"), kl.call("speed2"),
 				kl.call("speed3"), kl.call("fullscreen")]]
 		ui.rect(Rect2(cx - 440, 500, 880, 58), Color(0.05, 0.067, 0.09, 0.6), 12)

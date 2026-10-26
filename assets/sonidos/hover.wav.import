@@ -2,13 +2,13 @@
 
 importer="wav"
 type="AudioStreamWAV"
-uid="uid://cyqtoiqnd4eru"
-path="res://.godot/imported/tension.wav-d2bffc9058d9786c9a7daaca3e35d9ca.sample"
+uid="uid://bks7p6yypncg7"
+path="res://.godot/imported/hover.wav-8baaf832047f33f1491eb43ffcf8a362.sample"
 
 [deps]
 
-source_file="res://assets/sonidos/tension.wav"
-dest_files=["res://.godot/imported/tension.wav-d2bffc9058d9786c9a7daaca3e35d9ca.sample"]
+source_file="res://assets/sonidos/hover.wav"
+dest_files=["res://.godot/imported/hover.wav-8baaf832047f33f1491eb43ffcf8a362.sample"]
 
 [params]
 

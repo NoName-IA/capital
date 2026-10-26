@@ -8,6 +8,7 @@ const FLAT_WEST := -118.0   # al oeste de esto empiezan los cerros
 const COAST := 160.0        # al este de esto el suelo baja hacia el mar
 const BEACH_START := 110.0  # desde aquí el suelo es arena (terrenos de la playa)
 const FLAT_Z := 64.0        # más allá de |z| empiezan las lomas
+const TUNNEL_X := -165.0    # al oeste la avenida entra a un túnel que atraviesa la montaña
 
 static var soft: FastNoiseLite
 static var ridge: FastNoiseLite
@@ -57,6 +58,36 @@ static func height(x: float, z: float) -> float:
 	return h * (1 - sea) - 9.0 * sea
 
 
+## La montaña del túnel: una cumbre redondeada al oeste que cruza el valle de la avenida. Por delante baja hasta
+## apoyarse en el muro de la boca (ver WorldBuilder._tunnel): ahí queda a la altura de PORTAL_TOP y no tapa la
+## entrada; por encima del túnel nunca baja del techo. A los costados se junta con los cerros.
+const PORTAL_TOP := 13.0
+const PORTAL_HALF := 9.3   # ancho medio de la entrada
+const PORTAL_WING := 19.0  # el muro de la boca llega hasta aquí a cada lado
+
+
+static func mountain_height(x: float, z: float) -> float:
+	_setup()
+	var az := absf(z)
+	var s := soft.get_noise_2d(x * 1.7, z * 1.7) * 0.5 + 0.5
+	var k := clampf(ridge.get_noise_2d(x * 2.0, z * 2.0) * 0.5 + 0.5, 0.0, 1.0)
+	# El contorno se deforma con ruido para que no quede como un domo liso
+	var r := Vector2((x + 212.0) / 52.0, z / 75.0).length() * (1.0 + 0.16 * soft.get_noise_2d(x * 3.1 + 70.0, z * 3.1))
+	var m: float = (30.0 + 14.0 * s + 16.0 * k * k) * max(0.0, 1.0 - r * r) * sstep(1.0, 0.8, r)
+	m += 3.5 * soft.get_noise_2d(x * 6.0, z * 6.0) * sstep(1.0, 0.6, r)   # lomitas y quebradas
+	m *= 1.0 - (1.0 - sstep(PORTAL_WING, PORTAL_WING + 8.0, az)) * sstep(TUNNEL_X - 2.5, TUNNEL_X - 1.5, x)
+	if az < PORTAL_WING + 1.0 and x < TUNNEL_X - 2.5:
+		m = min(m, PORTAL_TOP - 0.2) if x > TUNNEL_X - 4.0 else m
+		if az < PORTAL_HALF + 1.0:
+			m = max(m, 8.2)   # sobre el techo del túnel
+	return max(height(x, z), m) - 0.4
+
+
+## Celdas de la montaña que no se dibujan: justo detrás de la entrada, donde el terreno sube de golpe (lo tapa el muro).
+static func mountain_hole(x: float, z: float) -> bool:
+	return absf(z) < PORTAL_HALF + 1.5 and TUNNEL_X - 3.0 < x and x < TUNNEL_X - 1.0
+
+
 ## Pasto en lo plano, pasto oscuro en los cerros, roca en lo empinado, nieve arriba y arena en la costa.
 static func ground_color(x: float, z: float, h: float, slope: float) -> Color:
 	var v := tint.get_noise_2d(x, z) * 0.5 + 0.5
@@ -76,22 +107,29 @@ static func ground_color(x: float, z: float, h: float, slope: float) -> Color:
 
 
 static func build_mesh(step := 8.0, half_x := 540.0, half_z := 460.0) -> ArrayMesh:
+	return build_patch(-half_x, -half_z, half_x * 2, half_z * 2, step, height)
+
+
+## Malla de terreno de (x0, z0) a (x0 + size_x, z0 + size_z) con la altura que da `fn(x, z)`.
+## `hole(x, z)` (opcional) dice qué celdas no se dibujan, según su centro.
+static func build_patch(x0: float, z0: float, size_x: float, size_z: float, step: float, fn: Callable,
+		hole := Callable()) -> ArrayMesh:
 	_setup()
-	var nx := int(half_x * 2 / step) + 1
-	var nz := int(half_z * 2 / step) + 1
+	var nx := int(size_x / step) + 1
+	var nz := int(size_z / step) + 1
 	var hs := PackedFloat32Array()
 	hs.resize(nx * nz)
 	for j in nz:
 		for i in nx:
-			hs[j * nx + i] = height(-half_x + i * step, -half_z + j * step)
+			hs[j * nx + i] = fn.call(x0 + i * step, z0 + j * step)
 	var verts := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var colors := PackedColorArray()
 	var uvs := PackedVector2Array()
 	for j in nz:
 		for i in nx:
-			var x := -half_x + i * step
-			var z := -half_z + j * step
+			var x := x0 + i * step
+			var z := z0 + j * step
 			var h: float = hs[j * nx + i]
 			var hx: float = hs[j * nx + min(i + 1, nx - 1)] - hs[j * nx + max(i - 1, 0)]
 			var hz: float = hs[min(j + 1, nz - 1) * nx + i] - hs[max(j - 1, 0) * nx + i]
@@ -104,6 +142,8 @@ static func build_mesh(step := 8.0, half_x := 540.0, half_z := 460.0) -> ArrayMe
 	var idx := PackedInt32Array()
 	for j in nz - 1:
 		for i in nx - 1:
+			if hole.is_valid() and hole.call(x0 + (i + 0.5) * step, z0 + (j + 0.5) * step):
+				continue
 			var a := j * nx + i
 			var b := a + 1
 			var c := a + nx

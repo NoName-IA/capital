@@ -35,6 +35,10 @@ var face_to = null    # a quién mira mientras habla o escucha
 var chatted := false  # cada peatón conversa una vez como mucho
 var windowed := false # ya miró una vitrina
 var weather_said := false
+var annoyed := 0.0    # segundos que el jugador le tapa el paso
+var punch_t := 0.0    # > 0 mientras te empuja por no dejarlo pasar
+var pusher := randf() < 0.45   # no todos empujan: los demás solo piden permiso y protestan
+var push_dir := Vector3.ZERO   # hacia dónde te empuja (fuera de su camino)
 
 
 func _init(owner_city, target_store = null, is_angry := false) -> void:
@@ -479,16 +483,89 @@ func _buy_diario(dt: float) -> void:
 			city.say(seller, ["¡Gracias, vuelva pronto!", "¡Que le vaya bien!", "Hoy viene buenísimo."].pick_random(), "white", 1.8)
 
 
+## ¿Está por llegar a donde va? (cerca de su próximo punto: ahí no se lo aparta ni esquiva, para que pueda llegar
+## aunque el lugar esté ocupado, como el kiosco o la misma repisa)
+func near_goal() -> bool:
+	if path.is_empty() or not is_instance_valid(body):
+		return false
+	var p: Vector3 = path[0]
+	return Vector2(p.x - body.position.x, p.z - body.position.z).length() < 1.0
+
+
 func step_to(target: Vector3, dt: float, speed: float) -> bool:
+	if punch_t > 0:
+		_punch(dt)
+		return true
 	var delta := Vector3(target.x - body.position.x, 0, target.z - body.position.z)
 	var dist := delta.length()
 	if dist < 0.08:
 		body.animate(0, dt)
 		return false
-	body.position += delta.normalized() * min(dist, speed * dt)
+	var dir := delta.normalized()
+	if _player_in_way(dir, dist, dt):
+		return true
+	# Si alguien está justo adelante, se corre hacia su derecha para pasarlo (como en la vereda)
+	for other in city.customers:
+		if other == self or not is_instance_valid(other.body):
+			continue
+		var o: Vector3 = other.body.position - body.position
+		o.y = 0
+		var od := o.length()
+		if od > 0.05 and od < 1.1 and od < dist - 0.3 and dir.dot(o / od) > 0.75:   # solo si está antes del destino
+			dir = (dir + Vector3(-dir.z, 0, dir.x) * 0.9 * (1.1 - od)).normalized()
+			break
+	body.position += dir * min(dist, speed * dt)
 	body.rotation.y = lerp_angle(body.rotation.y, atan2(delta.x, delta.z), dt * 10)
 	body.animate(speed, dt)
 	return true
+
+
+## Si el jugador se le pone adelante y no lo deja pasar: primero pide permiso, después grita y al final (solo los
+## `pusher`) lo empuja fuera de su camino; los demás refunfuñan. Devuelve true si empezó a empujar (ese cuadro no camina).
+const ASK_AFTER := 0.25
+const SHOUT_AFTER := 0.6
+const PUNCH_AFTER := 1.0
+
+func _player_in_way(dir: Vector3, dist: float, dt: float) -> bool:
+	var o: Vector3 = city.player.position - body.position
+	var od := Vector2(o.x, o.z).length()
+	if not city.can_be_shoved() or absf(o.y) > 1.0 or od > 1.0 or od > dist + 0.3 or Vector3(o.x, 0, o.z).dot(dir) < 0.5 * od:
+		annoyed = max(0.0, annoyed - dt * 0.5)
+		return false
+	var before := annoyed
+	annoyed += dt
+	if before < ASK_AFTER and annoyed >= ASK_AFTER:
+		city.say(body, ["Permiso...", "Con permiso.", "¿Me deja pasar?"].pick_random(), "white", 1.6)
+	elif before < SHOUT_AFTER and annoyed >= SHOUT_AFTER:
+		city.say(body, ["¡Muévete!", "¡Oye, quítate del medio!", "¡Que me dejes pasar!"].pick_random(), "orange", 1.6)
+		city.sfx.play("angry", 0.5 * city.near(body.position), randf_range(0.9, 1.15))
+	elif annoyed >= PUNCH_AFTER:
+		annoyed = SHOUT_AFTER - 0.3   # si sigues ahí, en un momento vuelve a pasar
+		if not pusher:
+			city.say(body, ["Uf, qué gente...", "¿En serio?", "Ay, por favor..."].pick_random(), "orange", 1.6)
+			return false
+		# Te empuja hacia el costado (del lado donde ya estás), no hacia adelante: así te saca de su camino
+		var side := Vector3(-dir.z, 0, dir.x)
+		var lean := side.dot(o)
+		push_dir = side * (signf(lean) if absf(lean) > 0.05 else [-1.0, 1.0].pick_random())
+		punch_t = 0.5
+		city.say(body, ["¡Toma!", "¡Te dije que te movieras!", "¡Quítate!"].pick_random(), "red", 1.8)
+		return true
+	return false
+
+
+## Empujón con el brazo derecho: mira al jugador, estira el brazo y a mitad del golpe lo saca de su camino.
+func _punch(dt: float) -> void:
+	var before := punch_t
+	punch_t -= dt
+	var o: Vector3 = city.player.position - body.position
+	body.rotation.y = lerp_angle(body.rotation.y, atan2(o.x, o.z), dt * 14)
+	body.animate(0, dt)
+	body.arms[1].rotation.x = deg_to_rad(-95.0 * sin(clampf(1.0 - punch_t / 0.5, 0.0, 1.0) * PI))
+	if before > 0.25 and punch_t <= 0.25:
+		city.shoved_by(push_dir)
+	if punch_t <= 0:
+		body.set_reach(0.45 if body.item else 0.0)
 
 
 func join_line() -> void:

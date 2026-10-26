@@ -54,6 +54,7 @@ var pops := []
 var bubbles := []        # globos de diálogo de los NPC (ver say)
 var cars_frozen := false  # en pausa los autos se quedan quietos y chocan como obstáculos
 var cars := []
+var tesla_t := 40.0   # segundos para que pase el próximo Tesla
 var player: Person
 var serving = null
 var first_person := false
@@ -132,6 +133,7 @@ func _ready() -> void:
 	sky.flare_mat = flare.mesh.material
 	sfx = Sfx.new()
 	add_child(sfx)
+	ImUI.menu_sound = func(name: String) -> void: sfx.play(name, 0.3 if name == "hover" else 0.45)
 	thumbs = Thumbs.new()
 	add_child(thumbs)
 	player = Person.new(null, null, false, Wardrobe.DEFAULT_LOOK)
@@ -1010,6 +1012,62 @@ func inside_wall(pos: Vector3) -> bool:
 	return false
 
 
+## De vez en cuando pasa un Tesla por la avenida: entra por un extremo, la recorre entera y se va.
+func update_tesla(dt: float) -> void:
+	for car in cars.duplicate():
+		if car.has_meta("tesla"):
+			if absf(car.position.x - float(car.get_meta("last_x"))) > 40.0:   # llegó al final y volvió a empezar: se va
+				cars.erase(car)
+				car.queue_free()
+				tesla_t = randf_range(90.0, 180.0)
+			else:
+				car.set_meta("last_x", car.position.x)
+			return
+	tesla_t -= dt
+	if tesla_t <= 0.0:
+		var lane: int = [-1, 1].pick_random()
+		cars.append(Actors.tesla(self, lane, Actors.ROAD_WEST + 1.0 if lane < 0 else Actors.ROAD_END - 1.0))
+
+
+## Que la gente no se encime: si dos personas quedan a menos de PERSONAL_SPACE se separan. Los que están quietos en
+## su lugar de la fila o frente a la repisa no se mueven (empujan a los que pasan). Nadie atraviesa una pared al separarse.
+const PERSONAL_SPACE := 0.6
+
+func separate_people() -> void:
+	var bodies := []   # [cuerpo, se puede mover]
+	for c in customers:
+		if is_instance_valid(c.body):
+			bodies.append([c.body, not (c.state in ["queue", "picking", "putback", "talk", "listen", "buying"]) and not c.near_goal()])
+	bodies.append([player, false])
+	for i in bodies.size():
+		var a: Node3D = bodies[i][0]
+		for j in range(i + 1, bodies.size()):
+			var b: Node3D = bodies[j][0]
+			var d := Vector2(b.position.x - a.position.x, b.position.z - a.position.z)
+			var dist := d.length()
+			if dist >= PERSONAL_SPACE or absf(a.position.y - b.position.y) > 1.0:
+				continue
+			var n := d / dist if dist > 0.001 else Vector2(1, 0).rotated(randf() * TAU)
+			var push := PERSONAL_SPACE - dist
+			var ma: bool = bodies[i][1]
+			var mb: bool = bodies[j][1]
+			if not ma and not mb:
+				continue
+			var share := 0.5 if ma and mb else 1.0
+			if ma:
+				_nudge(a, -n * push * share)
+			if mb:
+				_nudge(b, n * push * share)
+
+
+func _nudge(body: Node3D, v: Vector2) -> void:
+	var nx := body.position.x + v.x
+	var nz := body.position.z + v.y
+	if not blocked(nx, nz, 0.15, body.position.y):
+		body.position.x = nx
+		body.position.z = nz
+
+
 ## Luces cercanas a la cámara y techos de los locales para el shader de la ciudad (ver CityLights).
 func update_lights() -> void:
 	var rooms := [hq_spots.ceiling]
@@ -1097,8 +1155,52 @@ func hit_by_car(car: Node3D) -> void:
 	toast("¡Te atropelló un auto! Cruza con cuidado.", "bad")
 
 
+## ¿Puede la gente enojarse contigo por taparle el paso? (no mientras atiendes, estás en un menú o ya te tiraron)
+func can_be_shoved() -> bool:
+	return game != null and knock == null and serving == null and not overlays.open()
+
+
+var shove_told := false
+
+## Un peatón o cliente te empuja por no dejarlo pasar: te tambaleas un par de pasos hacia `away` (fuera de su camino).
+func shoved_by(away: Vector3) -> void:
+	if not can_be_shoved():
+		return
+	if not first_person:   # te inclinas hacia atrás en la dirección del empujón
+		player.rotation.y = atan2(-away.x, -away.z)
+	knock = {"t": 0.0, "vel": away * 6.0, "light": true}
+	shake = 0.25
+	pop(player.position, "¡Auch!", "red")
+	sfx.play("angry", 0.8, 1.2)
+	if not shove_told:
+		shove_told = true
+		toast("¡No le tapes el paso a la gente! Si te pones en medio, se enojan.", "bad")
+
+
+## Tambaleo del empujón: retrocedes frenando, inclinado hacia atrás, y te enderezas.
+func _staggered(dt: float) -> void:
+	var p := player
+	var k: Dictionary = knock
+	k.t += dt
+	var v: Vector3 = k.vel * max(0.0, 1.0 - k.t / 0.35)
+	var nx := p.position.x + v.x * dt
+	var nz := p.position.z + v.z * dt
+	if not blocked(nx, p.position.z, 0.38, p.position.y):
+		p.position.x = nx
+	if not blocked(p.position.x, nz, 0.38, p.position.y):
+		p.position.z = nz
+	p.rotation.x = -0.3 * sin(clampf(k.t / 0.55, 0.0, 1.0) * PI)
+	p.animate(2.0 if k.t < 0.35 else 0.0, dt)
+	if k.t >= 0.55:
+		p.rotation.x = 0
+		knock = null
+
+
 ## Física simple del atropello: vuelo con gravedad, rebotes con fricción y levantarse.
 func knocked(dt: float) -> void:
+	if knock.get("light", false):
+		_staggered(dt)
+		return
 	var p := player
 	var k: Dictionary = knock
 	k.t += dt
@@ -1237,8 +1339,8 @@ func _custom_camera(dt: float) -> void:
 		custom_idle = 0.0
 	else:
 		custom_idle += dt
-		if custom_idle > 2.0:  # si no lo tocas un rato, vuelve suave a mirar al frente
-			var k := min(1.0, dt * 2.5)
+		if custom_idle > 0.6:  # si lo sueltas, enseguida vuelve suave a mirar al frente
+			var k := min(1.0, dt * 6.0)
 			p.rotation.y = lerp_angle(p.rotation.y, deg_to_rad(custom_yaw) + PI, k)
 			custom_pitch = lerpf(custom_pitch, 8.0, k)
 			custom_lift = lerpf(custom_lift, 0.0, k)
@@ -1327,8 +1429,9 @@ func update(dt: float) -> void:
 		tutorial.stop()
 		if g != null and overlays.open() and app.modal == null:
 			overlays.hide()
-		# Partida nueva por primera vez: el tutorial
-		tutorial_pending = (g != null and g.day == 0 and not settings.tutorial_seen and not main.testing)
+		# Partida nueva: siempre empieza con el tutorial (se puede saltar)
+		tutorial_pending = g != null and app.just_created and not main.testing
+		app.just_created = false
 	if tutorial_pending and not overlays.open() and app.modal == null:
 		tutorial_pending = false
 		open_tutorial()
@@ -1360,15 +1463,20 @@ func update(dt: float) -> void:
 		prompt_action = best
 		hud.prompt = "[%s] %s" % [Keys.label("interact"), best[1]] if best != null else ""
 		update_zone()
-	for st in stores.values():
-		st.update(dt)
-	for c in customers.duplicate():
-		c.update(dt)
-		if c.done:
-			c.destroy()
-			customers.erase(c)
-	var frozen: bool = g != null and (app.paused or app.modal != null)  # en pausa los autos también se detienen
+	# En pausa (P o Esc) o con una decisión pendiente la ciudad se congela: gente, empleados, autos y animales
+	var frozen: bool = g != null and (app.paused or app.modal != null)
+	if not frozen:
+		for st in stores.values():
+			st.update(dt)
+		for c in customers.duplicate():
+			c.update(dt)
+			if c.done:
+				c.destroy()
+				customers.erase(c)
+		separate_people()
 	cars_frozen = frozen
+	if not frozen and g != null:
+		update_tesla(dt)
 	for car in cars:
 		if frozen:
 			continue
@@ -1418,7 +1526,8 @@ func update(dt: float) -> void:
 	sky.set_time(day_fraction() if settings.day_night or sky_lock != null else 0.34)
 	update_camera(dt)
 	update_lights()
-	life.update(dt)
+	if not frozen:
+		life.update(dt)
 	diario_t -= dt
 	if diario_t <= 0.0:
 		diario_t = 0.5
@@ -1454,6 +1563,7 @@ func update_diario() -> void:
 func open_tutorial() -> void:
 	tutorial_prev = app.paused
 	app.paused = true
+	overlays.tutorial_pages = Overlays.TUTORIAL
 	overlays.tutorial_page = 0
 	overlays.show("tutorial")
 
@@ -1506,6 +1616,9 @@ func _key(e: InputEventKey) -> void:
 	if app.naming:  # escribiendo el nombre de la empresa: las teclas van al nombre
 		app.type_key(e)
 		return
+	if app.credits_open and app.view == "menu" and key == KEY_ESCAPE:   # créditos del menú de inicio
+		app.credits_open = false
+		return
 	if app.settings_open and app.view == "menu" and key == KEY_ESCAPE:   # ajustes del menú de inicio
 		if overlays.pause_page != "main":
 			overlays.pause_page = "main"
@@ -1520,8 +1633,10 @@ func _key(e: InputEventKey) -> void:
 		toast("Música activada." if sfx.music_on else "Música en silencio (%s para volver)." % Keys.label("music"), "info")
 		return
 	if overlays.mode == "tutorial":
-		if key == KEY_ESCAPE:
+		if key == KEY_ESCAPE and overlays.tutorial_pages == Overlays.TUTORIAL:
 			close_tutorial()
+		elif key == KEY_ESCAPE:
+			overlays.tutorial_next()   # en las tarjetas del medio y del final, Esc es «Entendido»
 		elif key in [KEY_RIGHT, KEY_ENTER, KEY_SPACE]:
 			overlays.tutorial_next()
 			if overlays.mode != "tutorial":

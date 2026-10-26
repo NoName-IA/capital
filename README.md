@@ -10,8 +10,8 @@ Hecho en **Godot 4.7** (modo Compatibilidad: funciona en tarjetas gráficas mode
 ## Cómo jugar
 
 - **`Jugar Capital.bat`** abre el juego. **`Abrir en el editor de Godot.bat`** abre el proyecto en el editor.
-- La primera partida empieza con un **tutorial guiado**: aprendes jugando, paso a paso, con una flecha que te muestra a
-  dónde ir.
+- Cada partida nueva empieza con un **tutorial guiado** (se puede saltar): aprendes jugando, paso a paso, con una
+  flecha grande que te muestra a dónde ir o qué botón apretar, y al final te explica cómo se gana.
 - **Meta (modo normal):** que tu empresa valga **$10 millones** (rango Imperio). En el **modo inversionista** empiezas
   con más capital y no hay final.
 - Las partidas y los ajustes se guardan en `%APPDATA%\Godot\app_userdata\Capital`. La primera vez, el juego importa
@@ -20,7 +20,7 @@ Hecho en **Godot 4.7** (modo Compatibilidad: funciona en tarjetas gráficas mode
 | Tecla | Acción | Tecla | Acción |
 |---|---|---|---|
 | WASD | caminar | E | interactuar |
-| Shift | correr | Tab | celular |
+| Shift | correr | Tab | tablet |
 | Espacio | saltar | O | ir a la oficina |
 | Mouse / rueda / V | mirar y cámara | 1 · 2 · 3 | velocidad x1 · x2 · x4 |
 | Esc | pausa y menú | P | pausa rápida |
@@ -48,14 +48,14 @@ de las casas, vitrinas, ventanas, los autos y el faro.
 
 | | |
 |---|---|
-| ![Jugando en la avenida](docs/fotos/avenida.jpg) | ![El celular, pestaña Mercado](docs/fotos/celular.jpg) |
-| **La avenida**: tus locales, clientes que hacen fila y la tarjeta de tu empresa arriba. | **El celular**: precios, curva de demanda, calidad, marketing, inventario y finanzas. |
+| ![Jugando en la avenida](docs/fotos/avenida.jpg) | ![La tablet, pestaña Mercado](docs/fotos/celular.jpg) |
+| **La avenida**: tus locales, clientes que hacen fila y la tarjeta de tu empresa arriba. | **La tablet**: precios, curva de demanda, calidad, marketing, inventario y finanzas. |
 | ![La oficina por dentro](docs/fotos/oficina.jpg) | ![Vitrina de trofeos](docs/fotos/trofeos.jpg) |
 | **La oficina**: computadora, estrategia del mes, bolsa, asistente, armario y trofeos. | **Vitrina de trofeos**: uno por cada rango que consigues. |
 | ![Pantalla de inicio](docs/fotos/menu_inicio.jpg) | ![Cargar partida](docs/fotos/cargar_partida.jpg) |
 | **Pantalla de inicio**: un fondo distinto cada vez y la tarjeta de tu última partida. | **Tus partidas**: 3 espacios con rango, caja de los últimos 60 días y más. |
-| ![Tutorial guiado](docs/fotos/tutorial.jpg) | ![Tutorial en el celular](docs/fotos/tutorial_celular.jpg) |
-| **Tutorial guiado**: los pasos se marcan solos al hacerlos. | El paso del tutorial también se ve con el celular abierto. |
+| ![Tutorial guiado](docs/fotos/tutorial.jpg) | ![Tutorial en la tablet](docs/fotos/tutorial_celular.jpg) |
+| **Tutorial guiado**: los pasos se marcan solos al hacerlos. | Con la tablet abierta, la flecha apunta al botón que hay que apretar. |
 
 ## Qué tiene
 
@@ -89,7 +89,8 @@ de las casas, vitrinas, ventanas, los autos y el faro.
 - **Empleados que trabajan**: cobran, ordenan repisas, barren, traen cajas de la bodega y descansan en la banca.
   Caminan esquivando muebles y a los demás (AStarGrid2D).
 - **Vida**: perritos en el parque, palomas que vuelan si te acercas, gaviotas, gente en las bancas, autos que te
-  pueden atropellar.
+  pueden atropellar y, de vez en cuando, un Tesla blanco que recorre la avenida. La gente se esquiva al caminar (no se
+  enciman), y en pausa toda la ciudad se queda quieta.
 - **Tu empresa tiene nombre**: sale en los letreros, la oficina, el HUD y lo que dicen los clientes.
 
 ### Gráficos
@@ -109,9 +110,11 @@ de las casas, vitrinas, ventanas, los autos y el faro.
 
 - **Pantalla de inicio** con un fondo distinto cada vez que entras (lugar y hora de la ciudad al azar), la tarjeta de
   tu última partida y pantallas de cargar y crear partida con tarjetas por espacio.
-- **Tutorial guiado** de 9 pasos que se hacen jugando, con una flecha en la ciudad (o en el borde de la pantalla) que
-  te lleva a cada lugar. Se puede saltar y volver a ver en Pausa → Controles.
-- **Avisos como notificaciones del celular**, carteles grandes para los hitos, alarma de quiebra, confeti y música que
+- **Tutorial guiado** de 11 pasos que se hacen jugando (caminar, atender, abrir la tablet, ver cuánto vale tu empresa,
+  poner el precio óptimo, contratar, acelerar el tiempo, ir a la oficina y mirar un terreno). Cada paso dice cómo
+  hacerlo y para qué sirve para ganar; una flecha grande señala el lugar en la ciudad (con un haz de luz) o el botón
+  en la pantalla. Termina con la tarjeta **Cómo se gana**. Sale en cada partida nueva y se puede saltar.
+- **Avisos como notificaciones de la tablet**, carteles grandes para los hitos, alarma de quiebra, confeti y música que
   se pone tensa cuando hay peligro.
 - **Ventana que recuerda su tamaño y posición**, y pantalla completa con F11.
 
@@ -129,14 +132,14 @@ capital_godot/
 ├── assets/
 │   ├── icono/        capital.png y capital.ico (icono del juego, de la ventana y del .exe)
 │   ├── imagenes/     imágenes del tutorial
-│   └── sonidos/      música (musicachill.mp3) y efectos (.wav)
+│   └── sonidos/      música (musica/*.mp3) y efectos (.wav)
 ├── docs/fotos/       las fotos de este README
 ├── scenes/           main.tscn, la escena principal
 ├── scripts/
 │   ├── core/         main.gd (arranque, capas y escenarios de prueba) y city.gd (la ciudad, el jugador y los ajustes)
 │   ├── economy/      sim.gd (motor económico), data.gd (datos fijos) y fmt.gd (formato de números)
 │   ├── systems/      graphics.gd (niveles de gráficos), keys.gd (controles) y sfx.gd (música y sonidos)
-│   ├── ui/           admin.gd (menús y celular), imui.gd (interfaz), HUD, avisos, ventanas, tutorial e íconos
+│   ├── ui/           admin.gd (menús y tablet), imui.gd (interfaz), HUD, avisos, ventanas, tutorial e íconos
 │   └── world/        edificios, terreno, personas, ropa, autos, cielo, luces de la ciudad, clima y materiales
 ├── shaders/          material de la ciudad, vidrio, agua, cielo, oclusión ambiental, destello del sol y desenfoque
 └── tests/            pruebas del motor (run_tests.tscn) y escenarios que sacan capturas

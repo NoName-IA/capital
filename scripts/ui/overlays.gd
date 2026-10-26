@@ -28,6 +28,23 @@ Tu meta: que tu empresa llegue a valer $10 millones (el rango Imperio). Arriba a
 
 Ahora vas a aprender jugando: un par de pasos cortos, y una flecha amarilla te muestra a dónde ir."],
 ]
+## Al terminar el tutorial: las claves para ganar.
+const TUTORIAL_END := [
+	["ganar", "Cómo se gana", ""],
+]
+const WIN_TIPS := [
+	["1", "Precio óptimo", "En Mercado, «Usar precio óptimo» cada tanto: cambia con la inflación, la competencia y tus empleados."],
+	["2", "Que nadie se vaya sin comprar", "Si la demanda supera la capacidad (en Negocios), contrata o agranda el local."],
+	["3", "Abre locales donde ganas", "Compra terrenos SE VENDE. Los de la playa venden +20%. Cada local suma utilidad."],
+	["4", "Cuida la caja", "Si queda en negativo 20 días seguidos, quiebras. Pide préstamos solo para crecer."],
+	["5", "Reinvierte", "Desbloquea negocios nuevos, haz la estrategia del mes y agranda a megatienda."],
+]
+## En el tutorial, al abrir la tablet: cómo se gana (cuánto vale tu empresa).
+const TUTORIAL_VALOR := [
+	["valor", "Así se gana", ""],
+]
+var tutorial_return := ""      # la ventana que estaba abierta antes de la tarjeta (para volver a ella)
+var tutorial_pages: Array = TUTORIAL   # la bienvenida o las claves para ganar
 var shop_tab := "cabeza"
 var saved_at := -9999
 
@@ -59,9 +76,12 @@ func draw() -> void:
 	match mode:
 		"admin":
 			if app.view == "menu" or app.game == null:
-				menu_backdrop(app.slot_screen == null and not app.pick_mode and not app.naming and not app.settings_open)
+				menu_backdrop(app.slot_screen == null and not app.pick_mode and not app.naming and not app.settings_open
+						and not app.credits_open)
 				if app.settings_open:
 					draw_menu_settings()
+				elif app.credits_open:
+					draw_credits()
 				else:
 					app.draw_menu()
 			else:
@@ -135,7 +155,7 @@ func draw_lot() -> void:
 		var d: Dictionary = D.PRODUCTS[key]
 		ui.text(d.name, Vector2(70, y + 8), 22, "text" if p.unlocked else "muted", true)
 		if not p.unlocked:
-			ui.text("Bloqueado: desbloquéalo en el celular (Negocios) por %s" % Fmt.money(g.unlock_cost(key)), Vector2(290, y + 12), 16, "muted")
+			ui.text("Bloqueado: desbloquéalo en la tablet (Negocios) por %s" % Fmt.money(g.unlock_cost(key)), Vector2(290, y + 12), 16, "muted")
 		else:
 			for s in D.SIZES.size():
 				var size: Dictionary = D.SIZES[s]
@@ -356,7 +376,6 @@ func _draw_row_desc(area: Rect2) -> void:
 	var r := Rect2(area.position.x, area.end.y - 54, area.size.x, 54)
 	ui.rect(Rect2(r.position.x, r.position.y, r.size.x, 1), Color(1, 1, 1, 0.08))
 	if row_desc == null:
-		ui.text("Pasa el mouse sobre una opción para ver qué hace.", Vector2(r.position.x + 16, r.get_center().y + 2), 14, "muted", false, "midleft")
 		return
 	ui.circle(Vector2(r.position.x + 26, r.get_center().y + 2), 11, ImUI.COL.accent)
 	ui.text("i", Vector2(r.position.x + 26, r.get_center().y + 3), 14, Color8(16, 20, 30), true, "center")
@@ -390,18 +409,99 @@ func draw_settings(area: Rect2) -> void:
 
 # ---------- tutorial ----------
 func tutorial_next() -> void:
-	if tutorial_page >= TUTORIAL.size() - 1:
-		city.close_tutorial(true)
+	if tutorial_pages == TUTORIAL_VALOR:
+		city.tutorial.understood = true
+		app.paused = city.tutorial_prev
+		if tutorial_return == "admin":
+			show("admin")
+		else:
+			hide()
+		return
+	if tutorial_page >= tutorial_pages.size() - 1:
+		city.close_tutorial(tutorial_pages == TUTORIAL)
 	else:
 		tutorial_page += 1
 
 
 ## Una página por vez: imagen del juego, título y unas líneas. Se pasa con los botones, las flechas o Enter.
+## Al terminar los pasos guiados: la tarjeta con las claves para ganar.
+## Autores del juego: [nombre, qué hizo] (se ven en los créditos del menú de inicio)
+const AUTHORS := [["Brandon Alvis (NoName-IA)", "Idea, diseño y desarrollo"]]
+
+
+## Créditos (desde «Créditos», abajo en el menú de inicio), centrados como los del final de un juego: los autores,
+## las canciones con sus artistas (la que suena lleva un ecualizador) y el motor.
+func draw_credits() -> void:
+	var songs: Array = Sfx.SONGS
+	var cx := W / 2
+	var y := H / 2 - (250 + AUTHORS.size() * 52 + songs.size() * 34) / 2.0
+	ui.text("CAPITAL", Vector2(cx, y), 52, "accent", true, "midtop")
+	ui.rect(Rect2(cx - 40, y + 70, 80, 3), "accent", 2)
+	y += 104
+	y = _credits_section("AUTORES", y)
+	for a in AUTHORS:
+		ui.text(a[0], Vector2(cx, y), 22, "text", true, "midtop")
+		ui.text(a[1], Vector2(cx, y + 28), 14, "muted", false, "midtop")
+		y += 52
+	y = _credits_section("MÚSICA", y + 18)
+	var playing: Array = city.sfx.now_playing()
+	for sg in songs:
+		var on: bool = sg == playing
+		var title_w := ui.text_size(sg[1], 17, true).x
+		var by: String = "  ·  " + sg[2]
+		var x := cx - (title_w + ui.text_size(by, 15).x) / 2
+		ui.text(sg[1], Vector2(x, y + 13), 17, "accent" if on else "text", true, "midleft")
+		ui.text(by, Vector2(x + title_w, y + 13), 15, "muted", false, "midleft")
+		if on:   # ecualizador chiquito a la izquierda de la que suena
+			var t := Time.get_ticks_msec() / 1000.0
+			for i in 3:
+				var bh := 4.0 + 9.0 * absf(sin(t * (5.0 + i * 1.7) + i))
+				ui.rect(Rect2(x - 24 + i * 6, y + 20 - bh, 4, bh), "accent", 1)
+		y += 34
+	ui.text("Hecho con Godot Engine", Vector2(cx, y + 26), 13, "muted", false, "midtop")
+	if ui.button(Rect2(cx - 80, y + 64, 160, 40), "Volver (Esc)", true, "normal", 15):
+		app.credits_open = false
+
+
+## Título chico de una sección de los créditos, entre dos líneas finas. Devuelve dónde sigue.
+func _credits_section(title: String, y: float) -> float:
+	var cx := W / 2
+	var tw := ui.text_size(title, 12, true).x
+	ui.line(Vector2(cx - tw / 2 - 70, y + 8), Vector2(cx - tw / 2 - 14, y + 8), Color(1, 1, 1, 0.18))
+	ui.line(Vector2(cx + tw / 2 + 14, y + 8), Vector2(cx + tw / 2 + 70, y + 8), Color(1, 1, 1, 0.18))
+	ui.text(title, Vector2(cx, y), 12, "accent", true, "midtop")
+	return y + 32
+
+
+func show_win_guide() -> void:
+	city.tutorial_prev = app.paused
+	app.paused = true
+	tutorial_pages = TUTORIAL_END
+	tutorial_page = 0
+	show("tutorial")
+
+
+## Tarjeta del tutorial que explica cómo se gana: se pone encima de todo (también de la tablet).
+func show_value_card() -> void:
+	tutorial_return = mode if mode != null else ""
+	city.tutorial_prev = app.paused
+	app.paused = true
+	tutorial_pages = TUTORIAL_VALOR
+	tutorial_page = 0
+	show("tutorial")
+
+
 func draw_tutorial() -> void:
-	var page: Array = TUTORIAL[tutorial_page]
+	var page: Array = tutorial_pages[tutorial_page]
+	if page[0] == "ganar":
+		_draw_win_guide()
+		return
+	if page[0] == "valor":
+		_draw_value_card()
+		return
 	var box := Rect2(W / 2 - 470, H / 2 - 350, 940, 700)
 	glass_box(box)
-	ui.text("BIENVENIDA" if TUTORIAL.size() == 1 else "TUTORIAL · %d de %d" % [tutorial_page + 1, TUTORIAL.size()],
+	ui.text("BIENVENIDA" if tutorial_pages.size() == 1 else "TUTORIAL · %d de %d" % [tutorial_page + 1, tutorial_pages.size()],
 			box.position + Vector2(40, 24), 13, "muted", true)
 	if ui.button(Rect2(box.end.x - 170, box.position.y + 18, 130, 32), "Saltar (Esc)", true, "normal", 13):
 		city.close_tutorial()
@@ -419,7 +519,7 @@ func draw_tutorial() -> void:
 	ui.text(page[1], Vector2(box.get_center().x, img.end.y + 18), 28, "accent", true, "midtop")
 	ui.wrap_text(page[2], Rect2(box.position.x + 70, img.end.y + 64, box.size.x - 140, 130), 16, "text")
 	# Puntos de las páginas
-	var n := TUTORIAL.size()
+	var n := tutorial_pages.size()
 	for i in n:
 		ui.circle(Vector2(box.get_center().x + (i - (n - 1) / 2.0) * 22, box.end.y - 86), 5,
 				"accent" if i == tutorial_page else "border")
@@ -427,6 +527,60 @@ func draw_tutorial() -> void:
 	if tutorial_page > 0 and ui.button(Rect2(box.position.x + 40, box.end.y - 64, 200, 44), "< Anterior", true, "normal", 16):
 		tutorial_page -= 1
 	if ui.button(Rect2(box.end.x - 260, box.end.y - 64, 220, 44), "Empezar el tutorial" if last else "Siguiente >", true, "primary", 17):
+		tutorial_next()
+
+
+func _draw_value_card() -> void:
+	var g: Game = app.game
+	var box := Rect2(W / 2 - 430, H / 2 - 255, 860, 510)
+	glass_box(box)
+	var cx := box.get_center().x
+	ui.text("TUTORIAL", Vector2(cx, box.position.y + 28), 13, "accent", true, "center")
+	ui.text("Así se gana", Vector2(cx, box.position.y + 50), 40, "accent", true, "midtop")
+	ui.text("Ganas cuando tu empresa vale %s. Esto es lo que vale:" % Fmt.short(D.WIN_VALUE),
+			Vector2(cx, box.position.y + 108), 18, "text", false, "midtop")
+	# La fórmula, con los números de tu empresa
+	var ebitda: float = max(0.0, g.recent_ebitda() * 12.0)
+	var parts := [["Utilidad del año (EBITDA) × %s" % Fmt.num(g.valuation_multiple(), 1),
+			Fmt.short(ebitda * g.valuation_multiple()), "green"],
+			["+ Caja e inversiones", Fmt.short(g.cash + g.bonds + g.fund), "text"], ["− Deudas", Fmt.short(g.debt()), "red"]]
+	var pw := 230.0
+	var px := cx - (pw * 3 + 24) / 2
+	for i in parts.size():
+		var r := Rect2(px + i * (pw + 12), box.position.y + 150, pw, 86)
+		ui.rect(r, Color(1, 1, 1, 0.05), 12)
+		ui.text(parts[i][0], Vector2(r.get_center().x, r.position.y + 16), 15, "muted", false, "midtop")
+		ui.text(parts[i][1], Vector2(r.get_center().x, r.position.y + 42), 22, parts[i][2], true, "midtop")
+	var v := g.valuation()
+	ui.text("Hoy vale %s" % Fmt.money(v), Vector2(cx, box.position.y + 262), 24, "accent", true, "midtop")
+	var bar := Rect2(box.position.x + 80, box.position.y + 302, box.size.x - 160, 12)
+	ui.bar(bar, v / D.WIN_VALUE, "accent")
+	ui.text("$0", Vector2(bar.position.x, bar.end.y + 6), 12, "muted")
+	ui.text("Imperio · %s" % Fmt.short(D.WIN_VALUE), Vector2(bar.end.x, bar.end.y + 6), 12, "muted", false, "topright")
+	ui.wrap_text("Para que suba: gana más utilidad cada mes (buen precio, que nadie se quede sin atender, más locales) y no te endeudes de más. En la tablet lo ves siempre arriba: «Valor empresa».",
+			Rect2(box.position.x + 80, box.position.y + 350, box.size.x - 160, 90), 17, "text")
+	if ui.button(Rect2(cx - 120, box.end.y - 66, 240, 48), "Entendido", true, "primary", 18):
+		tutorial_next()
+
+
+func _draw_win_guide() -> void:
+	var box := Rect2(W / 2 - 470, H / 2 - 330, 940, 660)
+	glass_box(box)
+	ui.text("TUTORIAL COMPLETO", Vector2(box.get_center().x, box.position.y + 28), 13, "green", true, "center")
+	ui.text("Cómo se gana", Vector2(box.get_center().x, box.position.y + 52), 40, "accent", true, "midtop")
+	ui.text("Tu empresa tiene que valer %s. Valor = utilidad (EBITDA) × múltiplo + caja − deudas." % Fmt.short(D.WIN_VALUE),
+			Vector2(box.get_center().x, box.position.y + 108), 17, "text", false, "midtop")
+	var y := box.position.y + 150
+	for t in WIN_TIPS:
+		var r := Rect2(box.position.x + 50, y, box.size.x - 100, 78)
+		ui.rect(r, Color(1, 1, 1, 0.04), 12)
+		var c := Vector2(r.position.x + 40, r.get_center().y)
+		ui.circle(c, 22, ImUI.COL.accent)
+		ui.text(t[0], c, 22, Color8(20, 20, 24), true, "center")
+		ui.text(t[1], Vector2(r.position.x + 80, r.position.y + 14), 19, "accent", true)
+		ui.wrap_text(t[2], Rect2(r.position.x + 80, r.position.y + 42, r.size.x - 100, 34), 15, "text")
+		y += 88
+	if ui.button(Rect2(box.get_center().x - 120, box.end.y - 62, 240, 46), "¡A jugar!", true, "primary", 18):
 		tutorial_next()
 
 
