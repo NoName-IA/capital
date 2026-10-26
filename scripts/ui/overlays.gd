@@ -22,22 +22,22 @@ var tutorial_tex := {}
 # Tutorial de la primera partida: [imagen, título, texto]
 ## La bienvenida: después siguen los pasos guiados jugando (ver Tutorial).
 const TUTORIAL := [
-	["meta", "Bienvenido a Capital", "Empiezas con un puesto de café y un poco de plata. Vende, invierte y crece.
+	["meta", "Bienvenido a Capital", "Tienes un puestito de café y un poco de plata. Vende, invierte y conviértelo en un imperio.
 
-Tu meta: que tu empresa llegue a valer $10 millones (el rango Imperio). Arriba a la izquierda ves cuánto vale.
+Tu meta: que tu empresa valga $10 millones. Arriba a la izquierda siempre ves cuánto vale.
 
-Ahora vas a aprender jugando: un par de pasos cortos, y una flecha amarilla te muestra a dónde ir."],
+Vas a aprender jugando. Sigue la flecha amarilla, son pasos cortos."],
 ]
 ## Al terminar el tutorial: las claves para ganar.
 const TUTORIAL_END := [
 	["ganar", "Cómo se gana", ""],
 ]
 const WIN_TIPS := [
-	["1", "Precio óptimo", "En Mercado, «Usar precio óptimo» cada tanto: cambia con la inflación, la competencia y tus empleados."],
-	["2", "Que nadie se vaya sin comprar", "Si la demanda supera la capacidad (en Negocios), contrata o agranda el local."],
-	["3", "Abre locales donde ganas", "Compra terrenos SE VENDE. Los de la playa venden +20%. Cada local suma utilidad."],
-	["4", "Cuida la caja", "Si queda en negativo 20 días seguidos, quiebras. Pide préstamos solo para crecer."],
-	["5", "Reinvierte", "Desbloquea negocios nuevos, haz la estrategia del mes y agranda a megatienda."],
+	["1", "El precio justo", "Toca «Usar precio óptimo» en Mercado de vez en cuando. El mejor precio cambia con el tiempo."],
+	["2", "Que nadie se vaya sin comprar", "Si llega más gente de la que puedes atender, contrata o agranda tu tienda."],
+	["3", "Abre más tiendas", "Compra terrenos SE VENDE. Los de la playa venden más. Cada tienda te trae más plata."],
+	["4", "No te quedes sin plata", "Si estás en rojo 20 días seguidos, quiebras. Pide préstamos solo para crecer."],
+	["5", "Haz crecer tu imperio", "Desbloquea negocios nuevos, elige la jugada del mes y convierte tus tiendas en megatiendas."],
 ]
 ## En el tutorial, al abrir la tablet: cómo se gana (cuánto vale tu empresa).
 const TUTORIAL_VALOR := [
@@ -537,13 +537,13 @@ func _draw_value_card() -> void:
 	var cx := box.get_center().x
 	ui.text("TUTORIAL", Vector2(cx, box.position.y + 28), 13, "accent", true, "center")
 	ui.text("Así se gana", Vector2(cx, box.position.y + 50), 40, "accent", true, "midtop")
-	ui.text("Ganas cuando tu empresa vale %s. Esto es lo que vale:" % Fmt.short(D.WIN_VALUE),
+	ui.text("Ganas cuando tu empresa vale %s. Así se calcula:" % Fmt.short(D.WIN_VALUE),
 			Vector2(cx, box.position.y + 108), 18, "text", false, "midtop")
 	# La fórmula, con los números de tu empresa
 	var ebitda: float = max(0.0, g.recent_ebitda() * 12.0)
-	var parts := [["Utilidad del año (EBITDA) × %s" % Fmt.num(g.valuation_multiple(), 1),
+	var parts := [["Lo que ganas en un año × %s" % Fmt.num(g.valuation_multiple(), 1),
 			Fmt.short(ebitda * g.valuation_multiple()), "green"],
-			["+ Caja e inversiones", Fmt.short(g.cash + g.bonds + g.fund), "text"], ["− Deudas", Fmt.short(g.debt()), "red"]]
+			["+ Tu plata", Fmt.short(g.cash + g.bonds + g.fund), "text"], ["− Lo que debes", Fmt.short(g.debt()), "red"]]
 	var pw := 230.0
 	var px := cx - (pw * 3 + 24) / 2
 	for i in parts.size():
@@ -557,7 +557,7 @@ func _draw_value_card() -> void:
 	ui.bar(bar, v / D.WIN_VALUE, "accent")
 	ui.text("$0", Vector2(bar.position.x, bar.end.y + 6), 12, "muted")
 	ui.text("Imperio · %s" % Fmt.short(D.WIN_VALUE), Vector2(bar.end.x, bar.end.y + 6), 12, "muted", false, "topright")
-	ui.wrap_text("Para que suba: gana más utilidad cada mes (buen precio, que nadie se quede sin atender, más locales) y no te endeudes de más. En la tablet lo ves siempre arriba: «Valor empresa».",
+	ui.wrap_text("Para que suba: gana más cada mes (buen precio, que nadie se quede sin atender y más tiendas) y no te endeudes de más. En la tablet lo ves siempre arriba, en «Valor empresa».",
 			Rect2(box.position.x + 80, box.position.y + 350, box.size.x - 160, 90), 17, "text")
 	if ui.button(Rect2(cx - 120, box.end.y - 66, 240, 48), "Entendido", true, "primary", 18):
 		tutorial_next()
@@ -568,7 +568,7 @@ func _draw_win_guide() -> void:
 	glass_box(box)
 	ui.text("TUTORIAL COMPLETO", Vector2(box.get_center().x, box.position.y + 28), 13, "green", true, "center")
 	ui.text("Cómo se gana", Vector2(box.get_center().x, box.position.y + 52), 40, "accent", true, "midtop")
-	ui.text("Tu empresa tiene que valer %s. Valor = utilidad (EBITDA) × múltiplo + caja − deudas." % Fmt.short(D.WIN_VALUE),
+	ui.text("Haz que tu empresa valga %s. Mientras más ganes cada mes y menos debas, más vale." % Fmt.short(D.WIN_VALUE),
 			Vector2(box.get_center().x, box.position.y + 108), 17, "text", false, "midtop")
 	var y := box.position.y + 150
 	for t in WIN_TIPS:
