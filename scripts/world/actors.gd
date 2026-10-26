@@ -102,7 +102,44 @@ static func car(parent: Node3D, lane: int, x: float) -> Node3D:
 	return root
 
 
-const ROAD_WEST := -240.0  # al oeste los autos se pierden en el valle de los cerros
+## Auto eléctrico de lujo (estilo Tesla Model 3): blanco perla, bajo y alargado, techo de vidrio oscuro, focos LED
+## finos y una franja roja atrás. Pasa de vez en cuando por la avenida (ver City.update_tesla).
+static func tesla(parent: Node3D, lane: int, x: float) -> Node3D:
+	var root := Node3D.new()
+	root.position = Vector3(x, 0, lane * 2.7)
+	var dir := 1 if lane < 0 else -1
+	root.rotation.y = PI / 2 if dir > 0 else -PI / 2
+	var pearl := Color8(242, 243, 245)
+	var b := Boxes.new()
+	b.box(Vector3(0, 0.55, 0), Vector3(1.85, 0.5, 4.6), pearl)                        # carrocería baja
+	b.box_rot(Vector3(0, 0.62, 2.15), Vector3(1.8, 0.35, 0.7), pearl, Vector3(-14, 0, 0))   # trompa en punta
+	b.box(Vector3(0, 0.82, -2.0), Vector3(1.8, 0.12, 0.6), pearl)                     # cola alta
+	for wx in [-0.88, 0.88]:
+		for wz in [-1.45, 1.45]:
+			b.box(Vector3(wx, 0.33, wz), Vector3(0.28, 0.66, 0.66), Color8(25, 25, 28))   # neumático
+			b.box(Vector3(wx * 1.03, 0.33, wz), Vector3(0.06, 0.42, 0.42), Color8(170, 175, 182))   # llanta
+	b.box(Vector3(0, 0.25, 0), Vector3(1.7, 0.08, 4.4), Color8(35, 35, 40))            # zócalo negro
+	b.node(root, Mats.smooth)
+	var cab := Boxes.new()   # todo el techo es vidrio oscuro
+	cab.box(Vector3(0, 1.02, -0.25), Vector3(1.6, 0.45, 2.6), Color8(30, 40, 55))
+	cab.box_rot(Vector3(0, 0.95, 1.2), Vector3(1.58, 0.4, 0.8), Color8(30, 40, 55), Vector3(38, 0, 0))   # parabrisas inclinado
+	cab.node(root, Mats.glass, true)
+	var lights := Boxes.new()
+	for lx in [-0.62, 0.62]:
+		lights.box(Vector3(lx, 0.68, 2.42), Vector3(0.42, 0.06, 0.05), Color8(235, 245, 255))   # LED finos
+	lights.box(Vector3(0, 0.8, -2.31), Vector3(1.7, 0.07, 0.03), Color8(230, 30, 40))      # franja roja atrás
+	lights.node(root, Mats.emissive, false)
+	Mats.add_light(root, Vector3(0, 0.7, 3.0), 12.0, false, true)
+	root.set_meta("dir", dir)
+	root.set_meta("speed", 12.0)
+	root.set_meta("brake", 0.0)
+	root.set_meta("tesla", true)
+	root.set_meta("last_x", x)
+	parent.add_child(root)
+	return root
+
+
+const ROAD_WEST := -204.0  # al oeste los autos entran al túnel de la montaña (y de ahí salen)
 const ROAD_END := 178.0   # la calle termina bajo el agua: de ahí salen los autos y ahí se meten
 
 

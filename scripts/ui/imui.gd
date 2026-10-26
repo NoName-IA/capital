@@ -29,6 +29,18 @@ var font: Font
 var bold: Font
 var styles := {}
 var anim := {}               # estado de las animaciones de tween()
+# Menús (menu_item): una sola franja que se desliza hasta la opción bajo el mouse, como en los juegos grandes.
+# Se ubica con lo que quedó bajo el mouse en el cuadro anterior.
+static var menu_sound: Callable   # (nombre) -> suena "hover" al pasar a otra opción y "select" al elegir
+var menu_hot := ""                # opción bajo el mouse en este cuadro
+var menu_prev := ""               # y en el anterior
+var menu_target := Rect2()
+var menu_target_col := Color.WHITE
+var menu_band := Rect2()
+var menu_band_col := Color.WHITE
+var menu_band_a := 0.0
+var menu_band_drawn := false
+var menu_idle := 99               # cuadros sin opción bajo el mouse (en el hueco entre dos la franja no se apaga)
 # Medir y cortar textos cuesta: se recuerdan los resultados (la interfaz se redibuja entera en cada cuadro)
 var _size_cache := {}
 var _fit_cache := {}
@@ -147,6 +159,10 @@ func begin(mouse_window: Vector2, was_clicked: bool, wheel_steps: int, is_down: 
 	tip = null
 	seg = -1
 	clip = null
+	menu_prev = menu_hot
+	menu_idle = 0 if menu_hot != "" else menu_idle + 1
+	menu_hot = ""
+	menu_band_drawn = false
 	_next_segment(null)
 
 
@@ -446,17 +462,61 @@ func menu_item(key: String, pos: Vector2, label: String, sub := "", enabled := t
 	var h := size + 18.0 + (20.0 if sub else 0.0)
 	var r := Rect2(pos.x - 22, pos.y, w, h)
 	var hot := enabled and hover(r)
-	var k := tween("menu:" + key, 1.0 if hot or selected else 0.0)
 	var c := col(color)
-	if k > 0.01:
-		gradient(r, Color(c, 0.26 * k), Color(c, 0.0))
-		rect(Rect2(r.position.x, r.position.y + 5, 4, h - 10), Color(c, k), 2)
-	var x := pos.x + 16 * k
-	var fg: Color = COL.muted.darkened(0.25) if not enabled else COL.text.lerp(c, k)
+	if hot:
+		menu_hot = key
+		menu_target = r
+		menu_target_col = c
+		if key != menu_prev and menu_sound.is_valid():
+			menu_sound.call("hover")
+	if not menu_band_drawn:
+		_menu_band()
+	var k := tween("menu:" + key, 1.0 if hot else 0.0, 0.2)
+	var dim := tween("menudim:" + key, 1.0 if menu_idle < 10 and not hot and menu_target != r else 0.0, 0.18)
+	if selected and k < 0.99:   # la opción elegida (p. ej. la página abierta) queda marcada aunque no tenga el mouse
+		gradient(r, Color(c, 0.16 * (1 - k)), Color(c, 0.0))
+		rect(Rect2(r.position.x, r.position.y + 5, 3, h - 10), Color(c, 0.8 * (1 - k)), 2)
+	var e := 1.0 - pow(1.0 - k, 3)   # sale rápido y frena al final
+	var x := pos.x + 18 * e
+	var fg: Color = COL.muted.darkened(0.25)
+	if enabled:   # con el mouse encima el texto se pone blanco (o del color de la opción, como el rojo de Salir)
+		fg = COL.text.lerp(Color.WHITE if color is String and color == "accent" else c, k)
+		if selected:
+			fg = fg.lerp(c, 1.0 - k)
+		fg.a = 1.0 - 0.5 * dim
 	text(label, Vector2(x, pos.y + 8), size, fg, true)
 	if sub:
-		text(sub, Vector2(x + 2, pos.y + 12 + size), 14, COL.muted if enabled else COL.muted.darkened(0.35), false, "topleft", w - 40)
+		text(sub, Vector2(x + 2, pos.y + 12 + size), 14, Color(COL.muted if enabled else COL.muted.darkened(0.35), 1.0 - 0.5 * dim),
+				false, "topleft", w - 40)
+	# Línea fina que se estira bajo el texto
+	if k > 0.01 and not sub:
+		rect(Rect2(x, pos.y + 12 + size * 1.08, text_size(label, size, true).x * e, 2), Color(c, 0.9 * k), 1)
+	if hot and clicked and menu_sound.is_valid():
+		menu_sound.call("select")
 	return hot and clicked
+
+
+## La franja del menú: se desliza (con freno) hasta la opción que tenía el mouse y se apaga cuando no hay ninguna.
+func _menu_band() -> void:
+	menu_band_drawn = true
+	var on := menu_idle < 10
+	if on and menu_band_a < 0.05:   # al aparecer no viaja desde lejos: nace donde está el mouse
+		menu_band = menu_target
+		menu_band_col = menu_target_col
+	if on:
+		var t := 0.28
+		menu_band.position = menu_band.position.lerp(menu_target.position, t)
+		menu_band.size = menu_band.size.lerp(menu_target.size, t)
+		menu_band_col = menu_band_col.lerp(menu_target_col, t)
+	menu_band_a = lerpf(menu_band_a, 1.0 if on else 0.0, 0.25)
+	if menu_band_a < 0.01:
+		return
+	var r := menu_band
+	var a := menu_band_a
+	gradient(r, Color(menu_band_col, 0.28 * a), Color(menu_band_col, 0.0))
+	rect(Rect2(r.position.x, r.position.y + 4, 4, r.size.y - 8), Color(menu_band_col, a), 2)
+	# Brillo suave a la izquierda, junto a la barra
+	gradient(Rect2(r.position.x + 4, r.position.y, 60, r.size.y), Color(1, 1, 1, 0.06 * a), Color(1, 1, 1, 0.0))
 
 
 func bar(r: Rect2, frac: float, color = "green", bg = "panel2") -> void:

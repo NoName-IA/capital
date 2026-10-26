@@ -13,7 +13,7 @@ const ACTIONS := [
 	["jump", "Saltar", KEY_SPACE, "MOVERTE"],
 	["camera", "Primera o tercera persona", KEY_V, "MOVERTE"],
 	["interact", "Interactuar", KEY_E, "ACCIONES"],
-	["phone", "Abrir el celular", KEY_TAB, "ACCIONES"],
+	["phone", "Abrir la tablet", KEY_TAB, "ACCIONES"],
 	["office", "Ir a la oficina", KEY_O, "ACCIONES"],
 	["pause_quick", "Pausa rápida (sin menú)", KEY_P, "JUEGO"],
 	["speed1", "Velocidad x1", KEY_1, "JUEGO"],

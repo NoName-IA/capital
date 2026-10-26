@@ -101,28 +101,45 @@ func restyle(new_look = null) -> void:
 	var limb := func(i: int, pos: Vector3, scale: Vector3, c: Color) -> void:
 		var size := leg_size if i < 2 else arm_size
 		limbs[i].box(pos * size, scale * size, c)
+	var limb_rot := func(i: int, pos: Vector3, scale: Vector3, c: Color, rot: Vector3) -> void:
+		var size := leg_size if i < 2 else arm_size
+		limbs[i].box_rot(pos * size, scale * size, c, rot)
 
-	# ---- pantalón con relieve y zapatos ----
+	# ---- pantalón y zapatos ----
+	# Jeans: ruedo doblado más claro, rodillas gastadas, costura lateral, bolsillos de abertura diagonal y de atrás.
+	# De vestir: raya planchada adelante, bolsillos de ojal al costado y ruedo limpio que cae sobre el zapato.
+	# Bermudas: hasta abajo de la rodilla, dobladillo vuelto y bolsillo cargo con tapa al costado.
 	var dark := lighten(pants, -0.28)
+	var seam := lighten(pants, -0.16)
 	var style: String = L.pants_style
 	for i in 2:
 		var out := -1 if i == 0 else 1
 		if style == "cortos":
-			limb.call(i, Vector3(0, -0.79, 0), Vector3(1.02, 0.44, 1.02), skin)
-			limb.call(i, Vector3(0, -0.56, 0), Vector3(1.1, 0.06, 1.1), dark)
+			limb.call(i, Vector3(0, -0.8, 0), Vector3(1.02, 0.4, 1.02), skin)
+			limb.call(i, Vector3(0, -0.585, 0), Vector3(1.1, 0.07, 1.1), lighten(pants, 0.12))
+			limb.call(i, Vector3(0.53 * out, -0.36, 0.04), Vector3(0.08, 0.24, 0.62), seam)
+			limb.call(i, Vector3(0.55 * out, -0.25, 0.04), Vector3(0.08, 0.05, 0.66), dark)
+			limb.call(i, Vector3(0.6 * out, -0.36, 0.04), Vector3(0.01, 0.12, 0.08), Color8(190, 190, 195))   # botón de la tapa
+		elif style == "jeans":
+			limb.call(i, Vector3(0, -0.905, 0), Vector3(1.1, 0.09, 1.1), lighten(pants, 0.14))
+			limb.call(i, Vector3(0, -0.5, 0.505), Vector3(0.72, 0.2, 0.03), lighten(pants, 0.1))
+			limb.call(i, Vector3(0, -0.36, 0.505), Vector3(0.6, 0.12, 0.03), lighten(pants, 0.05))
+			limb.call(i, Vector3(0.505 * out, -0.47, 0), Vector3(0.03, 0.83, 0.07), seam)
+			limb_rot.call(i, Vector3(0.24 * out, -0.1, 0.51), Vector3(0.5, 0.035, 0.03), dark, Vector3(0, 0, -38 * out))
+			limb.call(i, Vector3(0.02 * out, -0.15, -0.51), Vector3(0.6, 0.17, 0.04), seam)
+			limb.call(i, Vector3(0.02 * out, -0.075, -0.515), Vector3(0.6, 0.025, 0.04), dark)
 		else:
-			limb.call(i, Vector3(0, -0.91, 0), Vector3(1.12, 0.1, 1.12), dark if style == "jeans" else lighten(pants, -0.12))
-		if style in ["jeans", "cortos"]:
-			limb.call(i, Vector3(0, -0.13, 0.51), Vector3(0.64, 0.15, 0.05), dark)
-			limb.call(i, Vector3(0, -0.15, -0.51), Vector3(0.62, 0.17, 0.05), dark)
-			limb.call(i, Vector3(0.51 * out, -0.45, 0), Vector3(0.04, 0.85, 0.14), Color8(205, 150, 80))
-		if style == "jeans":
-			limb.call(i, Vector3(0, -0.52, 0.51), Vector3(0.72, 0.035, 0.04), dark)
-		elif style == "vestir":
-			limb.call(i, Vector3(0, -0.48, 0.51), Vector3(0.05, 0.86, 0.03), lighten(pants, 0.14))
+			limb.call(i, Vector3(0, -0.47, 0.51), Vector3(0.05, 0.86, 0.03), lighten(pants, 0.14))
+			limb.call(i, Vector3(0, -0.47, -0.51), Vector3(0.05, 0.86, 0.03), lighten(pants, 0.08))
+			limb_rot.call(i, Vector3(0.42 * out, -0.13, 0.3), Vector3(0.04, 0.22, 0.05), dark, Vector3(0, 0, 12 * out))
+			limb.call(i, Vector3(0, -0.93, 0.06), Vector3(1.08, 0.06, 1.2), lighten(pants, -0.06))
 		limb.call(i, Vector3(0, -0.965, 0.2), Vector3(1.16, 0.09, 1.5), col(L.shoes))
+		limb.call(i, Vector3(0, -0.985, 0.2), Vector3(1.18, 0.03, 1.52), lighten(col(L.shoes), -0.35))   # suela
+	# Cinturón con pasadores; la hebilla es plateada con los pantalones de vestir y dorada con el resto
 	b.box(Vector3(0, 0.93, 0), Vector3(0.58, 0.08, 0.34), Color8(60, 40, 25))
-	b.box(Vector3(0, 0.93, 0.172), Vector3(0.1, 0.07, 0.02), Blueprints.PALETTE.gold)
+	for lx in [-0.2, 0.2]:
+		b.box(Vector3(lx, 0.93, 0.172), Vector3(0.03, 0.1, 0.02), lighten(pants, -0.1))
+	b.box(Vector3(0, 0.93, 0.172), Vector3(0.1, 0.07, 0.02), Color8(200, 200, 205) if style == "vestir" else Blueprints.PALETTE.gold)
 
 	# ---- chaquetas ----
 	if jacket == "sudadera":
@@ -202,14 +219,20 @@ func restyle(new_look = null) -> void:
 			b.box(Vector3(0, 1.7, 0.17), Vector3(0.41, 0.18, 0.08), hair)
 	if L.watch:
 		limb.call(2, Vector3(0, -0.82, 0), Vector3(1.22, 0.12, 1.22), gold)
-	if L.chain:
+	if L.headphones:   # de diadema: con sombrero la diadema queda debajo y solo se ven los parlantes
+		var hp := Color8(28, 28, 32)
 		for sx in [-1, 1]:
-			b.box_rot(Vector3(0.075 * sx, 1.5, 0.185), Vector3(0.2, 0.035, 0.02), gold, Vector3(0, 0, -35 * sx))
-		b.box(Vector3(0, 1.42, 0.188), Vector3(0.07, 0.07, 0.02), gold)
+			b.box(Vector3(0.25 * sx, 1.88, 0), Vector3(0.07, 0.19, 0.17), hp)
+			b.box(Vector3(0.288 * sx, 1.88, 0), Vector3(0.01, 0.1, 0.1), Color8(215, 60, 70))
+			b.box(Vector3(0.212 * sx, 1.88, 0), Vector3(0.02, 0.15, 0.13), Color8(70, 70, 78))
+			var top := 2.2 if hat == "ninguno" else hat_bottom
+			b.box(Vector3(0.245 * sx, (1.97 + top) / 2, 0), Vector3(0.035, top - 1.97, 0.06), hp)
+		if hat == "ninguno":
+			b.box(Vector3(0, 2.2, 0), Vector3(0.525, 0.04, 0.07), hp)
 	if L.backpack:
 		b.box(Vector3(0, 1.25, -0.27), Vector3(0.46, 0.56, 0.2), Color8(60, 90, 140))
 		b.box(Vector3(0, 1.1, -0.38), Vector3(0.34, 0.2, 0.04), Color8(50, 75, 120))
-		for sx in [-0.215, 0.215]:  # correas por fuera de la cadena y la corbata
+		for sx in [-0.215, 0.215]:  # correas por fuera de la corbata
 			b.box(Vector3(sx, 1.38, 0.19), Vector3(0.06, 0.42, 0.02), Color8(40, 60, 100))
 	if L.scarf:
 		b.box(Vector3(0, 1.64, 0), Vector3(0.48, 0.12, 0.4), Color8(200, 60, 60))

@@ -14,7 +14,7 @@ const FRAMES := {
 	"piernas": [Vector3(0, 0.55, 0), Vector3(0.95, 0.95, 2.75)],
 }
 const ITEM_FRAME := {"hair_style": "cabeza", "hat": "cabeza", "jacket": "torso", "pants_style": "piernas", "tie": "cuello",
-		"glasses": "cabeza", "beard": "cabeza", "watch": "mano", "chain": "cuello", "backpack": "espalda",
+		"glasses": "cabeza", "beard": "cabeza", "watch": "mano", "headphones": "cabeza", "backpack": "espalda",
 		"scarf": "cuello"}
 
 var cache := {}

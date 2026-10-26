@@ -19,14 +19,14 @@ const HATS := [["ninguno", "Ninguno"], ["gorra", "Gorra"], ["lana", "Gorro de la
 const JACKETS := [["ninguna", "Ninguna"], ["sudadera", "Sudadera"], ["blazer", "Blazer"], ["cuero", "Cuero"]]
 const PANTS_STYLES := [["jeans", "Jeans"], ["vestir", "De vestir"], ["cortos", "Cortos"]]
 const TOGGLES := [["tie", "Corbata"], ["glasses", "Lentes de sol"], ["beard", "Barba"], ["watch", "Reloj de oro"],
-		["chain", "Cadena de oro"], ["backpack", "Mochila"], ["scarf", "Bufanda"]]
-const TOGGLE_KEYS := ["tie", "glasses", "beard", "watch", "chain", "backpack", "scarf"]
+		["headphones", "Audífonos"], ["backpack", "Mochila"], ["scarf", "Bufanda"]]
+const TOGGLE_KEYS := ["tie", "glasses", "beard", "watch", "headphones", "backpack", "scarf"]
 const SHOP_TABS := [["cabeza", "Cabeza"], ["sombreros", "Sombreros"], ["ropa", "Ropa"], ["piernas", "Piernas"],
 		["accesorios", "Accesorios"]]
 const DEFAULT_LOOK := {"skin": [240, 200, 165], "hair": [30, 25, 20], "hair_style": "corto", "hat": "ninguno",
 		"shirt": [227, 179, 65], "pants": [40, 50, 80], "pants_style": "jeans", "jacket": "ninguna",
 		"jacket_color": [40, 40, 45], "shoes": [30, 30, 35], "tie": false, "glasses": false, "beard": false,
-		"watch": false, "chain": false, "backpack": false, "scarf": false}
+		"watch": false, "headphones": false, "backpack": false, "scarf": false}
 # Lo que viene gratis; todo lo demás se compra en el armario de la oficina (precios base, suben con la inflación).
 const FREE_ITEMS := {"hair": [[30, 25, 20], [90, 60, 35]], "hair_style": ["corto", "calvo"], "hat": ["ninguno"],
 		"shirt": [[227, 179, 65], [245, 245, 245]], "pants": [[40, 50, 80], [40, 40, 45]],
@@ -36,7 +36,7 @@ const ITEM_PRICES := {"hair": 150, "shirt": 200, "pants": 150, "jacket_color": 2
 		"hair_style": {"largo": 300, "cresta": 500},
 		"hat": {"gorra": 600, "lana": 250, "vaquero": 900, "copa": 5000, "corona": 25000},
 		"jacket": {"sudadera": 700, "blazer": 1500, "cuero": 2500}, "pants_style": {"vestir": 400, "cortos": 250},
-		"tie": 800, "glasses": 1200, "beard": 250, "watch": 3000, "chain": 4000, "backpack": 600, "scarf": 350}
+		"tie": 800, "glasses": 1200, "beard": 250, "watch": 3000, "headphones": 1500, "backpack": 600, "scarf": 350}
 const SPECIAL_PRICES := {"hair=[230, 110, 160]": 400, "hair=[70, 110, 210]": 400, "shoes=[227, 179, 65]": 2000}
 
 
@@ -76,4 +76,6 @@ static func item_price(key: String, value) -> float:
 
 
 static func owns(g: Game, key: String, value) -> bool:
+	if key == "headphones" and "chain" in g.owned_items:   # quien compró la cadena de oro (ya no existe) tiene los audífonos
+		return true
 	return item_price(key, value) == 0 or item_id(key, value) in g.owned_items

@@ -44,12 +44,15 @@ var slot_cache := {}
 var pick_mode := false
 var naming := false           # escribiendo el nombre de la empresa (después de elegir el modo)
 var settings_open := false    # ajustes abiertos desde el menú de inicio (los dibuja Overlays)
+var credits_open := false     # créditos abiertos desde el menú de inicio (los dibuja Overlays)
 var name_mode := "normal"
 var company_name := ""
 const NAME_IDEAS := ["Grupo Horizonte", "Inversiones Faro", "Café & Cía.", "Capital Andina", "Empresas del Sur",
 		"Comercial Las Lomas", "Holding Aurora", "Grupo Puerto", "Alfa Retail", "Corporación Brisa", "Imperio Dorado",
 		"Mercantil del Pacífico"]
 var win_shown := false
+var just_created := false
+var marks := {}               # dónde quedó dibujado cada botón importante este cuadro (el tutorial apunta ahí)    # se acaba de crear una partida (la ciudad lanza el tutorial)
 var quit_requested := false
 var unread := 0               # avisos que llegaron y todavía no viste en Noticias
 
@@ -297,12 +300,9 @@ func draw_menu() -> void:
 	var last := latest_slot()
 	var info = slot_info(last) if last else null
 	var y := 318.0
-	var cont_sub := ""
-	if info != null and not info.get("broken", false):
-		cont_sub = "%s · %s · %s" % [info.company, info.rank, Fmt.short(info.value)]
-	if ui.menu_item("continuar", Vector2(x, y), "CONTINUAR", cont_sub, last > 0 and not (info != null and info.get("over", false)), 32):
+	if ui.menu_item("continuar", Vector2(x, y), "CONTINUAR", "", last > 0 and not (info != null and info.get("over", false)), 32):
 		load_slot(last)
-	y += 92 if cont_sub else 72
+	y += 72
 	if ui.menu_item("nuevo", Vector2(x, y), "NUEVA PARTIDA", "", true, 32):
 		slot_screen = "new"
 		slot_confirm = null
@@ -316,12 +316,12 @@ func draw_menu() -> void:
 	y += 72
 	if ui.menu_item("salir", Vector2(x, y), "SALIR", "", true, 32, 400.0, false, "red"):
 		quit_requested = true
-	# Tarjeta de la última partida, abajo a la derecha (clic en ella = continuar)
-	if info != null and not info.get("broken", false):
-		if draw_last_card(Rect2(W - 470, H - 362, 410, 296), last, info):
-			load_slot(last)
-	ui.text("© 2026 Brandon Alvis (NoName-IA)", Vector2(x, H - 34), 12, "muted")
-	ui.text("M: música · F11: pantalla completa", Vector2(W - 60, H - 34), 12, "muted", false, "topright")
+	var c := ui.text("© 2026 Brandon Alvis (NoName-IA)  ·  ", Vector2(x, H - 34), 12, "muted")
+	# Créditos: un texto chico al lado, que solo se ilumina al pasar el mouse
+	var cr := Rect2(c.end.x, c.position.y - 4, ui.text_size("Créditos", 12).x, c.size.y + 8)
+	ui.text("Créditos", Vector2(cr.position.x, H - 34), 12, "text" if ui.hover(cr) else "muted")
+	if ui.hover(cr) and ui.clicked:
+		credits_open = true
 	draw_toast_line(H - 64)
 
 
@@ -405,40 +405,6 @@ func rank_progress(x: float, y: float, w: float, info: Dictionary) -> float:
 	ui.text("%s / %s" % [Fmt.short(info.value), Fmt.short(info.next[0])], Vector2(x + w, y + 12), 12, "text", false,
 			"topright")
 	return y + 30
-
-
-## Tarjeta de la última partida en la pantalla de inicio. Toda la tarjeta es un botón para seguir jugando.
-func draw_last_card(r: Rect2, n: int, info: Dictionary) -> bool:
-	var ok: bool = not info.over
-	var hot := ok and ui.hover(r)
-	var k := ui.tween("last_card", 1.0 if hot else 0.0)
-	r.position.y -= 4 * k
-	ui.rect(r, Color(0.05, 0.065, 0.09, 0.9), 16)
-	ui.rect(r, Color(ImUI.COL.accent, 0.3 + 0.5 * k), 16, 1 + k)
-	var x := r.position.x + 22
-	var w := r.size.x - 44
-	var y := r.position.y + 20
-	pill(Vector2(x, y), "ÚLTIMA PARTIDA", "accent", true)
-	ui.text("Espacio %d · %s" % [n, ago(info.stamp, info.saved)], Vector2(r.end.x - 22, y + 3), 12, "muted", false,
-			"topright")
-	ui.text(info.company, Vector2(x, y + 30), 26, "accent", true, "topleft", w)
-	var mt := ui.text(info.mode, Vector2(x, y + 66), 14, MODE_COLOR.get(info.mode_key, "blue"), true)
-	ui.text("·  " + info.rank, Vector2(mt.end.x + 8, y + 66), 14, "text", false, "topleft", w - mt.size.x - 8)
-	if info.over:
-		pill(Vector2(r.end.x - 22, y + 66), "QUIEBRA", "red", false, "topright")
-	y = rank_progress(x, y + 96, w, info)
-	spark(Rect2(x, y + 2, w, 48), info.spark, "Caja · últimos 60 días")
-	y += 60
-	var tw := (w - 16) / 3.0
-	stat_tile(Rect2(x, y, tw, 50), "Valor", Fmt.short(info.value), "accent")
-	stat_tile(Rect2(x + tw + 8, y, tw, 50), "Caja", Fmt.short(info.cash), sc(info.cash))
-	stat_tile(Rect2(x + 2 * (tw + 8), y, tw, 50), "Jugado", "%d min" % roundi(info.minutes))
-	y += 62
-	ui.text(info.date, Vector2(x, y), 12, "muted", false, "topleft", w - 130)
-	if k > 0.01:
-		ui.text("Clic para continuar", Vector2(r.end.x - 22, y), 12, Color(ImUI.COL.accent, k), true, "topright")
-	ui.tooltip(r, null if not hot else "Guardada el %s" % info.saved)
-	return hot and ui.clicked
 
 
 ## Borde punteado (para los espacios vacíos).
@@ -658,6 +624,7 @@ func start_named_game() -> void:
 		return
 	naming = false
 	new_game(name_mode)
+	just_created = true
 	game.company = name
 	game.news.clear()
 	game.add_news("Fundaste %s con un puesto de café y %s en caja. ¡A vender!" % [name, Fmt.money(game.cash)], "good")
@@ -760,6 +727,7 @@ func draw_mode_picker() -> void:
 
 # ---------- juego ----------
 func draw_game() -> void:
+	marks.clear()
 	var was_clicked := ui.clicked
 	var was_mouse := ui.mouse
 	if modal != null:
@@ -805,6 +773,7 @@ func draw_top() -> void:
 	var x := 1074.0
 	if ui.button(Rect2(x, 15, 46, 30), "II", true, "normal", 15, "Pausa (P)", paused):
 		paused = not paused
+	marks.velocidad = Rect2(x + 52, 15, 46 * 3 + 52 * 2 - 46, 30)
 	for i in SPEEDS.size():
 		if ui.button(Rect2(x + 52 + i * 52, 15, 46, 30), SPEEDS[i][1], true, "normal", 15,
 				"Velocidad %s (tecla %d)" % [SPEEDS[i][1], i + 1], not paused and speed == i):
@@ -820,6 +789,7 @@ func draw_side() -> void:
 		var label: String = TABS[i][1]
 		if TABS[i][0] == "noticias" and unread and tab != "noticias":
 			label += " (%d)" % mini(unread, 99)
+		marks["tab_" + TABS[i][0]] = Rect2(12, TOP + 16 + i * 46, SIDE - 24, 38)
 		if ui.button(Rect2(12, TOP + 16 + i * 46, SIDE - 24, 38), label, true, "normal", 16, null, tab == TABS[i][0]):
 			tab = TABS[i][0]
 			confirm_sell = null
@@ -1023,6 +993,8 @@ func draw_resumen(g: Game) -> void:
 	for i in cards.size():
 		var c: Array = cards[i]
 		var r := Rect2(CX + i * (cw + 12), CY, cw, 86)
+		if i == 3:
+			marks.valor = r
 		ui.panel(r)
 		ui.text(c[0], r.position + Vector2(16, 10), 14, "muted")
 		ui.text(c[1], r.position + Vector2(16, 30), 25, c[2], true, "topleft", r.size.x - 24)
@@ -1180,6 +1152,8 @@ func draw_negocios(g: Game) -> void:
 				"Despedir: pagas %d días de salario de indemnización." % int(D.SEVERANCE_DAYS)):
 			act(g.fire(loc))
 		ui.text("%d/%d" % [loc.employees, size.max_emp], Vector2(x0 + 201, cy), 15, "text", false, "center")
+		if not marks.has("contratar"):
+			marks.contratar = Rect2(x0 + 236, cy - 13, 26, 26)
 		if ui.button(Rect2(x0 + 236, cy - 13, 26, 26), "+", loc.employees < size.max_emp and not p.manager, "normal", 15,
 				"Contratar: %s de reclutamiento y %s/mes de salario." % [Fmt.money(D.HIRING_COST * g.price_index), Fmt.money(g.wage_daily() * 30)]):
 			act(g.hire(loc))
@@ -1271,6 +1245,7 @@ func draw_mercado(g: Game) -> void:
 	var cv: Array = cached("curve%d|%s|%f|%d|%d|%d" % [g.day, key, p.price, p.quality, ls.size(), emp], func(): return g.price_curve(key))
 	var curve: Array = cv[0]
 	var best: Array = cv[1]
+	marks.precio_optimo = Rect2(CX + 190, y0 + 88, 242, 30)
 	if ui.button(Rect2(CX + 190, y0 + 88, 242, 30), "Usar precio óptimo (%s)" % Fmt.money(best[0], 2), not ls.is_empty(), "normal", 15,
 			"Precio que maximiza la utilidad diaria con tu personal y sucursales actuales. Ojo: precios muy altos también bajan la reputación."):
 		p.price = best[0]
