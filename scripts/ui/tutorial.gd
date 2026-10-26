@@ -94,39 +94,39 @@ func text(id: String) -> Array:
 	var k := func(a: String) -> String: return Keys.label(a)
 	match id:
 		"caminar":
-			return ["Camina por la ciudad", "Usa %s %s %s %s para caminar y el mouse para mirar. %s corre." % [
+			return ["Camina por la ciudad", "Muévete con %s %s %s %s y mira con el mouse. Mantén %s para correr." % [
 					k.call("forward"), k.call("left"), k.call("back"), k.call("right"), k.call("run")],
-					"Todo pasa en la ciudad: tus locales, tu oficina y los terrenos que vas a comprar."]
+					"Esta ciudad es tuya para conquistar: tus tiendas, tu oficina y los terrenos que vas a comprar."]
 		"saltar":
-			return ["Salta", "Aprieta %s. Puedes subirte a bancas, jardineras y al cerco del parque." % k.call("jump"), ""]
+			return ["¡Salta!", "Aprieta %s. Puedes subirte a bancas, jardineras y a los cercos del parque." % k.call("jump"), ""]
 		"puesto":
-			return ["Ve a tu puesto de café", "Sigue la flecha amarilla hasta tu primer negocio.",
-					"Empiezas con un puesto de café y $1.500. Todo tu imperio sale de aquí."]
+			return ["Ve a tu puesto de café", "Sigue la flecha amarilla. Ahí empieza tu imperio.",
+					"Empiezas con un puestito de café y $1.500. De aquí sale todo lo demás."]
 		"atender":
-			return ["Atiende el mostrador", "Párate frente al mostrador y aprieta %s." % k.call("interact"),
-					"Al atender tú, vendes como un empleado más sin pagar sueldo: más clientes atendidos = más utilidad."]
+			return ["Atiende a tus clientes", "Ponte detrás del mostrador y aprieta %s." % k.call("interact"),
+					"Si atiendes tú, es como tener un ayudante gratis: atiendes a más gente y ganas más."]
 		"tablet":
-			return ["Abre tu tablet", "Aprieta %s (o haz clic en el botón Tablet de arriba)." % k.call("phone"),
-					"En la tablet manejas todo el negocio: precios, empleados, inventario, préstamos y reportes."]
+			return ["Abre tu tablet", "Aprieta %s o haz clic en el botón Tablet." % k.call("phone"),
+					"Desde la tablet controlas todo: precios, empleados, mercadería y préstamos."]
 		"valor":
 			return ["Así se gana", "Lee la tarjeta y aprieta Entendido.",
-					"ASÍ SE GANA: el valor es tu utilidad (EBITDA) × un múltiplo, más la caja, menos las deudas. Llega a %s y eres un Imperio." % Fmt.short(D.WIN_VALUE)]
+					"Haz que tu empresa valga %s y ganas. Mientras más ganes cada mes, más vale." % Fmt.short(D.WIN_VALUE)]
 		"precio":
-			return ["Pon el mejor precio", "Pestaña Mercado → botón «Usar precio óptimo» (o súbelo y bájalo tú).",
-					"Precio muy bajo: vendes mucho pero no ganas. Muy alto: nadie compra. El óptimo maximiza tu utilidad."]
+			return ["Ponle precio al café", "Entra a Mercado y toca «Usar precio óptimo». También puedes subirlo o bajarlo tú.",
+					"Muy barato: vendes mucho pero no ganas nada. Muy caro: nadie compra. El precio óptimo te deja más plata."]
 		"contratar":
-			return ["Contrata un empleado", "Pestaña Negocios → el botón + de tu puesto.",
-					"Si la demanda es mayor que la capacidad, pierdes clientes. Cada empleado atiende más gente."]
+			return ["Contrata a alguien", "Entra a Negocios y toca el + de tu puesto.",
+					"Si llega más gente de la que puedes atender, se van sin comprar. Con más empleados no se te escapa nadie."]
 		"tiempo":
-			return ["Haz correr el tiempo", "Cierra la tablet y aprieta %s o %s para ir más rápido (%s = normal, %s = pausa)." % [
+			return ["Haz correr el tiempo", "Cierra la tablet y aprieta %s o %s para adelantar el tiempo. %s vuelve a la normalidad y %s pausa." % [
 					k.call("speed2"), k.call("speed3"), k.call("speed1"), k.call("pause_quick")],
-					"Cada día que pasa vendes y pagas costos. Mira cómo sube la caja arriba a la izquierda."]
+					"Cada día vendes y pagas tus gastos. Mira cómo crece tu plata arriba a la izquierda."]
 		"oficina":
-			return ["Ve a tu oficina central", "Aprieta %s para ir directo o camina hasta la torre." % k.call("office"),
-					"Ahí están la computadora, la estrategia del mes (más ventas o menos costos), la bolsa y tus trofeos."]
+			return ["Visita tu oficina", "Aprieta %s para ir directo o camina hasta la torre." % k.call("office"),
+					"Ahí eliges la jugada del mes, inviertes en la bolsa y guardas tus trofeos."]
 		"terreno":
-			return ["Mira un terreno en venta", "Acércate a un letrero SE VENDE y aprieta %s." % k.call("interact"),
-					"Abrir locales es como más creces: más locales = más utilidad = tu empresa vale más."]
+			return ["Busca dónde abrir otra tienda", "Acércate a un letrero SE VENDE y aprieta %s." % k.call("interact"),
+					"Cada tienda nueva te trae más plata y hace que tu empresa valga más."]
 	return ["", "", ""]
 
 
@@ -266,6 +266,18 @@ static func big_arrow(ui: ImUI, r: Rect2) -> void:
 		ui.rect(Rect2(tip.x - 10 - g, y0 - g, 20 + g * 2, 32 + g * 2), c)
 
 
+## Cuando hay una flecha: oscurece todo menos el botón que señala (que además brilla un poco). Lo que se dibuje
+## después (el texto del tutorial y la flecha) queda encima, con su brillo normal.
+static func spotlight(ui: ImUI, hole: Rect2, dim := 0.62) -> void:
+	var far := 4000.0
+	var c := Color(0.01, 0.012, 0.02, dim)
+	ui.rect(Rect2(-far, -far, far * 2 + ui.W, hole.position.y + far), c)                        # arriba
+	ui.rect(Rect2(-far, hole.end.y, far * 2 + ui.W, far + ui.H - hole.end.y), c)                # abajo
+	ui.rect(Rect2(-far, hole.position.y, hole.position.x + far, hole.size.y), c)                # izquierda
+	ui.rect(Rect2(hole.end.x, hole.position.y, far + ui.W - hole.end.x, hole.size.y), c)        # derecha
+	ui.rect(hole, Color(1, 1, 1, 0.07), 8)
+
+
 ## Panel de los pasos (a la izquierda, debajo de la tarjeta de la empresa), la flecha sobre el botón de la tablet o de
 ## la velocidad, y la flecha en el borde de la pantalla si el lugar queda fuera de la vista.
 func draw(ui: ImUI) -> void:
@@ -273,12 +285,21 @@ func draw(ui: ImUI) -> void:
 		return   # con la tablet abierta el paso se ve debajo de la tablet (ver draw_phone)
 	var id: String = STEPS[step]
 	var tx := text(id)
-	var x := 12.0
-	var y: float = city.hud.panel.end.y + 56
+	var goal = null   # el botón del HUD que señala la flecha
+	if id == "tablet" or id in TABLET_STEPS:
+		goal = city.hud.phone_rect
+	elif id == "tiempo":
+		goal = city.hud.speed_rect
+	if goal != null and goal.size.x > 0:
+		spotlight(ui, goal.grow(8))
 	var pw := 380.0
 	var rows := STEPS.size()
 	var how_h := ui.wrap_height(tx[1], pw - 36, 14)
-	var box := Rect2(x, y, pw, 62 + how_h + 30)
+	var box := Rect2(12, city.hud.panel.end.y + 56, pw, 62 + how_h + 30)
+	if goal != null and goal.size.x > 0:   # pegado a la flecha
+		box.position = _by_arrow(ui, goal, box.size)
+	var x := box.position.x
+	var y := box.position.y
 	ui.rect(box, Color(0.05, 0.065, 0.09, 0.9), 14)
 	ui.rect(box, Color(ImUI.COL.accent, 0.6), 14, 1.5)
 	ui.text("TUTORIAL · PASO %d DE %d" % [step + 1, rows], Vector2(x + 18, y + 14), 11, "accent", true)
@@ -302,10 +323,8 @@ func draw(ui: ImUI) -> void:
 	# Flechas sobre la pantalla: abrir la tablet (también para los pasos que se hacen en ella) y la velocidad
 	if id == "valor" and not city.overlays.open():
 		city.overlays.show_value_card()   # se cerró sin leerla: vuelve a salir
-	if id == "tablet" or id in TABLET_STEPS:
-		big_arrow(ui, city.hud.phone_rect)
-	elif id == "tiempo":
-		big_arrow(ui, city.hud.speed_rect)
+	if goal != null:
+		big_arrow(ui, goal)
 	_edge_arrow(ui)
 
 
@@ -318,12 +337,6 @@ func draw_phone(ui: ImUI) -> void:
 	var tx := text(id)
 	if id == "valor":
 		return   # se explica en la tarjeta (Overlays.show_value_card)
-	var w: float = ui.text_size(tx[1], 15).x + 130
-	var r := Rect2(ui.W / 2 - w / 2, ui.H + 14, w, 40)
-	ui.rect(r, Color(0.05, 0.067, 0.09, 0.95), 20)
-	ui.rect(r, Color(ImUI.COL.accent, 0.9), 20, 2)
-	ui.text("TUTORIAL", Vector2(r.position.x + 18, r.get_center().y), 12, "accent", true, "midleft")
-	ui.text(tx[1], Vector2(r.position.x + 104, r.get_center().y), 15, Color.WHITE, false, "midleft")
 	var m: Dictionary = city.app.marks
 	var app = city.app
 	var goal = null
@@ -334,8 +347,40 @@ func draw_phone(ui: ImUI) -> void:
 			goal = m.get("contratar") if app.tab == "negocios" else m.get("tab_negocios")
 		"tiempo":
 			goal = m.get("velocidad")
-	if goal != null:
-		big_arrow(ui, goal)
+	if goal == null or app.modal != null:
+		var w: float = ui.text_size(tx[1], 15).x + 130
+		var r := Rect2(ui.W / 2 - w / 2, ui.H + 14, w, 40)
+		ui.rect(r, Color(0.05, 0.067, 0.09, 0.95), 20)
+		ui.rect(r, Color(ImUI.COL.accent, 0.9), 20, 2)
+		ui.text("TUTORIAL", Vector2(r.position.x + 18, r.get_center().y), 12, "accent", true, "midleft")
+		ui.text(tx[1], Vector2(r.position.x + 104, r.get_center().y), 15, Color.WHITE, false, "midleft")
+		return
+	# Hay flecha: todo lo demás se oscurece y el texto va pegado a la flecha
+	spotlight(ui, goal.grow(8))
+	_note_by_arrow(ui, goal, tx[1])
+	big_arrow(ui, goal)
+
+
+## Dónde va un recuadro de `size` pegado al botón que señala big_arrow, centrado sobre él: justo debajo del botón
+## (la flecha queda arriba) o, si el botón está arriba de todo, debajo de la flecha. Si no cabe abajo, arriba de la flecha.
+static func _by_arrow(ui: ImUI, goal: Rect2, size: Vector2) -> Vector2:
+	var y := goal.end.y + (96.0 if goal.position.y < 56 else 16.0)
+	if y + size.y > ui.H - 8:
+		y = goal.position.y - 96 - size.y
+	return Vector2(clampf(goal.get_center().x - size.x / 2, 8, ui.W - size.x - 8), maxf(8, y))
+
+
+## El texto del paso en una nota pegada a la flecha (ver _by_arrow).
+func _note_by_arrow(ui: ImUI, goal: Rect2, how: String) -> void:
+	var w: float = minf(ui.text_size(how, 16).x, 440.0) + 36
+	var text_h := ui.wrap_height(how, w - 36, 16)
+	var h := 40 + text_h + 14
+	var k := clampf(step_t / 0.35, 0.0, 1.0)
+	var r := Rect2(_by_arrow(ui, goal, Vector2(w, h)) + Vector2(0, 10 * (1.0 - k)), Vector2(w, h))
+	ui.rect(r, Color(0.05, 0.067, 0.09, 0.97), 14)
+	ui.rect(r, Color(ImUI.COL.accent, 0.95), 14, 2)
+	ui.text("TUTORIAL · PASO %d DE %d" % [step + 1, STEPS.size()], r.position + Vector2(18, 14), 11, "accent", true)
+	ui.wrap_text(how, Rect2(r.position.x + 18, r.position.y + 36, w - 36, text_h + 4), 16, Color(1, 1, 1, k))
 
 
 ## Si el lugar al que hay que ir queda fuera de la pantalla, una flecha grande en el borde apunta hacia él.

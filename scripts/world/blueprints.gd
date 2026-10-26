@@ -135,6 +135,21 @@ static func hq() -> Array:
 	return [boxes, spots]
 
 
+## Caja registradora del puesto: en el mostrador, justo frente al cajero (staff[0], en x = −0,9), girada para que la
+## pantalla y el cajón miren hacia él, como en la vida real.
+const STALL_REGISTER := [Vector3(-0.9, 1.15, 4.8), PI]
+
+
+## Dónde van los productos sobre el mostrador del puesto: una fila del lado del cajero, sin el lugar de la caja.
+static func stall_slots() -> Array:
+	var slots := []
+	for i in 9:
+		var x := -1.6 + i * 0.4
+		if absf(x - STALL_REGISTER[0].x) > 0.4:
+			slots.append([Vector3(x, 1.15, 4.55), PI])
+	return slots
+
+
 ## Devuelve [cajas, lugares] para un puesto (0), local (1), megatienda (2) u oficina ("hq").
 ## `variant` >= 0 arma un interior propio para ese local (ver _varied); -1 deja el plano clásico.
 static func blueprint(kind, variant := -1, product := "") -> Array:
@@ -487,12 +502,8 @@ static func _varied_stall(boxes: Array, spots: Dictionary, rng: RandomNumberGene
 			"lines": [{"slots": [[0, 1.9], [0, 1.0], [0, 0.1], [0, -0.8]], "exit": [[1.9, 1.9], [1.9, 0.0]]}],
 			"staff": [[-0.9, 5.9], [0.4, 5.9]], "serve": [1.6, 5.9], "manage": [-3.0, 0.6], "aisles": [],
 			"picks": [], "lights": [[0, 2.5, 4, 6.5]],
-			"stall_slots": [], "registers": [[Vector3(1.2, 1.15, 3.5), 0.0]], "seats": [[-0.9, 6.95]]})
+			"stall_slots": stall_slots(), "registers": [STALL_REGISTER], "seats": [[-0.9, 6.95]]})
 	boxes.append(B([-0.9, 0.22, 7.05], [0.42, 0.44, 0.42], wood))   # piso para descansar detrás del mostrador
-	var slots := []
-	for i in 9:
-		slots.append([Vector3(-1.6 + i * 0.4, 1.15, 4.55), PI])
-	spots.stall_slots = slots
 
 
 ## Local: tres distribuciones (repisas en las dos paredes; repisa en una pared y mesas o vitrinas en la otra; repisas

@@ -394,8 +394,26 @@ func _barrio() -> void:
 				house(Vector3(x + rng.randf_range(-1, 1), 0, row_z), face, pastel, roofs)
 			for x in range(int(x0) + 14, int(x1) - 4, 26):
 				tree(Vector3(x + 6.5, 0, row_z - face * 6.2))
+		# Faroles a los dos lados del pasaje, alternados, en el borde de la vereda (entre la solera y los cercos)
+		var n := 0
+		for x in range(int(x0) + 4, int(x1), 16):
+			var s: int = 1 if n % 2 == 0 else -1
+			n += 1
+			_street_lamp(Vector3(x, 0, lane + s * 3.3), -s, 3.8)
 	for k in 6:  # bosquecito entre el distrito financiero y el parque (lado sur)
 		tree(Vector3(rng.randf_range(-38, -28), 0, rng.randf_range(-56, -30)))
+
+
+## Farol de calle: poste, brazo hacia la calzada (dir en z: ±1) y la lámpara, que de noche alumbra (lamp_spots).
+func _street_lamp(pos: Vector3, dir: int, h: float) -> void:
+	var dark: Color = Blueprints.PALETTE.dark
+	props.box(pos + Vector3(0, 0.12, 0), Vector3(0.3, 0.24, 0.3), Color8(120, 120, 118))
+	props.box(pos + Vector3(0, h / 2, 0), Vector3(0.13, h, 0.13), dark)
+	props.box(pos + Vector3(0, h, dir * 0.4), Vector3(0.1, 0.1, 0.9), dark)
+	props.box(pos + Vector3(0, h - 0.02, dir * 0.8), Vector3(0.36, 0.1, 0.5), dark)
+	lamps.box(pos + Vector3(0, h - 0.11, dir * 0.8), Vector3(0.3, 0.08, 0.42), Color8(255, 225, 140))
+	lamp_spots.append(pos + Vector3(0, h - 0.3, dir * 0.8))
+	rects.append([pos.x - 0.15, pos.x + 0.15, pos.z - 0.15, pos.z + 0.15, h])
 
 
 ## Casa con techo a dos aguas, puerta hacia el pasaje, ventanas, chimenea y cerco con jardín.
@@ -459,24 +477,32 @@ func _park() -> void:
 	# no se atraviesa y arriba no se hunden los pies.
 	var hedges := Boxes.new()
 	var segs := []
-	for x in range(int(px0), int(px1) + 1, 2):
-		if absf(x) > 2.5:
-			segs.append([Vector3(x, 0, pz0 - 0.3), Vector3(2.05, 0.9, 0.9)])
-		segs.append([Vector3(x, 0, pz1 + 0.3), Vector3(2.05, 0.9, 0.9)])
-	for z in range(int(pz1), int(pz0), 2):
-		for x in [px0, px1]:
-			if absf(z + 34) > 2:
-				segs.append([Vector3(x, 0, z + 1), Vector3(0.9, 0.9, 2.05)])
+	# Cada tramo se reparte en pedazos de ~2 m que calzan justo entre sus extremos: nada se pasa a la vereda ni
+	# sobresale en las esquinas (los costados terminan contra el cerco de adelante y el del fondo)
+	var hw := 0.45   # medio grosor del cerco
+	var runs := [[px0 - hw, -2.9, pz0 - 0.3, true], [2.9, px1 + hw, pz0 - 0.3, true], [px0 - hw, px1 + hw, pz1 + 0.3, true]]
+	for x in [px0, px1]:
+		runs += [[pz1 + 0.3 + hw, -36.0, x, false], [-32.0, pz0 - 0.3 - hw, x, false]]
+	for run in runs:
+		var n := ceili((run[1] - run[0]) / 2.0)
+		var piece: float = (run[1] - run[0]) / n
+		for i in n:
+			var along: float = run[0] + piece * (i + 0.5)
+			if run[3]:
+				segs.append([Vector3(along, 0, run[2]), Vector3(piece + 0.02, 0.9, hw * 2)])
+			else:
+				segs.append([Vector3(run[2], 0, along), Vector3(hw * 2, 0.9, piece + 0.02)])
 	for sg in segs:
 		var p: Vector3 = sg[0]
 		var size: Vector3 = sg[1]
+		var long := maxf(size.x, size.z)
 		var shade := Color8(62, 128, 58).lerp(Color8(80, 145, 62), rng.randf())
 		hedges.box(p + Vector3(0, 0.45, 0), size, shade)
-		for k in 3:  # matas redondeadas encima
-			var off := Vector3(rng.randf_range(-0.6, 0.6), 0, 0) if size.x > 1 else Vector3(0, 0, rng.randf_range(-0.6, 0.6))
-			hedges.box(p + off + Vector3(0, 0.9 + rng.randf_range(0.0, 0.06), 0),
-					Vector3(0.7, 0.14, 0.7) * Vector3(rng.randf_range(0.8, 1.2), 1, rng.randf_range(0.8, 1.2)),
-					shade.lerp(Color8(110, 165, 75), 0.35))
+		for k in 3:  # matas redondeadas encima, siempre dentro del borde del arbusto
+			var ms := Vector3(0.7, 0.14, 0.7) * Vector3(rng.randf_range(0.8, 1.1), 1, rng.randf_range(0.8, 1.1))
+			var room := long / 2 - 0.42
+			var off := Vector3(rng.randf_range(-room, room), 0, 0) if size.x > size.z else Vector3(0, 0, rng.randf_range(-room, room))
+			hedges.box(p + off + Vector3(0, 0.9 + rng.randf_range(0.0, 0.06), 0), ms, shade.lerp(Color8(110, 165, 75), 0.35))
 	hedges.node(city, Mats.textured(Mats.leaves, 0.95, Color.WHITE, Vector3(2.5, 2.5, 1)))
 	for x in [-2.6, 2.6]:
 		props.box(Vector3(x, 1.7, pz0 - 0.3), Vector3(0.6, 3.4, 0.6), Color8(190, 180, 160))
@@ -528,18 +554,10 @@ func _park() -> void:
 	# Juegos (al fondo, a la izquierda): columpios y tobogán
 	var sx := -14.0
 	var sz := -49.0
-	var red := Color8(220, 70, 60)
-	for dx in [-2.2, 2.2]:
-		for dz in [-0.8, 0.8]:
-			props.box_rot(Vector3(sx + dx, 1.3, sz + dz * 0.6), Vector3(0.12, 2.7, 0.12), red, Vector3(dz * 14, 0, 0))
-	props.box(Vector3(sx, 2.6, sz), Vector3(4.6, 0.12, 0.12), red)
-	for dx in [-1, 1]:
-		props.box(Vector3(sx + dx, 0.6, sz), Vector3(0.7, 0.08, 0.35), Color8(60, 90, 160))
-		for k in [-0.3, 0.3]:
-			props.box(Vector3(sx + dx + k, 1.6, sz), Vector3(0.03, 2.0, 0.03), Color8(90, 90, 95))
+	_swings(sx, sz)
 	props.box(Vector3(sx + 1, 1.0, sz + 5), Vector3(1.4, 2.0, 1.4), Color8(250, 200, 60))
 	props.box_rot(Vector3(sx + 3, 0.95, sz + 5), Vector3(3.4, 0.12, 1.0), Color8(60, 160, 200), Vector3(0, 0, -38))
-	rects += [[sx - 2.5, sx + 2.5, sz - 1, sz + 1, 2.6], [sx, sx + 4.6, sz + 4.2, sz + 5.8, 2]]
+	rects += [[sx - 2.6, sx + 2.6, sz - 1.1, sz + 1.1, 2.7], [sx, sx + 4.6, sz + 4.2, sz + 5.8, 2]]
 	# Bancas a los lados de los senderos
 	for bspec in [[-2.6, -16, "z"], [2.6, -16, "z"], [-2.6, -24, "z"], [2.6, -24, "z"], [-10, -31.6, "x"],
 			[10, -31.6, "x"], [-10, -36.4, "x"], [10, -36.4, "x"], [-2.6, -44, "z"], [2.6, -52, "z"]]:
@@ -567,6 +585,56 @@ func _park() -> void:
 		taken.append(Vector2(x, z))
 		tree(Vector3(x, 0, z))
 		placed += 1
+
+
+## Columpios: dos marcos en A de acero azul con riostra, travesaño amarillo, piso de goma con borde, dos asientos de
+## goma colgando de cadenas (con eslabones) y una silla de bebé al medio.
+func _swings(sx: float, sz: float) -> void:
+	var blue := Color8(40, 110, 190)
+	var yellow := Color8(250, 195, 40)
+	var steel := Color8(150, 152, 158)
+	var top := 2.6
+	var spread := 1.05   # cuánto se abren las patas en z
+	# Piso de goma bajo los columpios, con borde de cemento
+	props.box(Vector3(sx, 0.02, sz), Vector3(5.6, 0.03, 3.4), Color8(170, 70, 55))
+	for dz in [-1.75, 1.75]:
+		props.box(Vector3(sx, 0.07, sz + dz), Vector3(5.8, 0.14, 0.12), Color8(190, 185, 175))
+	for dx in [-2.85, 2.85]:
+		props.box(Vector3(sx + dx, 0.07, sz), Vector3(0.12, 0.14, 3.5), Color8(190, 185, 175))
+	var tilt := rad_to_deg(atan2(spread, top))
+	var leg_len := sqrt(top * top + spread * spread)
+	for dx in [-2.3, 2.3]:
+		for dz in [-1, 1]:
+			props.box_rot(Vector3(sx + dx, top / 2, sz + dz * spread / 2), Vector3(0.14, leg_len, 0.14), blue,
+					Vector3(-dz * tilt, 0, 0))
+			props.box(Vector3(sx + dx, 0.06, sz + dz * spread), Vector3(0.3, 0.12, 0.3), Color8(120, 120, 118))   # pie
+		var bh := 1.0   # riostra que une las dos patas
+		props.box(Vector3(sx + dx, bh, sz), Vector3(0.1, 0.1, 2 * spread * (1 - bh / top)), blue)
+		props.box(Vector3(sx + dx, top + 0.02, sz), Vector3(0.26, 0.26, 0.26), yellow)   # unión de arriba
+	props.box(Vector3(sx, top + 0.02, sz), Vector3(4.9, 0.16, 0.16), yellow)            # travesaño
+	# Dos asientos de goma y una silla de bebé, cada uno con dos cadenas
+	for seat in [[-1.45, "goma"], [0.0, "bebe"], [1.45, "goma"]]:
+		var x: float = sx + seat[0]
+		var y := 0.55 if seat[1] == "goma" else 0.75
+		for k in [-0.24, 0.24]:
+			props.box(Vector3(x + k, top - 0.07, sz), Vector3(0.08, 0.06, 0.12), Color8(50, 50, 55))   # gancho
+			var length := top - 0.1 - y
+			for j in int(length / 0.12):   # eslabones alternados
+				var link := Vector3(0.02, 0.1, 0.045) if j % 2 == 0 else Vector3(0.045, 0.1, 0.02)
+				props.box(Vector3(x + k, top - 0.16 - j * 0.12, sz), link, steel)
+		if seat[1] == "goma":
+			props.box(Vector3(x, y, sz), Vector3(0.5, 0.05, 0.26), Color8(30, 30, 34))
+			for e in [-1, 1]:   # puntas levantadas, como un asiento de goma curvo
+				props.box_rot(Vector3(x + e * 0.27, y + 0.03, sz), Vector3(0.1, 0.04, 0.26), Color8(30, 30, 34),
+						Vector3(0, 0, e * 30))
+		else:   # silla de bebé: un balde rojo con hoyos para las piernas
+			var c := Color8(220, 60, 55)
+			props.box(Vector3(x, y - 0.12, sz), Vector3(0.48, 0.06, 0.34), c)
+			props.box(Vector3(x, y, sz - 0.17), Vector3(0.48, 0.28, 0.05), c)
+			props.box(Vector3(x, y + 0.04, sz + 0.17), Vector3(0.48, 0.2, 0.05), c)
+			for e in [-1, 1]:
+				props.box(Vector3(x + e * 0.24, y, sz), Vector3(0.05, 0.28, 0.34), c)
+			props.box(Vector3(x, y - 0.06, sz + 0.17), Vector3(0.08, 0.1, 0.06), c)   # separa las piernas
 
 
 ## Decoración del parque: farolas clásicas en los senderos (de noche alumbran), basureros junto a las bancas,

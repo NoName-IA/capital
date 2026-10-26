@@ -568,8 +568,7 @@ static func stock_shelves(root: Node3D, kind: int, product: String, layout := {}
 	elif layout.has("stall_slots"):
 		slots = layout.stall_slots.duplicate()
 	elif kind == 0:  # puesto: en el mostrador
-		for i in 9:
-			slots.append([Vector3(-1.6 + i * 0.4, 1.15, 4.55), PI])
+		slots = Blueprints.stall_slots()
 	else:
 		var levels := [0.5, 1.2, 1.9] if kind == 1 else [0.5, 1.3, 2.1]
 		var rows := []                              # [x de la tabla, z desde, z hasta, hacia dónde mira (±1 en x)]
@@ -622,7 +621,7 @@ static func add_registers(root: Node3D, kind: int, layout := {}) -> void:
 	if layout.has("registers"):
 		spots = layout.registers
 	elif kind == 0:
-		spots = [[Vector3(1.2, 1.15, 3.5), 0.0]]
+		spots = [Blueprints.STALL_REGISTER]
 	elif kind == 1:
 		spots = [[Vector3(0.0, 1.15, 9.25), 0.0]]
 	else:
