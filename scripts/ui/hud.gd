@@ -116,6 +116,7 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 		_draw_panel(g)
 		_draw_panel_buttons(g)
 		_draw_center()
+		city.tutorial.draw(ui)
 		notes.draw(ui)
 	confetti.draw(ui)
 	ui.end()

@@ -20,6 +20,7 @@ var flare_mat: ShaderMaterial   # destello del sol en la cámara (lo pone la ciu
 var to_sun := Vector3.UP        # hacia el sol (de día)
 var clouds := 0.15              # clima (lo pone la ciudad desde Weather): nubes en el cielo
 var overcast := 0.0             # y cielo gris: apaga el sol y suaviza las sombras
+var indoors := 0.0              # 0 afuera, 1 con la cámara bajo techo (lo pone la ciudad): adentro alumbran las lámparas
 
 
 func _init(parent: Node3D) -> void:
@@ -117,7 +118,7 @@ func set_time(t: float) -> void:
 	# fría (8000 K), más fuerte con luna llena, y alcanza para ver todo y marcar sombras.
 	var sun_col := kelvin(lerpf(2200.0, 6300.0, smoothstep(0.15, 0.6, elev)))
 	sun.light_color = sun_col.lerp(kelvin(8000.0), night_amount)
-	sun.light_energy = lerpf(0.3 + 1.05 * smoothstep(0.08, 0.5, elev), 0.32 + 0.28 * full, night_amount)
+	sun.light_energy = lerpf(0.3 + 1.05 * smoothstep(0.08, 0.5, elev), 0.06 + 0.08 * full, night_amount)
 	var horizon := Color8(20, 26, 50).lerp(Color8(135, 185, 235), day).lerp(Color8(235, 160, 115), golden * 0.6)
 	var top := Color8(6, 8, 22).lerp(Color8(55, 110, 205), day)
 	# Nublado o lluvia: cielo gris, sol tapado (luz más débil y difusa, sombras suaves)
@@ -136,9 +137,12 @@ func set_time(t: float) -> void:
 	sky_mat.set_shader_parameter("daylight", day)
 	env.ambient_light_color = top.lerp(horizon, 0.6).lerp(Color(0.6, 0.62, 0.66) * day, 0.35)  # cielo, no tan azul
 	env.ambient_light_energy = 0.2 + 0.4 * day + 0.25 * overcast * day
-	# Noche: luz de cielo azulada y el ojo que se acostumbra a la oscuridad (más exposición), como en Eclipse
+	# Noche: casi no hay luz de cielo (un poco azulada para distinguir las formas). Lo que se ve lo alumbran los
+	# faroles, los focos, las vitrinas y las ventanas.
 	env.ambient_light_color = env.ambient_light_color.lerp(Color(0.24, 0.3, 0.48), night_amount)
-	env.ambient_light_energy = lerpf(env.ambient_light_energy, 0.75, night_amount)
+	env.ambient_light_energy = lerpf(env.ambient_light_energy, 0.14, night_amount)
+	# Bajo techo la luz del cielo casi no llega: alumbran los paneles del techo (y el sol que entra por la puerta)
+	env.ambient_light_energy *= 1.0 - 0.5 * indoors
 	env.tonemap_exposure = lerpf(0.72, 1.2, night_amount) * user_exposure
 	Mats.water.set_shader_parameter("moon_light", night_amount * (0.35 + 0.65 * full))
 	# Visión nocturna (efecto Purkinje): de noche los colores se apagan y todo tira a azul
@@ -153,9 +157,8 @@ func set_time(t: float) -> void:
 	night = elev < 0.3
 	Mats.set_night(night_amount)
 	Mats.emissive.albedo_color = Color(1, 1, 1) * (0.7 + 0.8 * night_amount)
-	Mats.set_lights(1.7 * smoothstep(0.0, 1.0, (0.42 - elev) / 0.2) * (1.0 if night_lights else 0.0))  # se prenden al atardecer
-	# Adentro: de día más fuerte (el ojo está acostumbrado a la luz de afuera), de noche un poco menos
-	Mats.indoor_light.set_shader_parameter("energy", lerpf(1.5, 1.2, night_amount))
+	Mats.lamps_on = smoothstep(0.0, 1.0, (0.42 - elev) / 0.2) * (1.0 if night_lights else 0.0)  # se prenden al atardecer
+	RenderingServer.global_shader_parameter_set("city_daylight", day)
 
 
 ## Color de una luz a cierta temperatura en kelvin (aproximación de Tanner Helland).

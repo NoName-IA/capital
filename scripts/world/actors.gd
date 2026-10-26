@@ -94,6 +94,7 @@ static func car(parent: Node3D, lane: int, x: float) -> Node3D:
 	for lx in [-0.6, 0.6]:
 		lights.box(Vector3(lx, 0.7, 2.0), Vector3(0.35, 0.18, 0.05), Color8(255, 245, 200))
 	lights.node(root, Mats.emissive, false)
+	Mats.add_light(root, Vector3(0, 0.7, 3.0), 11.0, false, true)   # de noche los focos alumbran la calle de adelante
 	root.set_meta("dir", dir)
 	root.set_meta("speed", randf_range(7, 12))
 	root.set_meta("brake", 0.0)
@@ -101,6 +102,7 @@ static func car(parent: Node3D, lane: int, x: float) -> Node3D:
 	return root
 
 
+const ROAD_WEST := -240.0  # al oeste los autos se pierden en el valle de los cerros
 const ROAD_END := 178.0   # la calle termina bajo el agua: de ahí salen los autos y ahí se meten
 
 
@@ -129,8 +131,8 @@ static func drive(car: Node3D, dt: float, cars: Array = []) -> void:
 	if gap < CAR_GAP * 2.0:
 		speed *= clampf((gap - CAR_GAP) / CAR_GAP, 0.0, 1.0)
 	car.position.x += dir * speed * dt
-	if car.position.x > ROAD_END or car.position.x < -118:
-		var start := -118.0 if dir > 0 else ROAD_END
+	if car.position.x > ROAD_END or car.position.x < ROAD_WEST:
+		var start := ROAD_WEST if dir > 0 else ROAD_END
 		var free := true
 		for other in cars:
 			if other != car and other.get_meta("dir") == dir and absf(other.position.x - start) < CAR_GAP + 2.0:
@@ -138,7 +140,7 @@ static func drive(car: Node3D, dt: float, cars: Array = []) -> void:
 		if free:
 			car.position.x = start
 		else:  # el lugar de entrada está ocupado: espera escondido fuera de la calle
-			car.position.x = clampf(car.position.x, -118.5, ROAD_END + 0.5)
+			car.position.x = clampf(car.position.x, ROAD_WEST - 0.5, ROAD_END + 0.5)
 			return
 	# Sigue la rampa: inclinado hacia abajo al entrar al mar y hacia arriba al salir
 	var x := car.position.x

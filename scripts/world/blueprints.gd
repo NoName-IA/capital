@@ -6,11 +6,11 @@ extends RefCounted
 const FRONT := 9.0        # distancia del centro de la calle al frente de los terrenos
 const PALETTE := {
 	"wall": Color8(232, 226, 214), "roof": Color8(70, 74, 82), "glass": Color8(150, 200, 230), "floor": Color8(200, 190, 170),
-	"wood": Color8(140, 100, 65), "dark": Color8(40, 42, 48), "shelf": Color8(190, 180, 165), "white": Color8(245, 245, 245),
+	"wood": Color8(140, 100, 65), "dark": Color8(78, 80, 88), "shelf": Color8(190, 180, 165), "white": Color8(245, 245, 245),
 	"gold": Color8(227, 179, 65), "green": Color8(60, 150, 80),
 	# Oficina central
-	"hq_stone": Color8(70, 78, 92), "hq_trim": Color8(38, 42, 52), "hq_glass": Color8(80, 125, 170), "hq_wood": Color8(95, 60, 40),
-	"hq_sofa": Color8(45, 70, 110), "marble": Color8(225, 222, 215), "carpet": Color8(150, 40, 45), "plant": Color8(60, 135, 70),
+	"hq_stone": Color8(128, 134, 146), "hq_trim": Color8(92, 98, 112), "hq_glass": Color8(80, 125, 170), "hq_wood": Color8(138, 96, 66),
+	"hq_sofa": Color8(80, 108, 150), "marble": Color8(225, 222, 215), "carpet": Color8(150, 40, 45), "plant": Color8(60, 135, 70),
 	"art1": Color8(210, 120, 70), "art2": Color8(80, 150, 190),
 	"lamp": Color8(255, 240, 215),   # paneles de luz del techo
 	"crate": Color8(176, 132, 82),   # cajas de cartón de la bodega
@@ -20,8 +20,9 @@ const PRODUCT_COLORS := {"cafe": Color8(150, 95, 55), "pan": Color8(225, 170, 80
 const GLASS_KEYS := ["glass", "hq_glass"]
 
 
-## `key`: nombre de color de PALETTE, "product" o directamente un Color.
-static func B(c: Array, s: Array, key, solid := false) -> Array:
+## `key`: nombre de color de PALETTE, "product" o directamente un Color. `solid`: true choca hasta lo alto de la caja;
+## un número choca hasta esa altura (para muebles con repisas arriba que no son sólidas, como la vitrina de trofeos).
+static func B(c: Array, s: Array, key, solid = false) -> Array:
 	return [Vector3(c[0], c[1], c[2]), Vector3(s[0], s[1], s[2]), key, solid]
 
 
@@ -89,7 +90,7 @@ static func hq() -> Array:
 		B([5.2, 1.5, 14.07], [0.06, 0.45, 0.04], "gold"),
 		B([5.6, 1.5, 14.07], [0.06, 0.45, 0.04], "gold"),
 		B([5.4, 2.97, 14.6], [2.8, 0.14, 1.1], "gold"),
-		B([-5.4, 0.55, 14.6], [2.6, 1.1, 1.0], "hq_wood", true),         # vitrina de trofeos
+		B([-5.4, 0.55, 14.6], [2.6, 1.1, 1.0], "hq_wood", 2.52),         # vitrina de trofeos (choca hasta el techo de la vitrina)
 		B([-5.4, 1.12, 14.6], [2.7, 0.06, 1.1], "gold"),
 		B([-5.4, 1.8, 15.05], [2.6, 1.4, 0.1], "hq_trim"),
 		B([-5.4, 1.75, 14.6], [2.6, 0.04, 1.0], "white"),
@@ -128,7 +129,8 @@ static func hq() -> Array:
 			[Vector3(5.4, 2.55, 14.05), "ARMARIO", 6, "gold"]]
 	var spots := {"front": [0, -1.5], "door": [0, 1.8], "texts": texts, "computer": [0, 7.6], "screen": Vector3(0, 1.35, 9.35),
 			"ceiling": [-w / 2, w / 2, z0, z1, lobby - 0.1], "wardrobe": [5.4, 12.7], "trophies": [-5.4, 12.8],
-			"indoor_lights": [[-4, 4.0, 6, 7.5], [4, 4.0, 6, 7.5], [-4, 4.0, 12.5, 7.5], [4, 4.0, 12.5, 7.5]],
+			"indoor_lights": [[-4, 4.0, 5, 6.5], [4, 4.0, 5, 6.5], [-4, 4.0, 9.5, 6.5], [4, 4.0, 9.5, 6.5],
+					[-4, 4.0, 13.5, 6.5], [4, 4.0, 13.5, 6.5]],   # debajo de cada panel del techo
 			"board": [-6.5, 11], "ticker": [6.5, 11], "assistant": [-2.9, 7.6]}
 	return [boxes, spots]
 
@@ -176,6 +178,7 @@ static func blueprint(kind, variant := -1, product := "") -> Array:
 			B([(door + side_w) / 2, h / 2, z0], [side_w, h, 0.3], "wall", true),
 			B([0, (h + door_h) / 2, z0], [door, h - door_h, 0.3], "wall"),
 			B([0, h + 0.15, zc], [w + 0.6, 0.3, depth + 0.6], "roof"),
+			B([0, h - 0.02, zc], [w - 0.3, 0.04, depth - 0.3], Color8(236, 232, 224)),   # cielo raso claro por dentro
 			B([0, 0.03, zc], [w - 0.4, 0.06, depth - 0.4], "floor"),
 			B([0, door_h + 0.35, z0 - 0.6], [w, 0.15, 1.2], "product")]
 	for sx in [-1, 1]:
@@ -265,10 +268,10 @@ const MEGA_W := 20.6   # ancho de la megatienda: los terrenos están cada 22 m, 
 const WALLS := [Color8(232, 226, 214), Color8(236, 232, 226), Color8(214, 226, 232), Color8(226, 236, 222),
 		Color8(240, 222, 206), Color8(222, 218, 236), Color8(244, 238, 220), Color8(210, 214, 220)]
 const FLOORS := [Color8(200, 190, 170), Color8(170, 120, 80), Color8(130, 135, 145), Color8(225, 222, 215),
-		Color8(150, 105, 70), Color8(90, 95, 105), Color8(205, 175, 140), Color8(185, 200, 195)]
-const TILES := [Color8(235, 232, 225), Color8(60, 62, 70), Color8(160, 110, 75), Color8(200, 205, 210)]
-const SHELVES := [Color8(190, 180, 165), Color8(240, 240, 240), Color8(70, 72, 80), Color8(150, 105, 70), Color8(120, 150, 160)]
-const WOODS := [Color8(140, 100, 65), Color8(95, 65, 45), Color8(200, 165, 120), Color8(60, 60, 66), Color8(235, 235, 235)]
+		Color8(150, 105, 70), Color8(140, 145, 155), Color8(205, 175, 140), Color8(185, 200, 195)]
+const TILES := [Color8(235, 232, 225), Color8(120, 122, 130), Color8(160, 110, 75), Color8(200, 205, 210)]
+const SHELVES := [Color8(190, 180, 165), Color8(240, 240, 240), Color8(125, 128, 136), Color8(150, 105, 70), Color8(120, 150, 160)]
+const WOODS := [Color8(140, 100, 65), Color8(135, 98, 70), Color8(200, 165, 120), Color8(115, 115, 122), Color8(235, 235, 235)]
 const RUGS := [Color8(150, 40, 45), Color8(40, 70, 120), Color8(60, 120, 80), Color8(120, 80, 140), Color8(200, 150, 60)]
 const ART := [Color8(210, 120, 70), Color8(80, 150, 190), Color8(220, 190, 80), Color8(150, 90, 160), Color8(90, 170, 120)]
 
@@ -395,6 +398,7 @@ static func _shell(kind: int, wall: Color, floor_col: Color, awning, boxes: Arra
 			B([(door + side_w) / 2, h / 2, z0], [side_w, h, 0.3], wall, true),
 			B([0, (h + door_h) / 2, z0], [door, h - door_h, 0.3], wall),
 			B([0, h + 0.15, zc], [w + 0.6, 0.3, depth + 0.6], "roof"),
+			B([0, h - 0.02, zc], [w - 0.3, 0.04, depth - 0.3], Color8(236, 232, 224)),   # cielo raso claro por dentro
 			B([0, 0.03, zc], [w - 0.4, 0.06, depth - 0.4], floor_col),
 			B([0, door_h + 0.35, z0 - 0.6], [w, 0.15, 1.2], awning)])
 	for sx in [-1, 1]:
@@ -442,10 +446,10 @@ static func _varied(kind: int, variant: int, product: String) -> Array:
 ## Puesto: toldo a rayas o liso, mostrador de distintos colores y cosas alrededor (taburetes, pizarra, plantas...).
 static func _varied_stall(boxes: Array, spots: Dictionary, rng: RandomNumberGenerator, pcol: Color, wood: Color) -> void:
 	var floor_col: Color = FLOORS[rng.randi() % FLOORS.size()]
-	var counter: Color = [pcol, wood, Color8(240, 240, 240), pcol.darkened(0.3)][rng.randi() % 4]
+	var counter: Color = [pcol, wood, Color8(240, 240, 240), pcol.darkened(0.1)][rng.randi() % 4]
 	boxes.append_array([B([0, 0.02, 4.5], [7, 0.04, 6], floor_col),
 			B([0, 0.55, 4], [4, 1.1, 2.4], counter, true),
-			B([0, 1.12, 4], [4.2, 0.06, 2.6], wood if counter != wood else Color8(60, 60, 66)),
+			B([0, 1.12, 4], [4.2, 0.06, 2.6], wood if counter != wood else Color8(115, 115, 122)),
 			B([0, 3.5, 2.6], [3.6, 0.8, 0.2], "product")])
 	var stripes := rng.randf() < 0.6
 	var stripe_b: Color = [Color8(245, 245, 245), Color8(250, 220, 90), Color8(40, 40, 45)][rng.randi() % 3]

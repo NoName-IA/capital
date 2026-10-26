@@ -20,24 +20,13 @@ var pause_page := "main"
 var tutorial_page := 0
 var tutorial_tex := {}
 # Tutorial de la primera partida: [imagen, título, texto]
+## La bienvenida: después siguen los pasos guiados jugando (ver Tutorial).
 const TUTORIAL := [
-	["meta", "Bienvenido a Capital", "Empiezas con un poco de plata y tu propia empresa. Vende, invierte y crece.
+	["meta", "Bienvenido a Capital", "Empiezas con un puesto de café y un poco de plata. Vende, invierte y crece.
 
-Tu meta: que tu empresa llegue a valer $10 millones (el rango Imperio). Arriba a la izquierda ves cuánto vale y cuánto te falta."],
-	["moverse", "Muévete por la ciudad", "W A S D para caminar · Shift para correr · Espacio para saltar.
-Mueve el mouse para mirar y usa la rueda para acercar o alejar la cámara.
-Alt suelta el mouse para hacer clic en los botones."],
-	["terreno", "Compra terrenos", "Acércate a un letrero SE VENDE y aprieta E.
-Elige qué vender (café, pan, hamburguesas...) y el tamaño: puesto, local o megatienda. Más grande vende más, pero cuesta más cada mes."],
-	["celular", "Tu celular (Tab)", "En el celular manejas todo: precios, calidad, empleados, inventario, publicidad y préstamos.
-Revisa Resumen seguido: ahí ves si estás ganando o perdiendo plata."],
-	["clientes", "Clientes y empleados", "Los clientes hacen fila y tus empleados les venden lo de tu negocio.
-Si ves un ! rojo, alguien se fue enojado: falta personal o producto. Contrata más o repón inventario."],
-	["oficina", "Cuida la caja", "Si la caja queda en negativo mucho tiempo, la empresa quiebra. No crezcas con deuda más rápido de lo que vendes.
-En tu oficina (tecla O) están la computadora, la estrategia, los trofeos y el armario."],
-	["eldiario", "ELDIARIO", "Al lado de tu oficina está el kiosco ELDIARIO: su pantalla muestra el clima de hoy, la temperatura, la hora y el pronóstico de mañana.
+Tu meta: que tu empresa llegue a valer $10 millones (el rango Imperio). Arriba a la izquierda ves cuánto vale.
 
-¡Listo! Ahora a construir tu imperio."],
+Ahora vas a aprender jugando: un par de pasos cortos, y una flecha amarilla te muestra a dónde ir."],
 ]
 var shop_tab := "cabeza"
 var saved_at := -9999
@@ -78,6 +67,7 @@ func draw() -> void:
 			else:
 				draw_tablet_frame()
 				app.draw_game()
+				city.tutorial.draw_phone(ui)
 				# Un clic fuera de la tablet la guarda
 				if ui.clicked and app.modal == null and not Rect2(-30, -30, W + 60, H + 60).has_point(ui.mouse):
 					hide()
@@ -401,7 +391,7 @@ func draw_settings(area: Rect2) -> void:
 # ---------- tutorial ----------
 func tutorial_next() -> void:
 	if tutorial_page >= TUTORIAL.size() - 1:
-		city.close_tutorial()
+		city.close_tutorial(true)
 	else:
 		tutorial_page += 1
 
@@ -411,14 +401,15 @@ func draw_tutorial() -> void:
 	var page: Array = TUTORIAL[tutorial_page]
 	var box := Rect2(W / 2 - 470, H / 2 - 350, 940, 700)
 	glass_box(box)
-	ui.text("TUTORIAL · %d de %d" % [tutorial_page + 1, TUTORIAL.size()], box.position + Vector2(40, 24), 13, "muted", true)
+	ui.text("BIENVENIDA" if TUTORIAL.size() == 1 else "TUTORIAL · %d de %d" % [tutorial_page + 1, TUTORIAL.size()],
+			box.position + Vector2(40, 24), 13, "muted", true)
 	if ui.button(Rect2(box.end.x - 170, box.position.y + 18, 130, 32), "Saltar (Esc)", true, "normal", 13):
 		city.close_tutorial()
 		return
 	var img := Rect2(box.position.x + 150, box.position.y + 60, 640, 360)
 	var key: String = page[0]
 	if not tutorial_tex.has(key):
-		var path := "res://images/tutorial/%s.png" % key
+		var path := "res://assets/imagenes/tutorial/%s.png" % key
 		tutorial_tex[key] = load(path) if ResourceLoader.exists(path) else null
 	if tutorial_tex[key]:
 		ui.image(tutorial_tex[key], img)
@@ -435,7 +426,7 @@ func draw_tutorial() -> void:
 	var last := tutorial_page == n - 1
 	if tutorial_page > 0 and ui.button(Rect2(box.position.x + 40, box.end.y - 64, 200, 44), "< Anterior", true, "normal", 16):
 		tutorial_page -= 1
-	if ui.button(Rect2(box.end.x - 240, box.end.y - 64, 200, 44), "¡A jugar!" if last else "Siguiente >", true, "primary", 17):
+	if ui.button(Rect2(box.end.x - 260, box.end.y - 64, 220, 44), "Empezar el tutorial" if last else "Siguiente >", true, "primary", 17):
 		tutorial_next()
 
 
@@ -748,63 +739,129 @@ func draw_trophies() -> void:
 	var g: Game = app.game
 	var ranks: Array = g.ranks().slice(1)
 	var rows := (ranks.size() + 4) / 5
-	var bh := 170.0 + rows * 250
-	var box := Rect2(W / 2 - 560, H / 2 - bh / 2, 1120, bh)
+	var bh := 180.0 + rows * 262
+	var box := Rect2(W / 2 - 570, H / 2 - bh / 2, 1140, bh)
 	glass_box(box)
 	var got: int = g.rank
-	ui.text("Vitrina de trofeos", box.position + Vector2(40, 26), 32, "accent", true)
-	ui.text("%d de %d títulos · %s" % [got, ranks.size(), D.MODES[g.mode].name], box.position + Vector2(42, 72), 15, "muted")
+	ui.text("TU OFICINA", box.position + Vector2(42, 26), 12, "muted", true)
+	ui.text("Vitrina de trofeos", box.position + Vector2(40, 42), 32, "accent", true)
+	ui.text("Un trofeo por cada título que consigues · %s" % D.MODES[g.mode].name, box.position + Vector2(42, 86), 14, "muted")
+	# Contador circular: cuántos títulos tienes
+	var cc := Vector2(box.end.x - 76, box.position.y + 66)
+	ui.ring(cc, 34, Color(1, 1, 1, 0.08), 7)
+	arc(cc, 34, float(got) / ranks.size(), ImUI.COL.accent, 7)
+	ui.text("%d/%d" % [got, ranks.size()], cc, 18, "text", true, "center")
+	# Lo que falta para el siguiente
 	var info := g.rank_info()
+	var nx := cc.x - 70
 	if info[2] != null:
-		ui.text("Siguiente: %s — te faltan %s" % [info[2][1], Fmt.money(max(0.0, info[2][0] - info[3]))],
-				Vector2(box.end.x - 40, box.position.y + 34), 16, "text", false, "topright")
 		var lo: float = g.ranks()[got][0]
-		ui.bar(Rect2(box.end.x - 340, box.position.y + 62, 300, 8), (info[3] - lo) / (info[2][0] - lo), "accent")
+		ui.text("Siguiente: %s" % info[2][1], Vector2(nx, box.position.y + 40), 15, "text", true, "topright")
+		ui.text("Te faltan %s" % Fmt.money(max(0.0, info[2][0] - info[3])), Vector2(nx, box.position.y + 62), 13, "muted",
+				false, "topright")
+		ui.bar(Rect2(nx - 260, box.position.y + 84, 260, 6), (info[3] - lo) / (info[2][0] - lo), "accent")
 	else:
-		ui.text("¡Los tienes todos!", Vector2(box.end.x - 40, box.position.y + 34), 18, "green", true, "topright")
+		ui.text("¡Los tienes todos!", Vector2(nx, box.position.y + 52), 18, "green", true, "topright")
 	for i in ranks.size():
-		var r := Rect2(box.position.x + 40 + (i % 5) * 210, box.position.y + 110 + (i / 5) * 250, 196, 236)
-		var earned := i < got
-		var tier: Array = TIERS[min(i, TIERS.size() - 1)]
-		ui.rect(r, "panel2", 14)
-		if earned:
-			ui.rect(r, tier[1], 14, 2)
-		draw_cup(Vector2(r.get_center().x, r.position.y + 78), tier[1] if earned else Color8(58, 62, 72), earned)
-		var title: String = ranks[i][1]
-		ui.text(title, Vector2(r.get_center().x, r.position.y + 150), 16, "text" if earned else "muted", true, "midtop", r.size.x - 16)
-		ui.text("%s · %s" % [tier[0], Fmt.short(ranks[i][0])], Vector2(r.get_center().x, r.position.y + 174), 13,
-				tier[1] if earned else "muted", false, "midtop")
-		if earned:
-			var logged = g.rank_log.get(title)
-			var when := "Conseguido"
-			if logged != null:
-				var day := int(logged[0])
-				when = "%d de %s, año %d" % [day % 30 + 1, D.MONTHS[(day / 30) % 12], day / 360 + 1]
-			ui.text(when, Vector2(r.get_center().x, r.position.y + 196), 12, "muted", false, "midtop")
-			if logged != null:
-				ui.text("a los %d min de juego" % roundi(logged[1] / 60.0), Vector2(r.get_center().x, r.position.y + 212), 12, "muted", false, "midtop")
-		else:
-			ui.text("Bloqueado", Vector2(r.get_center().x, r.position.y + 200), 13, "muted", false, "midtop")
-	if ui.button(Rect2(box.get_center().x - 130, box.end.y - 58, 260, 42), "Cerrar (E)", true, "normal", 16):
+		var r := Rect2(box.position.x + 40 + (i % 5) * 214, box.position.y + 122 + (i / 5) * 262, 200, 248)
+		draw_trophy_card(r, i, ranks[i], i < got, i == got, info)
+	if ui.button(Rect2(box.get_center().x - 130, box.end.y - 54, 260, 40), "Cerrar (E)", true, "normal", 16):
 		hide()
 
 
-## Una copa dibujada con figuras: asas, copa, tallo y base. Brilla si está ganada.
-func draw_cup(c: Vector2, rgb: Color, earned: bool) -> void:
+## Arco de progreso (de arriba, en el sentido del reloj) para el contador de la vitrina.
+func arc(c: Vector2, radius: float, frac: float, color, width := 4.0) -> void:
+	var n := int(48 * clampf(frac, 0.0, 1.0))
+	if n < 1:
+		return
+	var pts := PackedVector2Array()
+	for j in n + 1:
+		var a := -PI / 2 + TAU * frac * j / n
+		pts.append(c + Vector2(cos(a), sin(a)) * radius)
+	ui.polyline(pts, color, width)
+
+
+## Una tarjeta de la vitrina: ganada (con el color de su nivel y brillo), la siguiente (con su avance) o bloqueada.
+func draw_trophy_card(r: Rect2, i: int, rank: Array, earned: bool, is_next: bool, info: Array) -> void:
+	var tier: Array = TIERS[min(i, TIERS.size() - 1)]
+	var tc: Color = tier[1]
+	var hot := ui.hover(r)
+	var k := ui.tween("trophy:%d" % i, 1.0 if hot else 0.0)
+	r.position.y -= 3 * k
+	var cup := Vector2(r.get_center().x, r.position.y + 100)
+	ui.rect(r, Color8(27, 32, 41), 14)
+	if earned:
+		ui.rect(r, Color(tc, 0.1 + 0.05 * k), 14)
+		for g in [[66, 0.05], [50, 0.07], [36, 0.09]]:   # brillo detrás de la copa
+			ui.circle(cup + Vector2(0, -8), g[0], Color(tc, g[1] + 0.03 * k))
+		ui.rect(r, Color(tc, 0.75 + 0.25 * k), 14, 1.5 + k)
+	elif is_next:
+		ui.rect(r, Color(ImUI.COL.accent, 0.45 + 0.4 * k), 14, 1.5)
+	else:
+		ui.rect(r, Color(1, 1, 1, 0.06 + 0.08 * k), 14, 1)
+	# Arriba: el nivel (bronce, plata...) y el número del título
+	if earned:
+		app.pill(r.position + Vector2(12, 12), tier[0].to_upper(), tc)
+	elif is_next:
+		app.pill(r.position + Vector2(12, 12), "SIGUIENTE", "accent", true)
+	else:
+		app.pill(r.position + Vector2(12, 12), tier[0].to_upper(), Color8(110, 116, 130))
+	ui.text("#%d" % (i + 1), Vector2(r.end.x - 14, r.position.y + 15), 12, Color(1, 1, 1, 0.35), true, "topright")
+	draw_cup(cup, tc if earned else Color8(52, 57, 68), earned, i)
+	var title: String = rank[1]
+	var cx := r.get_center().x
+	ui.text(title, Vector2(cx, r.position.y + 162), 16, "text" if earned or is_next else "muted", true, "midtop", r.size.x - 16)
+	ui.text(Fmt.short(rank[0]), Vector2(cx, r.position.y + 184), 13, tc if earned else ("accent" if is_next else "muted"),
+			true, "midtop")
+	if earned:
+		var logged = app.game.rank_log.get(title)
+		if logged != null:
+			var day := int(logged[0])
+			ui.text("%d de %s, año %d" % [day % 30 + 1, D.MONTHS[(day / 30) % 12], day / 360 + 1],
+					Vector2(cx, r.position.y + 206), 12, "muted", false, "midtop")
+			ui.text("a los %d min de juego" % roundi(logged[1] / 60.0), Vector2(cx, r.position.y + 222), 11,
+					Color(ImUI.COL.muted, 0.8), false, "midtop")
+		else:
+			ui.text("Conseguido", Vector2(cx, r.position.y + 212), 12, "muted", false, "midtop")
+	elif is_next and info[2] != null:
+		var lo: float = app.game.ranks()[i][0]   # el título anterior
+		var frac: float = (info[3] - lo) / (rank[0] - lo) if rank[0] > lo else 0.0
+		ui.bar(Rect2(r.position.x + 20, r.position.y + 210, r.size.x - 40, 6), frac, "accent")
+		ui.text("%d %%" % roundi(clampf(frac, 0, 1) * 100), Vector2(cx, r.position.y + 222), 11, "muted", false, "midtop")
+	else:
+		ui.text("Bloqueado", Vector2(cx, r.position.y + 212), 12, Color(ImUI.COL.muted, 0.7), false, "midtop")
+
+
+## Una copa dibujada con figuras: asas, copa, tallo y base. Ganada brilla (y las de diamante en adelante destellan);
+## bloqueada es gris con un candado.
+func draw_cup(c: Vector2, rgb: Color, earned: bool, i := 0) -> void:
 	var dark := rgb * 0.65
 	dark.a = 1
+	var light := rgb.lightened(0.35)
 	for sx in [-1, 1]:
 		ui.ring(c + Vector2(sx * 34, -14), 12, dark, 6)
 	ui.polygon(PackedVector2Array([c + Vector2(-36, -40), c + Vector2(36, -40), c + Vector2(22, 8), c + Vector2(-22, 8)]), rgb)
 	ui.circle(c + Vector2(0, 7), 22, rgb)
+	ui.rect(Rect2(c.x - 38, c.y - 44, 76, 7), light if earned else rgb.lightened(0.08), 3)   # borde de la copa
 	ui.rect(Rect2(c.x - 6, c.y + 14, 12, 22), dark)
 	ui.rect(Rect2(c.x - 22, c.y + 34, 44, 10), rgb, 3)
 	ui.rect(Rect2(c.x - 30, c.y + 44, 60, 12), dark, 3)
 	if earned:
-		ui.line(c + Vector2(-22, -32), c + Vector2(-12, 2), Color.WHITE, 4)
-		ui.circle(c + Vector2(14, -24), 4, Color.WHITE)
-	else:
-		ui.text("?", c + Vector2(0, -16), 30, Color8(110, 116, 130), true, "center")
+		ui.polygon(PackedVector2Array([c + Vector2(-26, -34), c + Vector2(-16, -34), c + Vector2(-8, 4), c + Vector2(-14, 4)]),
+				Color(1, 1, 1, 0.45))   # reflejo
+		ui.text("★", c + Vector2(0, -12), 22, dark, true, "center")
+		if i >= 6:   # diamante y leyenda: destellos que laten
+			var t := Time.get_ticks_msec() / 1000.0
+			for s in [[Vector2(30, -46), 0.0], [Vector2(-40, 18), 1.3], [Vector2(38, 26), 2.6]]:
+				var a := 0.5 + 0.5 * sin(t * 2.4 + s[1])
+				var p: Vector2 = c + s[0]
+				ui.line(p - Vector2(7 * a, 0), p + Vector2(7 * a, 0), Color(1, 1, 1, a), 2)
+				ui.line(p - Vector2(0, 7 * a), p + Vector2(0, 7 * a), Color(1, 1, 1, a), 2)
+	else:   # candado
+		var lc := Color8(120, 126, 140)
+		ui.ring(c + Vector2(0, -22), 9, lc, 3.5)
+		ui.rect(Rect2(c.x - 13, c.y - 20, 26, 20), lc, 4)
+		ui.circle(c + Vector2(0, -12), 3, rgb)
 
 
 # ---------- reunión de estrategia ----------
