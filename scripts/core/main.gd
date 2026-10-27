@@ -62,6 +62,9 @@ func _exit_tree() -> void:
 	# Las interfaces dibujan directo en el RenderingServer: hay que liberar lo que crearon.
 	ui.free_items()
 	city.hud.ui.free_items()
+	# La función del sonido de los menús (en una variable static) guarda a la ciudad: si se suelta recién cuando Godot
+	# ya apagó el audio, el juego se cae al cerrarse.
+	ImUI.menu_sound = Callable()
 
 
 func _input(event: InputEvent) -> void:
