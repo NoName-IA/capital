@@ -2,7 +2,6 @@
 .godot/
 *.translation
 export/
-export_presets.cfg
 
 # Capturas que generan los escenarios de prueba
 tests/shots/
