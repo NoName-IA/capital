@@ -21,6 +21,7 @@ static var config_path := "user://config.json"
 const DEFAULT_SETTINGS := {"music": 0.7, "effects": 0.8, "sensitivity": 1.0, "fov": 70.0, "invert_y": false,
 		"fullscreen": false, "day_night": true, "comments": true, "help": true, "blur": true,
 		"tutorial_seen": false,
+		"lang": "",   # idioma (ver Lang); vacío = todavía no se eligió: se usa el del sistema
 		"quality": 1, "g_shadows": 2, "g_ao": false, "g_glow": true, "g_aa": 0, "g_flare": true,  # gráficos: ver Graphics
 		"keys": {},   # teclas cambiadas en Controles (ver Keys)
 		# Gráficos extra (no cambian el nivel): ver Graphics.apply
@@ -115,6 +116,9 @@ func _ready() -> void:
 	Icons.setup(self)
 	Mats.setup()
 	settings = load_settings()
+	if settings.lang == "":   # la primera vez: el idioma del sistema (o inglés si el juego no lo tiene)
+		settings.lang = Lang.system_code()
+	Lang.use(settings.lang)
 	builder = WorldBuilder.new(self)
 	builder.build()
 	static_rects = builder.rects
@@ -164,6 +168,8 @@ func load_settings() -> Dictionary:
 		for k in data:
 			if s.has(k) and typeof(data[k]) in [TYPE_FLOAT, TYPE_INT, TYPE_BOOL]:
 				s[k] = data[k]
+		if data.get("lang") is String:
+			s.lang = data.lang
 		if data.get("keys") is Dictionary:
 			s.keys = data.keys
 		if data.get("window") is Array and data.window.size() == 4:
@@ -281,9 +287,9 @@ func _build_office() -> void:
 
 func sync_office(g: Game) -> void:
 	var wait := g.strategy_wait()
-	board_text.text = "REUNIÓN DE ESTRATEGIA\n" + ("Lista: acércate y presiona E" if not wait else "Próxima en %d días" % wait)
+	board_text.text = Lang.t("REUNIÓN DE ESTRATEGIA") + "\n" + (Lang.t("Lista: acércate y presiona E") if not wait else Lang.f("Próxima en %d días", wait))
 	var chg := g.market_today * 100
-	ticker_text.text = "BOLSA DE VALORES\nHoy %s%s%%\nTu fondo: %s" % ["+" if chg >= 0 else "", Fmt.num(chg, 1), Fmt.short(g.fund)]
+	ticker_text.text = Lang.f("BOLSA DE VALORES\nHoy %s%s%%\nTu fondo: %s", ["+" if chg >= 0 else "", Fmt.num(chg, 1), Fmt.short(g.fund)])
 	ticker_text.modulate = Color8(120, 255, 120) if chg >= 0 else Color8(255, 90, 90)
 	if g.rank != trophy_count:
 		build_trophies(g.rank)
@@ -331,7 +337,7 @@ func ask_assistant() -> void:
 	if not g.strategy_wait():
 		tips.push_front("La pizarra está lista: haz la reunión de estrategia del mes.")
 	if tips.is_empty():
-		tips = ["Todo en orden, jefe. Este mes llevamos %s de utilidad." % Fmt.money(Game.statement(g.ledger).utilidad_neta)]
+		tips = [Lang.f("Todo en orden, jefe. Este mes llevamos %s de utilidad.", Fmt.money(Game.statement(g.ledger).utilidad_neta))]
 	var text: String = tips[tip_i % tips.size()]
 	tip_i += 1
 	hud.notes.push("oficina", "Sofía · tu asistente", text, {"initials": "SO", "sound": "ring"})
@@ -527,7 +533,7 @@ func toast(text: String, kind := "info") -> void:
 func pop(pos: Vector3, text: String, kind: String, size := 16.0, life := 1.2) -> void:
 	var cols := {"green": Color8(120, 255, 120), "red": Color8(255, 80, 80), "orange": Color8(255, 170, 60), "white": Color.WHITE}
 	var l := Label3D.new()
-	l.text = text
+	l.text = Lang.t(text)
 	l.font = Building.title_font
 	l.font_size = 48
 	l.pixel_size = size * 0.0011
@@ -554,7 +560,7 @@ func say(person: Node3D, text: String, kind := "white", life := 2.4) -> void:
 	var cols := {"green": Color8(150, 255, 150), "red": Color8(255, 120, 110), "orange": Color8(255, 190, 90),
 			"gold": Color8(255, 215, 90), "white": Color.WHITE}
 	var l := Label3D.new()
-	l.text = text
+	l.text = Lang.t(text)
 	l.font = Building.title_font
 	l.font_size = 40
 	l.pixel_size = 0.0068
@@ -622,12 +628,12 @@ func complain(pos: Vector3, store) -> void:
 	if store == null or not settings.comments or randf() > 0.6:
 		return
 	var p: Dictionary = game.products[store.loc.product]
-	var name: String = D.PRODUCTS[p.key].name.to_lower()
+	var name := Lang.noun(D.PRODUCTS[p.key].name)
 	var lines := []
 	if p.last_sold < min(p.last_demand, p.last_capacity) * 0.95:
-		lines = ["¿No hay %s?" % name, "¡Se les acabó todo!"]
+		lines = [Lang.f("¿No hay %s?", name), "¡Se les acabó todo!"]
 	else:
-		lines = ["¡Qué fila!", "¡Nadie atiende!", "Me voy donde %s..." % D.rival_for(p.key).short, "¡Llevo horas esperando!"]
+		lines = ["¡Qué fila!", "¡Nadie atiende!", Lang.f("Me voy donde %s...", D.rival_for(p.key).short), "¡Llevo horas esperando!"]
 	pop(pos + Vector3(0, 0.55, 0), lines.pick_random(), "orange", 10, 1.8)
 
 
@@ -655,18 +661,18 @@ func react(n: Dictionary) -> void:
 	var orange := Color8(240, 140, 50)
 	match fx:
 		"rank":
-			notes.push_hero("NUEVO RANGO", v, "Tu empresa vale %s. ¡Sigue así!" % Fmt.money(game.valuation()), gold, "fanfare", 140)
+			notes.push_hero("NUEVO RANGO", v, Lang.f("Tu empresa vale %s. ¡Sigue así!", Fmt.money(game.valuation())), gold, "fanfare", 140)
 		"win":
 			if game.mode == "normal":
-				notes.push_hero("IMPERIO", "¡Construiste un imperio!", "En %d minutos de juego" % roundi(game.win_seconds / 60.0), gold, "fanfare", 180, null, "crown")
+				notes.push_hero("IMPERIO", "¡Construiste un imperio!", Lang.f("En %d minutos de juego", roundi(game.win_seconds / 60.0)), gold, "fanfare", 180, null, "crown")
 			else:
 				notes.push_hero("MIL MILLONARIO", "¡Llegaste a la cima!", "El título más alto del juego", gold, "fanfare", 180, null, "crown")
 		"record":
 			notes.push_hero("RÉCORD DE VENTAS", "{}", "vendidos en un solo día", green, "record", 50, v, "chart")
 		"streak":
-			notes.push_hero("RACHA", "¡%d meses ganando!" % v, "Tu racha de meses con utilidad sigue viva", orange, "good", 40, null, "heart")
+			notes.push_hero("RACHA", Lang.f("¡%d meses ganando!", v), "Tu racha de meses con utilidad sigue viva", orange, "good", 40, null, "heart")
 		"streak_lost":
-			notes.push("banco", "Se cortó tu racha", "Llevabas %d meses seguidos con utilidad. ¡Puedes empezar otra!" % v, {"col": red, "sound": "bad"})
+			notes.push("banco", "Se cortó tu racha", Lang.f("Llevabas %d meses seguidos con utilidad. ¡Puedes empezar otra!", v), {"col": red, "sound": "bad"})
 		"month":
 			var title: String = n.text.split(":")[0]
 			if v >= 0:
@@ -687,11 +693,11 @@ func react(n: Dictionary) -> void:
 			for w in r.name.replace("Dr. ", "").replace("Doña ", "").split(" ").slice(0, 2):
 				initials += w[0]
 			var said: String = n.text.split(": «", true, 1)[-1].trim_suffix("»")
-			notes.push("mensajes", "%s · %s" % [r.name, r.company], "«%s»" % said, {"col": r.color, "initials": initials, "sound": "rival", "low": true})
+			notes.push("mensajes", Lang.f("%s · %s", [r.name, r.company]), Lang.f("«%s»", said), {"col": r.color, "initials": initials, "sound": "rival", "low": true})
 		"weather":
 			var wd: Dictionary = D.WEATHER[v]
 			var nxt: Dictionary = D.WEATHER[game.weather_next]
-			notes.push("clima", wd.name, "%s Pronóstico: %s en %d días." % [n.text, nxt.name.to_lower(), game.weather_days],
+			notes.push("clima", wd.name, Lang.f("%s Pronóstico: %s en %d días.", [n.text, Lang.noun(nxt.name), game.weather_days]),
 					{"col": Color8(255, 120, 60) if v == 4 else (Color8(225, 85, 75) if v == 5 else Color8(90, 170, 230)), "icon": Icons.weather(v)})
 		"stars":  # sin aviso: las estrellas saltan sobre el local (y queda en Noticias)
 			var up: bool = v[2]
@@ -908,8 +914,8 @@ func sync_competitors(g: Game) -> void:
 	for k in need:
 		for n in need[k]:
 			for i in COMP_PLOTS.size():
-				if not comps.has("c%d" % i):
-					comps["c%d" % i] = Actors.competitor(self, k, COMP_PLOTS[i])
+				if not comps.has(Lang.f("c%d", i)):
+					comps[Lang.f("c%d", i)] = Actors.competitor(self, k, COMP_PLOTS[i])
 					break
 
 
@@ -1390,17 +1396,17 @@ func interactables() -> Array:
 	if g.wardrobe:
 		items.append([hq_spots.wardrobe, "Abrir el armario: comprar ropa y cambiar tu aspecto", use_wardrobe])
 	else:
-		items.append([hq_spots.wardrobe, "Comprar el armario (%s): tienda de ropa" % Fmt.money(g.wardrobe_cost()), use_wardrobe])
+		items.append([hq_spots.wardrobe, Lang.f("Comprar el armario (%s): tienda de ropa", Fmt.money(g.wardrobe_cost())), use_wardrobe])
 	for i in stores:
 		var store: Store = stores[i]
-		var name := "%s de %s" % [D.SIZES[store.loc.size].name, D.PRODUCTS[store.loc.product].name.to_lower()]
+		var name := Lang.f("%s de %s", [D.SIZES[store.loc.size].name, Lang.noun(D.PRODUCTS[store.loc.product].name)])
 		if serving == store:
 			items.append([store.spots.serve, "Dejar de atender", stop_serving])
 		else:
 			items.append([store.spots.serve, "Atender el mostrador (+1 empleado gratis: tú)", start_serving.bind(store)])
-		items.append([store.spots.manage, "Administrar %s" % name, manage.bind(store)])
+		items.append([store.spots.manage, Lang.f("Administrar %s", name), manage.bind(store)])
 	for i in lots:
-		items.append([lots[i].manage, "Comprar el terreno %d" % (i + 1), func(): overlays.show("lote", i)])
+		items.append([lots[i].manage, Lang.f("Comprar el terreno %d", (i + 1)), func(): overlays.show("lote", i)])
 	# Actividades de la ciudad (parque, barrio, playa, muelle)
 	for a in D.ACTIVITIES:
 		var key: String = a[0]
@@ -1408,13 +1414,13 @@ func interactables() -> Array:
 		var cost := g.activity_cost(key)
 		var text: String = a[1]
 		if wait:
-			text += " (de nuevo en %d día%s)" % [wait, "" if wait == 1 else "s"]
+			text += Lang.f(" (de nuevo en %d día%s)", [wait, "" if wait == 1 else "s"])
 		elif cost > 0:
-			text += " (%s)" % Fmt.money(cost)
+			text += Lang.f(" (%s)", Fmt.money(cost))
 		items.append([builder.activity_spots[key], text, do_activity.bind(key)])
 	for c in comps.values():
-		var name: String = D.PRODUCTS[c.key].name.to_lower()
-		items.append([c.spots.manage, "Competencia: %s (%s). Ver cómo comprarla" % [c.rival.company, name], manage_market.bind(c.key)])
+		var name: String = Lang.noun(D.PRODUCTS[c.key].name)
+		items.append([c.spots.manage, Lang.f("Competencia: %s (%s). Ver cómo comprarla", [c.rival.company, name]), manage_market.bind(c.key)])
 	return items
 
 
@@ -1461,7 +1467,7 @@ func update(dt: float) -> void:
 				best = it
 				best_d = dd
 		prompt_action = best
-		hud.prompt = "[%s] %s" % [Keys.label("interact"), best[1]] if best != null else ""
+		hud.prompt = Lang.f("[%s] %s", [Keys.label("interact"), best[1]]) if best != null else ""
 		update_zone()
 	# En pausa (P o Esc) o con una decisión pendiente la ciudad se congela: gente, empleados, autos y animales
 	var frozen: bool = g != null and (app.paused or app.modal != null)
@@ -1554,10 +1560,10 @@ func update_diario() -> void:
 	var w := weather
 	dl.icon.region_rect = Icons.region(Icons.weather(w.today, sky.night_amount > 0.5))
 	dl.temp.text = "%d°C" % w.temperature(hour)
-	dl.kind.text = w.name_of(w.today)
+	dl.kind.text = Lang.t(w.name_of(w.today))
 	dl.hour.text = "%02d:%02d" % [int(hour), int(fmod(hour, 1.0) * 60)]
 	var days: int = game.weather_days if game != null else 1
-	dl.tomorrow.text = "En %d día%s: %s" % [days, "" if days == 1 else "s", w.name_of(w.tomorrow)]
+	dl.tomorrow.text = Lang.f("En %d día%s: %s", [days, "" if days == 1 else "s", w.name_of(w.tomorrow)])
 
 
 func open_tutorial() -> void:
@@ -1630,7 +1636,7 @@ func _key(e: InputEventKey) -> void:
 		return
 	if Keys.is_event(e, "music") and not (overlays.open() and app.view == "menu"):
 		sfx.music_on = not sfx.music_on
-		toast("Música activada." if sfx.music_on else "Música en silencio (%s para volver)." % Keys.label("music"), "info")
+		toast("Música activada." if sfx.music_on else Lang.f("Música en silencio (%s para volver).", Keys.label("music")), "info")
 		return
 	if overlays.mode == "tutorial":
 		if key == KEY_ESCAPE and overlays.tutorial_pages == Overlays.TUTORIAL:

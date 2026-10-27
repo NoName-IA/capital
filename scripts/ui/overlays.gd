@@ -62,6 +62,7 @@ func open() -> bool:
 func show(new_mode: String, lot_index := -1, is_auto := false) -> void:
 	mode = new_mode
 	lot = lot_index
+	lang_pick = -1
 	auto = is_auto
 	city.release_mouse()
 
@@ -141,27 +142,27 @@ func draw_lot() -> void:
 	var g: Game = app.game
 	var beach: bool = lot in D.BEACH_PLOTS
 	ui.panel(Rect2(40, 30, W - 80, H - 60))
-	ui.text("Terreno %d en venta%s" % [lot + 1, " · en la playa" if beach else ""], Vector2(70, 60), 32, "accent", true)
+	ui.text(Lang.f("Terreno %d en venta%s", [lot + 1, " · en la playa" if beach else ""]), Vector2(70, 60), 32, "accent", true)
 	var y0 := 110.0
 	if beach:
-		ui.text("Frente al mar: +%d%% de clientes por los turistas." % roundi((D.BEACH_BONUS - 1) * 100), Vector2(72, 98), 16, "green", true)
+		ui.text(Lang.f("Frente al mar: +%d%% de clientes por los turistas.", roundi((D.BEACH_BONUS - 1) * 100)), Vector2(72, 98), 16, "green", true)
 		y0 = 128
 	ui.wrap_text("Elige qué negocio construir aquí. La construcción es una inversión (CAPEX) que se deprecia en 5 años; el alquiler es un costo fijo que pagas cada mes vendas o no. Más grande = más clientes y más empleados, pero también más costo fijo.",
 			Rect2(70, y0, W - 140, 80), 16, "muted")
-	ui.text("Caja disponible: %s" % Fmt.money(g.cash), Vector2(W - 70, 64), 20, Admin.sc(g.cash), true, "topright")
+	ui.text(Lang.f("Caja disponible: %s", Fmt.money(g.cash)), Vector2(W - 70, 64), 20, Admin.sc(g.cash), true, "topright")
 	var y := 200.0
 	for key in D.PRODUCT_ORDER:
 		var p: Dictionary = g.products[key]
 		var d: Dictionary = D.PRODUCTS[key]
 		ui.text(d.name, Vector2(70, y + 8), 22, "text" if p.unlocked else "muted", true)
 		if not p.unlocked:
-			ui.text("Bloqueado: desbloquéalo en la tablet (Negocios) por %s" % Fmt.money(g.unlock_cost(key)), Vector2(290, y + 12), 16, "muted")
+			ui.text(Lang.f("Bloqueado: desbloquéalo en la tablet (Negocios) por %s", Fmt.money(g.unlock_cost(key))), Vector2(290, y + 12), 16, "muted")
 		else:
 			for s in D.SIZES.size():
 				var size: Dictionary = D.SIZES[s]
 				var cost := g.location_cost(s)
-				var tip := "%s: inversión %s, alquiler %s/mes, hasta %d empleados, tráfico ×%d." % [size.name, Fmt.money(cost), Fmt.money(size.rent * g.price_index), size.max_emp, int(size.traffic)]
-				if ui.button(Rect2(290 + s * 300, y, 285, 44), "%s · %s" % [size.name, Fmt.money(cost)], g.cash >= cost, "normal", 15, tip):
+				var tip := Lang.f("%s: inversión %s, alquiler %s/mes, hasta %d empleados, tráfico ×%d.", [size.name, Fmt.money(cost), Fmt.money(size.rent * g.price_index), size.max_emp, int(size.traffic)])
+				if ui.button(Rect2(290 + s * 300, y, 285, 44), Lang.f("%s · %s", [size.name, Fmt.money(cost)]), g.cash >= cost, "normal", 15, tip):
 					var res := g.open_location(key, s, lot)
 					if res[0]:
 						hide()
@@ -176,6 +177,7 @@ func draw_lot() -> void:
 # ---------- menú de pausa ----------
 const PAUSE_PAGES := [["main", "AJUSTES"], ["graficos", "GRÁFICOS"], ["controles", "CONTROLES"]]
 const ROW_H := 46.0
+var lang_pick := -1          # idioma elegido en Ajustes que todavía no se aplicó (-1: el actual)
 var row_desc = null         # descripción de la fila bajo el mouse (se muestra abajo, como en los juegos grandes)
 var binding = null          # acción de Controles que espera una tecla nueva
 var settings_scroll := 0.0
@@ -193,7 +195,7 @@ func draw_pause() -> void:
 	if g != null:
 		var info := g.rank_info()
 		ui.text(g.company, Vector2(x, 162), 18, "text", true, "topleft", 300)
-		ui.text("%s · %s" % [info[1], Fmt.short(info[3])], Vector2(x, 188), 14, "muted", false, "topleft", 300)
+		ui.text(Lang.f("%s · %s", [info[1], Fmt.short(info[3])]), Vector2(x, 188), 14, "muted", false, "topleft", 300)
 	var y := 240.0
 	if ui.menu_item("p:continuar", Vector2(x, y), "CONTINUAR", "", true, 24, 310.0):
 		city.close_pause()
@@ -206,10 +208,10 @@ func draw_pause() -> void:
 			settings_scroll = 0.0
 		y += 54
 	var just_saved := Time.get_ticks_msec() - saved_at < 2500
-	if ui.menu_item("p:guardar", Vector2(x, y), "GUARDAR PARTIDA", "¡Guardada en el espacio %d!" % app.slot if just_saved else "",
+	if ui.menu_item("p:guardar", Vector2(x, y), "GUARDAR PARTIDA", Lang.f("¡Guardada en el espacio %d!", app.slot) if just_saved else "",
 			true, 24, 310.0, false, "green" if just_saved else "accent"):
 		app.save(true)
-		city.toast("Partida guardada en el espacio %d." % app.slot, "good")
+		city.toast(Lang.f("Partida guardada en el espacio %d.", app.slot), "good")
 		saved_at = Time.get_ticks_msec()
 	y += 74 if just_saved else 54
 	if ui.menu_item("p:menu", Vector2(x, y), "MENÚ PRINCIPAL", "", true, 24, 310.0):
@@ -268,6 +270,7 @@ func draw_menu_settings() -> void:
 
 func close_menu_settings() -> void:
 	app.settings_open = false
+	lang_pick = -1
 	pause_page = "main"
 	binding = null
 	city.save_settings()
@@ -371,6 +374,42 @@ func row_toggle(area: Rect2, y: float, label: String, key: String, desc: String,
 	return y + ROW_H
 
 
+## Fila del idioma: con las flechas se elige y con «Aplicar cambios» se cambia todo el juego. Cada idioma se
+## nombra en el idioma actual y abajo, chiquito, en el suyo (para encontrarlo aunque no entiendas el actual).
+func row_lang(area: Rect2, y: float) -> float:
+	var n: int = Lang.CODES.size()
+	if lang_pick < 0:
+		lang_pick = Lang.index()
+	var hot := row_bg(area, y, "lang", "El idioma de todo el juego. Elige uno con las flechas y toca «Aplicar cambios». Language · 语言 · Язык · Idioma · Sprache")
+	row_label(area, y, "Idioma")
+	var cy := y + (ROW_H - 4) / 2
+	var bw := 170.0
+	var apply := Rect2(area.end.x - 14 - bw, cy - 15, bw, 30)
+	var w := 260.0
+	var x := apply.position.x - 10 - w
+	var left := Rect2(x, cy - 15, 30, 30)
+	var right := Rect2(x + w - 30, cy - 15, 30, 30)
+	var lh := ui.hover(left)
+	var rh := ui.hover(right)
+	Icons.draw(ui, "arrow_left", left.get_center(), 16, ImUI.COL.accent if lh else ImUI.COL.muted)
+	Icons.draw(ui, "arrow_right", right.get_center(), 16, ImUI.COL.accent if rh else ImUI.COL.muted)
+	var name := Lang.name_in(lang_pick)
+	var own: String = Lang.NAMES[lang_pick]
+	if name == own:
+		ui.text(name, Vector2(x + w / 2, cy), 16, "text", true, "center")
+	else:
+		ui.text(name, Vector2(x + w / 2, cy - 7), 15, "text", true, "center")
+		ui.text(own, Vector2(x + w / 2, cy + 11), 12, "muted", false, "center")
+	var changed := lang_pick != Lang.index()
+	if ui.button(apply, "Aplicar cambios", changed, "primary", 14):
+		city.settings.lang = Lang.CODES[lang_pick]
+		Lang.use(Lang.CODES[lang_pick])
+		city.save_settings()
+	elif ui.clicked and hot and (lh or rh or Rect2(x, cy - 15, w, 30).has_point(ui.mouse)):
+		lang_pick = (lang_pick + (n - 1 if lh else 1)) % n
+	return y + ROW_H
+
+
 ## Descripción de la fila bajo el mouse, abajo del panel (como en los juegos de consola).
 func _draw_row_desc(area: Rect2) -> void:
 	var r := Rect2(area.position.x, area.end.y - 54, area.size.x, 54)
@@ -399,12 +438,13 @@ func draw_settings(area: Rect2) -> void:
 	var half := Rect2(area.position.x, y, area.size.x / 2 - 8, 0)
 	var half2 := Rect2(area.position.x + area.size.x / 2 + 8, y, area.size.x / 2 - 8, 0)
 	city.settings.fullscreen = city.is_fullscreen()   # lo que muestra el interruptor es lo que hay de verdad
-	row_toggle(half, y, "Pantalla completa", "fullscreen", "Ocupa toda la pantalla (también con %s)." % Keys.label("fullscreen"), city.toggle_fullscreen)
+	row_toggle(half, y, "Pantalla completa", "fullscreen", Lang.f("Ocupa toda la pantalla (también con %s).", Keys.label("fullscreen")), city.toggle_fullscreen)
 	row_toggle(half2, y, "Desenfocar menús", "blur", "La ciudad se ve borrosa detrás de los menús.")
 	var speed_labels: Array = Admin.SPEEDS.map(func(sp): return sp[1])
+	row_lang(area, y + ROW_H)
 	if app.view == "game":
-		row_choice(half, y + ROW_H, "Velocidad", "speed", speed_labels, app.speed, func(i): app.speed = i,
-			"Qué tan rápido pasan los días. También con %s, %s y %s." % [Keys.label("speed1"), Keys.label("speed2"), Keys.label("speed3")])
+		row_choice(half, y + 2 * ROW_H, "Velocidad", "speed", speed_labels, app.speed, func(i): app.speed = i,
+			Lang.f("Qué tan rápido pasan los días. También con %s, %s y %s.", [Keys.label("speed1"), Keys.label("speed2"), Keys.label("speed3")]))
 
 
 # ---------- tutorial ----------
@@ -501,7 +541,7 @@ func draw_tutorial() -> void:
 		return
 	var box := Rect2(W / 2 - 470, H / 2 - 350, 940, 700)
 	glass_box(box)
-	ui.text("BIENVENIDA" if tutorial_pages.size() == 1 else "TUTORIAL · %d de %d" % [tutorial_page + 1, tutorial_pages.size()],
+	ui.text("BIENVENIDA" if tutorial_pages.size() == 1 else Lang.f("TUTORIAL · %d de %d", [tutorial_page + 1, tutorial_pages.size()]),
 			box.position + Vector2(40, 24), 13, "muted", true)
 	if ui.button(Rect2(box.end.x - 170, box.position.y + 18, 130, 32), "Saltar (Esc)", true, "normal", 13):
 		city.close_tutorial()
@@ -537,11 +577,11 @@ func _draw_value_card() -> void:
 	var cx := box.get_center().x
 	ui.text("TUTORIAL", Vector2(cx, box.position.y + 28), 13, "accent", true, "center")
 	ui.text("Así se gana", Vector2(cx, box.position.y + 50), 40, "accent", true, "midtop")
-	ui.text("Ganas cuando tu empresa vale %s. Así se calcula:" % Fmt.short(D.WIN_VALUE),
+	ui.text(Lang.f("Ganas cuando tu empresa vale %s. Así se calcula:", Fmt.short(D.WIN_VALUE)),
 			Vector2(cx, box.position.y + 108), 18, "text", false, "midtop")
 	# La fórmula, con los números de tu empresa
 	var ebitda: float = max(0.0, g.recent_ebitda() * 12.0)
-	var parts := [["Lo que ganas en un año × %s" % Fmt.num(g.valuation_multiple(), 1),
+	var parts := [[Lang.f("Lo que ganas en un año × %s", Fmt.num(g.valuation_multiple(), 1)),
 			Fmt.short(ebitda * g.valuation_multiple()), "green"],
 			["+ Tu plata", Fmt.short(g.cash + g.bonds + g.fund), "text"], ["− Lo que debes", Fmt.short(g.debt()), "red"]]
 	var pw := 230.0
@@ -552,11 +592,11 @@ func _draw_value_card() -> void:
 		ui.text(parts[i][0], Vector2(r.get_center().x, r.position.y + 16), 15, "muted", false, "midtop")
 		ui.text(parts[i][1], Vector2(r.get_center().x, r.position.y + 42), 22, parts[i][2], true, "midtop")
 	var v := g.valuation()
-	ui.text("Hoy vale %s" % Fmt.money(v), Vector2(cx, box.position.y + 262), 24, "accent", true, "midtop")
+	ui.text(Lang.f("Hoy vale %s", Fmt.money(v)), Vector2(cx, box.position.y + 262), 24, "accent", true, "midtop")
 	var bar := Rect2(box.position.x + 80, box.position.y + 302, box.size.x - 160, 12)
 	ui.bar(bar, v / D.WIN_VALUE, "accent")
 	ui.text("$0", Vector2(bar.position.x, bar.end.y + 6), 12, "muted")
-	ui.text("Imperio · %s" % Fmt.short(D.WIN_VALUE), Vector2(bar.end.x, bar.end.y + 6), 12, "muted", false, "topright")
+	ui.text(Lang.f("Imperio · %s", Fmt.short(D.WIN_VALUE)), Vector2(bar.end.x, bar.end.y + 6), 12, "muted", false, "topright")
 	ui.wrap_text("Para que suba: gana más cada mes (buen precio, que nadie se quede sin atender y más tiendas) y no te endeudes de más. En la tablet lo ves siempre arriba, en «Valor empresa».",
 			Rect2(box.position.x + 80, box.position.y + 350, box.size.x - 160, 90), 17, "text")
 	if ui.button(Rect2(cx - 120, box.end.y - 66, 240, 48), "Entendido", true, "primary", 18):
@@ -568,7 +608,7 @@ func _draw_win_guide() -> void:
 	glass_box(box)
 	ui.text("TUTORIAL COMPLETO", Vector2(box.get_center().x, box.position.y + 28), 13, "green", true, "center")
 	ui.text("Cómo se gana", Vector2(box.get_center().x, box.position.y + 52), 40, "accent", true, "midtop")
-	ui.text("Haz que tu empresa valga %s. Mientras más ganes cada mes y menos debas, más vale." % Fmt.short(D.WIN_VALUE),
+	ui.text(Lang.f("Haz que tu empresa valga %s. Mientras más ganes cada mes y menos debas, más vale.", Fmt.short(D.WIN_VALUE)),
 			Vector2(box.get_center().x, box.position.y + 108), 17, "text", false, "midtop")
 	var y := box.position.y + 150
 	for t in WIN_TIPS:
@@ -607,7 +647,7 @@ func draw_controls(area: Rect2) -> void:
 			last_group[c] = a[3]
 		var ry: float = ys[c]
 		var waiting: bool = binding == a[0]
-		var hot := row_bg(sub, ry, "key:" + a[0], "Clic para cambiar la tecla de «%s»." % a[1])
+		var hot := row_bg(sub, ry, "key:" + a[0], Lang.f("Clic para cambiar la tecla de «%s».", a[1]))
 		ui.text(a[1], Vector2(sub.position.x + 20, ry + (ROW_H - 4) / 2), 15, "text", false, "midleft", col_w - 140)
 		var label := "Aprieta una tecla…" if waiting else Keys.label(a[0])
 		var kw: float = max(54.0, ui.text_size(label, 14, true).x + 22)
@@ -626,7 +666,7 @@ func draw_controls(area: Rect2) -> void:
 		ui.text(row[0], Vector2(sub.end.x - 20, fy + 12), 14, "muted", true, "topright")
 		fy += 30
 	if binding != null:
-		row_desc = "Aprieta la tecla nueva para «%s». Esc cancela." % Keys.name_of(binding)
+		row_desc = Lang.f("Aprieta la tecla nueva para «%s». Esc cancela.", Keys.name_of(binding))
 
 
 ## Termina de cambiar una tecla (la llama la ciudad con la tecla apretada).
@@ -642,7 +682,7 @@ func finish_binding(e: InputEventKey) -> void:
 		return
 	city.save_settings()
 	if swapped:
-		city.toast("«%s» ahora usa %s." % [Keys.name_of(swapped), Keys.label(swapped)], "info")
+		city.toast(Lang.f("«%s» ahora usa %s.", [Keys.name_of(swapped), Keys.label(swapped)]), "info")
 
 
 ## Página «Gráficos», con pestañas como en los juegos grandes: Calidad (el nivel y cada efecto), Imagen (brillo,
@@ -658,7 +698,7 @@ func draw_graphics(area: Rect2) -> void:
 	var fps := Engine.get_frames_per_second()
 	var fr := Rect2(area.end.x - 110, area.position.y + 16, 110, 34)
 	ui.rect(fr, Color(1, 1, 1, 0.06), 17)
-	ui.text("%d FPS" % fps, fr.get_center(), 16, "green" if fps >= 40 else ("orange" if fps >= 25 else "red"), true, "center")
+	ui.text(Lang.f("%d FPS", fps), fr.get_center(), 16, "green" if fps >= 40 else ("orange" if fps >= 25 else "red"), true, "center")
 	# pestañas
 	var tx := area.position.x
 	for t in GFX_TABS:
@@ -735,7 +775,7 @@ func draw_custom() -> void:
 	var box := Rect2(30, 26, 600, H - 52)
 	glass_box(box)
 	ui.text("Armario", box.position + Vector2(32, 22), 32, "accent", true)
-	ui.text("Caja: %s" % Fmt.money(g.cash), Vector2(box.end.x - 32, box.position.y + 30), 18, Admin.sc(g.cash), true, "topright")
+	ui.text(Lang.f("Caja: %s", Fmt.money(g.cash)), Vector2(box.end.x - 32, box.position.y + 30), 18, Admin.sc(g.cash), true, "topright")
 	ui.text("Lo que tiene precio se compra con la caja de la empresa (gasto de representación).",
 			box.position + Vector2(34, 66), 14, "muted")
 	var x := box.position.x + 32
@@ -806,7 +846,7 @@ func pick(key: String, value) -> void:
 			city.sfx.play("angry", 0.5)
 			return
 		city.sfx.play("coin", 0.7)
-		city.toast("Compra hecha: %s." % Fmt.money(g.item_price(Wardrobe.item_price(key, value))), "good")
+		city.toast(Lang.f("Compra hecha: %s.", Fmt.money(g.item_price(Wardrobe.item_price(key, value)))), "good")
 	g.look[key] = value
 	city.apply_look()
 
@@ -899,7 +939,7 @@ func draw_trophies() -> void:
 	var got: int = g.rank
 	ui.text("TU OFICINA", box.position + Vector2(42, 26), 12, "muted", true)
 	ui.text("Vitrina de trofeos", box.position + Vector2(40, 42), 32, "accent", true)
-	ui.text("Un trofeo por cada título que consigues · %s" % D.MODES[g.mode].name, box.position + Vector2(42, 86), 14, "muted")
+	ui.text(Lang.f("Un trofeo por cada título que consigues · %s", D.MODES[g.mode].name), box.position + Vector2(42, 86), 14, "muted")
 	# Contador circular: cuántos títulos tienes
 	var cc := Vector2(box.end.x - 76, box.position.y + 66)
 	ui.ring(cc, 34, Color(1, 1, 1, 0.08), 7)
@@ -910,8 +950,8 @@ func draw_trophies() -> void:
 	var nx := cc.x - 70
 	if info[2] != null:
 		var lo: float = g.ranks()[got][0]
-		ui.text("Siguiente: %s" % info[2][1], Vector2(nx, box.position.y + 40), 15, "text", true, "topright")
-		ui.text("Te faltan %s" % Fmt.money(max(0.0, info[2][0] - info[3])), Vector2(nx, box.position.y + 62), 13, "muted",
+		ui.text(Lang.f("Siguiente: %s", info[2][1]), Vector2(nx, box.position.y + 40), 15, "text", true, "topright")
+		ui.text(Lang.f("Te faltan %s", Fmt.money(max(0.0, info[2][0] - info[3]))), Vector2(nx, box.position.y + 62), 13, "muted",
 				false, "topright")
 		ui.bar(Rect2(nx - 260, box.position.y + 84, 260, 6), (info[3] - lo) / (info[2][0] - lo), "accent")
 	else:
@@ -940,7 +980,7 @@ func draw_trophy_card(r: Rect2, i: int, rank: Array, earned: bool, is_next: bool
 	var tier: Array = TIERS[min(i, TIERS.size() - 1)]
 	var tc: Color = tier[1]
 	var hot := ui.hover(r)
-	var k := ui.tween("trophy:%d" % i, 1.0 if hot else 0.0)
+	var k := ui.tween(Lang.f("trophy:%d", i), 1.0 if hot else 0.0)
 	r.position.y -= 3 * k
 	var cup := Vector2(r.get_center().x, r.position.y + 100)
 	ui.rect(r, Color8(27, 32, 41), 14)
@@ -960,7 +1000,7 @@ func draw_trophy_card(r: Rect2, i: int, rank: Array, earned: bool, is_next: bool
 		app.pill(r.position + Vector2(12, 12), "SIGUIENTE", "accent", true)
 	else:
 		app.pill(r.position + Vector2(12, 12), tier[0].to_upper(), Color8(110, 116, 130))
-	ui.text("#%d" % (i + 1), Vector2(r.end.x - 14, r.position.y + 15), 12, Color(1, 1, 1, 0.35), true, "topright")
+	ui.text(Lang.f("#%d", (i + 1)), Vector2(r.end.x - 14, r.position.y + 15), 12, Color(1, 1, 1, 0.35), true, "topright")
 	draw_cup(cup, tc if earned else Color8(52, 57, 68), earned, i)
 	var title: String = rank[1]
 	var cx := r.get_center().x
@@ -971,9 +1011,9 @@ func draw_trophy_card(r: Rect2, i: int, rank: Array, earned: bool, is_next: bool
 		var logged = app.game.rank_log.get(title)
 		if logged != null:
 			var day := int(logged[0])
-			ui.text("%d de %s, año %d" % [day % 30 + 1, D.MONTHS[(day / 30) % 12], day / 360 + 1],
+			ui.text(Lang.f("%d de %s, año %d", [day % 30 + 1, D.MONTHS[(day / 30) % 12], day / 360 + 1]),
 					Vector2(cx, r.position.y + 206), 12, "muted", false, "midtop")
-			ui.text("a los %d min de juego" % roundi(logged[1] / 60.0), Vector2(cx, r.position.y + 222), 11,
+			ui.text(Lang.f("a los %d min de juego", roundi(logged[1] / 60.0)), Vector2(cx, r.position.y + 222), 11,
 					Color(ImUI.COL.muted, 0.8), false, "midtop")
 		else:
 			ui.text("Conseguido", Vector2(cx, r.position.y + 212), 12, "muted", false, "midtop")
@@ -981,7 +1021,7 @@ func draw_trophy_card(r: Rect2, i: int, rank: Array, earned: bool, is_next: bool
 		var lo: float = app.game.ranks()[i][0]   # el título anterior
 		var frac: float = (info[3] - lo) / (rank[0] - lo) if rank[0] > lo else 0.0
 		ui.bar(Rect2(r.position.x + 20, r.position.y + 210, r.size.x - 40, 6), frac, "accent")
-		ui.text("%d %%" % roundi(clampf(frac, 0, 1) * 100), Vector2(cx, r.position.y + 222), 11, "muted", false, "midtop")
+		ui.text(Lang.f("%d %%", roundi(clampf(frac, 0, 1) * 100)), Vector2(cx, r.position.y + 222), 11, "muted", false, "midtop")
 	else:
 		ui.text("Bloqueado", Vector2(cx, r.position.y + 212), 12, Color(ImUI.COL.muted, 0.7), false, "midtop")
 
@@ -1026,9 +1066,9 @@ func draw_strategy() -> void:
 	glass_box(box)
 	ui.text("Reunión de estrategia", box.position + Vector2(40, 28), 32, "accent", true)
 	var wait := g.strategy_wait()
-	ui.text("Elige una estrategia para este mes." if not wait else "Ya hubo reunión este mes: la próxima es en %d días." % wait,
+	ui.text("Elige una estrategia para este mes." if not wait else Lang.f("Ya hubo reunión este mes: la próxima es en %d días.", wait),
 			box.position + Vector2(42, 74), 15, "muted" if not wait else "orange")
-	ui.text("Caja: %s" % Fmt.money(g.cash), Vector2(box.end.x - 40, box.position.y + 36), 18, Admin.sc(g.cash), true, "topright")
+	ui.text(Lang.f("Caja: %s", Fmt.money(g.cash)), Vector2(box.end.x - 40, box.position.y + 36), 18, Admin.sc(g.cash), true, "topright")
 	for i in D.STRATEGIES.size():
 		var st: Array = D.STRATEGIES[i]
 		var r := Rect2(box.position.x + 40 + i * 315, box.position.y + 116, 295, 290)
@@ -1036,7 +1076,7 @@ func draw_strategy() -> void:
 		ui.text(st[1], r.position + Vector2(18, 18), 19, "text", true)
 		ui.wrap_text(st[3], Rect2(r.position.x + 18, r.position.y + 56, r.size.x - 36, 120), 15, "muted")
 		var cost := g.strategy_cost(st[0])
-		ui.text("Costo: %s" % Fmt.money(cost), Vector2(r.position.x + 18, r.end.y - 96), 16, "accent", true)
+		ui.text(Lang.f("Costo: %s", Fmt.money(cost)), Vector2(r.position.x + 18, r.end.y - 96), 16, "accent", true)
 		if ui.button(Rect2(r.position.x + 18, r.end.y - 62, r.size.x - 36, 44), "Elegir", not wait and g.cash >= cost, "primary", 16):
 			var res := g.run_strategy(st[0])
 			city.sfx.play("good" if res[0] else "angry")  # la noticia de la reunión llega como aviso de la oficina

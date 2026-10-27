@@ -340,14 +340,17 @@ func hover(r: Rect2) -> bool:
 # ---------- texto ----------
 func text_size(s: String, size := 16, is_bold := false) -> Vector2:
 	var f := bold if is_bold else font
-	return Vector2(_width(s, size, is_bold), f.get_height(size))
+	return Vector2(_width(Lang.t(s), size, is_bold), f.get_height(size))
 
 
 ## Dibuja un texto. `anchor` como en pygame: topleft, topright, midtop, center, midleft, midright, midbottom...
-## Devuelve el rectángulo que ocupa.
+## Devuelve el rectángulo que ocupa. El texto se traduce al idioma elegido (ver Lang).
 func text(s, pos: Vector2, size := 16, color = "text", is_bold := false, anchor := "topleft", maxw := -1.0) -> Rect2:
+	return _text(Lang.t(s), pos, size, color, is_bold, anchor, maxw)
+
+
+func _text(s: String, pos: Vector2, size: int, color, is_bold: bool, anchor := "topleft", maxw := -1.0) -> Rect2:
 	var f := bold if is_bold else font
-	s = str(s)
 	if maxw > 0:
 		s = _fit(s, size, is_bold, maxw)
 	var w := _width(s, size, is_bold)
@@ -380,9 +383,18 @@ func _lines(s: String, w: float, size: int, is_bold: bool) -> Array:
 			var test := (cur + " " + word).strip_edges()
 			if _width(test, size, is_bold) <= w:
 				cur = test
-			else:
+				continue
+			if cur != "":
 				out.append(cur)
-				cur = word
+			cur = word
+			# Una "palabra" más ancha que la línea (el chino no usa espacios, o una palabra alemana larga): se corta
+			# letra por letra
+			while _width(cur, size, is_bold) > w and cur.length() > 1:
+				var n := cur.length() - 1
+				while n > 1 and _width(cur.substr(0, n), size, is_bold) > w:
+					n -= 1
+				out.append(cur.substr(0, n))
+				cur = cur.substr(n)
 		out.append(cur)
 	_lines_cache[key] = out
 	return out
@@ -392,14 +404,14 @@ func _lines(s: String, w: float, size: int, is_bold: bool) -> Array:
 func wrap_text(s, r: Rect2, size := 15, color = "text", is_bold := false, line_gap := 3.0) -> float:
 	var f := bold if is_bold else font
 	var y := r.position.y
-	for ln in _lines(str(s), r.size.x, size, is_bold):
-		text(ln, Vector2(r.position.x, y), size, color, is_bold)
+	for ln in _lines(Lang.t(s), r.size.x, size, is_bold):
+		_text(ln, Vector2(r.position.x, y), size, color, is_bold)
 		y += f.get_height(size) + line_gap
 	return y - r.position.y
 
 
 func wrap_height(s, w: float, size := 15, line_gap := 3.0) -> float:
-	return _lines(str(s), w, size, false).size() * (font.get_height(size) + line_gap)
+	return _lines(Lang.t(s), w, size, false).size() * (font.get_height(size) + line_gap)
 
 
 # ---------- piezas ----------

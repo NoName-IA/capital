@@ -158,7 +158,7 @@ func save(silent := false, to_slot := 0) -> void:
 		return
 	slot_cache.erase(slot)
 	if not silent:
-		say("Partida guardada en el espacio %d." % slot, "good")
+		say(Lang.f("Partida guardada en el espacio %d.", slot), "good")
 
 
 ## Escribe primero un archivo temporal y después lo pone en su lugar: si el juego se corta a la mitad, el archivo
@@ -180,7 +180,7 @@ static func write_file(path: String, text: String) -> bool:
 func load_slot(n: int) -> bool:
 	var text := FileAccess.get_file_as_string(slot_path(n))
 	if text.is_empty():
-		say("No se pudo cargar la partida del espacio %d." % n, "bad")
+		say(Lang.f("No se pudo cargar la partida del espacio %d.", n), "bad")
 		return false
 	game = Game.from_json(text)
 	slot = n
@@ -191,7 +191,7 @@ func load_slot(n: int) -> bool:
 	modal = null
 	acc = 0.0
 	win_shown = game.won
-	say("Partida del espacio %d cargada. Presiona P para continuar." % n, "info")
+	say(Lang.f("Partida del espacio %d cargada. Presiona P para continuar.", n), "info")
 	return true
 
 
@@ -213,7 +213,7 @@ func slot_info(n: int):
 	var saved := Time.get_datetime_string_from_unix_time(stamp + _tz_offset(), true)
 	var parts := saved.split(" ")
 	var dmy := parts[0].split("-")
-	saved = "%s/%s/%s %s" % [dmy[2], dmy[1], dmy[0], parts[1].substr(0, 5)]
+	saved = Lang.f("%s/%s/%s %s", [dmy[2], dmy[1], dmy[0], parts[1].substr(0, 5)])
 	var info := {}
 	var text := FileAccess.get_file_as_string(path)
 	var parsed = JSON.parse_string(text)
@@ -225,8 +225,8 @@ func slot_info(n: int):
 		var ri := g.rank_info()
 		var caja: Array = g.series.caja
 		info = {"company": g.company, "mode": D.MODES[g.mode].name, "mode_key": g.mode, "rank": ri[1], "value": g.valuation(),
-				"cash": g.cash, "date": "Día %d de %s, año %d" % dp,
-				"date_short": "%d %s, año %d" % [dp[0], str(dp[1]).substr(0, 3).to_lower(), dp[2]], "minutes": g.play_seconds / 60.0, "over": g.game_over,
+				"cash": g.cash, "date": Lang.f("Día %d de %s, año %d", dp),
+				"date_short": Lang.f("%d %s, año %d", [dp[0], Lang.month_short(str(dp[1])), dp[2]]), "minutes": g.play_seconds / 60.0, "over": g.game_over,
 				"saved": saved, "stores": g.locations.size(),
 				"rank_lo": rank_lo(ri[0]), "next": ri[2],   # siguiente rango: [valor, nombre] o null si ya es el último
 				"spark": caja.slice(maxi(0, caja.size() - 60))}   # caja de los últimos 60 días
@@ -340,13 +340,13 @@ func ago(stamp: int, saved: String) -> String:
 	if s < 60:
 		return "hace un momento"
 	if s < 3600:
-		return "hace %d min" % (s / 60)
+		return Lang.f("hace %d min", (s / 60))
 	if s < 86400:
-		return "hace %d h" % (s / 3600)
+		return Lang.f("hace %d h", (s / 3600))
 	if s < 2 * 86400:
 		return "ayer"
 	if s < 7 * 86400:
-		return "hace %d días" % (s / 86400)
+		return Lang.f("hace %d días", (s / 86400))
 	return saved.split(" ")[0]
 
 
@@ -401,8 +401,8 @@ func rank_progress(x: float, y: float, w: float, info: Dictionary) -> float:
 		return y + 30
 	var frac: float = (info.value - info.rank_lo) / (info.next[0] - info.rank_lo)
 	ui.bar(Rect2(x, y, w, 6), frac, "accent")
-	ui.text("Siguiente: %s" % info.next[1], Vector2(x, y + 12), 12, "muted", false, "topleft", w - 90)
-	ui.text("%s / %s" % [Fmt.short(info.value), Fmt.short(info.next[0])], Vector2(x + w, y + 12), 12, "text", false,
+	ui.text(Lang.f("Siguiente: %s", info.next[1]), Vector2(x, y + 12), 12, "muted", false, "topleft", w - 90)
+	ui.text(Lang.f("%s / %s", [Fmt.short(info.value), Fmt.short(info.next[0])]), Vector2(x + w, y + 12), 12, "text", false,
 			"topright")
 	return y + 30
 
@@ -451,7 +451,7 @@ func draw_slots() -> void:
 ## Una tarjeta de espacio de guardado. Devuelve true si se salió de la pantalla (se cargó o se empezó una partida).
 func draw_slot_card(r: Rect2, n: int, info, is_new: bool, is_last: bool) -> bool:
 	var confirming: bool = slot_confirm == n
-	var k := ui.tween("slot:%d" % n, 1.0 if ui.hover(r) and not confirming else 0.0)
+	var k := ui.tween(Lang.f("slot:%d", n), 1.0 if ui.hover(r) and not confirming else 0.0)
 	r.position.y -= 4 * k
 	var x := r.position.x + 24
 	var w := r.size.x - 48
@@ -466,7 +466,7 @@ func draw_slot_card(r: Rect2, n: int, info, is_new: bool, is_last: bool) -> bool
 		ui.ring(c, 34, Color(ImUI.COL.muted, 0.6 + 0.4 * k), 2)
 		ui.line(c - Vector2(13, 0), c + Vector2(13, 0), Color(ImUI.COL.muted, 0.8 + 0.2 * k), 3)
 		ui.line(c - Vector2(0, 13), c + Vector2(0, 13), Color(ImUI.COL.muted, 0.8 + 0.2 * k), 3)
-		ui.text("ESPACIO %d" % n, Vector2(c.x, r.position.y + 40), 12, "muted", true, "midtop")
+		ui.text(Lang.f("ESPACIO %d", n), Vector2(c.x, r.position.y + 40), 12, "muted", true, "midtop")
 		ui.text("Espacio libre", Vector2(c.x, c.y + 54), 22, "text", true, "midtop")
 		if is_new:
 			ui.text("Aquí puedes empezar una partida nueva.", Vector2(c.x, c.y + 92), 14, "muted", false, "midtop")
@@ -486,7 +486,7 @@ func draw_slot_card(r: Rect2, n: int, info, is_new: bool, is_last: bool) -> bool
 	# Número grande de fondo, como marca de agua
 	ui.text(str(n), Vector2(r.end.x - 18, r.position.y - 8), 96, Color(mc, 0.22), true, "topright")
 	var y := r.position.y + 18
-	var t := ui.text("ESPACIO %d" % n, Vector2(x, y + 3), 12, "muted", true)
+	var t := ui.text(Lang.f("ESPACIO %d", n), Vector2(x, y + 3), 12, "muted", true)
 	if is_last and not broken:
 		pill(Vector2(t.end.x + 10, y), "ÚLTIMA", "accent", true)
 	if broken:
@@ -497,7 +497,7 @@ func draw_slot_card(r: Rect2, n: int, info, is_new: bool, is_last: bool) -> bool
 		ui.text("!", c, 36, mc, true, "center")
 		ui.wrap_text("No se pudo leer esta partida. Puedes borrarla para usar el espacio otra vez.",
 				Rect2(x + 10, c.y + 54, w - 20, 60), 14, "muted")
-		ui.text("Guardada el %s" % info.saved, Vector2(r.get_center().x, by - 30), 12, "muted", false, "midtop")
+		ui.text(Lang.f("Guardada el %s", info.saved), Vector2(r.get_center().x, by - 30), 12, "muted", false, "midtop")
 	else:
 		ui.text(info.company, Vector2(x, y + 26), 24, "text", true, "topleft", w - 60)
 		pill(Vector2(x, y + 64), info.mode.to_upper(), mc)
@@ -505,7 +505,7 @@ func draw_slot_card(r: Rect2, n: int, info, is_new: bool, is_last: bool) -> bool
 			pill(Vector2(r.end.x - 24, y + 64), "QUIEBRA", "red", false, "topright")
 		y = r.position.y + 122
 		ui.text(info.rank, Vector2(x, y), 17, "accent", true, "topleft", w - 90)
-		ui.text("%d %s" % [info.stores, "local" if info.stores == 1 else "locales"], Vector2(x + w, y + 3), 13,
+		ui.text(Lang.f("%d %s", [info.stores, "local" if info.stores == 1 else "locales"]), Vector2(x + w, y + 3), 13,
 				"muted", false, "topright")
 		y = rank_progress(x, y + 30, w, info)
 		spark(Rect2(x, y, w, 52), info.spark, "Caja · últimos 60 días")
@@ -514,9 +514,9 @@ func draw_slot_card(r: Rect2, n: int, info, is_new: bool, is_last: bool) -> bool
 		stat_tile(Rect2(x, y, tw, 48), "Valor de la empresa", Fmt.short(info.value), "accent")
 		stat_tile(Rect2(x + tw + 10, y, tw, 48), "Caja", Fmt.short(info.cash), sc(info.cash))
 		stat_tile(Rect2(x, y + 56, tw, 48), "Fecha del juego", info.date_short)
-		stat_tile(Rect2(x + tw + 10, y + 56, tw, 48), "Tiempo jugado", "%d min" % roundi(info.minutes))
-		var st := ui.text("Guardada %s" % ago(info.stamp, info.saved), Vector2(x, y + 114), 12, "muted")
-		ui.tooltip(st, "Guardada el %s" % info.saved)
+		stat_tile(Rect2(x + tw + 10, y + 56, tw, 48), "Tiempo jugado", Lang.f("%d min", roundi(info.minutes)))
+		var st := ui.text(Lang.f("Guardada %s", ago(info.stamp, info.saved)), Vector2(x, y + 114), 12, "muted")
+		ui.tooltip(st, Lang.f("Guardada el %s", info.saved))
 	# Botones (o la pregunta de confirmación, encima de la tarjeta)
 	if confirming:
 		ui.rect(r, Color(0.03, 0.04, 0.06, 0.86), 14)
@@ -524,7 +524,7 @@ func draw_slot_card(r: Rect2, n: int, info, is_new: bool, is_last: bool) -> bool
 		ui.text("¿Sobrescribir esta partida?" if is_new else "¿Borrar esta partida?", c - Vector2(0, 46), 20, "orange",
 				true, "center")
 		ui.text("Esto no se puede deshacer.", c - Vector2(0, 16), 14, "muted", false, "center")
-		if ui.button(Rect2(bx, c.y + 14, bw / 2 - 6, 44), "Sí, " + ("sobrescribir" if is_new else "borrar"), true,
+		if ui.button(Rect2(bx, c.y + 14, bw / 2 - 6, 44), Lang.t("Sí, sobrescribir" if is_new else "Sí, borrar"), true,
 				"danger", 15):
 			delete_save(n)
 			slot_confirm = null
@@ -574,7 +574,7 @@ func draw_naming() -> void:
 	if int(Time.get_ticks_msec() / 500) % 2 == 0:  # cursor que parpadea
 		var cx: float = t.end.x + 3 if company_name else field.position.x + 24
 		ui.rect(Rect2(cx, field.get_center().y - 20, 3, 40), "accent")
-	ui.text("%d / 24" % company_name.length(), Vector2(field.end.x - 16, field.end.y + 8), 13, "muted", false, "topright")
+	ui.text(Lang.f("%d / 24", company_name.length()), Vector2(field.end.x - 16, field.end.y + 8), 13, "muted", false, "topright")
 	# Ideas de nombre: se eligen con un clic y van cambiando cada pocos segundos
 	ui.text("IDEAS", Vector2(x, field.end.y + 14), 11, "muted", true)
 	var ix := x
@@ -627,7 +627,7 @@ func start_named_game() -> void:
 	just_created = true
 	game.company = name
 	game.news.clear()
-	game.add_news("Fundaste %s con un puesto de café y %s en caja. ¡A vender!" % [name, Fmt.money(game.cash)], "good")
+	game.add_news(Lang.f("Fundaste %s con un puesto de café y %s en caja. ¡A vender!", [name, Fmt.money(game.cash)]), "good")
 	if name_mode == "inversionista":
 		game.add_news("Modo inversionista: tienes capital para crecer rápido. No hay final: llega a Mil millonario.", "info")
 	game.add_news("Consejo: en Mercado puedes ver la curva de precio y el precio que maximiza tu utilidad.", "info")
@@ -673,10 +673,10 @@ func draw_steps(active: int) -> void:
 func draw_mode_picker() -> void:
 	draw_steps(1)
 	ui.text("¿Cómo quieres jugar?", Vector2(W / 2, 62), 38, "text", true, "center")
-	ui.text("Se guardará en el espacio %d." % slot, Vector2(W / 2, 122), 16, "muted", false, "center")
+	ui.text(Lang.f("Se guardará en el espacio %d.", slot), Vector2(W / 2, 122), 16, "muted", false, "center")
 	var cards := [
 		["normal", "Empiezas desde abajo con un puesto de café. Sube rango por rango hasta construir tu imperio.",
-		 [["Capital inicial", Fmt.short(D.MODES.normal.start_cash), "green"], ["Meta", "Imperio · %s" % Fmt.short(D.WIN_VALUE), "accent"],
+		 [["Capital inicial", Fmt.short(D.MODES.normal.start_cash), "green"], ["Meta", Lang.f("Imperio · %s", Fmt.short(D.WIN_VALUE)), "accent"],
 		  ["Duración", "Unos 40 min", "text"], ["Rangos", str(D.MODES.normal.ranks), "text"]]],
 		["inversionista", "Tienes capital para crecer rápido. No hay final: usa la bolsa, la gestión y las adquisiciones para llegar a Mil millonario.",
 		 [["Capital inicial", Fmt.short(D.MODES.inversionista.start_cash), "green"], ["Meta", "Sin final", "accent"],
@@ -714,7 +714,7 @@ func draw_mode_picker() -> void:
 			if j < ranks - 1:
 				ui.rect(Rect2(px, ry + 41, (w - 12) / (ranks - 1.0), 2), Color(mc, 0.4))
 			ui.circle(Vector2(px, ry + 42), 4.0 if j < ranks - 1 else 6.0, mc if j < ranks - 1 else ImUI.COL.accent)
-		if ui.button(Rect2(x, r.end.y - 66, w, 46), "Elegir modo %s" % key, true, "primary", 17):
+		if ui.button(Rect2(x, r.end.y - 66, w, 46), Lang.f("Elegir modo %s", key), true, "primary", 17):
 			pick_mode = false
 			naming = true
 			name_mode = key
@@ -759,7 +759,7 @@ func draw_top() -> void:
 		[415, "Caja", Fmt.money(g.cash), sc(g.cash), "Dinero disponible. Puede ser negativa (sobregiro), pero pagas un interés muy alto."],
 		[560, "Valor empresa", Fmt.money(g.valuation()), "accent",
 		 "Valoración: EBITDA anual × múltiplo + caja + bonos + inventario − deuda. Define tu rango."],
-		[715, "Economía", "%s (%s)" % [ph.name, Fmt.num(g.econ_index, 2)], econ_color,
+		[715, "Economía", Lang.f("%s (%s)", [ph.name, Fmt.num(g.econ_index, 2)]), econ_color,
 		 "Índice de actividad económica (1,00 = normal). Afecta la demanda según la elasticidad ingreso de cada producto."],
 		[885, "Inflación", Fmt.pct(g.inflation), "text",
 		 "Inflación anual. Tus costos, salarios y alquileres suben; el precio de referencia del mercado también."],
@@ -776,7 +776,7 @@ func draw_top() -> void:
 	marks.velocidad = Rect2(x + 52, 15, 46 * 3 + 52 * 2 - 46, 30)
 	for i in SPEEDS.size():
 		if ui.button(Rect2(x + 52 + i * 52, 15, 46, 30), SPEEDS[i][1], true, "normal", 15,
-				"Velocidad %s (tecla %d)" % [SPEEDS[i][1], i + 1], not paused and speed == i):
+				Lang.f("Velocidad %s (tecla %d)", [SPEEDS[i][1], i + 1]), not paused and speed == i):
 			speed = i
 			paused = false
 
@@ -788,7 +788,7 @@ func draw_side() -> void:
 	for i in TABS.size():
 		var label: String = TABS[i][1]
 		if TABS[i][0] == "noticias" and unread and tab != "noticias":
-			label += " (%d)" % mini(unread, 99)
+			label += Lang.f(" (%d)", mini(unread, 99))
 		marks["tab_" + TABS[i][0]] = Rect2(12, TOP + 16 + i * 46, SIDE - 24, 38)
 		if ui.button(Rect2(12, TOP + 16 + i * 46, SIDE - 24, 38), label, true, "normal", 16, null, tab == TABS[i][0]):
 			tab = TABS[i][0]
@@ -800,8 +800,8 @@ func draw_side() -> void:
 	if info[2] != null:
 		var lo := rank_lo(info[0])
 		ui.bar(Rect2(16, y + 48, SIDE - 32, 8), (info[3] - lo) / (info[2][0] - lo), "accent")
-		ui.text("Siguiente: %s" % Fmt.short(info[2][0]), Vector2(16, y + 62), 12, "muted")
-		ui.tooltip(Rect2(16, y, SIDE - 32, 80), "Llega a un valor de empresa de %s para ser %s." % [Fmt.money(info[2][0]), info[2][1]])
+		ui.text(Lang.f("Siguiente: %s", Fmt.short(info[2][0])), Vector2(16, y + 62), 12, "muted")
+		ui.tooltip(Rect2(16, y, SIDE - 32, 80), Lang.f("Llega a un valor de empresa de %s para ser %s.", [Fmt.money(info[2][0]), info[2][1]]))
 	if ui.button(Rect2(12, H - 118, SIDE - 24, 32), "Guardar", true, "normal", 14):
 		save()
 	if ui.button(Rect2(12, H - 80, SIDE - 24, 32), "Nuevo juego", true, "normal", 14):
@@ -840,7 +840,7 @@ func draw_modal() -> void:
 	var cx := box.get_center().x
 	if modal == "gameover":
 		ui.text("Quiebra", Vector2(cx, box.position.y + 46), 36, "red", true, "center")
-		ui.wrap_text("Tu empresa no pudo pagar al banco y cerró después de %s años. Revisa en Reportes qué costos se comieron tu utilidad: casi siempre es crecer con deuda más rápido que la caja." % Fmt.num(g.day / 360.0, 1),
+		ui.wrap_text(Lang.f("Tu empresa no pudo pagar al banco y cerró después de %s años. Revisa en Reportes qué costos se comieron tu utilidad: casi siempre es crecer con deuda más rápido que la caja.", Fmt.num(g.day / 360.0, 1)),
 				Rect2(box.position.x + 40, box.position.y + 90, box.size.x - 80, 120), 16, "text")
 		if ui.button(Rect2(box.position.x + 40, box.end.y - 64, 220, 42), "Nuevo juego", true, "primary"):
 			delete_save()
@@ -858,7 +858,7 @@ func draw_modal() -> void:
 		var minutes: float = (g.win_seconds if g.win_seconds != null else g.play_seconds) / 60.0
 		ui.text("¡Construiste un imperio!" if normal else "¡Eres mil millonario!", Vector2(cx, box.position.y + 46), 32,
 				"accent", true, "center")
-		ui.wrap_text("Tu empresa vale %s. Lo lograste en %d minutos de juego (%s años dentro del juego). " % [Fmt.money(g.valuation()), roundi(minutes), Fmt.num(g.day / 360.0, 1)]
+		ui.wrap_text(Lang.f("Tu empresa vale %s. Lo lograste en %d minutos de juego (%s años dentro del juego). ", [Fmt.money(g.valuation()), roundi(minutes), Fmt.num(g.day / 360.0, 1)])
 				+ ("Fin de la partida. ¿Quieres más títulos? Prueba el modo inversionista." if normal
 				else "Llegaste a la cima. Puedes seguir jugando todo lo que quieras."),
 				Rect2(box.position.x + 40, box.position.y + 90, box.size.x - 80, 120), 16, "text")
@@ -943,12 +943,12 @@ func draw_dilemma() -> void:
 		Icons.draw(ui, look[0], ic, 40, Color8(16, 20, 30))
 	var tx := ic.x + 56
 	var dp := g.date_parts()
-	ui.text("DECISIÓN URGENTE · DÍA %d DE %s" % [dp[0], String(dp[1]).to_upper()], Vector2(tx, box.position.y + 30), 13,
+	ui.text(Lang.f("DECISIÓN URGENTE · DÍA %d DE %s", [dp[0], String(dp[1]).to_upper()]), Vector2(tx, box.position.y + 30), 13,
 			Notifications.light(accent, 0.3), true)
 	ui.text(c.title, Vector2(tx, box.position.y + 50), 30, "text", true, "topleft", box.end.x - tx - pad)
 	var cash_r := Rect2(box.end.x - pad - 200, box.position.y + 22, 200, 30)
 	ui.rect(cash_r, Color(0, 0, 0, 0.3), 15)
-	ui.text("Caja: %s" % Fmt.money(g.cash), cash_r.get_center(), 14, sc(g.cash), true, "center")
+	ui.text(Lang.f("Caja: %s", Fmt.money(g.cash)), cash_r.get_center(), 14, sc(g.cash), true, "center")
 	# Texto
 	var y := box.position.y + head + 24
 	y += ui.wrap_text(c.text, Rect2(box.position.x + pad, y, bw - pad * 2, text_h), 17, Color8(215, 222, 232)) + 22
@@ -957,7 +957,7 @@ func draw_dilemma() -> void:
 		var o: Dictionary = c.options[i]
 		var r := Rect2(box.position.x + pad, y, bw - pad * 2, 52 + details[i])
 		var hot := ui.hover(r)
-		var k := ui.tween("dilema%d" % i, 1.0 if hot else 0.0)
+		var k := ui.tween(Lang.f("dilema%d", i), 1.0 if hot else 0.0)
 		ui.rect(r, ImUI.COL.panel2.lerp(Color8(44, 52, 66), k), 12)
 		ui.rect(r, Color(accent, 0.25 + 0.6 * k), 12, 1.0 + k)
 		ui.text(o.label, Vector2(r.position.x + 22, r.position.y + 14), 17, "text", true, "topleft", r.size.x - 44)
@@ -978,15 +978,15 @@ func draw_resumen(g: Game) -> void:
 	var cur := Game.statement(g.ledger)
 	var net_margin: float = last.utilidad_neta / last.ingresos if last != null and last.ingresos else 0.0
 	var cards := [
-		["Caja", Fmt.money(g.cash), sc(g.cash), "Bonos: %s" % Fmt.money(g.bonds), "Dinero disponible para invertir y pagar costos."],
+		["Caja", Fmt.money(g.cash), sc(g.cash), Lang.f("Bonos: %s", Fmt.money(g.bonds)), "Dinero disponible para invertir y pagar costos."],
 		["Ingresos del mes", Fmt.money(cur.ingresos), "text",
-		 "Mes pasado: %s" % Fmt.money(last.ingresos) if last != null else "Tu primer mes",
+		 Lang.f("Mes pasado: %s", Fmt.money(last.ingresos)) if last != null else "Tu primer mes",
 		 "Precio × unidades vendidas en lo que va del mes."],
 		["Utilidad neta (mes pasado)", Fmt.money(last.utilidad_neta) if last != null else "—",
-		 sc(last.utilidad_neta) if last != null else "muted", "Margen neto: %s" % Fmt.pct(net_margin),
+		 sc(last.utilidad_neta) if last != null else "muted", Lang.f("Margen neto: %s", Fmt.pct(net_margin)),
 		 "Lo que quedó después de TODOS los costos, intereses, depreciación e impuestos."],
 		["Valor de la empresa", Fmt.money(g.valuation()), "accent",
-		 "Múltiplo: %s × EBITDA" % Fmt.num(g.valuation_multiple(), 1),
+		 Lang.f("Múltiplo: %s × EBITDA", Fmt.num(g.valuation_multiple(), 1)),
 		 "Cuánto pagaría un inversionista por tu empresa. El múltiplo sube en auge y baja en recesión."],
 	]
 	var cw := (CW - 36) / 4
@@ -1008,7 +1008,7 @@ func draw_resumen(g: Game) -> void:
 	if info[2] != null:
 		var lo := rank_lo(info[0])
 		ui.bar(Rect2(r.position.x + 330, r.position.y + 26, 460, 12), (info[3] - lo) / (info[2][0] - lo), "accent")
-		ui.text("Siguiente rango: %s al valer %s" % [info[2][1], Fmt.money(info[2][0])], Vector2(r.end.x - 16, r.position.y + 21),
+		ui.text(Lang.f("Siguiente rango: %s al valer %s", [info[2][1], Fmt.money(info[2][0])]), Vector2(r.end.x - 16, r.position.y + 21),
 				15, "muted", false, "topright")
 	else:
 		ui.text("¡Llegaste al rango máximo!", r.position + Vector2(330, 19), 17, "green", true)
@@ -1023,7 +1023,7 @@ func draw_resumen(g: Game) -> void:
 	var rw := CW - 652
 	r = ui.panel(Rect2(rx, y, rw, 236), "Alertas y consejos")
 	var ty := r.position.y + 44
-	var tips: Array = cached("tips%d" % g.day, g.advisories)
+	var tips: Array = cached(Lang.f("tips%d", g.day), g.advisories)
 	if tips.is_empty():
 		tips = [["good", "Todo en orden. Busca la siguiente inversión con mejor retorno."]]
 	for t in tips:
@@ -1059,17 +1059,17 @@ func draw_negocios(g: Game) -> void:
 		ui.text(d.name, r.position + Vector2(16, 12), 19, "text" if p.unlocked else "muted", true)
 		if not p.unlocked:
 			ui.text("Bloqueado", r.position + Vector2(16, 44), 14, "muted")
-			ui.text("Desbloquear: %s" % Fmt.money(g.unlock_cost(key)), r.position + Vector2(16, 66), 14,
+			ui.text(Lang.f("Desbloquear: %s", Fmt.money(g.unlock_cost(key))), r.position + Vector2(16, 66), 14,
 					"green" if g.cash >= g.unlock_cost(key) else "muted")
 			continue
 		var ls := g.locs(key)
 		var contrib = null
 		if g.history and g.history[-1].productos.has(key):
 			contrib = g.history[-1].productos[key].contribucion
-		ui.text("%d sucursal(es)%s" % [ls.size(), " · fábrica" if p.factory else ""], r.position + Vector2(16, 42), 14, "text")
-		ui.text("Ventas ayer: %s %s" % [Fmt.num(p.last_sold), d.unit], r.position + Vector2(16, 62), 14, "muted")
+		ui.text(Lang.f("%d sucursal(es)%s", [ls.size(), " · fábrica" if p.factory else ""]), r.position + Vector2(16, 42), 14, "text")
+		ui.text(Lang.f("Ventas ayer: %s %s", [Fmt.num(p.last_sold), d.unit]), r.position + Vector2(16, 62), 14, "muted")
 		if contrib != null:
-			ui.text("Contribución mes: %s" % Fmt.money(contrib), r.position + Vector2(16, 82), 14, sc(contrib))
+			ui.text(Lang.f("Contribución mes: %s", Fmt.money(contrib)), r.position + Vector2(16, 82), 14, sc(contrib))
 
 	var key := sel
 	var p: Dictionary = g.products[key]
@@ -1088,33 +1088,33 @@ func draw_negocios(g: Game) -> void:
 	for s in D.SIZES.size():
 		var size: Dictionary = D.SIZES[s]
 		var cost := g.location_cost(s)
-		var tip := "Inversión (CAPEX): %s, se deprecia en 5 años. Alquiler: %s/mes. Tráfico de clientes ×%s y hasta %d empleados. Cada sucursal nueva del mismo producto canibaliza un poco a las demás." % [Fmt.money(cost), Fmt.money(size.rent * g.price_index), Fmt.num(size.traffic), size.max_emp]
-		if ui.button(Rect2(rx + 20 + s * (bw + 12), y, bw, 34), "Abrir %s (%s)" % [size.name, Fmt.short(cost)], g.cash >= cost, "normal", 15, tip):
+		var tip := Lang.f("Inversión (CAPEX): %s, se deprecia en 5 años. Alquiler: %s/mes. Tráfico de clientes ×%s y hasta %d empleados. Cada sucursal nueva del mismo producto canibaliza un poco a las demás.", [Fmt.money(cost), Fmt.money(size.rent * g.price_index), Fmt.num(size.traffic), size.max_emp])
+		if ui.button(Rect2(rx + 20 + s * (bw + 12), y, bw, 34), Lang.f("Abrir %s (%s)", [size.name, Fmt.short(cost)]), g.cash >= cost, "normal", 15, tip):
 			act(g.open_location(key, s))
 	y += 44
 	var units_month: float = p.ema_sales * 30
 	var no_factory_cost: float = g.unit_cost(p) / (1 - D.FACTORY_SAVING) if p.factory else g.unit_cost(p)
 	var saving: float = units_month * no_factory_cost * D.FACTORY_SAVING
 	var upkeep := g.factory_cost(key) * D.FACTORY_UPKEEP
-	var f_tip := "Integración vertical: fabricar tú mismo baja el costo unitario 30%%. Costo fijo de mantenimiento: %s/mes. Con tus ventas actuales ahorrarías ~%s/mes. Solo conviene si el ahorro supera el mantenimiento y la depreciación (%s/mes)." % [Fmt.money(upkeep), Fmt.money(saving), Fmt.money(g.factory_cost(key) / 60)]
+	var f_tip := Lang.f("Integración vertical: fabricar tú mismo baja el costo unitario 30%%. Costo fijo de mantenimiento: %s/mes. Con tus ventas actuales ahorrarías ~%s/mes. Solo conviene si el ahorro supera el mantenimiento y la depreciación (%s/mes).", [Fmt.money(upkeep), Fmt.money(saving), Fmt.money(g.factory_cost(key) / 60)])
 	if p.factory:
 		ui.button(Rect2(rx + 20, y, bw, 34), "Fábrica propia activa", false, "normal", 15, f_tip)
-	elif ui.button(Rect2(rx + 20, y, bw, 34), "Construir fábrica (%s)" % Fmt.short(g.factory_cost(key)), g.cash >= g.factory_cost(key), "normal", 15, f_tip):
+	elif ui.button(Rect2(rx + 20, y, bw, 34), Lang.f("Construir fábrica (%s)", Fmt.short(g.factory_cost(key))), g.cash >= g.factory_cost(key), "normal", 15, f_tip):
 		act(g.build_factory(key))
 	var wage: float = D.MANAGER_WAGE * g.price_index * g.min_wage_mult
-	var m_tip := "Delegación: un gerente cuesta %s/mes y ajusta solo el personal de cada sucursal y los días de inventario de esta línea." % Fmt.money(wage)
-	if ui.button(Rect2(rx + 32 + bw, y, bw, 34), "Despedir gerente" if p.manager else "Contratar gerente (%s/mes)" % Fmt.short(wage),
+	var m_tip := Lang.f("Delegación: un gerente cuesta %s/mes y ajusta solo el personal de cada sucursal y los días de inventario de esta línea.", Fmt.money(wage))
+	if ui.button(Rect2(rx + 32 + bw, y, bw, 34), "Despedir gerente" if p.manager else Lang.f("Contratar gerente (%s/mes)", Fmt.short(wage)),
 			true, "normal", 15, m_tip, p.manager):
 		act(g.toggle_manager(key))
 	var acq := g.acquire_cost(key)
-	var a_tip := "Fusiones y adquisiciones: compras un competidor (%d en el mercado). Recibes su local con 3 empleados y hay un rival menos. Lo que pagas por encima del valor del local es plusvalía (goodwill). Cada competidor que queda es más caro." % p.competitors
-	if ui.button(Rect2(rx + 44 + 2 * bw, y, bw, 34), "Adquirir competidor (%s)" % Fmt.short(acq), p.competitors > 0 and g.cash >= acq, "normal", 15, a_tip):
+	var a_tip := Lang.f("Fusiones y adquisiciones: compras un competidor (%d en el mercado). Recibes su local con 3 empleados y hay un rival menos. Lo que pagas por encima del valor del local es plusvalía (goodwill). Cada competidor que queda es más caro.", p.competitors)
+	if ui.button(Rect2(rx + 44 + 2 * bw, y, bw, 34), Lang.f("Adquirir competidor (%s)", Fmt.short(acq)), p.competitors > 0 and g.cash >= acq, "normal", 15, a_tip):
 		act(g.acquire(key))
 
 	y += 50
 	var ls := g.locs(key)
 	var service: float = p.last_sold / p.last_demand if p.last_demand else 1.0
-	ui.text("Ayer: demanda %s · capacidad %s · vendido %s %s · nivel de servicio %s" % [Fmt.num(p.last_demand), Fmt.num(p.last_capacity), Fmt.num(p.last_sold), d.unit, Fmt.pct(service, 0)],
+	ui.text(Lang.f("Ayer: demanda %s · capacidad %s · vendido %s %s · nivel de servicio %s", [Fmt.num(p.last_demand), Fmt.num(p.last_capacity), Fmt.num(p.last_sold), d.unit, Fmt.pct(service, 0)]),
 			Vector2(rx + 20, y), 14, "muted")
 	y += 28
 	var x0 := rx + 20
@@ -1141,21 +1141,21 @@ func draw_negocios(g: Game) -> void:
 		var size: Dictionary = D.SIZES[loc.size]
 		var where := ""
 		if Game.plot_of(loc) >= 0:
-			where = " · T%d" % (Game.plot_of(loc) + 1)
-		ui.text("%s #%d%s" % [size.name, i + 1, where], Vector2(x0, cy - 8), 14, "text", true, "midleft", 135)
+			where = Lang.f(" · T%d", (Game.plot_of(loc) + 1))
+		ui.text(Lang.f("%s #%d%s", [size.name, i + 1, where]), Vector2(x0, cy - 8), 14, "text", true, "midleft", 135)
 		var st := Game.stars_of(loc)
 		for k in 5:
 			Icons.draw(ui, "star", Vector2(x0 + 6 + k * 13, cy + 9), 12, Color8(240, 190, 60) if k < floori(st + 0.25) else Color8(70, 75, 85))
 		ui.text(Fmt.num(st, 1), Vector2(x0 + 72, cy + 9), 12, "muted", false, "midleft")
-		ui.tooltip(Rect2(x0, ry, 135, rows), "Estrellas: %s de 5 (con 5 vende 15%% más que con 3; suben atendiendo a todos, con buena reputación, calidad y precio justo). Inversión total: %s. Valor en libros: %s. Productividad: %s %s por empleado al día." % [Fmt.num(st, 1), Fmt.money(loc.invested), Fmt.money(g.asset_book(loc.asset_ids)), Fmt.num(prod, 1), d.unit])
+		ui.tooltip(Rect2(x0, ry, 135, rows), Lang.f("Estrellas: %s de 5 (con 5 vende 15%% más que con 3; suben atendiendo a todos, con buena reputación, calidad y precio justo). Inversión total: %s. Valor en libros: %s. Productividad: %s %s por empleado al día.", [Fmt.num(st, 1), Fmt.money(loc.invested), Fmt.money(g.asset_book(loc.asset_ids)), Fmt.num(prod, 1), d.unit]))
 		if ui.button(Rect2(x0 + 140, cy - 13, 26, 26), "−", loc.employees > 0 and not p.manager, "normal", 15,
-				"Despedir: pagas %d días de salario de indemnización." % int(D.SEVERANCE_DAYS)):
+				Lang.f("Despedir: pagas %d días de salario de indemnización.", int(D.SEVERANCE_DAYS))):
 			act(g.fire(loc))
 		ui.text("%d/%d" % [loc.employees, size.max_emp], Vector2(x0 + 201, cy), 15, "text", false, "center")
 		if not marks.has("contratar"):
 			marks.contratar = Rect2(x0 + 236, cy - 13, 26, 26)
 		if ui.button(Rect2(x0 + 236, cy - 13, 26, 26), "+", loc.employees < size.max_emp and not p.manager, "normal", 15,
-				"Contratar: %s de reclutamiento y %s/mes de salario." % [Fmt.money(D.HIRING_COST * g.price_index), Fmt.money(g.wage_daily() * 30)]):
+				Lang.f("Contratar: %s de reclutamiento y %s/mes de salario.", [Fmt.money(D.HIRING_COST * g.price_index), Fmt.money(g.wage_daily() * 30)])):
 			act(g.hire(loc))
 		var lost: bool = loc.demand > loc.capacity * 1.02
 		ui.text(Fmt.num(loc.demand), Vector2(x0 + 315, cy), 15, "orange" if lost else "text", false, "midright")
@@ -1169,11 +1169,11 @@ func draw_negocios(g: Game) -> void:
 			ui.text(Fmt.short(loc.month_contrib), Vector2(x0 + 545, cy), 15, "muted", false, "midright")
 			ui.text("—", Vector2(x0 + 605, cy), 15, "muted", false, "midright")
 		var up = g.upgrade_cost(loc)
-		var up_tip := "Ampliar a %s por %s: más tráfico y más empleados posibles." % [D.SIZES[loc.size + 1].name, Fmt.money(up)] if up != null else "Ya es una megatienda."
+		var up_tip := Lang.f("Ampliar a %s por %s: más tráfico y más empleados posibles.", [D.SIZES[loc.size + 1].name, Fmt.money(up)]) if up != null else "Ya es una megatienda."
 		if ui.button(Rect2(x0 + 618, cy - 14, 72, 28), "Ampliar", up != null and g.cash >= up, "normal", 13, up_tip):
 			act(g.upgrade_location(loc))
 		var confirming: bool = confirm_sell == loc.id
-		var sell_tip := "Recibes %s: la mitad de su valor en libros. La otra mitad es un costo hundido y se registra como pérdida. También pagas indemnizaciones." % Fmt.money(g.sell_value(loc))
+		var sell_tip := Lang.f("Recibes %s: la mitad de su valor en libros. La otra mitad es un costo hundido y se registra como pérdida. También pagas indemnizaciones.", Fmt.money(g.sell_value(loc)))
 		if ui.button(Rect2(x0 + 696, cy - 14, rw - 40 - 696, 28), "¿Seguro?" if confirming else "Vender", true, "danger", 13, sell_tip):
 			if confirming:
 				confirm_sell = null
@@ -1196,7 +1196,7 @@ func draw_locked(g: Game, key: String, rx: float, rw: float) -> void:
 		["Margen bruto típico", Fmt.pct(1 - d.unit_cost / d.ref_price, 0), null],
 		["Elasticidad precio", Fmt.num(d.elasticity, 1), "Con 2,0, subir el precio 10% baja la demanda cerca de 20%."],
 		["Elasticidad ingreso", Fmt.num(d.income_elasticity, 1), "Cuánto sube o baja la demanda con la economía."],
-		["Ventas por empleado al día", "%s %s" % [Fmt.num(d.productivity, 1), d.unit], null],
+		["Ventas por empleado al día", Lang.f("%s %s", [Fmt.num(d.productivity, 1), d.unit]), null],
 		["Merma diaria del inventario", Fmt.pct(d.spoil, 1), "Parte del inventario que se pierde cada día."],
 		["Temporada alta", D.MONTHS[d.season_peak - 1], null],
 		["Competidores", str(g.products[key].competitors), null],
@@ -1205,11 +1205,11 @@ func draw_locked(g: Game, key: String, rx: float, rw: float) -> void:
 		y = ui.row(x, y, w, r[0], r[1], "text", r[2])
 	var cost := g.unlock_cost(key)
 	y += 16
-	if ui.button(Rect2(x, y, 320, 44), "Desbloquear por %s" % Fmt.money(cost), g.cash >= cost, "primary", 15,
+	if ui.button(Rect2(x, y, 320, 44), Lang.f("Desbloquear por %s", Fmt.money(cost)), g.cash >= cost, "primary", 15,
 			"Licencias, recetas y desarrollo. Se registra como activo intangible y se amortiza en 5 años."):
 		act(g.unlock(key))
 	if g.cash < cost:
-		ui.text("Te faltan %s. Ahorra o pide un préstamo en Finanzas." % Fmt.money(cost - g.cash), Vector2(x, y + 56), 14, "muted")
+		ui.text(Lang.f("Te faltan %s. Ahorra o pide un préstamo en Finanzas.", Fmt.money(cost - g.cash)), Vector2(x, y + 56), 14, "muted")
 
 
 # ---------- Mercado ----------
@@ -1242,11 +1242,11 @@ func draw_mercado(g: Game) -> void:
 	var emp := 0
 	for l in ls:
 		emp += l.employees
-	var cv: Array = cached("curve%d|%s|%f|%d|%d|%d" % [g.day, key, p.price, p.quality, ls.size(), emp], func(): return g.price_curve(key))
+	var cv: Array = cached(Lang.f("curve%d|%s|%f|%d|%d|%d", [g.day, key, p.price, p.quality, ls.size(), emp]), func(): return g.price_curve(key))
 	var curve: Array = cv[0]
 	var best: Array = cv[1]
 	marks.precio_optimo = Rect2(CX + 190, y0 + 88, 242, 30)
-	if ui.button(Rect2(CX + 190, y0 + 88, 242, 30), "Usar precio óptimo (%s)" % Fmt.money(best[0], 2), not ls.is_empty(), "normal", 15,
+	if ui.button(Rect2(CX + 190, y0 + 88, 242, 30), Lang.f("Usar precio óptimo (%s)", Fmt.money(best[0], 2)), not ls.is_empty(), "normal", 15,
 			"Precio que maximiza la utilidad diaria con tu personal y sucursales actuales. Ojo: precios muy altos también bajan la reputación."):
 		p.price = best[0]
 
@@ -1264,16 +1264,16 @@ func draw_mercado(g: Game) -> void:
 		 "Más del 25% por encima daña tu reputación. Mucho más barato la mejora un poco, pero sacrificas margen."],
 		["Elasticidad precio", Fmt.num(d.elasticity * q.elast, 2), "text", "Si es 2, subir el precio 1% baja la demanda cerca de 2%."],
 		["Costo unitario", Fmt.money(cost, 2), "text",
-		 "Costo base × calidad × inflación. Descuento por volumen: %s%s" % [Fmt.pct(g.volume_discount(p), 0), " · fábrica propia −30%." if p.factory else "."]],
-		["Margen de contribución por unidad", "%s (%s)" % [Fmt.money(margin, 2), Fmt.pct(margin / p.price if p.price else 0.0, 0)], sc(margin),
+		 Lang.f("Costo base × calidad × inflación. Descuento por volumen: %s%s", [Fmt.pct(g.volume_discount(p), 0), " · fábrica propia −30%." if p.factory else "."])],
+		["Margen de contribución por unidad", Lang.f("%s (%s)", [Fmt.money(margin, 2), Fmt.pct(margin / p.price if p.price else 0.0, 0)]), sc(margin),
 		 "Precio − costo variable. Lo que cada venta aporta para pagar los costos fijos."],
-		["Demanda / capacidad (ayer)", "%s / %s" % [Fmt.num(p.last_demand), Fmt.num(p.last_capacity)], "text",
+		["Demanda / capacidad (ayer)", Lang.f("%s / %s", [Fmt.num(p.last_demand), Fmt.num(p.last_capacity)]), "text",
 		 "Capacidad = empleados × productividad. Si la demanda la supera, pierdes ventas."],
-		["Ventas ayer · nivel de servicio", "%s · %s" % [Fmt.num(p.last_sold), Fmt.pct(service, 0)], "green" if service > 0.95 else "orange",
+		["Ventas ayer · nivel de servicio", Lang.f("%s · %s", [Fmt.num(p.last_sold), Fmt.pct(service, 0)]), "green" if service > 0.95 else "orange",
 		 "Porcentaje de la demanda que lograste atender. Si es bajo, baja tu reputación."],
-		["Punto de equilibrio", "%s %s/día" % [Fmt.num(be), d.unit] if be != null else "precio bajo el costo",
+		["Punto de equilibrio", Lang.f("%s %s/día", [Fmt.num(be), d.unit]) if be != null else "precio bajo el costo",
 		 "green" if be != null and p.last_sold >= be else "red",
-		 "Costos fijos diarios de la línea (%s) ÷ margen de contribución." % Fmt.money(g.fixed_costs_daily(key))],
+		 Lang.f("Costos fijos diarios de la línea (%s) ÷ margen de contribución.", Fmt.money(g.fixed_costs_daily(key)))],
 	]
 	for row in rows:
 		y = ui.row(x, y, w, row[0], row[1], row[2], row[3])
@@ -1288,7 +1288,7 @@ func draw_mercado(g: Game) -> void:
 		current *= margin
 		var util := curve.map(func(c): return c[1])
 		ui.line_chart(chart, [[util, "green", "Utilidad diaria"]],
-				"Utilidad diaria según precio (%s a %s)" % [Fmt.money(lo_p, 2), Fmt.money(hi_p, 2)], Fmt.short,
+				Lang.f("Utilidad diaria según precio (%s a %s)", [Fmt.money(lo_p, 2), Fmt.money(hi_p, 2)]), Fmt.short,
 				[[(best[0] - lo_p) / (hi_p - lo_p), best[1], "green", "óptimo", true],
 				 [(p.price - lo_p) / (hi_p - lo_p), current, "accent", "tu precio", false]])
 	else:
@@ -1307,7 +1307,7 @@ func draw_mercado(g: Game) -> void:
 			"Clientes menos sensibles al precio, pero cae fuerte en recesión."]
 	for i in D.QUALITIES.size():
 		var qual: Dictionary = D.QUALITIES[i]
-		var tip := "Costo ×%s · precio de referencia ×%s · reputación objetivo %d. %s" % [Fmt.num(qual.cost, 2), Fmt.num(qual.price, 2), int(qual.rep), notes[i]]
+		var tip := Lang.f("Costo ×%s · precio de referencia ×%s · reputación objetivo %d. %s", [Fmt.num(qual.cost, 2), Fmt.num(qual.price, 2), int(qual.rep), notes[i]])
 		var qw := (w - 16) / 3
 		if ui.button(Rect2(x + i * (qw + 8), y, qw, 32), qual.name, true, "normal", 15, tip, p.quality == i):
 			if p.quality != i:
@@ -1316,9 +1316,9 @@ func draw_mercado(g: Game) -> void:
 				p.price = g.ref_price(p) * ratio
 	y += 46
 
-	ui.text("Marketing", Vector2(x, y), 15, "muted", true)
-	ui.info_dot(Vector2(x + 84, y + 10), "Rendimientos decrecientes: el reconocimiento de marca sube con el presupuesto, pero cada dólar extra rinde menos. Si dejas de invertir, la gente se olvida de ti poco a poco.")
-	ui.text("%s/mes" % Fmt.money(p.marketing), Vector2(x + w, y), 16, "text", true, "topright")
+	var mk := ui.text("Marketing", Vector2(x, y), 15, "muted", true)
+	ui.info_dot(Vector2(maxf(x + 84, mk.end.x + 12), y + 10), "Rendimientos decrecientes: el reconocimiento de marca sube con el presupuesto, pero cada dólar extra rinde menos. Si dejas de invertir, la gente se olvida de ti poco a poco.")
+	ui.text(Lang.f("%s/mes", Fmt.money(p.marketing)), Vector2(x + w, y), 16, "text", true, "topright")
 	y += 26
 	var bw := (w - 25) / 6
 	var msteps := [-10000.0, -1000.0, -100.0, 100.0, 1000.0, 10000.0]
@@ -1328,25 +1328,25 @@ func draw_mercado(g: Game) -> void:
 		if ui.button(Rect2(x + i * (bw + 5), y, bw, 28), label, true, "normal", 13):
 			p.marketing = max(0.0, p.marketing + step)
 	y += 38
-	ui.text("Reconocimiento de marca: %s (demanda +%s)" % [Fmt.pct(p.awareness, 0), Fmt.pct(0.6 * p.awareness, 0)], Vector2(x, y), 14, "text")
+	ui.text(Lang.f("Reconocimiento de marca: %s (demanda +%s)", [Fmt.pct(p.awareness, 0), Fmt.pct(0.6 * p.awareness, 0)]), Vector2(x, y), 14, "text")
 	y += 22
 	ui.bar(Rect2(x, y, w, 8), p.awareness, "purple")
 	y += 18
-	ui.text("Reputación: %s/100 (demanda ×%s)" % [Fmt.num(p.reputation), Fmt.num(0.7 + 0.6 * p.reputation / 100, 2)], Vector2(x, y), 14, "text")
+	ui.text(Lang.f("Reputación: %s/100 (demanda ×%s)", [Fmt.num(p.reputation), Fmt.num(0.7 + 0.6 * p.reputation / 100, 2)]), Vector2(x, y), 14, "text")
 	ui.tooltip(Rect2(x, y, w, 20), "Depende de la calidad, de atender toda la demanda y de no cobrar mucho más que el mercado.")
 	y += 22
 	ui.bar(Rect2(x, y, w, 8), p.reputation / 100.0, "green" if p.reputation >= 50 else "orange")
 	y += 26
 
-	ui.text("Inventario", Vector2(x, y), 15, "muted", true)
-	ui.info_dot(Vector2(x + 84, y + 10), "Compras cada mañana lo necesario para cubrir N días de ventas. Poco inventario = te quedas sin producto si sube la demanda. Mucho = más merma y costo de almacenamiento.")
+	var inv := ui.text("Inventario", Vector2(x, y), 15, "muted", true)
+	ui.info_dot(Vector2(maxf(x + 84, inv.end.x + 12), y + 10), "Compras cada mañana lo necesario para cubrir N días de ventas. Poco inventario = te quedas sin producto si sube la demanda. Mucho = más merma y costo de almacenamiento.")
 	if ui.button(Rect2(x + w - 150, y - 4, 30, 26), "−", p.stock_days > 1 and not p.manager):
 		p.stock_days -= 1
-	ui.text("%d día%s" % [p.stock_days, "s" if p.stock_days > 1 else ""], Vector2(x + w - 75, y + 9), 15, "text", true, "center")
+	ui.text(Lang.f("%d día%s", [p.stock_days, "s" if p.stock_days > 1 else ""]), Vector2(x + w - 75, y + 9), 15, "text", true, "center")
 	if ui.button(Rect2(x + w - 30, y - 4, 30, 26), "+", p.stock_days < 30 and not p.manager):
 		p.stock_days += 1
 	y += 30
-	y = ui.row(x, y, w, "En bodega", "%s %s (%s)" % [Fmt.num(p.stock), d.unit, Fmt.money(p.stock * p.avg_cost)])
+	y = ui.row(x, y, w, "En bodega", Lang.f("%s %s (%s)", [Fmt.num(p.stock), d.unit, Fmt.money(p.stock * p.avg_cost)]))
 	y = ui.row(x, y, w, "Merma diaria", Fmt.pct(d.spoil, 1), "text", "Inventario que se pierde cada día (se pudre o se vuelve obsoleto).")
 	if p.manager:
 		ui.text("El gerente administra el inventario de esta línea.", Vector2(x, y), 13, "blue")
@@ -1363,7 +1363,7 @@ func draw_mercado(g: Game) -> void:
 	y = ui.row(x, y, w, "Descuento por volumen", Fmt.pct(disc, 0), "text",
 			"Economías de escala: el proveedor te da mejor precio si el mes pasado le compraste más.")
 	if nxt != null:
-		y = ui.row(x, y, w, "Siguiente: %s al comprar" % Fmt.pct(nxt[1], 0), "%s/mes" % Fmt.money(nxt[0] * g.price_index), "muted")
+		y = ui.row(x, y, w, Lang.f("Siguiente: %s al comprar", Fmt.pct(nxt[1], 0)), Lang.f("%s/mes", Fmt.money(nxt[0] * g.price_index)), "muted")
 	y = ui.row(x, y, w, "Compras del mes pasado", Fmt.money(p.last_month_purchases))
 	y = ui.row(x, y, w, "Competidores", str(p.competitors), "text",
 			"Más competidores = menos clientes para ti. Llegan cuando el mercado deja mucho margen.")
@@ -1405,7 +1405,7 @@ func draw_finanzas(g: Game) -> void:
 	ui.text("Plazo", Vector2(x, y + 5), 15, "muted", true)
 	var terms := [12, 24, 36, 60]
 	for i in terms.size():
-		if ui.button(Rect2(x + 80 + i * 92, y, 86, 28), "%d meses" % terms[i], true, "normal", 13, null, loan_months == terms[i]):
+		if ui.button(Rect2(x + 80 + i * 92, y, 86, 28), Lang.f("%d meses", terms[i]), true, "normal", 13, null, loan_months == terms[i]):
 			loan_months = terms[i]
 	y += 40
 	var pay := g.loan_payment(loan_amount, loan_months, rate)
@@ -1421,11 +1421,11 @@ func draw_finanzas(g: Game) -> void:
 	for loan in g.loans.duplicate():
 		if y > CY + CH - 40:
 			break
-		ui.text("%s al %s · %d cuotas de %s" % [Fmt.money(loan.principal), Fmt.pct(loan.rate), loan.months_left, Fmt.money(loan.payment)],
+		ui.text(Lang.f("%s al %s · %d cuotas de %s", [Fmt.money(loan.principal), Fmt.pct(loan.rate), loan.months_left, Fmt.money(loan.payment)]),
 				Vector2(x, y + 4), 14, "text")
 		var payoff := g.prepay_amount(loan)
 		if ui.button(Rect2(x + w - 90, y, 90, 26), "Prepagar", g.cash >= payoff, "normal", 13,
-				"Pagas hoy %s (el saldo más el interés de los días que van del mes) y te ahorras los intereses futuros." % Fmt.money(payoff)):
+				Lang.f("Pagas hoy %s (el saldo más el interés de los días que van del mes) y te ahorras los intereses futuros.", Fmt.money(payoff))):
 			act(g.prepay_loan(loan))
 		y += 32
 
@@ -1488,7 +1488,7 @@ func draw_crecimiento(g: Game) -> void:
 	var lvl: Array = D.HQ_LEVELS[g.hq_level]
 	var factor: float = lvl[2]
 	var corp := g.corporate_cost_monthly()
-	y = ui.row(x, y, w, "Nivel actual", "%d · %s" % [g.hq_level, lvl[0]], "accent")
+	y = ui.row(x, y, w, "Nivel actual", Lang.f("%d · %s", [g.hq_level, lvl[0]]), "accent")
 	y = ui.row(x, y, w, "Sucursales", str(g.locations.size()))
 	y = ui.row(x, y, w, "Gastos corporativos al mes", Fmt.money(corp), "red" if corp > 0 else "text",
 			"Crecen más rápido que el número de sucursales (a partir de la sexta).")
@@ -1499,12 +1499,12 @@ func draw_crecimiento(g: Game) -> void:
 	else:
 		var nxt: Array = D.HQ_LEVELS[g.hq_level + 1]
 		var saving: float = corp * (1 - nxt[2] / factor)
-		y = ui.row(x, y, w, "Siguiente: %s" % nxt[0], "−%d%% de gastos" % roundi((1 - nxt[2] / factor) * 100))
+		y = ui.row(x, y, w, Lang.f("Siguiente: %s", nxt[0]), Lang.f("−%d%% de gastos", roundi((1 - nxt[2] / factor) * 100)))
 		y = ui.row(x, y, w, "Ahorro mensual hoy", Fmt.money(saving), "green",
 				"Con más sucursales el ahorro crece. La inversión se deprecia en 5 años como cualquier activo.")
 		var months = cost / saving if saving > 0 else null
-		y = ui.row(x, y, w, "Se paga sola en", "%d meses" % roundi(months) if months != null and months < 999 else "aún no conviene")
-		if ui.button(Rect2(x, y + 6, w, 40), "Instalar por %s" % Fmt.money(cost), g.cash >= cost, "primary"):
+		y = ui.row(x, y, w, "Se paga sola en", Lang.f("%d meses", roundi(months)) if months != null and months < 999 else "aún no conviene")
+		if ui.button(Rect2(x, y + 6, w, 40), Lang.f("Instalar por %s", Fmt.money(cost)), g.cash >= cost, "primary"):
 			act(g.upgrade_hq())
 
 	var y0 := CY + 312
@@ -1514,7 +1514,7 @@ func draw_crecimiento(g: Game) -> void:
 	y = y0 + 46
 	var expected: float = D.FUND_RETURN[g.phase]
 	y = ui.row(x, y, w, "Invertido (valor de mercado)", Fmt.money(g.fund), "accent")
-	y = ui.row(x, y, w, "Rendimiento esperado en %s" % D.PHASES[g.phase].name.to_lower(), Fmt.pct(expected),
+	y = ui.row(x, y, w, Lang.f("Rendimiento esperado en %s", Lang.noun(D.PHASES[g.phase].name)), Fmt.pct(expected),
 			"green" if expected >= 0 else "red", "Cambia con el ciclo económico. Los bonos rinden la tasa del banco central.")
 	y = ui.row(x, y, w, "Bonos (sin riesgo)", Fmt.pct(g.policy_rate))
 	fund_amount = max(10000.0, fund_amount)
@@ -1542,10 +1542,10 @@ func draw_crecimiento(g: Game) -> void:
 	w = rw - 40
 	y = CY + 46
 	var mins := g.play_seconds / 60.0
-	y = ui.row(x, y, w, "Tiempo de juego", "%d h %02d min" % [int(mins / 60), int(mins) % 60] if mins >= 60 else "%d min" % roundi(mins))
+	y = ui.row(x, y, w, "Tiempo de juego", Lang.f("%d h %02d min", [int(mins / 60), int(mins) % 60]) if mins >= 60 else Lang.f("%d min", roundi(mins)))
 	y = ui.row(x, y, w, "Modo", D.MODES[g.mode].name, "accent")
 	if g.win_seconds != null:
-		y = ui.row(x, y, w, "Meta cumplida en", "%d min" % roundi(g.win_seconds / 60.0), "green")
+		y = ui.row(x, y, w, "Meta cumplida en", Lang.f("%d min", roundi(g.win_seconds / 60.0)), "green")
 	else:
 		y = ui.row(x, y, w, "Meta", "Imperio ($10 M) en unos 40 min" if g.mode == "normal" else "Mil millonario ($1.000 M)", "muted")
 	y += 8
@@ -1664,8 +1664,8 @@ func draw_reportes(g: Game) -> void:
 		["ROA anualizado", Fmt.pct(st.utilidad_neta * 12 / b.activos) if b.activos > 0 else "—", "Retorno sobre activos: qué tan bien usas todo lo que tienes."],
 		["Meses de caja", Fmt.num(g.cash / fixed, 1) if fixed > 0 and g.cash > 0 else "0",
 		 "Cuántos meses podrías pagar los costos fijos con la caja actual si no vendieras nada."],
-		["Costo de oportunidad del capital", "%s/mes" % Fmt.money(max(0.0, eq) * cost_capital / 12),
-		 "Lo que tu patrimonio ganaría en otra inversión de riesgo similar (tasa BC + 4%% = %s)." % Fmt.pct(cost_capital)],
+		["Costo de oportunidad del capital", Lang.f("%s/mes", Fmt.money(max(0.0, eq) * cost_capital / 12)),
+		 Lang.f("Lo que tu patrimonio ganaría en otra inversión de riesgo similar (tasa BC + 4%% = %s).", Fmt.pct(cost_capital))],
 		["Valor económico agregado (EVA)", Fmt.money(eva), "Utilidad neta − costo de oportunidad. Si es negativo, tu dinero rendiría más en otro lado."],
 	]
 	for k in kpis:
@@ -1687,7 +1687,7 @@ func draw_noticias(g: Game) -> void:
 		if y + rows < area.position.y or y > area.end.y:
 			continue
 		var m := int(n.day) / 30
-		ui.text("%s año %d" % [D.MONTHS[m % 12].substr(0, 3), m / 12 + 1], Vector2(area.position.x + 10, y + 4), 13, "muted")
+		ui.text(Lang.f("%s año %d", [Lang.month_short(D.MONTHS[m % 12]), m / 12 + 1]), Vector2(area.position.x + 10, y + 4), 13, "muted")
 		ui.text(n.text, Vector2(area.position.x + 130, y + 3), 15, ImUI.KIND_COLOR[n.kind], false, "topleft", area.size.x - 140)
 	ui.set_clip(null)
 

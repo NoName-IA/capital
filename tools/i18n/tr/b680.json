@@ -1,0 +1,975 @@
+{
+"680": [
+"Yes, overwrite",
+"是，覆盖",
+"Да, перезаписать",
+"Sim, sobrescrever",
+"Ja, überschreiben"
+],
+"681": [
+"Yes, delete",
+"是，删除",
+"Да, удалить",
+"Sim, apagar",
+"Ja, löschen"
+],
+"682": [
+"Cancel",
+"取消",
+"Отмена",
+"Cancelar",
+"Abbrechen"
+],
+"683": [
+"Overwrite",
+"覆盖",
+"Перезаписать",
+"Sobrescrever",
+"Überschreiben"
+],
+"684": [
+"Load",
+"读取",
+"Загрузить",
+"Carregar",
+"Laden"
+],
+"685": [
+"This game ended in bankruptcy: it can't be continued.",
+"这局游戏以破产告终：无法继续。",
+"Эта игра закончилась банкротством: продолжить нельзя.",
+"Este jogo terminou em falência: não dá mais para continuar.",
+"Dieses Spiel endete mit der Pleite: Es kann nicht fortgesetzt werden."
+],
+"686": [
+"What's your company called?",
+"你的公司叫什么名字？",
+"Как называется ваша компания?",
+"Qual é o nome da sua empresa?",
+"Wie heißt deine Firma?"
+],
+"687": [
+"It appears on your stores, your office and in what customers and rivals say.",
+"它会出现在你的门店、办公室，以及顾客和对手的话里。",
+"Оно будет на ваших точках, в офисе и в словах клиентов и конкурентов.",
+"Aparece nas suas lojas, no seu escritório e no que dizem os clientes e os rivais.",
+"Er erscheint auf deinen Läden, in deinem Büro und in dem, was Kunden und Rivalen sagen."
+],
+"688": [
+"Type a name…",
+"输入名字……",
+"Введите название…",
+"Digite um nome…",
+"Gib einen Namen ein…"
+],
+"690": [
+"IDEAS",
+"灵感",
+"ИДЕИ",
+"IDEIAS",
+"IDEEN"
+],
+"691": [
+"START",
+"开始",
+"НАЧАТЬ",
+"COMEÇAR",
+"STARTEN"
+],
+"692": [
+"BACK",
+"返回",
+"НАЗАД",
+"VOLTAR",
+"ZURÜCK"
+],
+"694": [
+"HOW YOU START",
+"开局情况",
+"С ЧЕГО ВЫ НАЧИНАЕТЕ",
+"COMO VOCÊ COMEÇA",
+"SO STARTEST DU"
+],
+"695": [
+"Your company",
+"你的公司",
+"Ваша компания",
+"Sua empresa",
+"Deine Firma"
+],
+"696": [
+"Starting capital",
+"启动资金",
+"Стартовый капитал",
+"Capital inicial",
+"Startkapital"
+],
+"697": [
+"Starting rank",
+"初始头衔",
+"Начальный ранг",
+"Nível inicial",
+"Startrang"
+],
+"698": [
+"Type a name with at least 2 letters.",
+"名字至少要 2 个字。",
+"Введите название минимум из 2 букв.",
+"Digite um nome com pelo menos 2 letras.",
+"Gib einen Namen mit mindestens 2 Buchstaben ein."
+],
+"699": [
+"You founded %s with a coffee stand and %s in cash. Start selling!",
+"你用一个咖啡摊和 %2$s 现金创办了%1$s。开卖吧！",
+"Вы основали %s с кофейным киоском и %s на счету. Вперёд, продавать!",
+"Você fundou %s com um quiosque de café e %s em caixa. Hora de vender!",
+"Du hast %s mit einem Kaffeestand und %s in der Kasse gegründet. Los geht's!"
+],
+"700": [
+"Mode",
+"模式",
+"Режим",
+"Modo",
+"Modus"
+],
+"701": [
+"Name",
+"名称",
+"Название",
+"Nome",
+"Name"
+],
+"702": [
+"How do you want to play?",
+"你想怎么玩？",
+"Как хотите играть?",
+"Como você quer jogar?",
+"Wie willst du spielen?"
+],
+"703": [
+"It will be saved in slot %d.",
+"将保存到存档位 %d。",
+"Игра сохранится в ячейку %d.",
+"Será salvo no espaço %d.",
+"Wird in Platz %d gespeichert."
+],
+"704": [
+"You start from the bottom with a coffee stand. Climb rank by rank until you build your empire.",
+"你从一个咖啡摊白手起家。一级一级往上爬，直到建立你的帝国。",
+"Вы начинаете с нуля с кофейным киоском. Поднимайтесь ранг за рангом, пока не построите империю.",
+"Você começa de baixo com um quiosque de café. Suba nível por nível até construir seu império.",
+"Du fängst ganz unten mit einem Kaffeestand an. Steig Rang für Rang auf, bis du dein Imperium hast."
+],
+"705": [
+"Goal",
+"目标",
+"Цель",
+"Meta",
+"Ziel"
+],
+"706": [
+"Empire · %s",
+"帝国 · %s",
+"Империя · %s",
+"Império · %s",
+"Imperium · %s"
+],
+"707": [
+"Length",
+"时长",
+"Длительность",
+"Duração",
+"Dauer"
+],
+"708": [
+"About 40 min",
+"约 40 分钟",
+"Около 40 мин",
+"Uns 40 min",
+"Etwa 40 Min."
+],
+"709": [
+"Ranks",
+"头衔",
+"Ранги",
+"Níveis",
+"Ränge"
+],
+"710": [
+"You have capital to grow fast. There's no ending: use the stock market, management and acquisitions to reach Billionaire.",
+"你有资本快速扩张。没有终点：利用股市、管理和收购成为亿万富翁。",
+"У вас есть капитал для быстрого роста. Финала нет: используйте биржу, управление и поглощения, чтобы стать миллиардером.",
+"Você tem capital para crescer rápido. Não há final: use a bolsa, a gestão e as aquisições para chegar a Bilionário.",
+"Du hast Kapital für schnelles Wachstum. Es gibt kein Ende: Nutze Börse, Verwaltung und Übernahmen, um Milliardär zu werden."
+],
+"711": [
+"No ending",
+"无终点",
+"Без финала",
+"Sem final",
+"Kein Ende"
+],
+"712": [
+"Open-ended",
+"自由",
+"Свободно",
+"Livre",
+"Frei"
+],
+"713": [
+"MODE",
+"模式",
+"РЕЖИМ",
+"MODO",
+"MODUS"
+],
+"714": [
+"Mode ",
+"模式",
+"Режим ",
+"Modo ",
+"Modus "
+],
+"715": [
+"From rank",
+"起始头衔",
+"С ранга",
+"Do nível",
+"Ab Rang"
+],
+"716": [
+"Choose %s mode",
+"选择%s模式",
+"Выбрать режим «%s»",
+"Escolher modo %s",
+"Modus %s wählen"
+],
+"717": [
+"Date",
+"日期",
+"Дата",
+"Data",
+"Datum"
+],
+"718": [
+"Available money. It can go negative (overdraft), but you pay very high interest.",
+"可用资金。可以为负（透支），但利息很高。",
+"Доступные деньги. Можно уйти в минус (овердрафт), но под очень высокий процент.",
+"Dinheiro disponível. Pode ficar negativo (cheque especial), mas você paga juros muito altos.",
+"Verfügbares Geld. Es kann negativ werden (Dispo), aber dann zahlst du sehr hohe Zinsen."
+],
+"719": [
+"Company value",
+"公司价值",
+"Стоимость компании",
+"Valor empresa",
+"Firmenwert"
+],
+"720": [
+"Valuation: annual EBITDA × multiple + cash + bonds + inventory − debt. It sets your rank.",
+"估值：年度 EBITDA × 倍数 + 现金 + 债券 + 库存 − 负债。决定你的头衔。",
+"Оценка: годовая EBITDA × мультипликатор + деньги + облигации + запасы − долг. Определяет ваш ранг.",
+"Valuation: EBITDA anual × múltiplo + caixa + títulos + estoque − dívida. Define seu nível.",
+"Bewertung: Jahres-EBITDA × Multiplikator + Kasse + Anleihen + Lager − Schulden. Bestimmt deinen Rang."
+],
+"721": [
+"Economy",
+"经济",
+"Экономика",
+"Economia",
+"Wirtschaft"
+],
+"723": [
+"Economic activity index (1.00 = normal). Affects demand according to each product's income elasticity.",
+"经济活动指数（1.00 = 正常）。根据各产品的收入弹性影响需求。",
+"Индекс экономической активности (1,00 = норма). Влияет на спрос в зависимости от эластичности по доходу.",
+"Índice de atividade econômica (1,00 = normal). Afeta a demanda conforme a elasticidade-renda de cada produto.",
+"Konjunkturindex (1,00 = normal). Beeinflusst die Nachfrage je nach Einkommenselastizität des Produkts."
+],
+"724": [
+"Annual inflation. Your costs, salaries and rents go up; so does the market's reference price.",
+"年通胀率。你的成本、工资和租金都会上涨，市场参考价也会上涨。",
+"Годовая инфляция. Растут ваши затраты, зарплаты и аренда, а также рыночная цена.",
+"Inflação anual. Seus custos, salários e aluguéis sobem; o preço de referência do mercado também.",
+"Jährliche Inflation. Deine Kosten, Gehälter und Mieten steigen, ebenso der Referenzpreis des Markts."
+],
+"725": [
+"CB rate",
+"央行利率",
+"Ставка ЦБ",
+"Taxa BC",
+"Leitzins"
+],
+"726": [
+"Central bank rate. It rises when there's inflation. It sets the cost of loans and the return on bonds.",
+"央行利率。通胀时会上调。决定贷款成本和债券收益。",
+"Ставка центробанка. Растёт при инфляции. Определяет стоимость кредитов и доходность облигаций.",
+"Taxa do banco central. Sobe quando há inflação. Define o custo dos empréstimos e o rendimento dos títulos.",
+"Zinssatz der Zentralbank. Steigt bei Inflation. Bestimmt Kreditkosten und Anleiherendite."
+],
+"728": [
+"Pause (P)",
+"暂停 (P)",
+"Пауза (P)",
+"Pausa (P)",
+"Pause (P)"
+],
+"729": [
+"Speed %s (key %d)",
+"速度 %s（按键 %d）",
+"Скорость %s (клавиша %d)",
+"Velocidade %s (tecla %d)",
+"Tempo %s (Taste %d)"
+],
+"731": [
+"Rank",
+"头衔",
+"Ранг",
+"Nível",
+"Rang"
+],
+"732": [
+"Reach a company value of %s to become %s.",
+"公司价值达到 %s 即可成为%s。",
+"Доведите стоимость компании до %s, чтобы стать «%s».",
+"Chegue a um valor de empresa de %s para ser %s.",
+"Erreiche einen Firmenwert von %s, um %s zu werden."
+],
+"733": [
+"Save",
+"保存",
+"Сохранить",
+"Salvar",
+"Speichern"
+],
+"734": [
+"New game",
+"新游戏",
+"Новая игра",
+"Novo jogo",
+"Neues Spiel"
+],
+"735": [
+"Main menu",
+"主菜单",
+"Главное меню",
+"Menu principal",
+"Hauptmenü"
+],
+"736": [
+"Your company couldn't pay the bank and closed after %s years. Check Reports to see which costs ate your profit: it's almost always growing on debt faster than your cash.",
+"你的公司无法偿还银行，%s 年后倒闭了。去“报表”看看是哪些成本吃掉了利润：几乎总是靠借债扩张得比现金流还快。",
+"Ваша компания не смогла расплатиться с банком и закрылась через %s лет. Посмотрите в «Отчётах», какие затраты съели прибыль: почти всегда это рост в долг быстрее, чем позволяют деньги.",
+"Sua empresa não conseguiu pagar o banco e fechou depois de %s anos. Veja em Relatórios quais custos comeram seu lucro: quase sempre é crescer com dívida mais rápido que o caixa.",
+"Deine Firma konnte die Bank nicht bezahlen und hat nach %s Jahren geschlossen. Sieh unter Berichte nach, welche Kosten deinen Gewinn aufgefressen haben: Fast immer ist es Wachstum auf Pump, schneller als die Kasse."
+],
+"737": [
+"You're a billionaire!",
+"你是亿万富翁了！",
+"Вы миллиардер!",
+"Você é bilionário!",
+"Du bist Milliardär!"
+],
+"738": [
+"Your company is worth %s. You did it in %d minutes of play (%s years in game). ",
+"你的公司价值 %s。你用 %d 分钟游戏时间做到了（游戏内 %s 年）。",
+"Ваша компания стоит %s. Вы справились за %d мин. игры (%s лет в игре). ",
+"Sua empresa vale %s. Você conseguiu em %d minutos de jogo (%s anos no jogo). ",
+"Deine Firma ist %s wert. Du hast es in %d Minuten Spielzeit geschafft (%s Jahre im Spiel). "
+],
+"739": [
+"Game over. Want more titles? Try investor mode.",
+"游戏结束。还想要更多头衔？试试投资者模式。",
+"Игра окончена. Хотите больше титулов? Попробуйте режим инвестора.",
+"Fim de jogo. Quer mais títulos? Experimente o modo investidor.",
+"Spiel vorbei. Mehr Titel gefällig? Probier den Investorenmodus."
+],
+"740": [
+"You reached the top. You can keep playing as long as you like.",
+"你登上了巅峰。想玩多久就玩多久。",
+"Вы на вершине. Можете играть сколько угодно.",
+"Você chegou ao topo. Pode continuar jogando o quanto quiser.",
+"Du bist ganz oben. Du kannst weiterspielen, so lange du willst."
+],
+"741": [
+"Keep playing",
+"继续游戏",
+"Продолжить игру",
+"Continuar jogando",
+"Weiterspielen"
+],
+"742": [
+"Start over?",
+"重新开始？",
+"Начать заново?",
+"Começar de novo?",
+"Neu anfangen?"
+],
+"743": [
+"You'll choose a slot for the new game. The current one is saved now in its slot.",
+"你将为新游戏选择一个存档位。当前游戏现在会保存到它的存档位。",
+"Вы выберете ячейку для новой игры. Текущая сейчас сохранится в свою ячейку.",
+"Você vai escolher um espaço para o jogo novo. O atual é salvo agora no espaço dele.",
+"Du wählst einen Platz für das neue Spiel. Das aktuelle wird jetzt in seinem Platz gespeichert."
+],
+"744": [
+"Yes, new game",
+"是，开始新游戏",
+"Да, новая игра",
+"Sim, jogo novo",
+"Ja, neues Spiel"
+],
+"745": [
+"URGENT DECISION · DAY %d OF %s",
+"紧急决定 · %2$s 第 %1$d 天",
+"СРОЧНОЕ РЕШЕНИЕ · ДЕНЬ %d, %s",
+"DECISÃO URGENTE · DIA %d DE %s",
+"DRINGENDE ENTSCHEIDUNG · TAG %d IM %s"
+],
+"746": [
+"Cash: %s",
+"现金：%s",
+"Деньги: %s",
+"Caixa: %s",
+"Kasse: %s"
+],
+"748": [
+"Read the odds: expected value and risk don't always go together (see Concepts).",
+"看清概率：期望值和风险不一定同步（见“概念”）。",
+"Смотрите на вероятности: ожидаемая ценность и риск не всегда идут рядом (см. «Понятия»).",
+"Leia as probabilidades: o valor esperado e o risco nem sempre andam juntos (veja Conceitos).",
+"Lies die Wahrscheinlichkeiten: Erwartungswert und Risiko gehen nicht immer zusammen (siehe Begriffe)."
+],
+"749": [
+"Bonds: %s",
+"债券：%s",
+"Облигации: %s",
+"Títulos: %s",
+"Anleihen: %s"
+],
+"750": [
+"Money available to invest and pay costs.",
+"可用于投资和支付成本的资金。",
+"Деньги для инвестиций и оплаты расходов.",
+"Dinheiro disponível para investir e pagar custos.",
+"Verfügbares Geld zum Investieren und für Kosten."
+],
+"751": [
+"Revenue this month",
+"本月收入",
+"Выручка за месяц",
+"Receita do mês",
+"Umsatz diesen Monat"
+],
+"752": [
+"Last month: %s",
+"上月：%s",
+"Прошлый месяц: %s",
+"Mês passado: %s",
+"Letzter Monat: %s"
+],
+"753": [
+"Your first month",
+"你的第一个月",
+"Ваш первый месяц",
+"Seu primeiro mês",
+"Dein erster Monat"
+],
+"754": [
+"Price × units sold so far this month.",
+"本月至今的价格 × 销量。",
+"Цена × проданные единицы с начала месяца.",
+"Preço × unidades vendidas até agora no mês.",
+"Preis × verkaufte Menge bisher in diesem Monat."
+],
+"755": [
+"Net profit (last month)",
+"净利润（上月）",
+"Чистая прибыль (прошлый месяц)",
+"Lucro líquido (mês passado)",
+"Nettogewinn (letzter Monat)"
+],
+"756": [
+"Net margin: %s",
+"净利率：%s",
+"Чистая маржа: %s",
+"Margem líquida: %s",
+"Nettomarge: %s"
+],
+"757": [
+"What's left after ALL costs, interest, depreciation and taxes.",
+"扣除所有成本、利息、折旧和税后剩下的部分。",
+"Что осталось после ВСЕХ затрат, процентов, амортизации и налогов.",
+"O que sobrou depois de TODOS os custos, juros, depreciação e impostos.",
+"Was nach ALLEN Kosten, Zinsen, Abschreibungen und Steuern übrig bleibt."
+],
+"758": [
+"Multiple: %s × EBITDA",
+"倍数：%s × EBITDA",
+"Мультипликатор: %s × EBITDA",
+"Múltiplo: %s × EBITDA",
+"Multiplikator: %s × EBITDA"
+],
+"759": [
+"How much an investor would pay for your company. The multiple rises in a boom and falls in a recession.",
+"投资者愿意为你的公司支付多少。繁荣时倍数上升，衰退时下降。",
+"Сколько инвестор заплатил бы за вашу компанию. Мультипликатор растёт в бум и падает в рецессию.",
+"Quanto um investidor pagaria pela sua empresa. O múltiplo sobe no auge e cai na recessão.",
+"So viel würde ein Investor für deine Firma zahlen. Der Multiplikator steigt im Boom und fällt in der Rezession."
+],
+"760": [
+"Rank:",
+"头衔：",
+"Ранг:",
+"Nível:",
+"Rang:"
+],
+"761": [
+"Next rank: %s at %s",
+"下一个头衔：价值 %2$s 时成为%1$s",
+"Следующий ранг: %s при стоимости %s",
+"Próximo nível: %s ao valer %s",
+"Nächster Rang: %s bei %s"
+],
+"762": [
+"You've reached the highest rank!",
+"你已达到最高头衔！",
+"Вы достигли высшего ранга!",
+"Você chegou ao nível máximo!",
+"Du hast den höchsten Rang erreicht!"
+],
+"763": [
+"Cash (last 365 days)",
+"现金（最近 365 天）",
+"Деньги (последние 365 дней)",
+"Caixa (últimos 365 dias)",
+"Kasse (letzte 365 Tage)"
+],
+"764": [
+"Revenue and EBITDA per day (7-day average)",
+"每日收入和 EBITDA（7 日平均）",
+"Выручка и EBITDA в день (среднее за 7 дней)",
+"Receita e EBITDA por dia (média de 7 dias)",
+"Umsatz und EBITDA pro Tag (7-Tage-Schnitt)"
+],
+"765": [
+"Alerts and tips",
+"提醒与建议",
+"Предупреждения и советы",
+"Alertas e dicas",
+"Hinweise und Tipps"
+],
+"767": [
+"All good. Look for the next investment with the best return.",
+"一切正常。寻找下一个回报最好的投资吧。",
+"Всё в порядке. Ищите следующую самую выгодную инвестицию.",
+"Tudo em ordem. Procure o próximo investimento com melhor retorno.",
+"Alles in Ordnung. Such die nächste Investition mit der besten Rendite."
+],
+"768": [
+"Latest news",
+"最新消息",
+"Последние новости",
+"Últimas notícias",
+"Neueste Nachrichten"
+],
+"769": [
+"Locked",
+"未解锁",
+"Закрыто",
+"Bloqueado",
+"Gesperrt"
+],
+"770": [
+"Unlock: %s",
+"解锁：%s",
+"Открыть: %s",
+"Desbloquear: %s",
+"Freischalten: %s"
+],
+"771": [
+"%d branch(es)%s",
+"%d 家分店%s",
+"Точек: %d%s",
+"%d filial(is)%s",
+"%d Filiale(n)%s"
+],
+"772": [
+" · factory",
+" · 工厂",
+" · фабрика",
+" · fábrica",
+" · Fabrik"
+],
+"773": [
+"Sales yesterday: %s %s",
+"昨日销量：%s %s",
+"Продажи вчера: %s %s",
+"Vendas ontem: %s %s",
+"Verkäufe gestern: %s %s"
+],
+"774": [
+"Contribution this month: %s",
+"本月贡献：%s",
+"Вклад за месяц: %s",
+"Contribuição do mês: %s",
+"Deckungsbeitrag Monat: %s"
+],
+"775": [
+"Investment (CAPEX): %s, depreciated over 5 years. Rent: %s/month. Customer traffic ×%s and up to %d employees. Each new branch of the same product cannibalizes the others a little.",
+"投资（CAPEX）：%s，分 5 年折旧。租金：%s/月。客流 ×%s，最多 %d 名员工。同一产品每开一家新分店，都会稍微抢走其他分店的生意。",
+"Вложения (CAPEX): %s, амортизация 5 лет. Аренда: %s/мес. Поток клиентов ×%s, до %d сотрудников. Каждая новая точка того же товара немного отбирает клиентов у остальных.",
+"Investimento (CAPEX): %s, depreciado em 5 anos. Aluguel: %s/mês. Fluxo de clientes ×%s e até %d funcionários. Cada filial nova do mesmo produto canibaliza um pouco as outras.",
+"Investition (CAPEX): %s, abgeschrieben über 5 Jahre. Miete: %s/Monat. Kundenstrom ×%s und bis zu %d Mitarbeiter. Jede neue Filiale desselben Produkts kannibalisiert die anderen ein wenig."
+],
+"776": [
+"Open %s (%s)",
+"开设%s（%s）",
+"Открыть: %s (%s)",
+"Abrir %s (%s)",
+"%s eröffnen (%s)"
+],
+"777": [
+"Vertical integration: making it yourself lowers unit cost 30%%. Fixed upkeep: %s/month. With your current sales you'd save ~%s/month. Only worth it if the savings exceed upkeep and depreciation (%s/month).",
+"垂直整合：自己生产可降低 30%% 的单位成本。固定维护费：%s/月。以你目前的销量，每月约可省 %s。只有省下的钱超过维护费和折旧（%s/月）才划算。",
+"Вертикальная интеграция: собственное производство снижает себестоимость на 30%%. Постоянное содержание: %s/мес. При текущих продажах вы сэкономите ~%s/мес. Выгодно, только если экономия больше содержания и амортизации (%s/мес).",
+"Integração vertical: fabricar você mesmo baixa o custo unitário em 30%%. Custo fixo de manutenção: %s/mês. Com suas vendas atuais você economizaria ~%s/mês. Só compensa se a economia superar a manutenção e a depreciação (%s/mês).",
+"Vertikale Integration: Selbst herstellen senkt die Stückkosten um 30 %%. Feste Unterhaltskosten: %s/Monat. Bei deinen aktuellen Verkäufen sparst du ~%s/Monat. Lohnt sich nur, wenn die Ersparnis Unterhalt und Abschreibung (%s/Monat) übersteigt."
+],
+"778": [
+"Own factory active",
+"自有工厂运作中",
+"Своя фабрика работает",
+"Fábrica própria ativa",
+"Eigene Fabrik aktiv"
+],
+"779": [
+"Build factory (%s)",
+"建造工厂（%s）",
+"Построить фабрику (%s)",
+"Construir fábrica (%s)",
+"Fabrik bauen (%s)"
+],
+"780": [
+"Delegation: a manager costs %s/month and automatically adjusts each branch's staff and this line's days of inventory.",
+"授权：经理每月花费 %s，会自动调整每家分店的人手和这条产品线的库存天数。",
+"Делегирование: управляющий стоит %s/мес и сам регулирует персонал каждой точки и дни запаса этой линии.",
+"Delegação: um gerente custa %s/mês e ajusta sozinho o pessoal de cada filial e os dias de estoque desta linha.",
+"Delegieren: Ein Manager kostet %s/Monat und regelt selbst das Personal jeder Filiale und die Lagertage dieser Sparte."
+],
+"781": [
+"Fire manager",
+"解雇经理",
+"Уволить управляющего",
+"Demitir gerente",
+"Manager entlassen"
+],
+"782": [
+"Hire manager (%s/month)",
+"雇用经理（%s/月）",
+"Нанять управляющего (%s/мес)",
+"Contratar gerente (%s/mês)",
+"Manager einstellen (%s/Monat)"
+],
+"783": [
+"Mergers and acquisitions: you buy a competitor (%d in the market). You get their store with 3 employees and there's one rival less. What you pay above the store's value is goodwill. Each remaining competitor costs more.",
+"并购：收购一个竞争对手（市场上有 %d 个）。你会得到他们的门店和 3 名员工，同时少一个对手。超出门店价值的部分是商誉。剩下的竞争对手会越来越贵。",
+"Слияния и поглощения: вы покупаете конкурента (на рынке их %d). Получаете его точку с 3 сотрудниками, а соперников становится меньше. Переплата сверх стоимости точки — гудвил. Каждый следующий конкурент дороже.",
+"Fusões e aquisições: você compra um concorrente (%d no mercado). Recebe a loja dele com 3 funcionários e há um rival a menos. O que você paga acima do valor da loja é ágio (goodwill). Cada concorrente que resta é mais caro.",
+"Fusionen und Übernahmen: Du kaufst einen Konkurrenten (%d im Markt). Du bekommst seinen Laden mit 3 Mitarbeitern und hast einen Rivalen weniger. Was du über dem Ladenwert zahlst, ist Goodwill. Jeder verbleibende Konkurrent wird teurer."
+],
+"784": [
+"Acquire competitor (%s)",
+"收购竞争对手（%s）",
+"Купить конкурента (%s)",
+"Adquirir concorrente (%s)",
+"Konkurrenten übernehmen (%s)"
+],
+"785": [
+"Yesterday: demand %s · capacity %s · sold %s %s · service level %s",
+"昨日：需求 %s · 接待能力 %s · 售出 %s %s · 服务水平 %s",
+"Вчера: спрос %s · мощность %s · продано %s %s · уровень сервиса %s",
+"Ontem: demanda %s · capacidade %s · vendido %s %s · nível de serviço %s",
+"Gestern: Nachfrage %s · Kapazität %s · verkauft %s %s · Servicegrad %s"
+],
+"786": [
+"Branch",
+"分店",
+"Точка",
+"Filial",
+"Filiale"
+],
+"787": [
+"Employees",
+"员工",
+"Сотрудники",
+"Funcionários",
+"Mitarbeiter"
+],
+"788": [
+"Demand",
+"需求",
+"Спрос",
+"Demanda",
+"Nachfrage"
+],
+"789": [
+"Capacity",
+"接待能力",
+"Мощн.",
+"Capacidade",
+"Kapazität"
+],
+"790": [
+"Sold",
+"售出",
+"Продано",
+"Vendido",
+"Verkauft"
+],
+"791": [
+"Contrib.",
+"贡献",
+"Вклад",
+"Contrib.",
+"DB"
+],
+"792": [
+"Annual ROI",
+"年 ROI",
+"ROI/год",
+"ROI anual",
+"ROI p.a."
+],
+"793": [
+"Contribution = revenue − goods − salaries − branch rent (last closed month). Annual ROI = contribution × 12 ÷ total investment in the branch.",
+"贡献 = 收入 − 货品 − 工资 − 分店租金（上一个结算月）。年 ROI = 贡献 × 12 ÷ 分店总投资。",
+"Вклад = выручка − товар − зарплаты − аренда точки (последний закрытый месяц). Годовой ROI = вклад × 12 ÷ все вложения в точку.",
+"Contribuição = receita − mercadoria − salários − aluguel da filial (último mês fechado). ROI anual = contribuição × 12 ÷ investimento total na filial.",
+"Deckungsbeitrag = Umsatz − Ware − Gehälter − Filialmiete (letzter abgeschlossener Monat). Jahres-ROI = Deckungsbeitrag × 12 ÷ Gesamtinvestition in die Filiale."
+],
+"796": [
+"Stars: %s of 5 (with 5 it sells 15%% more than with 3; they rise by serving everyone, with good reputation, quality and a fair price). Total investment: %s. Book value: %s. Productivity: %s %s per employee per day.",
+"星级：%s / 5（5 星比 3 星多卖 15%%；接待好每位顾客、声望好、品质好、价格公道就会升星）。总投资：%s。账面价值：%s。生产力：每名员工每天 %s %s。",
+"Звёзды: %s из 5 (с 5 звёздами продаётся на 15%% больше, чем с 3; растут, если обслуживать всех, при хорошей репутации, качестве и честной цене). Всего вложено: %s. Балансовая стоимость: %s. Производительность: %s %s на сотрудника в день.",
+"Estrelas: %s de 5 (com 5 vende 15%% mais que com 3; sobem atendendo todos, com boa reputação, qualidade e preço justo). Investimento total: %s. Valor contábil: %s. Produtividade: %s %s por funcionário por dia.",
+"Sterne: %s von 5 (mit 5 verkauft man 15 %% mehr als mit 3; sie steigen, wenn alle bedient werden, bei gutem Ansehen, Qualität und fairem Preis). Gesamtinvestition: %s. Buchwert: %s. Produktivität: %s %s pro Mitarbeiter und Tag."
+],
+"797": [
+"Fire: you pay %d days of salary as severance.",
+"解雇：需支付 %d 天工资作为遣散费。",
+"Уволить: выходное пособие — %d дн. зарплаты.",
+"Demitir: você paga %d dias de salário de indenização.",
+"Entlassen: Du zahlst %d Tage Gehalt als Abfindung."
+],
+"798": [
+"Hire: %s recruitment and %s/month salary.",
+"雇用：招聘费 %s，月薪 %s。",
+"Нанять: %s за подбор и %s/мес зарплата.",
+"Contratar: %s de recrutamento e %s/mês de salário.",
+"Einstellen: %s Anwerbung und %s/Monat Gehalt."
+],
+"799": [
+"Expand to %s for %s: more traffic and room for more employees.",
+"花 %2$s 扩建为%1$s：客流更多，可容纳更多员工。",
+"Расширить до «%s» за %s: больше клиентов и места для сотрудников.",
+"Ampliar para %s por %s: mais fluxo e mais funcionários possíveis.",
+"Für %2$s zu %1$s ausbauen: mehr Kunden und Platz für mehr Mitarbeiter."
+],
+"800": [
+"It's already a megastore.",
+"已经是大卖场了。",
+"Это уже мегамаркет.",
+"Já é uma megaloja.",
+"Schon ein Megastore."
+],
+"801": [
+"Expand",
+"扩建",
+"Расширить",
+"Ampliar",
+"Ausbauen"
+],
+"802": [
+"You get %s: half its book value. The other half is a sunk cost and is recorded as a loss. You also pay severance.",
+"你将得到 %s：账面价值的一半。另一半是沉没成本，记为损失。你还要支付遣散费。",
+"Вы получите %s — половину балансовой стоимости. Вторая половина — невозвратные затраты, они записываются в убыток. Ещё придётся заплатить выходные пособия.",
+"Você recebe %s: metade do valor contábil. A outra metade é custo irrecuperável e é registrada como prejuízo. Você também paga indenizações.",
+"Du bekommst %s: die Hälfte des Buchwerts. Die andere Hälfte sind versunkene Kosten und werden als Verlust verbucht. Außerdem zahlst du Abfindungen."
+],
+"803": [
+"Are you sure?",
+"确定吗？",
+"Уверены?",
+"Tem certeza?",
+"Sicher?"
+],
+"804": [
+"Sell",
+"出售",
+"Продать",
+"Vender",
+"Verkaufen"
+],
+"805": [
+"You don't have any branches of this line yet. Open one above.",
+"这条产品线还没有分店。在上方开一家吧。",
+"У вас ещё нет точек этой линии. Откройте одну выше.",
+"Você ainda não tem filiais desta linha. Abra uma acima.",
+"Du hast noch keine Filiale dieser Sparte. Eröffne oben eine."
+],
+"806": [
+"Reference price",
+"参考价",
+"Рыночная цена",
+"Preço de referência",
+"Referenzpreis"
+],
+"807": [
+"Unit cost",
+"单位成本",
+"Себестоимость единицы",
+"Custo unitário",
+"Stückkosten"
+],
+"808": [
+"Typical gross margin",
+"典型毛利率",
+"Типичная валовая маржа",
+"Margem bruta típica",
+"Typische Bruttomarge"
+],
+"809": [
+"Price elasticity",
+"价格弹性",
+"Эластичность по цене",
+"Elasticidade-preço",
+"Preiselastizität"
+],
+"810": [
+"With 2.0, raising the price 10% lowers demand by about 20%.",
+"弹性为 2.0 时，涨价 10% 需求约下降 20%。",
+"При 2,0 рост цены на 10% снижает спрос примерно на 20%.",
+"Com 2,0, subir o preço 10% baixa a demanda perto de 20%.",
+"Bei 2,0 senkt eine Preiserhöhung um 10 % die Nachfrage um etwa 20 %."
+],
+"811": [
+"Income elasticity",
+"收入弹性",
+"Эластичность по доходу",
+"Elasticidade-renda",
+"Einkommenselastizität"
+],
+"812": [
+"How much demand rises or falls with the economy.",
+"需求随经济涨跌的幅度。",
+"Насколько спрос растёт или падает вместе с экономикой.",
+"Quanto a demanda sobe ou cai com a economia.",
+"Wie stark die Nachfrage mit der Wirtschaft steigt oder fällt."
+],
+"813": [
+"Sales per employee per day",
+"每名员工每日销量",
+"Продажи на сотрудника в день",
+"Vendas por funcionário por dia",
+"Verkäufe pro Mitarbeiter und Tag"
+],
+"815": [
+"Daily inventory waste",
+"每日库存损耗",
+"Ежедневные потери запасов",
+"Perda diária do estoque",
+"Täglicher Lagerschwund"
+],
+"816": [
+"Part of the inventory lost each day.",
+"每天损失的库存比例。",
+"Доля запасов, теряемая каждый день.",
+"Parte do estoque que se perde a cada dia.",
+"Anteil des Lagers, der jeden Tag verloren geht."
+],
+"817": [
+"High season",
+"旺季",
+"Высокий сезон",
+"Alta temporada",
+"Hochsaison"
+],
+"818": [
+"Competitors",
+"竞争对手",
+"Конкуренты",
+"Concorrentes",
+"Konkurrenten"
+],
+"819": [
+"Unlock for %s",
+"花 %s 解锁",
+"Открыть за %s",
+"Desbloquear por %s",
+"Für %s freischalten"
+],
+"820": [
+"Licenses, recipes and development. Recorded as an intangible asset and amortized over 5 years.",
+"许可、配方和开发费。记为无形资产，分 5 年摊销。",
+"Лицензии, рецепты и разработка. Учитываются как нематериальный актив и амортизируются 5 лет.",
+"Licenças, receitas e desenvolvimento. É registrado como ativo intangível e amortizado em 5 anos.",
+"Lizenzen, Rezepte und Entwicklung. Wird als immaterieller Vermögenswert verbucht und über 5 Jahre abgeschrieben."
+],
+"821": [
+"You're %s short. Save up or take a loan in Finance.",
+"还差 %s。攒钱或去“财务”借贷吧。",
+"Не хватает %s. Накопите или возьмите кредит в «Финансах».",
+"Faltam %s. Economize ou peça um empréstimo em Finanças.",
+"Dir fehlen %s. Spar oder nimm unter Finanzen einen Kredit auf."
+],
+"822": [
+"Price and demand",
+"价格与需求",
+"Цена и спрос",
+"Preço e demanda",
+"Preis und Nachfrage"
+],
+"823": [
+"Demand drops when you raise the price (elasticity). The best price isn't the highest or the lowest: it's the one that maximizes sales × margin.",
+"涨价时需求会下降（弹性）。最好的价格既不是最高也不是最低，而是让销量 × 利润最大的那个。",
+"Спрос падает, когда вы поднимаете цену (эластичность). Лучшая цена — не самая высокая и не самая низкая, а та, что даёт максимум продажи × маржа.",
+"A demanda cai quando você sobe o preço (elasticidade). O melhor preço não é o mais alto nem o mais baixo: é o que maximiza vendas × margem.",
+"Die Nachfrage sinkt, wenn du den Preis erhöhst (Elastizität). Der beste Preis ist weder der höchste noch der niedrigste, sondern der mit dem größten Produkt aus Verkäufen × Marge."
+],
+"825": [
+"Use optimal price (%s)",
+"使用最优价格（%s）",
+"Оптимальная цена (%s)",
+"Usar preço ótimo (%s)",
+"Optimalen Preis nutzen (%s)"
+],
+"826": [
+"Price that maximizes daily profit with your current staff and branches. Careful: very high prices also lower reputation.",
+"以你现有的人手和分店，能让每日利润最高的价格。注意：价格太高也会降低声望。",
+"Цена с максимальной дневной прибылью при текущем персонале и точках. Осторожно: слишком высокие цены снижают репутацию.",
+"Preço que maximiza o lucro diário com seu pessoal e filiais atuais. Cuidado: preços muito altos também baixam a reputação.",
+"Preis, der mit deinem aktuellen Personal und deinen Filialen den Tagesgewinn maximiert. Vorsicht: Sehr hohe Preise senken auch das Ansehen."
+],
+"827": [
+"Market reference price",
+"市场参考价",
+"Рыночная цена",
+"Preço de referência do mercado",
+"Marktreferenzpreis"
+],
+"828": [
+"What the competition charges for this quality. Rises with inflation.",
+"竞争对手对该品质的收费。随通胀上涨。",
+"Сколько берут конкуренты за такое качество. Растёт с инфляцией.",
+"O que a concorrência cobra por esta qualidade. Sobe com a inflação.",
+"Was die Konkurrenz für diese Qualität verlangt. Steigt mit der Inflation."
+],
+"829": [
+"Your price vs. the market",
+"你的价格 vs. 市场",
+"Ваша цена против рынка",
+"Seu preço frente ao mercado",
+"Dein Preis im Vergleich zum Markt"
+]
+}

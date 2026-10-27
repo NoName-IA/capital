@@ -1,0 +1,926 @@
+{
+"1290": [
+"I wouldn't buy it, they say it's bad.",
+"我不会买，听说不好。",
+"Я бы не брал, говорят, это плохо.",
+"Eu não compraria, dizem que é ruim.",
+"Ich würde es nicht kaufen, angeblich ist es schlecht."
+],
+"1291": [
+"It's cheaper at %s.",
+"%s那儿更便宜。",
+"У %s дешевле.",
+"Na %s é mais barato.",
+"Bei %s ist es billiger."
+],
+"1292": [
+"Better not, we already ate.",
+"还是算了，我们吃过了。",
+"Лучше не надо, мы уже поели.",
+"Melhor não, já comemos.",
+"Lieber nicht, wir haben schon gegessen."
+],
+"1293": [
+"Should I get it? What do you think?",
+"要买吗？你觉得呢？",
+"Взять? Как думаешь?",
+"Levo? O que você acha?",
+"Soll ich's nehmen? Was meinst du?"
+],
+"1294": [
+"Is this %s worth it?",
+"这个%s值得买吗？",
+"Этот «%s» того стоит?",
+"Esse %s vale a pena?",
+"Lohnt sich dieses %s?"
+],
+"1295": [
+"Have you tried this one?",
+"你试过这个吗？",
+"Ты это пробовал?",
+"Você já provou esse?",
+"Hast du das schon probiert?"
+],
+"1296": [
+"I'll take it!",
+"我要了！",
+"Беру!",
+"Vou levar!",
+"Ich nehm's!"
+],
+"1297": [
+"You're right, I'll skip it.",
+"你说得对，不买了。",
+"Ты прав, не буду брать.",
+"Você tem razão, vou deixar.",
+"Du hast recht, ich lass es."
+],
+"1298": [
+"honey",
+"亲爱的",
+"дорогой",
+"meu amor",
+"Schatz"
+],
+"1299": [
+"mom",
+"妈",
+"мама",
+"mãe",
+"Mama"
+],
+"1300": [
+"Hello, %s... should I buy %s?",
+"喂，%s……我要买%s吗？",
+"Алло, %s... купить %s?",
+"Alô, %s... compro %s?",
+"Hallo, %s... soll ich %s kaufen?"
+],
+"1301": [
+"Okay, I'll take one.",
+"好，我买一个。",
+"Ладно, беру один.",
+"Tá, vou levar um.",
+"Okay, ich nehme eins."
+],
+"1302": [
+"Ok, ok, I'll take it.",
+"好啦好啦，我买。",
+"Ладно, ладно, беру.",
+"Ok, ok, vou levar.",
+"Okay, okay, ich nehm's."
+],
+"1303": [
+"No? Fine, I'll leave it.",
+"不行？好吧，那不买了。",
+"Нет? Ладно, не беру.",
+"Não? Tá bom, vou deixar.",
+"Nein? Na gut, dann nicht."
+],
+"1304": [
+"Eh, better not.",
+"算了，还是不买了。",
+"Ладно, лучше не надо.",
+"Tá, melhor não.",
+"Ach, lieber nicht."
+],
+"1305": [
+"%s? So cheap!",
+"%s？好便宜！",
+"%s? Как дёшево!",
+"%s? Que barato!",
+"%s? So billig!"
+],
+"1306": [
+"%s? Ugh, way too pricey...",
+"%s？唉，太贵了……",
+"%s? Ох, дороговато...",
+"%s? Nossa, caríssimo...",
+"%s? Puh, viel zu teuer..."
+],
+"1307": [
+"%s... that's fine.",
+"%s……还行。",
+"%s... нормально.",
+"%s... está bom.",
+"%s... geht klar."
+],
+"1308": [
+"Hmm... which one is the best?",
+"嗯……哪个最好呢？",
+"Хм... что же лучше?",
+"Hmm... qual será o melhor?",
+"Hm... welches ist wohl das beste?"
+],
+"1309": [
+"That's the best seller!",
+"那是卖得最好的！",
+"Это самое популярное!",
+"Esse é o mais vendido!",
+"Das ist der Bestseller!"
+],
+"1310": [
+"That one's from today, nice and fresh.",
+"那是今天刚出的，新鲜着呢。",
+"Это сегодняшнее, свеженькое.",
+"Esse saiu hoje, fresquinho.",
+"Das ist von heute, ganz frisch."
+],
+"1311": [
+"You're going to love it.",
+"你会喜欢的。",
+"Вам понравится.",
+"Vai adorar.",
+"Das wird Ihnen gefallen."
+],
+"1312": [
+"Take two, it's a better deal.",
+"买两个更划算。",
+"Возьмите два, так выгоднее.",
+"Leve dois, sai mais em conta.",
+"Nehmen Sie zwei, das lohnt sich mehr."
+],
+"1313": [
+"Excuse me, is this one good?",
+"请问，这个好吗？",
+"Простите, а это хорошее?",
+"Com licença, esse é bom?",
+"Entschuldigung, ist das gut?"
+],
+"1314": [
+"Perfect, thanks!",
+"太好了，谢谢！",
+"Отлично, спасибо!",
+"Perfeito, obrigado!",
+"Perfekt, danke!"
+],
+"1315": [
+"I'll think about it...",
+"我再想想……",
+"Я подумаю...",
+"Vou pensar...",
+"Ich überleg's mir..."
+],
+"1316": [
+"Photo for my stories!",
+"拍张照发快拍！",
+"Фото в сторис!",
+"Foto pros meus stories!",
+"Foto für meine Storys!"
+],
+"1317": [
+"This place is the best!",
+"这家店太棒了！",
+"Это место — лучшее!",
+"Esta loja é demais!",
+"Dieser Laden ist der Hammer!"
+],
+"1319": [
+"Hmm... this one or the other one?",
+"嗯……这个还是那个？",
+"Хм... это или то?",
+"Hmm... esse ou o outro?",
+"Hm... das hier oder das andere?"
+],
+"1320": [
+"This line isn't moving!",
+"这队怎么不动啊！",
+"Очередь не двигается!",
+"Essa fila não anda!",
+"Die Schlange bewegt sich nicht!"
+],
+"1321": [
+"It's worth the wait, you'll see.",
+"值得等，你等着瞧。",
+"Оно того стоит, вот увидишь.",
+"Vale a pena esperar, você vai ver.",
+"Das Warten lohnt sich, wirst sehen."
+],
+"1322": [
+"Is it always this packed?",
+"这里一直这么多人吗？",
+"Тут всегда так людно?",
+"Sempre fica cheio assim?",
+"Ist es hier immer so voll?"
+],
+"1323": [
+"They say this place is the best.",
+"听说这家店是最好的。",
+"Говорят, это место лучшее.",
+"Dizem que esta loja é a melhor.",
+"Man sagt, dieser Laden ist der beste."
+],
+"1324": [
+"Hire more people!",
+"多雇点人吧！",
+"Наймите больше людей!",
+"Contratem mais gente!",
+"Stellt mehr Leute ein!"
+],
+"1325": [
+"With %s stars, no wonder there's a line.",
+"有 %s 星，难怪要排队。",
+"С %s звёздами неудивительно, что очередь.",
+"Com %s estrelas, normal ter fila.",
+"Bei %s Sternen ist die Schlange kein Wunder."
+],
+"1326": [
+"What a lovely day!",
+"天气真好！",
+"Какой чудесный день!",
+"Que dia lindo!",
+"Was für ein schöner Tag!"
+],
+"1327": [
+"Perfect beach day.",
+"适合去海滩的好天气。",
+"Идеальный день для пляжа.",
+"Dia perfeito para a praia.",
+"Perfekter Strandtag."
+],
+"1328": [
+"Rain's coming...",
+"要下雨了……",
+"Скоро дождь...",
+"Vem chuva aí...",
+"Gleich regnet's..."
+],
+"1329": [
+"What a gray day.",
+"天好阴啊。",
+"Какой серый день.",
+"Que dia cinzento.",
+"Was für ein grauer Tag."
+],
+"1330": [
+"What rain!",
+"好大的雨！",
+"Вот это ливень!",
+"Que chuva!",
+"Was für ein Regen!"
+],
+"1331": [
+"I'm getting soaked!",
+"我都淋湿了！",
+"Я промокаю!",
+"Estou me molhando!",
+"Ich werde klatschnass!"
+],
+"1332": [
+"It's a coffee kind of day.",
+"今天适合喝咖啡。",
+"Сегодня день кофе.",
+"Hoje é dia de café.",
+"Heute ist Kaffeewetter."
+],
+"1333": [
+"It's so hot!",
+"好热啊！",
+"Как жарко!",
+"Que calor!",
+"So heiß!"
+],
+"1334": [
+"I'm melting!",
+"我要化了！",
+"Я таю!",
+"Estou derretendo!",
+"Ich schmelze!"
+],
+"1335": [
+"Let's go to the beach.",
+"去海滩吧。",
+"Пойдём на пляж.",
+"Vamos para a praia.",
+"Lass uns an den Strand gehen."
+],
+"1336": [
+"What a storm!",
+"好大的暴风雨！",
+"Ну и гроза!",
+"Que tempestade!",
+"Was für ein Unwetter!"
+],
+"1337": [
+"Run!",
+"快跑！",
+"Бежим!",
+"Corram!",
+"Lauft!"
+],
+"1338": [
+"The power's going out!",
+"要停电了！",
+"Свет отключают!",
+"A luz vai cair!",
+"Der Strom fällt aus!"
+],
+"1339": [
+"Mmm, looks tasty...",
+"嗯，看起来很好吃……",
+"Ммм, выглядит вкусно...",
+"Hmm, parece gostoso...",
+"Mmm, sieht lecker aus..."
+],
+"1340": [
+"%s stars! I have to try it.",
+"%s 星！我得尝尝。",
+"%s звезды! Надо попробовать.",
+"%s estrelas! Preciso provar.",
+"%s Sterne! Muss ich probieren."
+],
+"1341": [
+"They say the service here is bad.",
+"听说这里服务很差。",
+"Говорят, здесь плохо обслуживают.",
+"Dizem que aqui atendem mal.",
+"Man sagt, der Service hier ist schlecht."
+],
+"1342": [
+"Hmm... I don't know.",
+"嗯……不好说。",
+"Хм... не знаю.",
+"Hmm... não sei.",
+"Hm... weiß nicht."
+],
+"1343": [
+"Look at that window display!",
+"看那个橱窗！",
+"Посмотри на эту витрину!",
+"Olha essa vitrine!",
+"Schau dir das Schaufenster an!"
+],
+"1344": [
+"That's so nice...",
+"那个好漂亮……",
+"Какая красота...",
+"Que lindo isso...",
+"Wie schön das ist..."
+],
+"1345": [
+"Too expensive for me.",
+"对我来说太贵了。",
+"Слишком дорого для меня.",
+"Caro demais para mim.",
+"Zu teuer für mich."
+],
+"1348": [
+"Have you tried the %s at %s?",
+"你试过%2$s的%1$s吗？",
+"Пробовал «%s» в %s?",
+"Você provou o %s da %s?",
+"Hast du das %s bei %s probiert?"
+],
+"1349": [
+"Yes! It has %s stars.",
+"试过！有 %s 星呢。",
+"Да! У них %s звезды.",
+"Sim! Tem %s estrelas.",
+"Ja! Die haben %s Sterne."
+],
+"1350": [
+"It's my favorite.",
+"那是我的最爱。",
+"Моё любимое.",
+"É meu favorito.",
+"Das ist mein Liebling."
+],
+"1351": [
+"Really good and well priced!",
+"超好吃，价格还公道！",
+"Очень вкусно и по хорошей цене!",
+"Muito bom e com preço bom!",
+"Super lecker und preiswert!"
+],
+"1352": [
+"Ugh, the line was endless.",
+"唉，队排得没完没了。",
+"Ох, очередь была бесконечной.",
+"Nossa, a fila era eterna.",
+"Puh, die Schlange war endlos."
+],
+"1353": [
+"The service was bad...",
+"服务很差……",
+"Обслужили плохо...",
+"Me atenderam mal...",
+"Ich wurde schlecht bedient..."
+],
+"1354": [
+"Too expensive for what it is.",
+"这东西卖这价太贵了。",
+"Слишком дорого для такого.",
+"Caro demais pelo que é.",
+"Zu teuer für das, was es ist."
+],
+"1355": [
+"I'm going!",
+"我要去！",
+"Я схожу!",
+"Vou lá!",
+"Ich geh hin!"
+],
+"1356": [
+"Then I'm not going.",
+"那我不去了。",
+"Тогда не пойду.",
+"Então não vou.",
+"Dann geh ich nicht."
+],
+"1357": [
+"Did you see the weather? %s.",
+"看天气了吗？%s。",
+"Видел погоду? %s.",
+"Viu o clima? %s.",
+"Hast du das Wetter gesehen? %s."
+],
+"1358": [
+"They say %2$s is coming in %1$d days.",
+"听说 %d 天后会%s。",
+"Говорят, через %d дн. будет: %s.",
+"Dizem que em %d dias vem %s.",
+"Angeblich kommt in %d Tagen %s."
+],
+"1359": [
+"Did you hear about %s?",
+"你听说%s的事了吗？",
+"Слышал про %s?",
+"Ficou sabendo da %s?",
+"Hast du von %s gehört?"
+],
+"1360": [
+"They say another store is going to open.",
+"听说又要开一家店了。",
+"Говорят, откроется ещё одна точка.",
+"Dizem que vai abrir outra loja.",
+"Angeblich macht noch ein Laden auf."
+],
+"1361": [
+"%s is always fighting!",
+"%s总是在吵架！",
+"%s вечно с кем-то воюет!",
+"%s está sempre brigando!",
+"%s streitet sich ständig!"
+],
+"1362": [
+"I prefer %s.",
+"我更喜欢%s。",
+"Я предпочитаю %s.",
+"Prefiro a %s.",
+"Ich mag %s lieber."
+],
+"1363": [
+"Tip",
+"提示",
+"Совет",
+"Dica",
+"Tipp"
+],
+"1364": [
+"Did you read the paper?",
+"你看报纸了吗？",
+"Читал газету?",
+"Leu o jornal?",
+"Hast du die Zeitung gelesen?"
+],
+"1365": [
+"No, what happened?",
+"没有，发生什么了？",
+"Нет, а что случилось?",
+"Não, o que aconteceu?",
+"Nein, was ist passiert?"
+],
+"1366": [
+"Thanks, come again!",
+"谢谢，欢迎再来！",
+"Спасибо, приходите ещё!",
+"Obrigado, volte sempre!",
+"Danke, bis bald!"
+],
+"1367": [
+"Have a nice day!",
+"祝您愉快！",
+"Всего доброго!",
+"Tenha um bom dia!",
+"Schönen Tag noch!"
+],
+"1368": [
+"It's really good today.",
+"今天的特别好。",
+"Сегодня особенно вкусно.",
+"Hoje está muito bom.",
+"Heute ist es besonders gut."
+],
+"1369": [
+"Excuse me...",
+"借过……",
+"Простите...",
+"Licença...",
+"Entschuldigung..."
+],
+"1370": [
+"Pardon me.",
+"不好意思。",
+"Разрешите.",
+"Com licença.",
+"Verzeihung."
+],
+"1371": [
+"Can I get through?",
+"能让我过去吗？",
+"Можно пройти?",
+"Pode me deixar passar?",
+"Darf ich mal durch?"
+],
+"1372": [
+"Move!",
+"让开！",
+"Подвинься!",
+"Sai da frente!",
+"Beweg dich!"
+],
+"1373": [
+"Hey, get out of the way!",
+"喂，别挡路！",
+"Эй, уйди с дороги!",
+"Ei, sai do meio!",
+"He, geh aus dem Weg!"
+],
+"1374": [
+"Let me through!",
+"让我过去！",
+"Дай пройти!",
+"Me deixa passar!",
+"Lass mich durch!"
+],
+"1375": [
+"Ugh, people...",
+"唉，这些人……",
+"Ох уж эти люди...",
+"Ai, que gente...",
+"Puh, diese Leute..."
+],
+"1376": [
+"Seriously?",
+"认真的吗？",
+"Серьёзно?",
+"Sério?",
+"Im Ernst?"
+],
+"1377": [
+"Oh, come on...",
+"哎，拜托……",
+"Ну пожалуйста...",
+"Ah, por favor...",
+"Ach, bitte..."
+],
+"1378": [
+"Take that!",
+"接招！",
+"Получай!",
+"Toma!",
+"Da hast du's!"
+],
+"1379": [
+"I told you to move!",
+"我叫你让开了！",
+"Я же сказал подвинуться!",
+"Eu falei pra você sair!",
+"Ich hab gesagt, du sollst weggehen!"
+],
+"1380": [
+"Get out of the way!",
+"滚开！",
+"Прочь с дороги!",
+"Sai daí!",
+"Weg da!"
+],
+"1381": [
+"What do you recommend?",
+"有什么推荐的？",
+"Что посоветуете?",
+"O que você recomenda?",
+"Was empfehlen Sie?"
+],
+"1382": [
+"The usual!",
+"老样子！",
+"Как обычно!",
+"O de sempre!",
+"Das Übliche!"
+],
+"1383": [
+"What's new today?",
+"今天有什么新的？",
+"Что нового сегодня?",
+"O que tem de novo hoje?",
+"Was gibt's heute Neues?"
+],
+"1384": [
+"%s of 5 · reviews",
+"%s / 5 · 评价",
+"%s из 5 · отзывы",
+"%s de 5 · avaliações",
+"%s von 5 · Bewertungen"
+],
+"1385": [
+"+1 star",
+"+1 星",
+"+1 звезда",
+"+1 estrela",
+"+1 Stern"
+],
+"1386": [
+"−1 star",
+"−1 星",
+"−1 звезда",
+"−1 estrela",
+"−1 Stern"
+],
+"1387": [
+"REGISTER %d",
+"%d 号收银台",
+"КАССА %d",
+"CAIXA %d",
+"KASSE %d"
+],
+"1388": [
+"Short",
+"短发",
+"Короткая",
+"Curto",
+"Kurz"
+],
+"1389": [
+"Long",
+"长发",
+"Длинная",
+"Longo",
+"Lang"
+],
+"1390": [
+"Mohawk",
+"莫西干",
+"Ирокез",
+"Moicano",
+"Irokese"
+],
+"1391": [
+"Bald",
+"光头",
+"Лысый",
+"Careca",
+"Glatze"
+],
+"1392": [
+"None",
+"无",
+"Нет",
+"Nenhum",
+"Keiner"
+],
+"1393": [
+"Cap",
+"鸭舌帽",
+"Кепка",
+"Boné",
+"Kappe"
+],
+"1394": [
+"Beanie",
+"毛线帽",
+"Шапка",
+"Gorro de lã",
+"Mütze"
+],
+"1395": [
+"Cowboy hat",
+"牛仔帽",
+"Ковбойская шляпа",
+"Chapéu de caubói",
+"Cowboyhut"
+],
+"1396": [
+"Top hat",
+"礼帽",
+"Цилиндр",
+"Cartola",
+"Zylinder"
+],
+"1397": [
+"Crown",
+"皇冠",
+"Корона",
+"Coroa",
+"Krone"
+],
+"1398": [
+"None",
+"无",
+"Нет",
+"Nenhuma",
+"Keine"
+],
+"1399": [
+"Hoodie",
+"卫衣",
+"Худи",
+"Moletom",
+"Hoodie"
+],
+"1400": [
+"Blazer",
+"西装外套",
+"Блейзер",
+"Blazer",
+"Blazer"
+],
+"1401": [
+"Leather",
+"皮夹克",
+"Кожаная",
+"Couro",
+"Leder"
+],
+"1402": [
+"Jeans",
+"牛仔裤",
+"Джинсы",
+"Jeans",
+"Jeans"
+],
+"1403": [
+"Dress pants",
+"西裤",
+"Классические",
+"Social",
+"Anzughose"
+],
+"1404": [
+"Shorts",
+"短裤",
+"Шорты",
+"Bermuda",
+"Shorts"
+],
+"1405": [
+"Tie",
+"领带",
+"Галстук",
+"Gravata",
+"Krawatte"
+],
+"1406": [
+"Sunglasses",
+"太阳镜",
+"Солнцезащитные очки",
+"Óculos de sol",
+"Sonnenbrille"
+],
+"1407": [
+"Beard",
+"胡子",
+"Борода",
+"Barba",
+"Bart"
+],
+"1408": [
+"Gold watch",
+"金表",
+"Золотые часы",
+"Relógio de ouro",
+"Golduhr"
+],
+"1409": [
+"Headphones",
+"耳机",
+"Наушники",
+"Fones de ouvido",
+"Kopfhörer"
+],
+"1410": [
+"Backpack",
+"背包",
+"Рюкзак",
+"Mochila",
+"Rucksack"
+],
+"1411": [
+"Scarf",
+"围巾",
+"Шарф",
+"Cachecol",
+"Schal"
+],
+"1412": [
+"Head",
+"头部",
+"Голова",
+"Cabeça",
+"Kopf"
+],
+"1413": [
+"Hats",
+"帽子",
+"Головные уборы",
+"Chapéus",
+"Hüte"
+],
+"1414": [
+"Legs",
+"腿部",
+"Ноги",
+"Pernas",
+"Beine"
+],
+"1415": [
+"Accessories",
+"配饰",
+"Аксессуары",
+"Acessórios",
+"Accessoires"
+],
+"1419": [
+"THEDAILY",
+"城市日报",
+"ГАЗЕТА",
+"ODIÁRIO",
+"DIEZEITUNG"
+],
+"1421": [
+"In 3 days: Cloudy",
+"3 天后：阴",
+"Через 3 дня: облачно",
+"Em 3 dias: Nublado",
+"In 3 Tagen: Bewölkt"
+],
+"1422": [
+"TODAY'S WEATHER",
+"今日天气",
+"ПОГОДА СЕГОДНЯ",
+"O CLIMA HOJE",
+"DAS WETTER HEUTE"
+],
+"1423": [
+"Sea",
+"大海",
+"Море",
+"Mar",
+"Meer"
+],
+"1424": [
+"Mountain",
+"山",
+"Горы",
+"Montanha",
+"Berg"
+],
+"1425": [
+"FREE SAMPLES",
+"免费试吃",
+"БЕСПЛАТНЫЕ ПРОБНИКИ",
+"AMOSTRAS GRÁTIS",
+"GRATISPROBEN"
+],
+"1426": [
+"NEIGHBORS",
+"街坊",
+"ЖИТЕЛИ",
+"VIZINHOS",
+"NACHBARN"
+],
+"1427": [
+"VOLLEYBALL TOURNAMENT",
+"排球赛",
+"ТУРНИР ПО ВОЛЕЙБОЛУ",
+"TORNEIO DE VÔLEI",
+"VOLLEYBALLTURNIER"
+],
+"1428": [
+"CENTRAL PARK",
+"中央公园",
+"ЦЕНТРАЛЬНЫЙ ПАРК",
+"PARQUE CENTRAL",
+"STADTPARK"
+]
+}

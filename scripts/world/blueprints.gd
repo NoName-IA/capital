@@ -312,6 +312,8 @@ static func _mirror(boxes: Array, spots: Dictionary) -> void:
 				spots[k] = v.map(func(f): return -f)
 			"shelf_rows":
 				spots[k] = v.map(func(r): return [-r[0], r[1], r[2], -r[3]])
+			"chairs":
+				spots[k] = v.map(func(c): return [-c[0], c[1], -c[2], c[3], -c[4], c[5]])
 			"registers", "stall_slots":
 				spots[k] = v.map(func(r): return [Vector3(-r[0].x, r[0].y, r[0].z), r[1]])
 			"texts":
@@ -344,6 +346,13 @@ static func _table(boxes: Array, x: float, z: float, top: Color, seats := true) 
 			boxes.append(B([x, 0.45, z + sz], [0.45, 0.06, 0.45], top.darkened(0.25)))
 			boxes.append(B([x, 0.22, z + sz], [0.06, 0.44, 0.06], Color8(50, 50, 55)))
 			boxes.append(B([x, 0.72, z + sz * 1.25], [0.45, 0.5, 0.06], top.darkened(0.25)))
+
+
+## Las dos sillas de una mesa de _table, para que los clientes se sienten a comer: [silla x, z, mesa x, z, x, z de
+## donde llegan] (llegan por el lado del pasillo, hacia el centro del local).
+static func _chairs(x: float, z: float) -> Array:
+	var near_x := x - signf(x) * 1.05
+	return [[x, z - 0.8, x, z, near_x, z - 0.8], [x, z + 0.8, x, z, near_x, z + 0.8]]
 
 
 ## Mesa baja de exhibición con productos de su color encima.
@@ -542,6 +551,7 @@ static func _varied_local(boxes: Array, spots: Dictionary, rng: RandomNumberGene
 			_table(boxes, o * 4.6, 4.6, wood)
 			_table(boxes, o * 4.6, 7.4, wood)
 			tables = [[o * 4.6, 4.6], [o * 4.6, 7.4]]
+			spots["chairs"] = _chairs(o * 4.6, 4.6) + _chairs(o * 4.6, 7.4)
 		else:
 			_display(boxes, o * 4.9, 4.8, wood, pcol, rng)
 			_display(boxes, o * 4.9, 7.6, wood, pcol, rng)
@@ -555,6 +565,7 @@ static func _varied_local(boxes: Array, spots: Dictionary, rng: RandomNumberGene
 			if food:
 				_table(boxes, s * 5.0, 4.4, wood)
 				tables.append([s * 5.0, 4.4])
+				spots["chairs"] = spots.get("chairs", []) + _chairs(s * 5.0, 4.4)
 			else:
 				_display(boxes, s * 5.0, 4.6, wood, pcol, rng)
 	else:
@@ -655,6 +666,7 @@ static func _varied_mega(boxes: Array, spots: Dictionary, rng: RandomNumberGener
 			if food:
 				_table(boxes, s * 7.4, 3.6, wood)
 				spots["mega_tables"] = spots.get("mega_tables", []) + [[s * 7.4, 3.6]]
+				spots["chairs"] = spots.get("chairs", []) + _chairs(s * 7.4, 3.6)
 			else:
 				_display(boxes, s * 7.4, 3.6, wood, pcol, rng)
 		else:

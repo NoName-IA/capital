@@ -1,0 +1,100 @@
+{
+"Mmm, se ve rico el %s...": [
+"Mmm, the %s looks tasty...",
+"嗯，这%s看起来真好吃……",
+"Ммм, %s выглядит вкусно...",
+"Hmm, o %s parece gostoso...",
+"Mmm, der %s sieht lecker aus..."
+],
+"%s/mes": [
+"%s/month",
+"%s/月",
+"%s/мес",
+"%s/mês",
+"%s/Monat"
+],
+"%d mes": [
+"%d month",
+"%d 个月",
+"%d мес.",
+"%d mês",
+"%d Monat"
+],
+"tazas": [
+"cups",
+"杯",
+"чашек",
+"xícaras",
+"Tassen"
+],
+"panes": [
+"loaves",
+"个面包",
+"булок",
+"pães",
+"Brote"
+],
+"combos": [
+"combos",
+"份套餐",
+"комбо",
+"combos",
+"Menüs"
+],
+"prendas": [
+"items",
+"件",
+"вещей",
+"peças",
+"Teile"
+],
+"equipos": [
+"devices",
+"台",
+"устройств",
+"aparelhos",
+"Geräte"
+],
+"¡Qué rico!": [
+"So good!",
+"真好吃！",
+"Как вкусно!",
+"Que delícia!",
+"Wie lecker!"
+],
+"Justo lo que necesitaba.": [
+"Just what I needed.",
+"正是我想要的。",
+"Как раз то, что нужно.",
+"Era bem disso que eu precisava.",
+"Genau das, was ich brauchte."
+],
+"Mmm...": [
+"Mmm...",
+"嗯……",
+"Ммм...",
+"Hmm...",
+"Mmm..."
+],
+"Aquí se está bien.": [
+"It's nice in here.",
+"这里待着真舒服。",
+"Здесь хорошо.",
+"Aqui é gostoso.",
+"Hier ist es gemütlich."
+],
+"Aplicar cambios": [
+"Apply changes",
+"应用更改",
+"Применить",
+"Aplicar mudanças",
+"Übernehmen"
+],
+"El idioma de todo el juego. Elige uno con las flechas y toca «Aplicar cambios». Language · 语言 · Язык · Idioma · Sprache": [
+"The language of the whole game. Pick one with the arrows and press «Apply changes». Idioma · 语言 · Язык · Idioma · Sprache",
+"整个游戏的语言。用箭头选择，然后点击「应用更改」。Language · Idioma · Язык · Sprache",
+"Язык всей игры. Выберите стрелками и нажмите «Применить». Language · 语言 · Idioma · Sprache",
+"O idioma de todo o jogo. Escolha com as setas e toque em «Aplicar mudanças». Language · 语言 · Язык · Sprache",
+"Die Sprache des ganzen Spiels. Mit den Pfeilen wählen und «Übernehmen» drücken. Language · 语言 · Язык · Idioma"
+]
+}

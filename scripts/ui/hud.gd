@@ -136,7 +136,7 @@ func _draw_panel(g) -> void:
 		for l in g.locations:
 			total += Game.stars_of(l)
 		chips.append([Fmt.num(total / g.locations.size(), 1), "stars"])
-	chips.append(["%d %s" % [streak, "mes" if streak == 1 else "meses"] if streak else "Sin racha", null])
+	chips.append([Lang.f("%d mes" if streak == 1 else "%d meses", streak) if streak else "Sin racha", null])
 	for key in D.PRODUCT_ORDER:
 		if g.locs(key):
 			chips.append([SHORT[key], key])
@@ -163,7 +163,7 @@ func _draw_panel(g) -> void:
 	var night: bool = hour < 6.5 or hour > 19.5
 	var clock := ui.text("%02d:%02d" % [int(hour), int(fmod(hour, 1.0) * 60)], Vector2(right, r.position.y + 12), 16, "text", true, "topright")
 	Icons.draw(ui, Icons.weather(g.weather, night), Vector2(clock.position.x - 16, clock.get_center().y), 22)
-	ui.text("Día %d %s · Año %d" % [dp[0], dp[1].substr(0, 3).to_lower(), dp[2]], Vector2(clock.position.x - 34, r.position.y + 14), 14,
+	ui.text(Lang.f("Día %d %s · Año %d", [dp[0], Lang.month_short(dp[1]), dp[2]]), Vector2(clock.position.x - 34, r.position.y + 14), 14,
 			"muted", false, "topright")
 	ui.line(Vector2(x, r.position.y + 42), Vector2(right, r.position.y + 42), Color(1, 1, 1, 0.08))
 	# Caja y valor de la empresa
@@ -185,7 +185,7 @@ func _draw_panel(g) -> void:
 		var frac := clampf((info[3] - lo) / (info[2][0] - lo), 0, 1)
 		var close := frac >= 0.9
 		var blink := close and int(Time.get_ticks_msec() / 333) % 2 == 0
-		ui.text("%s hacia %s" % [Fmt.pct(frac, 0), info[2][1]], Vector2(right, y + 6), 13, "accent" if blink else "muted",
+		ui.text(Lang.f("%s hacia %s", [Fmt.pct(frac, 0), info[2][1]]), Vector2(right, y + 6), 13, "accent" if blink else "muted",
 				close, "topright", 150)
 		var bar := Rect2(x + 34, y + 27, right - x - 34, 6)
 		ui.rect(bar, Color(1, 1, 1, 0.08), 3)
@@ -221,10 +221,10 @@ func _weather_tip(g) -> String:
 	var fx: Dictionary = D.WEATHER[g.weather].effects
 	for k in fx:
 		var pct := roundi((fx[k] - 1.0) * 100)
-		parts.append("%s %s%d%%" % [names.get(k, k), "+" if pct > 0 else "", pct])
-	var text: String = "Hoy: %s. " % D.WEATHER[g.weather].name
-	text += ("Efectos: " + ", ".join(parts) + ".") if parts else "Sin efectos en la demanda."
-	return text + " Pronóstico: %s en %d días." % [D.WEATHER[g.weather_next].name.to_lower(), g.weather_days]
+		parts.append(Lang.f("%s %s%d%%", [names.get(k, k), "+" if pct > 0 else "", pct]))
+	var text: String = Lang.f("Hoy: %s. ", D.WEATHER[g.weather].name)
+	text += (Lang.t("Efectos:") + " " + ", ".join(parts) + ".") if parts else Lang.t("Sin efectos en la demanda.")
+	return text + Lang.f(" Pronóstico: %s en %d días.", [Lang.noun(D.WEATHER[g.weather_next].name), g.weather_days])
 
 
 func _chip_width(ch: Array) -> float:
@@ -255,7 +255,7 @@ func _rep_chip(pos: Vector2, name: String, rep: float, color: Color, full_name: 
 	var bar := Rect2(r.position.x + tw + 16, r.get_center().y - 2.5, 22, 5)
 	ui.rect(bar, Color(1, 1, 1, 0.1), 2.5)
 	ui.rect(Rect2(bar.position, Vector2(max(5.0, 22 * rep / 100.0), 5)), color, 2.5)
-	ui.tooltip(r, "Reputación de %s: %d de 100" % [full_name, roundi(rep)])
+	ui.tooltip(r, Lang.f("Reputación de %s: %d de 100", [full_name, roundi(rep)]))
 	return r.end.x + 6
 
 
@@ -264,9 +264,9 @@ func _draw_panel_buttons(g) -> void:
 	var b := hq_button_rect()
 	var hot: bool = not city.mouse_captured() and not city.overlays.open() and ui.hover(b)
 	ui.rect(b, Color8(250, 205, 90) if hot else Color8(227, 179, 65), 14)
-	ui.text("Ir a la oficina  [%s]" % Keys.label("office"), b.get_center(), 16, Color8(25, 25, 30), true, "center")
+	ui.text(Lang.f("Ir a la oficina  [%s]", Keys.label("office")), b.get_center(), 16, Color8(25, 25, 30), true, "center")
 	# Tablet con los avisos que no has leído (se ven en Noticias)
-	var label := "Tablet  [%s]" % Keys.label("phone")
+	var label := Lang.f("Tablet  [%s]", Keys.label("phone"))
 	var n := str(mini(city.app.unread, 99))
 	var cr := maxf(10.0, ui.text_size(n, 12, true).x / 2 + 5)
 	var pr := Rect2(b.end.x + 8, b.position.y, ui.text_size(label, 15).x + 24 + (cr * 2 + 6 if city.app.unread else 0.0), b.size.y)
@@ -279,10 +279,10 @@ func _draw_panel_buttons(g) -> void:
 		ui.text(n, c, 12, Color.WHITE, true, "center")
 	# Velocidad arriba a la derecha
 	var app = city.app
-	var speed: String = "PAUSA" if app.paused else "Velocidad %s" % Admin.SPEEDS[app.speed][1]
+	var speed: String = "PAUSA" if app.paused else Lang.f("Velocidad %s", Admin.SPEEDS[app.speed][1])
 	if city.settings.get("g_show_fps", false):
-		speed = "%d FPS  ·  " % Engine.get_frames_per_second() + speed
-	speed += "  ·  %d min de juego" % int(g.play_seconds / 60)
+		speed = Lang.f("%d FPS  ·  ", Engine.get_frames_per_second()) + speed
+	speed += Lang.f("  ·  %d min de juego", int(g.play_seconds / 60))
 	var sw := ui.text_size(speed, 18).x + 28
 	speed_rect = Rect2(ui.W - 12 - sw, 12, sw, 34)
 	ui.rect(speed_rect, Color(0.05, 0.067, 0.09, 0.72), 17)
@@ -300,7 +300,7 @@ func _draw_panel_buttons(g) -> void:
 		if Game.plot_of(l) == -1 and l.get("plot") != null:
 			extra += 1
 	if extra:
-		ui.text("+%d sucursales fuera del centro" % extra, Vector2(ui.W - 26, 90), 14, "text", false, "topright")
+		ui.text(Lang.f("+%d sucursales fuera del centro", extra), Vector2(ui.W - 26, 90), 14, "text", false, "topright")
 
 
 func sky_button_rect(i: int) -> Rect2:
@@ -339,12 +339,12 @@ func _draw_center() -> void:
 	if help_timer > 0 and not city.overlays.open():
 		ui.canvas_alpha(clampf(help_timer, 0, 1))
 		var kl := func(a: String) -> String: return Keys.label(a)
-		var lines := ["%s%s%s%s: caminar · %s: correr · %s: saltar · Mouse: mirar · Rueda/%s: cámara · %s: música" % [
+		var lines := [Lang.f("%s%s%s%s: caminar · %s: correr · %s: saltar · Mouse: mirar · Rueda/%s: cámara · %s: música", [
 				kl.call("forward"), kl.call("left"), kl.call("back"), kl.call("right"), kl.call("run"), kl.call("jump"),
-				kl.call("camera"), kl.call("music")],
-				"%s: interactuar · %s: tablet · %s: pausa · %s/%s/%s: velocidad · %s: pantalla completa · Esc: menú · Alt: mouse libre" % [
+				kl.call("camera"), kl.call("music")]),
+				Lang.f("%s: interactuar · %s: tablet · %s: pausa · %s/%s/%s: velocidad · %s: pantalla completa · Esc: menú · Alt: mouse libre", [
 				kl.call("interact"), kl.call("phone"), kl.call("pause_quick"), kl.call("speed1"), kl.call("speed2"),
-				kl.call("speed3"), kl.call("fullscreen")]]
+				kl.call("speed3"), kl.call("fullscreen")])]
 		ui.rect(Rect2(cx - 440, 500, 880, 58), Color(0.05, 0.067, 0.09, 0.6), 12)
 		for i in 2:
 			ui.text(lines[i], Vector2(cx, 516 + i * 24), 15, Color.WHITE, false, "center")
@@ -383,9 +383,9 @@ func danger_text() -> Array:
 		return []
 	if g.overdraft_days > 0:
 		var left: int = max(1, 20 - g.overdraft_days)
-		return ["¡Quiebra en %d día%s!" % [left, "s" if left > 1 else ""],
+		return [Lang.f("¡Quiebra en %d día%s!", [left, "s" if left > 1 else ""]),
 				"Pasaste el límite de sobregiro: vende algo, pide un préstamo o recorta costos (Tab)."]
-	return ["Estás en sobregiro", "Caja negativa: pagas %s anual de interés sobre ese saldo." % Fmt.pct(g.policy_rate + 0.18, 0)]
+	return ["Estás en sobregiro", Lang.f("Caja negativa: pagas %s anual de interés sobre ese saldo.", Fmt.pct(g.policy_rate + 0.18, 0))]
 
 
 ## Latido de la alarma (0 a 1), al ritmo del corazón que suena.

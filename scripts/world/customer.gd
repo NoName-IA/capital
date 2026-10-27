@@ -39,6 +39,10 @@ var annoyed := 0.0    # segundos que el jugador le tapa el paso
 var punch_t := 0.0    # > 0 mientras te empuja por no dejarlo pasar
 var pusher := randf() < 0.45   # no todos empujan: los demás solo piden permiso y protestan
 var push_dir := Vector3.ZERO   # hacia dónde te empuja (fuera de su camino)
+var chair := -1                # la silla del local donde se sienta a comer (índice en store.spots.chairs)
+var sit_time := 0.0            # cuánto se queda sentado
+
+const SIT_CHANCE := 0.5        # de los que compran en un local con mesas, cuántos se sientan a comer ahí
 
 
 func _init(owner_city, target_store = null, is_angry := false) -> void:
@@ -151,10 +155,14 @@ func update(dt: float) -> void:
 					if server != null and server != city.player:
 						server.hold("")
 					body.hold(store.loc.product)  # se lleva lo que compró
-					leave(line.exit)
+					if not _go_sit(line.exit):    # algunos se sientan a comer; si no hay silla libre, se van
+						leave(line.exit)
 		return
 	if state == "buying":
 		_buy_diario(dt)
+		return
+	if state == "seated":
+		_eat(dt)
 		return
 	if state == "picking":
 		wait += dt
@@ -172,6 +180,9 @@ func update(dt: float) -> void:
 	if path.is_empty():
 		if state == "enter":
 			join_line()
+		elif state == "to_seat":
+			state = "seated"
+			wait = 0.0
 		else:
 			done = true
 		return
@@ -192,6 +203,55 @@ func update(dt: float) -> void:
 			state = "picking"
 			wait = 0.0
 		path.pop_front()
+
+
+# ---------- sentarse a comer ----------
+## Después de pagar, a veces va a una silla libre del local a comer lo que compró. Devuelve false si no se sienta
+## (no le dieron ganas, el local no tiene mesas o están todas ocupadas).
+func _go_sit(exit: Array) -> bool:
+	if store.spots.get("chairs", []).is_empty() or randf() > SIT_CHANCE:
+		return false
+	chair = store.free_chair()
+	if chair < 0:
+		return false
+	store.seated[chair] = self
+	if line != null and self in line.members:
+		line.members.erase(self)
+	line = null
+	var c: Dictionary = store.spots.chairs[chair]
+	# En la megatienda baja primero por el pasillo de su fila (si no, atravesaría las góndolas)
+	path = ([exit[0], exit[1]] if store.loc.size == 2 else [exit[0]]) + [c.near, c.seat]
+	state = "to_seat"
+	sit_time = randf_range(9.0, 16.0)
+	return true
+
+
+## Sentado frente a la mesa: se acomoda, come a bocados y al terminar se para, suelta la silla y sale por la puerta.
+func _eat(dt: float) -> void:
+	var c: Dictionary = store.spots.chairs[chair]
+	wait += dt
+	body.animate(0, dt)
+	var d: Vector3 = c.table - c.seat
+	body.rotation.y = lerp_angle(body.rotation.y, atan2(d.x, d.z), dt * 8)
+	if wait < 0.5:
+		body.position = body.position.lerp(Vector3(c.seat.x, 0, c.seat.z), min(1.0, dt * 8))
+	if body.item:   # un bocado cada tanto (la mano a la boca y de vuelta)
+		body.set_reach(0.35 + 0.5 * pow(maxf(0.0, sin(wait * 1.6)), 4))
+		if wait > sit_time * 0.8:
+			body.hold("")   # se lo terminó
+	else:
+		body.set_reach(0.0)
+	body.sit(clampf(wait / 0.5, 0, 1) * clampf((sit_time - wait) / 0.5, 0, 1))
+	if wait > 1.2 and wait - dt <= 1.2 and randf() < 0.3 and not body.camera_far():
+		city.say(body, ["¡Qué rico!", "Justo lo que necesitaba.", "Mmm...", "Aquí se está bien."].pick_random(), "white", 1.8)
+	if wait >= sit_time:
+		body.sit(0.0)
+		store.seated.erase(chair)
+		chair = -1
+		var out: Array = [c.near]
+		if store.spots.get("door") != null:
+			out.append(store.spots.door)
+		leave(out)
 
 
 func _go_to_line() -> void:
@@ -241,29 +301,29 @@ func _maybe_doubt() -> bool:
 			pick = o[0]
 			break
 	var buy: bool = randf() < city.buy_chance(store)
-	var name: String = D.PRODUCTS[store.loc.product].name.to_lower()
+	var name: String = Lang.noun(D.PRODUCTS[store.loc.product].name)
 	var price := Fmt.money(p.price, 2 if p.price < 100 else 0)
 	var me := body
 	match pick:
 		"friend":
 			var yes := [["¡Sí! Yo siempre compro acá.", "green"], ["¡Llévalo, está buenísimo!", "green"],
-					["Este local tiene %s estrellas, confía." % Fmt.num(stars, 1), "green"], ["A ese precio, ni lo pienses.", "green"]]
+					[Lang.f("Este local tiene %s estrellas, confía.", Fmt.num(stars, 1)), "green"], ["A ese precio, ni lo pienses.", "green"]]
 			var no := [["Mmm... está caro para lo que es.", "orange"], ["Yo no lo compraría, dicen que es malo.", "red"],
-					["Donde %s es más barato." % D.rival_for(store.loc.product).short, "orange"], ["Mejor no, ya comimos.", "orange"]]
+					[Lang.f("Donde %s es más barato.", D.rival_for(store.loc.product).short), "orange"], ["Mejor no, ya comimos.", "orange"]]
 			var ans: Array = (yes if buy else no).pick_random()
-			_start([[me, ["¿Lo llevo? ¿Qué dices?", "¿Este %s vale la pena?" % name, "¿Tú has probado este?"].pick_random(), "white", 1.7],
+			_start([[me, ["¿Lo llevo? ¿Qué dices?", Lang.f("¿Este %s vale la pena?", name), "¿Tú has probado este?"].pick_random(), "white", 1.7],
 					[friend.body, ans[0], ans[1], 2.0],
 					[me, "¡Lo llevo!" if buy else "Tienes razón, lo dejo.", "green" if buy else "white", 1.4]],
 					"line" if buy else "putback", friend)
 		"phone":
 			body.hold("celular")
 			var who: String = ["mi amor", "mamá", "jefe", "compadre"].pick_random()
-			_start([[me, "Aló, %s... ¿compro %s?" % [who, name], "white", 1.9],
+			_start([[me, Lang.f("Aló, %s... ¿compro %s?", [who, name]), "white", 1.9],
 					[me, ["Ya, llevo uno.", "Ok, ok, lo llevo."].pick_random() if buy else ["¿Que no? Bueno, lo dejo.", "Ya, mejor no."].pick_random(),
 					"green" if buy else "orange", 1.6]], "line" if buy else "putback")
 		"price":
 			var ratio: float = p.price / city.game.ref_price(p)
-			var line_txt := "¿%s? ¡Qué barato!" % price if ratio < 0.9 else ("¿%s? Uf, carísimo..." % price if ratio > 1.2 else "%s... está bien." % price)
+			var line_txt := Lang.f("¿%s? ¡Qué barato!", price) if ratio < 0.9 else (Lang.f("¿%s? Uf, carísimo...", price) if ratio > 1.2 else Lang.f("%s... está bien.", price))
 			_start([[me, line_txt, "green" if ratio < 0.9 else ("red" if ratio > 1.2 else "white"), 1.9]], "line" if buy else "putback")
 		"staff":
 			var clerk: Person = store.server_for(store.spots.lines[0]) if store.spots.lines else null
@@ -275,7 +335,7 @@ func _maybe_doubt() -> bool:
 						[me, "¡Perfecto, gracias!" if buy else "Lo voy a pensar...", "green" if buy else "white", 1.3]],
 						"line" if buy else "putback")
 		"selfie":
-			_start([[me, ["¡Foto para mis historias!", "¡Este local es lo máximo!", "#%s" % city.game.company.replace(" ", "")].pick_random(), "gold", 2.0]], "line")
+			_start([[me, ["¡Foto para mis historias!", "¡Este local es lo máximo!", Lang.f("#%s", city.game.company.replace(" ", ""))].pick_random(), "gold", 2.0]], "line")
 			body.set_reach(1.0)
 		"compare":
 			var other: Array = store.pick_spot()
@@ -373,7 +433,7 @@ func _queue_chatter(idx: int, dt: float) -> void:
 	var lines := ["¡Esta fila no avanza!", "Vale la pena esperar, ya verás.", "¿Siempre está así de lleno?",
 			"Dicen que este local es el mejor.", "¡Contraten más gente!"]
 	if Game.stars_of(store.loc) >= 4.0:
-		lines += ["Con %s estrellas, normal que haya fila." % Fmt.num(Game.stars_of(store.loc), 1)]
+		lines += [Lang.f("Con %s estrellas, normal que haya fila.", Fmt.num(Game.stars_of(store.loc), 1))]
 	city.say(body, lines.pick_random(), "white" if randf() < 0.6 else "orange", 2.2)
 
 
@@ -401,16 +461,15 @@ func _street_life() -> void:
 				windowed = true
 				if randf() < 0.18:
 					var stars := Game.stars_of(st.loc)
-					var name: String = D.PRODUCTS[st.loc.product].name.to_lower()
-					var txt: String = (["Mmm, se ve rico...", "¡%s estrellas! Tengo que probar." % Fmt.num(stars, 1)] if stars >= 3.5
+					var name := Lang.noun(D.PRODUCTS[st.loc.product].name)
+					var txt: String = ([Lang.f("Mmm, se ve rico el %s...", name), Lang.f("¡%s estrellas! Tengo que probar.", Fmt.num(stars, 1))] if stars >= 3.5
 							else ["Dicen que acá atienden mal.", "Mmm... no sé."]).pick_random()
 					if st.loc.product in ["ropa", "tech"]:
 						txt = ["¡Mira esa vitrina!", "Qué lindo eso..."].pick_random() if stars >= 3 else "Muy caro para mí."
 					face_to = st.bld.root
 					state = "window"
 					wait = 0.0
-					city.say(body, txt.replace("rico", "rico el %s" % name) if txt.begins_with("Mmm, se ve") else txt,
-							"gold" if stars >= 3.5 else "white", 1.9)
+					city.say(body, txt, "gold" if stars >= 3.5 else "white", 1.9)
 				break
 	# Conversar con otro peatón que viene
 	if chatted or scenes >= MAX_SCENES or randf() > 0.02:
@@ -433,23 +492,23 @@ func _street_talk(g, other) -> Array:
 	match kind:
 		0:  # sobre uno de tus locales
 			var loc: Dictionary = g.locations.pick_random()
-			var name: String = D.PRODUCTS[loc.product].name.to_lower()
+			var name: String = Lang.noun(D.PRODUCTS[loc.product].name)
 			var stars := Game.stars_of(loc)
 			var good := stars >= 3.3
-			return [[me, "¿Probaste el %s de %s?" % [name, g.company], "white", 2.0],
-					[you, ["¡Sí! Tiene %s estrellas." % Fmt.num(stars, 1), "Es mi favorito.", "¡Buenísimo y a buen precio!"].pick_random() if good
+			return [[me, Lang.f("¿Probaste el %s de %s?", [name, g.company]), "white", 2.0],
+					[you, [Lang.f("¡Sí! Tiene %s estrellas.", Fmt.num(stars, 1)), "Es mi favorito.", "¡Buenísimo y a buen precio!"].pick_random() if good
 					else ["Uf, la fila era eterna.", "Me atendieron mal...", "Muy caro para lo que es."].pick_random(), "green" if good else "orange", 2.2],
 					[me, "¡Voy a ir!" if good else "Entonces no voy.", "white", 1.4]]
 		1:  # el clima
 			var w: Dictionary = D.WEATHER[g.weather]
 			var nxt: Dictionary = D.WEATHER[g.weather_next]
-			return [[me, "¿Viste el clima? %s." % w.name, "white", 1.8],
-					[you, "Dicen que en %d días viene %s." % [g.weather_days, nxt.name.to_lower()], "white", 2.2]]
+			return [[me, Lang.f("¿Viste el clima? %s.", w.name), "white", 1.8],
+					[you, Lang.f("Dicen que en %d días viene %s.", [g.weather_days, Lang.noun(nxt.name)]), "white", 2.2]]
 		2:  # la competencia
 			var key: String = D.PRODUCT_ORDER.pick_random()
 			var r: Dictionary = D.rival_for(key)
-			return [[me, "¿Supiste de %s?" % r.company, "white", 1.7],
-					[you, ["Dicen que va a abrir otro local.", "¡%s siempre está peleando!" % r.name, "Prefiero a %s." % g.company].pick_random(), "white", 2.2]]
+			return [[me, Lang.f("¿Supiste de %s?", r.company), "white", 1.7],
+					[you, ["Dicen que va a abrir otro local.", Lang.f("¡%s siempre está peleando!", r.name), Lang.f("Prefiero a %s.", g.company)].pick_random(), "white", 2.2]]
 		_:  # el diario
 			var headline := ""
 			for i in range(g.news.size() - 1, -1, -1):
@@ -458,7 +517,7 @@ func _street_talk(g, other) -> Array:
 					break
 			if headline.length() > 60:
 				headline = headline.left(57) + "..."
-			return [[me, "¿Leíste el diario?", "white", 1.5], [you, "«%s»" % headline if headline else "No, ¿qué pasó?", "white", 2.6]]
+			return [[me, "¿Leíste el diario?", "white", 1.5], [you, Lang.f("«%s»", headline) if headline else "No, ¿qué pasó?", "white", 2.6]]
 
 
 ## Compra en ELDIARIO: el vendedor se gira, saca un diario y se lo pasa; el peatón sigue caminando con él.
@@ -600,4 +659,6 @@ func destroy() -> void:
 		dog.destroy()
 	if line != null and self in line.members:
 		line.members.erase(self)
+	if chair >= 0 and store != null and store.seated.get(chair) == self:
+		store.seated.erase(chair)
 	body.queue_free()

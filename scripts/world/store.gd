@@ -23,6 +23,7 @@ var items := []                   # cada producto de la repisa: {mm, i, xf, pos 
 var fill := 1.0                   # qué tan llenas están las repisas (productos que quedan / total)
 var restocker: Person = null      # el empleado que va a la bodega y repone
 var jobs := {}                    # empleado -> tarea que está haciendo (ver _idle_job)
+var seated := {}                  # silla de los clientes (índice en spots.chairs) -> el Customer sentado ahí
 
 
 func _init(owner_city, index: int, location: Dictionary) -> void:
@@ -73,7 +74,7 @@ func sync_stars() -> void:
 			rep_stars.queue_free()
 		rep_stars = Icons.star_row(full)
 		rep.add_child(rep_stars)
-	rep_sub.text = "%s de 5 · reseñas" % Fmt.num(stars, 1)
+	rep_sub.text = Lang.f("%s de 5 · reseñas", Fmt.num(stars, 1))
 	rep_sub.modulate = Color(1, 1, 1, 0.9)
 
 
@@ -275,6 +276,8 @@ func _nav_path(from: Vector3, to: Vector3, avoid := []) -> Array:
 	var ids := nav.get_id_path(a, b)
 	for c in marked:
 		nav.set_point_solid(c, false)
+	if ids.is_empty() and not marked.is_empty():   # esquivando no hay salida: el camino de siempre
+		ids = nav.get_id_path(a, b)
 	var out := []
 	var last_dir := Vector2i.ZERO
 	for k in range(1, ids.size()):   # solo las esquinas del camino
@@ -287,15 +290,23 @@ func _nav_path(from: Vector3, to: Vector3, avoid := []) -> Array:
 	return out
 
 
-## Camina hacia `target` por la grilla. Si otro empleado le tapa el paso, espera y después busca otro camino.
-## Devuelve la distancia que avanzó, o -1 cuando llegó.
+## Camina hacia `target` por la grilla. Si otro empleado le tapa el paso, espera y después busca otro camino; si
+## igual sigue trabado (dos que se tapan entre sí, o uno quieto en un pasillo angosto), pasa de largo un rato sin
+## esquivar a nadie. Devuelve la distancia que avanzó, o -1 cuando llegó.
 func _walk(p: Person, job: Dictionary, target: Vector3, speed: float, dt: float) -> float:
 	if job.get("goal") != target:
 		job.goal = target
 		job.path = _nav_path(p.position, target)
 		job.blocked = 0.0
+		job.retries = 0
+		job.pass = 0.0
+		job.walk_t = 0.0
 	var path: Array = job.path
 	if path.is_empty():
+		return -1.0
+	job.walk_t += dt
+	if job.walk_t > 30.0:   # nunca debería pasar, pero si se quedó dando vueltas aparece donde iba
+		p.position = Vector3(target.x, p.position.y, target.z)
 		return -1.0
 	var next: Vector3 = path[0]
 	var d := Vector3(next.x - p.position.x, 0, next.z - p.position.z)
@@ -304,17 +315,27 @@ func _walk(p: Person, job: Dictionary, target: Vector3, speed: float, dt: float)
 		path.pop_front()
 		return 0.0 if not path.is_empty() else -1.0
 	var dir := d / dist
+	job.pass = maxf(0.0, job.pass - dt)
 	# ¿Hay otro empleado justo adelante?
 	for o in staff:
-		if o == p:
+		if o == p or job.pass > 0.0:
 			continue
 		var to_o: Vector3 = o.position - p.position
 		to_o.y = 0
 		if to_o.length() < 0.7 and to_o.normalized().dot(dir) > 0.4:
+			var at_goal := Vector2(o.position.x - target.x, o.position.z - target.z).length() < 0.6
+			if at_goal and Vector2(p.position.x - target.x, p.position.z - target.z).length() < 1.2:
+				return -1.0   # el otro está parado justo donde iba: se queda al lado y hace lo suyo ahí
 			job.blocked += dt
 			p.animate(0, dt)
 			if job.blocked > 0.9:   # se cansó de esperar: rodea a la otra persona
 				job.blocked = 0.0
+				job.retries += 1
+				if job.retries >= 3:   # ya probó rodearlo y no hay caso: pasa igual
+					job.pass = 1.6
+					job.retries = 0
+					job.path = _nav_path(p.position, target)
+					return 0.0
 				var oc := _cell(_to_local(o.position))
 				var around := []
 				for dx in range(-1, 2):
@@ -637,7 +658,7 @@ static func add_registers(root: Node3D, kind: int, layout := {}) -> void:
 		mi.rotation.y = s[1]
 		root.add_child(mi)
 		if kind == 2:
-			var sign := Building.label(root, "CAJA %d" % n, s[0] + Vector3(0, 1.75, 0), 9, Color8(255, 220, 120), true, false)
+			var sign := Building.label(root, Lang.f("CAJA %d", n), s[0] + Vector3(0, 1.75, 0), 9, Color8(255, 220, 120), true, false)
 			sign.rotation.y = s[1]
 			var pole := MeshInstance3D.new()
 			var pm := BoxMesh.new()
@@ -651,6 +672,15 @@ static func add_registers(root: Node3D, kind: int, layout := {}) -> void:
 
 func has_shelves() -> bool:
 	return loc.size > 0
+
+
+## Una silla libre para que un cliente se siente a comer (al azar), o -1 si no hay o están todas ocupadas.
+func free_chair() -> int:
+	var free := []
+	for i in spots.get("chairs", []).size():
+		if not seated.has(i) or not is_instance_valid(seated[i].body):
+			free.append(i)
+	return -1 if free.is_empty() else free.pick_random()
 
 
 ## Un cliente saca un producto: desaparece de la repisa el que tiene más a mano (lo compró), hasta que lo repongan.

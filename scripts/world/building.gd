@@ -30,7 +30,9 @@ static func label(parent: Node, text: String, pos: Vector3, ursina_scale: float,
 		face_street := true) -> Label3D:
 	fonts()
 	var l := Label3D.new()
-	l.text = text
+	l.text = Lang.t(text)
+	l.set_meta("src", text)   # para volver a traducirlo si cambias el idioma (Lang.use)
+	l.add_to_group("i18n")
 	l.font = title_font if bold else body_font
 	l.font_size = 64
 	l.outline_size = 0
@@ -118,6 +120,9 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 			var a := Blueprints.to_world(plot, v[0], v[2])
 			var e := Blueprints.to_world(plot, v[1], v[3])
 			spots[k] = [min(a.x, e.x), max(a.x, e.x), min(a.z, e.z), max(a.z, e.z), v[4]]
+		elif k == "chairs":  # sillas de los clientes: dónde se sientan, la mesa que miran y por dónde llegan
+			spots[k] = v.map(func(c): return {"seat": Blueprints.to_world(plot, c[0], c[1]),
+					"table": Blueprints.to_world(plot, c[2], c[3]), "near": Blueprints.to_world(plot, c[4], c[5])})
 		elif k == "lines":
 			var lines := []
 			for ln in v:
@@ -140,7 +145,7 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 
 ## Cambia el nombre de la empresa en los letreros (los nombres largos se achican para que quepan).
 static func set_brand_text(l: Label3D, name: String) -> void:
-	l.text = name.to_upper()
+	l.text = Lang.t(name).to_upper()
 	l.pixel_size = float(l.get_meta("size", l.pixel_size)) * minf(1.0, 9.0 / max(1, name.length()))
 
 

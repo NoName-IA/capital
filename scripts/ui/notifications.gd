@@ -93,7 +93,7 @@ func _when() -> String:
 	if g == null:
 		return ""
 	var dp: Array = g.date_parts()
-	return "Día %d %s" % [dp[0], dp[1].substr(0, 3).to_lower()]
+	return Lang.f("Día %d %s", [dp[0], Lang.month_short(dp[1])])
 
 
 func update(dt: float, frozen: bool) -> void:
@@ -152,7 +152,7 @@ func _body(c: Dictionary) -> String:
 	if c.count == null:
 		return c.body
 	var k: float = ease_out(c.t / 1.2)
-	return c.body.format([Fmt.money(c.count * k)], "{}")
+	return Lang.t(c.body).format([Fmt.money(c.count * k)], "{}")
 
 
 func _lines_max(ui: ImUI, text: String, w: float, size: int, is_bold: bool, n: int) -> Array:
@@ -171,7 +171,7 @@ func _draw_card(ui: ImUI, c: Dictionary, r: Rect2, alert := false) -> void:
 	app_icon(ui, Rect2(x, y, 20, 20), c.col, c.icon, c.get("letters", false))
 	var app := ui.text(c.app, Vector2(x + 28, y + 3), 11, Notifications.light(c.col, 0.25), true)
 	if c.repeat > 1:
-		var tag := "x%d" % c.repeat
+		var tag := Lang.f("x%d", c.repeat)
 		var tw := ui.text_size(tag, 11, true).x + 10
 		var tr := Rect2(app.end.x + 8, y + 2, tw, 16)
 		ui.rect(tr, c.col, 8)
@@ -241,7 +241,7 @@ func _draw_hero(ui: ImUI) -> void:
 		Icons.draw(ui, hero.icon, Vector2(cx + side * (kw / 2 - 18), kr.get_center().y), 18, Color8(16, 20, 30))
 	var title: String = hero.title
 	if hero.count != null:
-		title = title.format([Fmt.money(hero.count * ease_out(t / 1.0))], "{}")
+		title = Lang.t(title).format([Fmt.money(hero.count * ease_out(t / 1.0))], "{}")
 	ui.text(title, Vector2(cx, cy - 8), int(44 * pop), light(hero.col, 0.35), true, "center", w - 40)
 	ui.text(hero.sub, Vector2(cx, cy + 40 * pop), 16, TEXT, false, "center", w - 40)
 

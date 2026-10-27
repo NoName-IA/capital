@@ -1,0 +1,7147 @@
+[
+[
+0,
+"Pantalla",
+"scripts/core/city.gd"
+],
+[
+1,
+"CAPITAL",
+"scripts/core/city.gd"
+],
+[
+2,
+"Presiona E",
+"scripts/core/city.gd"
+],
+[
+3,
+"REUNIÓN DE ESTRATEGIA",
+"scripts/core/city.gd"
+],
+[
+4,
+"\\n",
+"scripts/core/city.gd"
+],
+[
+5,
+"Lista: acércate y presiona E",
+"scripts/core/city.gd"
+],
+[
+6,
+"Próxima en %d días",
+"scripts/core/city.gd"
+],
+[
+7,
+"BOLSA DE VALORES\\nHoy %s%s%%\\nTu fondo: %s",
+"scripts/core/city.gd"
+],
+[
+8,
+"La pizarra está lista: haz la reunión de estrategia del mes.",
+"scripts/core/city.gd"
+],
+[
+9,
+"Todo en orden, jefe. Este mes llevamos %s de utilidad.",
+"scripts/core/city.gd"
+],
+[
+10,
+"Sofía · tu asistente",
+"scripts/core/city.gd"
+],
+[
+11,
+"SO",
+"scripts/core/city.gd"
+],
+[
+12,
+"Llegaste a la oficina central.",
+"scripts/core/city.gd"
+],
+[
+13,
+"Estás atendiendo: tu sucursal gana la capacidad de un empleado más sin pagar salario.",
+"scripts/core/city.gd"
+],
+[
+14,
+"¡Qué caro!",
+"scripts/core/city.gd"
+],
+[
+15,
+"Uf, carísimo...",
+"scripts/core/city.gd"
+],
+[
+16,
+"¡Qué barato!",
+"scripts/core/city.gd"
+],
+[
+17,
+"¡Una ganga!",
+"scripts/core/city.gd"
+],
+[
+18,
+"¡Delicioso!",
+"scripts/core/city.gd"
+],
+[
+19,
+"¡Calidad top!",
+"scripts/core/city.gd"
+],
+[
+20,
+"Mmm... meh",
+"scripts/core/city.gd"
+],
+[
+21,
+"¡Me encanta este lugar!",
+"scripts/core/city.gd"
+],
+[
+22,
+"¡El mejor de la ciudad!",
+"scripts/core/city.gd"
+],
+[
+23,
+"Dicen que aquí es malo...",
+"scripts/core/city.gd"
+],
+[
+24,
+"¡Gracias, jefe!",
+"scripts/core/city.gd"
+],
+[
+25,
+"¡Qué buena atención!",
+"scripts/core/city.gd"
+],
+[
+26,
+"¿No hay %s?",
+"scripts/core/city.gd"
+],
+[
+27,
+"¡Se les acabó todo!",
+"scripts/core/city.gd"
+],
+[
+28,
+"¡Qué fila!",
+"scripts/core/city.gd"
+],
+[
+29,
+"¡Nadie atiende!",
+"scripts/core/city.gd"
+],
+[
+30,
+"Me voy donde %s...",
+"scripts/core/city.gd"
+],
+[
+31,
+"¡Llevo horas esperando!",
+"scripts/core/city.gd"
+],
+[
+32,
+"NUEVO RANGO",
+"scripts/core/city.gd"
+],
+[
+33,
+"Tu empresa vale %s. ¡Sigue así!",
+"scripts/core/city.gd"
+],
+[
+34,
+"IMPERIO",
+"scripts/core/city.gd"
+],
+[
+35,
+"¡Construiste un imperio!",
+"scripts/core/city.gd"
+],
+[
+36,
+"En %d minutos de juego",
+"scripts/core/city.gd"
+],
+[
+37,
+"MIL MILLONARIO",
+"scripts/core/city.gd"
+],
+[
+38,
+"¡Llegaste a la cima!",
+"scripts/core/city.gd"
+],
+[
+39,
+"El título más alto del juego",
+"scripts/core/city.gd"
+],
+[
+40,
+"RÉCORD DE VENTAS",
+"scripts/core/city.gd"
+],
+[
+41,
+"vendidos en un solo día",
+"scripts/core/city.gd"
+],
+[
+42,
+"RACHA",
+"scripts/core/city.gd"
+],
+[
+43,
+"¡%d meses ganando!",
+"scripts/core/city.gd"
+],
+[
+44,
+"Tu racha de meses con utilidad sigue viva",
+"scripts/core/city.gd"
+],
+[
+45,
+"Se cortó tu racha",
+"scripts/core/city.gd"
+],
+[
+46,
+"Llevabas %d meses seguidos con utilidad. ¡Puedes empezar otra!",
+"scripts/core/city.gd"
+],
+[
+47,
+"Ganaste {} este mes.",
+"scripts/core/city.gd"
+],
+[
+48,
+"Este mes perdiste {}.",
+"scripts/core/city.gd"
+],
+[
+49,
+"¡Cuidado, peligro de quiebra!",
+"scripts/core/city.gd"
+],
+[
+50,
+"Tienes 20 días para volver dentro del límite de sobregiro.",
+"scripts/core/city.gd"
+],
+[
+51,
+"¡Salió bien!",
+"scripts/core/city.gd"
+],
+[
+52,
+"Salió mal...",
+"scripts/core/city.gd"
+],
+[
+53,
+"Decisión tomada",
+"scripts/core/city.gd"
+],
+[
+54,
+"Decisión urgente: ",
+"scripts/core/city.gd"
+],
+[
+55,
+"Decisión urgente: el juego espera tu respuesta.",
+"scripts/core/city.gd"
+],
+[
+56,
+"Dr. ",
+"scripts/core/city.gd"
+],
+[
+57,
+"Doña ",
+"scripts/core/city.gd"
+],
+[
+58,
+"%s · %s",
+"scripts/core/city.gd"
+],
+[
+59,
+"«%s»",
+"scripts/core/city.gd"
+],
+[
+60,
+"%s Pronóstico: %s en %d días.",
+"scripts/core/city.gd"
+],
+[
+61,
+"Quiebra",
+"scripts/core/city.gd"
+],
+[
+62,
+"c%d",
+"scripts/core/city.gd"
+],
+[
+63,
+"¡Auch!",
+"scripts/core/city.gd"
+],
+[
+64,
+"¡Te atropelló un auto! Cruza con cuidado.",
+"scripts/core/city.gd"
+],
+[
+65,
+"¡No le tapes el paso a la gente! Si te pones en medio, se enojan.",
+"scripts/core/city.gd"
+],
+[
+66,
+"Avenida Comercial",
+"scripts/core/city.gd"
+],
+[
+67,
+"Tus locales y la competencia",
+"scripts/core/city.gd"
+],
+[
+68,
+"Entrada de la ciudad",
+"scripts/core/city.gd"
+],
+[
+69,
+"El camino a los cerros y locales de la competencia",
+"scripts/core/city.gd"
+],
+[
+70,
+"Distrito Financiero",
+"scripts/core/city.gd"
+],
+[
+71,
+"Rascacielos y tu oficina central",
+"scripts/core/city.gd"
+],
+[
+72,
+"Paseo de la Playa",
+"scripts/core/city.gd"
+],
+[
+73,
+"Terrenos frente al mar: +20% de clientes por los turistas",
+"scripts/core/city.gd"
+],
+[
+74,
+"Parque Central",
+"scripts/core/city.gd"
+],
+[
+75,
+"La fuente, la laguna y los juegos",
+"scripts/core/city.gd"
+],
+[
+76,
+"Barrio Las Lomas",
+"scripts/core/city.gd"
+],
+[
+77,
+"Donde viven tus clientes",
+"scripts/core/city.gd"
+],
+[
+78,
+"Usar la computadora de la oficina",
+"scripts/core/city.gd"
+],
+[
+79,
+"Pizarra: reunión de estrategia del mes",
+"scripts/core/city.gd"
+],
+[
+80,
+"Pantalla de la bolsa: ver tu fondo de inversión",
+"scripts/core/city.gd"
+],
+[
+81,
+"Vitrina de trofeos: tus títulos",
+"scripts/core/city.gd"
+],
+[
+82,
+"Hablar con tu asistente",
+"scripts/core/city.gd"
+],
+[
+83,
+"Abrir el armario: comprar ropa y cambiar tu aspecto",
+"scripts/core/city.gd"
+],
+[
+84,
+"Comprar el armario (%s): tienda de ropa",
+"scripts/core/city.gd"
+],
+[
+85,
+"%s de %s",
+"scripts/core/city.gd"
+],
+[
+86,
+"Dejar de atender",
+"scripts/core/city.gd"
+],
+[
+87,
+"Atender el mostrador (+1 empleado gratis: tú)",
+"scripts/core/city.gd"
+],
+[
+88,
+"Administrar %s",
+"scripts/core/city.gd"
+],
+[
+89,
+"Comprar el terreno %d",
+"scripts/core/city.gd"
+],
+[
+90,
+" (de nuevo en %d día%s)",
+"scripts/core/city.gd"
+],
+[
+91,
+" (%s)",
+"scripts/core/city.gd"
+],
+[
+92,
+"Competencia: %s (%s). Ver cómo comprarla",
+"scripts/core/city.gd"
+],
+[
+93,
+"[%s] %s",
+"scripts/core/city.gd"
+],
+[
+94,
+"En %d día%s: %s",
+"scripts/core/city.gd"
+],
+[
+95,
+"Música activada.",
+"scripts/core/city.gd"
+],
+[
+96,
+"Música en silencio (%s para volver).",
+"scripts/core/city.gd"
+],
+[
+97,
+"--scenario=",
+"scripts/core/main.gd"
+],
+[
+98,
+"Café",
+"scripts/economy/data.gd"
+],
+[
+99,
+"Un puesto de café en la esquina. Margen alto, producto perecedero y mucha competencia.",
+"scripts/economy/data.gd"
+],
+[
+100,
+"Panadería",
+"scripts/economy/data.gd"
+],
+[
+101,
+"Pan fresco cada mañana. Demanda estable en cualquier economía, pero se pone duro rápido (merma alta).",
+"scripts/economy/data.gd"
+],
+[
+102,
+"Hamburguesas",
+"scripts/economy/data.gd"
+],
+[
+103,
+"Comida rápida. Más ingreso por cliente, más empleados por venta.",
+"scripts/economy/data.gd"
+],
+[
+104,
+"Ropa",
+"scripts/economy/data.gd"
+],
+[
+105,
+"Moda. Muy estacional (diciembre) y sensible al precio y a la economía. No se pudre.",
+"scripts/economy/data.gd"
+],
+[
+106,
+"Electrónica",
+"scripts/economy/data.gd"
+],
+[
+107,
+"Tecnología. Margen bajo por unidad pero ventas enormes en tiendas grandes. Se vuelve obsoleta.",
+"scripts/economy/data.gd"
+],
+[
+108,
+"Puesto",
+"scripts/economy/data.gd"
+],
+[
+109,
+"Local",
+"scripts/economy/data.gd"
+],
+[
+110,
+"Megatienda",
+"scripts/economy/data.gd"
+],
+[
+111,
+"Económica",
+"scripts/economy/data.gd"
+],
+[
+112,
+"Estándar",
+"scripts/economy/data.gd"
+],
+[
+113,
+"Premium",
+"scripts/economy/data.gd"
+],
+[
+114,
+"Expansión",
+"scripts/economy/data.gd"
+],
+[
+115,
+"Auge",
+"scripts/economy/data.gd"
+],
+[
+116,
+"Recesión",
+"scripts/economy/data.gd"
+],
+[
+117,
+"Recuperación",
+"scripts/economy/data.gd"
+],
+[
+118,
+"Vendedor ambulante",
+"scripts/economy/data.gd"
+],
+[
+119,
+"Emprendedor",
+"scripts/economy/data.gd"
+],
+[
+120,
+"Pequeño empresario",
+"scripts/economy/data.gd"
+],
+[
+121,
+"Empresario",
+"scripts/economy/data.gd"
+],
+[
+122,
+"Magnate",
+"scripts/economy/data.gd"
+],
+[
+123,
+"Imperio",
+"scripts/economy/data.gd"
+],
+[
+124,
+"Conglomerado",
+"scripts/economy/data.gd"
+],
+[
+125,
+"Multinacional",
+"scripts/economy/data.gd"
+],
+[
+126,
+"Titán de la industria",
+"scripts/economy/data.gd"
+],
+[
+127,
+"Leyenda de los negocios",
+"scripts/economy/data.gd"
+],
+[
+128,
+"Mil millonario",
+"scripts/economy/data.gd"
+],
+[
+129,
+"Oficina básica",
+"scripts/economy/data.gd"
+],
+[
+130,
+"Software de gestión (ERP)",
+"scripts/economy/data.gd"
+],
+[
+131,
+"Centro de servicios compartidos",
+"scripts/economy/data.gd"
+],
+[
+132,
+"Gestión con inteligencia artificial",
+"scripts/economy/data.gd"
+],
+[
+133,
+"Holding corporativo",
+"scripts/economy/data.gd"
+],
+[
+134,
+"Campaña relámpago",
+"scripts/economy/data.gd"
+],
+[
+135,
+"Publicidad intensiva: +20% de demanda en todos tus negocios durante 15 días.",
+"scripts/economy/data.gd"
+],
+[
+136,
+"Capacitar al personal",
+"scripts/economy/data.gd"
+],
+[
+137,
+"Mejor atención: +6 de reputación en todos tus negocios.",
+"scripts/economy/data.gd"
+],
+[
+138,
+"Negociar con proveedores",
+"scripts/economy/data.gd"
+],
+[
+139,
+"Poder de negociación: el costo unitario baja 10% durante 30 días.",
+"scripts/economy/data.gd"
+],
+[
+140,
+"Repartir muestras en el parque",
+"scripts/economy/data.gd"
+],
+[
+141,
+"Regalas productos en la feria del parque: más gente conoce tus marcas (+8 de conocimiento en todos tus negocios).",
+"scripts/economy/data.gd"
+],
+[
+142,
+"Encuesta a los vecinos del barrio",
+"scripts/economy/data.gd"
+],
+[
+143,
+"Los vecinos te dicen qué precio pagarían (el que maximiza tu utilidad) y les gusta que les pregunten (+2 de reputación).",
+"scripts/economy/data.gd"
+],
+[
+144,
+"Patrocinar el torneo de vóley de la playa",
+"scripts/economy/data.gd"
+],
+[
+145,
+"Tu marca en la cancha: +5 de reputación en todos tus negocios y +25% de demanda en los locales de la playa por 7 días.",
+"scripts/economy/data.gd"
+],
+[
+146,
+"Pescar en la punta del muelle",
+"scripts/economy/data.gd"
+],
+[
+147,
+"Un rato libre: lo que pescas lo vendes en el mercado del puerto. Mejor de madrugada y al atardecer.",
+"scripts/economy/data.gd"
+],
+[
+148,
+"Enero",
+"scripts/economy/data.gd"
+],
+[
+149,
+"Febrero",
+"scripts/economy/data.gd"
+],
+[
+150,
+"Marzo",
+"scripts/economy/data.gd"
+],
+[
+151,
+"Abril",
+"scripts/economy/data.gd"
+],
+[
+152,
+"Mayo",
+"scripts/economy/data.gd"
+],
+[
+153,
+"Junio",
+"scripts/economy/data.gd"
+],
+[
+154,
+"Julio",
+"scripts/economy/data.gd"
+],
+[
+155,
+"Agosto",
+"scripts/economy/data.gd"
+],
+[
+156,
+"Septiembre",
+"scripts/economy/data.gd"
+],
+[
+157,
+"Octubre",
+"scripts/economy/data.gd"
+],
+[
+158,
+"Noviembre",
+"scripts/economy/data.gd"
+],
+[
+159,
+"Diciembre",
+"scripts/economy/data.gd"
+],
+[
+160,
+"Modo normal",
+"scripts/economy/data.gd"
+],
+[
+161,
+"Modo inversionista",
+"scripts/economy/data.gd"
+],
+[
+162,
+"Soleado",
+"scripts/economy/data.gd"
+],
+[
+163,
+"Día de sol: la playa se llena y las hamburguesas se venden más.",
+"scripts/economy/data.gd"
+],
+[
+164,
+"Parcialmente nublado",
+"scripts/economy/data.gd"
+],
+[
+165,
+"Cielo parcialmente nublado: un día normal para vender.",
+"scripts/economy/data.gd"
+],
+[
+166,
+"Nublado",
+"scripts/economy/data.gd"
+],
+[
+167,
+"Día nublado: más gente busca un café caliente y la playa está más vacía.",
+"scripts/economy/data.gd"
+],
+[
+168,
+"Lluvia",
+"scripts/economy/data.gd"
+],
+[
+169,
+"Llueve: hay menos gente en la calle, pero el café se dispara y la playa se vacía. Los puestos al aire libre venden menos.",
+"scripts/economy/data.gd"
+],
+[
+170,
+"Ola de calor",
+"scripts/economy/data.gd"
+],
+[
+171,
+"¡Ola de calor! La playa explota de turistas, pero nadie quiere café caliente y lo perecedero se echa a perder más rápido.",
+"scripts/economy/data.gd"
+],
+[
+172,
+"Tormenta",
+"scripts/economy/data.gd"
+],
+[
+173,
+"¡Tormenta! Casi nadie sale a la calle: los puestos y la playa casi no venden. Las megatiendas techadas aguantan mejor.",
+"scripts/economy/data.gd"
+],
+[
+174,
+"Ingresos",
+"scripts/economy/data.gd"
+],
+[
+175,
+"Precio × unidades vendidas. Es lo que entra por ventas antes de restar cualquier costo.",
+"scripts/economy/data.gd"
+],
+[
+176,
+"Costo de ventas (COGS)",
+"scripts/economy/data.gd"
+],
+[
+177,
+"Lo que te costó la mercancía que vendiste. Se calcula con el costo promedio del inventario.",
+"scripts/economy/data.gd"
+],
+[
+178,
+"Utilidad bruta y margen bruto",
+"scripts/economy/data.gd"
+],
+[
+179,
+"Ingresos − costo de ventas. El margen bruto es esa utilidad dividida por los ingresos.",
+"scripts/economy/data.gd"
+],
+[
+180,
+"Costos fijos y variables",
+"scripts/economy/data.gd"
+],
+[
+181,
+"Los variables crecen con cada unidad (mercancía). Los fijos se pagan vendas o no (alquiler, salarios, gerentes).",
+"scripts/economy/data.gd"
+],
+[
+182,
+"Margen de contribución",
+"scripts/economy/data.gd"
+],
+[
+183,
+"Precio − costo variable por unidad. Es lo que cada venta aporta para cubrir los costos fijos.",
+"scripts/economy/data.gd"
+],
+[
+184,
+"Punto de equilibrio",
+"scripts/economy/data.gd"
+],
+[
+185,
+"Unidades diarias que necesitas vender para cubrir los costos fijos: costos fijos ÷ margen de contribución. Lo ves en Mercado.",
+"scripts/economy/data.gd"
+],
+[
+186,
+"Elasticidad precio de la demanda",
+"scripts/economy/data.gd"
+],
+[
+187,
+"Cuánto cae la demanda cuando subes el precio. Con elasticidad 2, subir el precio 10% baja la demanda cerca de 20%. La curva de Mercado muestra el precio que maximiza la utilidad.",
+"scripts/economy/data.gd"
+],
+[
+188,
+"Elasticidad ingreso y bienes inferiores",
+"scripts/economy/data.gd"
+],
+[
+189,
+"Cuánto cambia la demanda con la economía. Lo premium cae mucho en recesión; la calidad económica es un bien inferior y vende MÁS en recesión.",
+"scripts/economy/data.gd"
+],
+[
+190,
+"Diferenciación por calidad",
+"scripts/economy/data.gd"
+],
+[
+191,
+"Premium cuesta más pero permite cobrar más, mejora la reputación y hace a los clientes menos sensibles al precio.",
+"scripts/economy/data.gd"
+],
+[
+192,
+"Rendimientos decrecientes",
+"scripts/economy/data.gd"
+],
+[
+193,
+"El marketing funciona, pero cada dólar extra aporta menos que el anterior. Lo mismo pasa al abrir muchas sucursales de un producto (canibalización).",
+"scripts/economy/data.gd"
+],
+[
+194,
+"Economías de escala",
+"scripts/economy/data.gd"
+],
+[
+195,
+"Cuanto más compras, mejor precio te da el proveedor (descuento por volumen). La fábrica propia baja el costo 30% si vendes suficiente.",
+"scripts/economy/data.gd"
+],
+[
+196,
+"Deseconomías de escala",
+"scripts/economy/data.gd"
+],
+[
+197,
+"Con muchas sucursales aparecen gastos corporativos que crecen más rápido que el número de tiendas.",
+"scripts/economy/data.gd"
+],
+[
+198,
+"Integración vertical",
+"scripts/economy/data.gd"
+],
+[
+199,
+"Fabricar tú mismo lo que vendes (fábrica propia). Tiene costo fijo alto: solo conviene con mucho volumen.",
+"scripts/economy/data.gd"
+],
+[
+200,
+"Inventario y nivel de servicio",
+"scripts/economy/data.gd"
+],
+[
+201,
+"Poco inventario = ventas perdidas. Mucho inventario = costo de almacenamiento y merma. Elige los días de inventario con cuidado.",
+"scripts/economy/data.gd"
+],
+[
+202,
+"Competencia y entrada al mercado",
+"scripts/economy/data.gd"
+],
+[
+203,
+"Si un mercado deja mucha ganancia llegan competidores y te quitan clientes. En recesión algunos cierran. Puedes adquirirlos.",
+"scripts/economy/data.gd"
+],
+[
+204,
+"Fusiones y adquisiciones",
+"scripts/economy/data.gd"
+],
+[
+205,
+"Comprar un competidor elimina rivalidad y te da su local. El sobreprecio sobre sus activos se llama plusvalía (goodwill).",
+"scripts/economy/data.gd"
+],
+[
+206,
+"Inflación",
+"scripts/economy/data.gd"
+],
+[
+207,
+"Los precios suben con el tiempo: tus costos, salarios y alquileres también. Si no subes tus precios, tu margen real se encoge.",
+"scripts/economy/data.gd"
+],
+[
+208,
+"Ciclo económico",
+"scripts/economy/data.gd"
+],
+[
+209,
+"La economía pasa por expansión, auge, recesión y recuperación. Afecta la demanda, la inflación y las tasas de interés.",
+"scripts/economy/data.gd"
+],
+[
+210,
+"Tasa de interés y política monetaria",
+"scripts/economy/data.gd"
+],
+[
+211,
+"El banco central sube la tasa cuando hay inflación. Eso encarece tus préstamos y paga más a los bonos.",
+"scripts/economy/data.gd"
+],
+[
+212,
+"Apalancamiento y riesgo",
+"scripts/economy/data.gd"
+],
+[
+213,
+"Pedir prestado multiplica el crecimiento, pero los intereses se pagan aunque vendas poco. Más deuda = tasa más alta.",
+"scripts/economy/data.gd"
+],
+[
+214,
+"Amortización (sistema francés)",
+"scripts/economy/data.gd"
+],
+[
+215,
+"Los préstamos se pagan en cuotas mensuales iguales que incluyen interés y abono al capital.",
+"scripts/economy/data.gd"
+],
+[
+216,
+"Depreciación",
+"scripts/economy/data.gd"
+],
+[
+217,
+"Lo que inviertes en sucursales y fábricas se reparte como gasto durante 5 años. No sale caja, pero reduce la utilidad y los impuestos.",
+"scripts/economy/data.gd"
+],
+[
+218,
+"Escudo fiscal",
+"scripts/economy/data.gd"
+],
+[
+219,
+"Los intereses y la depreciación se restan antes de impuestos, así que pagas menos impuestos.",
+"scripts/economy/data.gd"
+],
+[
+220,
+"Pérdidas fiscales compensables",
+"scripts/economy/data.gd"
+],
+[
+221,
+"Si un mes pierdes dinero, esa pérdida se descuenta de las utilidades futuras antes de pagar impuestos.",
+"scripts/economy/data.gd"
+],
+[
+222,
+"Costos hundidos",
+"scripts/economy/data.gd"
+],
+[
+223,
+"Si vendes una sucursal solo recuperas la mitad de su valor en libros. Lo invertido ya no vuelve: decide mirando el futuro.",
+"scripts/economy/data.gd"
+],
+[
+224,
+"Costo de oportunidad",
+"scripts/economy/data.gd"
+],
+[
+225,
+"El dinero quieto podría rendir en bonos. Si tu negocio rinde menos que los bonos, estás perdiendo dinero aunque ganes.",
+"scripts/economy/data.gd"
+],
+[
+226,
+"ROI, ROE y ROA",
+"scripts/economy/data.gd"
+],
+[
+227,
+"Retorno sobre la inversión de cada sucursal, sobre tu patrimonio y sobre tus activos totales. Comparan cuánto ganas con cuánto pusiste.",
+"scripts/economy/data.gd"
+],
+[
+228,
+"EBITDA",
+"scripts/economy/data.gd"
+],
+[
+229,
+"Utilidad antes de intereses, impuestos, depreciación y amortización. Mide cuánto genera la operación del negocio.",
+"scripts/economy/data.gd"
+],
+[
+230,
+"Valor económico agregado (EVA)",
+"scripts/economy/data.gd"
+],
+[
+231,
+"Utilidad neta − (patrimonio × costo del capital). Si es positivo, creas riqueza por encima del costo de oportunidad.",
+"scripts/economy/data.gd"
+],
+[
+232,
+"Valoración de empresa",
+"scripts/economy/data.gd"
+],
+[
+233,
+"Tu empresa vale aprox. EBITDA anual × múltiplo + caja − deuda. En auge los múltiplos suben; en recesión bajan.",
+"scripts/economy/data.gd"
+],
+[
+234,
+"Liquidez y sobregiro",
+"scripts/economy/data.gd"
+],
+[
+235,
+"Puedes quedar en caja negativa un tiempo (sobregiro) con un interés muy alto. Si pasas el límite muchos días, quiebras.",
+"scripts/economy/data.gd"
+],
+[
+236,
+"Delegación",
+"scripts/economy/data.gd"
+],
+[
+237,
+"Un gerente cuesta un salario fijo, pero ajusta solo el personal y el inventario de su línea.",
+"scripts/economy/data.gd"
+],
+[
+238,
+"Riesgo y valor esperado",
+"scripts/economy/data.gd"
+],
+[
+239,
+"Valor esperado = suma de (probabilidad × resultado). Dos opciones con el mismo valor esperado pueden tener riesgos muy distintos: los dilemas del juego te muestran las probabilidades para que compares.",
+"scripts/economy/data.gd"
+],
+[
+240,
+"Aversión a la pérdida",
+"scripts/economy/data.gd"
+],
+[
+241,
+"Perder $100 duele más de lo que alegra ganar $100. Por eso cuesta cortar un negocio que pierde o romper una racha: reconócelo y decide con números.",
+"scripts/economy/data.gd"
+],
+[
+242,
+"Riesgo moral y reputación",
+"scripts/economy/data.gd"
+],
+[
+243,
+"Un atajo poco ético (sobornos, carteles, mercancía dudosa) puede ahorrar dinero hoy, pero si se descubre la multa y la pérdida de reputación cuestan mucho más.",
+"scripts/economy/data.gd"
+],
+[
+244,
+"Gastos de representación",
+"scripts/economy/data.gd"
+],
+[
+245,
+"Lo que la empresa gasta en la imagen de su dueño (ropa, accesorios). Es un gasto operativo: baja la utilidad igual que cualquier otro.",
+"scripts/economy/data.gd"
+],
+[
+246,
+"Economías de escala en la gestión",
+"scripts/economy/data.gd"
+],
+[
+247,
+"Invertir en sistemas (ERP, servicios compartidos, IA) baja el costo de coordinar muchas sucursales. Es la forma de seguir creciendo sin que los gastos corporativos se coman la utilidad.",
+"scripts/economy/data.gd"
+],
+[
+248,
+"Riesgo y rentabilidad",
+"scripts/economy/data.gd"
+],
+[
+249,
+"La bolsa rinde más que los bonos en promedio, pero sube y baja todos los días y cae fuerte en recesión. Más rentabilidad esperada siempre viene con más riesgo.",
+"scripts/economy/data.gd"
+],
+[
+250,
+"Colusión",
+"scripts/economy/data.gd"
+],
+[
+251,
+"Acordar precios con la competencia sube los márgenes de ambos a costa del cliente. Es ilegal: las autoridades de libre competencia lo castigan con multas enormes.",
+"scripts/economy/data.gd"
+],
+[
+252,
+"Víctor Mardones",
+"scripts/economy/data.gd"
+],
+[
+253,
+"Mardones",
+"scripts/economy/data.gd"
+],
+[
+254,
+"Grupo Monopolio",
+"scripts/economy/data.gd"
+],
+[
+255,
+"Gracias por demostrar que el negocio de {p} deja plata. Abro uno justo enfrente.",
+"scripts/economy/data.gd"
+],
+[
+256,
+"Tus márgenes en {p} son demasiado buenos para ser solo tuyos. Ya llegué.",
+"scripts/economy/data.gd"
+],
+[
+257,
+"Vi tus números de {p}. Me gustaron. Nos vemos en la calle principal.",
+"scripts/economy/data.gd"
+],
+[
+258,
+"Cerré un local de {p}. No te emociones: es solo una retirada táctica.",
+"scripts/economy/data.gd"
+],
+[
+259,
+"Con esos precios en {p} vas a quebrar antes que yo... pero por ahora, tú ganas.",
+"scripts/economy/data.gd"
+],
+[
+260,
+"Escuché que tu banco está nervioso. Mi oferta para comprarte barato sigue en pie.",
+"scripts/economy/data.gd"
+],
+[
+261,
+"Números rojos, ¿eh? Yo empecé igual... no, mentira, yo nunca estuve tan mal.",
+"scripts/economy/data.gd"
+],
+[
+262,
+"¿{r}? Disfrútalo. Cuanto más alto subes, más dura es la caída.",
+"scripts/economy/data.gd"
+],
+[
+263,
+"Así que ahora eres {r}. Mis abogados ya saben tu nombre.",
+"scripts/economy/data.gd"
+],
+[
+264,
+"¿Compraste a uno de los míos? Esto no se queda así.",
+"scripts/economy/data.gd"
+],
+[
+265,
+"Doña Pilar Ríos",
+"scripts/economy/data.gd"
+],
+[
+266,
+"la Doña Pilar",
+"scripts/economy/data.gd"
+],
+[
+267,
+"Panaderías La Abuela",
+"scripts/economy/data.gd"
+],
+[
+268,
+"Ay, mijo, qué lindo tu negocito de {p}. Abrí uno al lado, para que no te sientas solo.",
+"scripts/economy/data.gd"
+],
+[
+269,
+"Cuarenta años vendiendo {p}. Tú llevas cuarenta días. Ya veremos quién se queda.",
+"scripts/economy/data.gd"
+],
+[
+270,
+"Les regalé un pancito a tus clientes. Ahora vienen a mi local nuevo, qué cosas.",
+"scripts/economy/data.gd"
+],
+[
+271,
+"Cerré un local de {p}. Pero no es por ti, ¿eh? Es la artritis.",
+"scripts/economy/data.gd"
+],
+[
+272,
+"Me ganaste esta vez, mijo. Te mando una empanada para que celebres.",
+"scripts/economy/data.gd"
+],
+[
+273,
+"¿Sin plata, mijo? Te puedo prestar para el pan... con intereses de abuela.",
+"scripts/economy/data.gd"
+],
+[
+274,
+"Abrígate, que esos números rojos dan frío.",
+"scripts/economy/data.gd"
+],
+[
+275,
+"¡{r}! Qué orgullo, mijo. Igual te voy a ganar, pero qué orgullo.",
+"scripts/economy/data.gd"
+],
+[
+276,
+"{r}... cuando yo tenía tu edad también me creía mucho.",
+"scripts/economy/data.gd"
+],
+[
+277,
+"¿Me compraste un local? Cuídalo, que ahí horneé mis mejores marraquetas.",
+"scripts/economy/data.gd"
+],
+[
+278,
+"Kevin Soto",
+"scripts/economy/data.gd"
+],
+[
+279,
+"Kevin",
+"scripts/economy/data.gd"
+],
+[
+280,
+"SmashBurger Bros",
+"scripts/economy/data.gd"
+],
+[
+281,
+"¡Bro! Abrí un SmashBurger frente a tu local de {p}. Tengo 300 mil seguidores, ¿y tú?",
+"scripts/economy/data.gd"
+],
+[
+282,
+"Hice un live probando tu {p}. Spoiler: el mío es mejor. Nuevo local abierto, bro.",
+"scripts/economy/data.gd"
+],
+[
+283,
+"Bro, el mercado de {p} es mío. Bueno, todavía no, pero acabo de abrir otro.",
+"scripts/economy/data.gd"
+],
+[
+284,
+"Cerré un local de {p}, bro. Es estrategia, lo explico en mi podcast.",
+"scripts/economy/data.gd"
+],
+[
+285,
+"Ok bro, tus precios están locos. Me retiro... por ahora.",
+"scripts/economy/data.gd"
+],
+[
+286,
+"Bro, vi tus números rojos. ¿Quieres mi curso de emprendimiento? 50% off.",
+"scripts/economy/data.gd"
+],
+[
+287,
+"Tranqui bro, la quiebra es solo un 'pivoteo' con otro nombre.",
+"scripts/economy/data.gd"
+],
+[
+288,
+"¿{r}? Respeto, bro. Igual mi Instagram tiene más likes que tu empresa.",
+"scripts/economy/data.gd"
+],
+[
+289,
+"{r}, bro. Hagamos un collab... mentira, te voy a destruir.",
+"scripts/economy/data.gd"
+],
+[
+290,
+"¡NO, BRO! ¡Ese local era de mi primo! Esto va directo a mis historias.",
+"scripts/economy/data.gd"
+],
+[
+291,
+"Valentina Cruz",
+"scripts/economy/data.gd"
+],
+[
+292,
+"Valentina",
+"scripts/economy/data.gd"
+],
+[
+293,
+"Maison Cruz",
+"scripts/economy/data.gd"
+],
+[
+294,
+"Querida, tu {p} es... valiente. Abrí una boutique cerca para que la gente compare.",
+"scripts/economy/data.gd"
+],
+[
+295,
+"La moda es cruel. Yo también. Nueva tienda de {p} en tu calle.",
+"scripts/economy/data.gd"
+],
+[
+296,
+"Cerré una tienda de {p}. Era de la temporada pasada, claramente.",
+"scripts/economy/data.gd"
+],
+[
+297,
+"Bajaste tanto tus precios que ya no puedo competir. Qué... vulgar. Pero efectivo.",
+"scripts/economy/data.gd"
+],
+[
+298,
+"Números rojos: el único rojo que no está de moda, querida.",
+"scripts/economy/data.gd"
+],
+[
+299,
+"Si necesitas vender algo, yo te compro los muebles. Baratos, claro.",
+"scripts/economy/data.gd"
+],
+[
+300,
+"{r}. Qué chic. Casi tanto como yo.",
+"scripts/economy/data.gd"
+],
+[
+301,
+"{r}, querida. Ya te puedo invitar a mis fiestas... a la de los empleados.",
+"scripts/economy/data.gd"
+],
+[
+302,
+"¿Compraste mi tienda? Espero que al menos cambies las vitrinas.",
+"scripts/economy/data.gd"
+],
+[
+303,
+"Dr. Tomás Feng",
+"scripts/economy/data.gd"
+],
+[
+304,
+"el Dr. Feng",
+"scripts/economy/data.gd"
+],
+[
+305,
+"NeoTech Global",
+"scripts/economy/data.gd"
+],
+[
+306,
+"Mi algoritmo detectó margen excesivo en {p}. Corrigiendo con un nuevo local.",
+"scripts/economy/data.gd"
+],
+[
+307,
+"Probabilidad de que me superes en {p}: 3,2%. Abro sucursal para bajarla a cero.",
+"scripts/economy/data.gd"
+],
+[
+308,
+"Error 404: local de {p} no encontrado. Lo cerré. Recalculando estrategia.",
+"scripts/economy/data.gd"
+],
+[
+309,
+"Tus precios en {p} no estaban en mi modelo. Actualizando.",
+"scripts/economy/data.gd"
+],
+[
+310,
+"Tu flujo de caja es negativo. Mi modelo predice tu quiebra. Me encantaría equivocarme. No me equivoco.",
+"scripts/economy/data.gd"
+],
+[
+311,
+"Detecto pánico en tus decisiones. Respira. Luego véndeme todo.",
+"scripts/economy/data.gd"
+],
+[
+312,
+"{r}: dato registrado. Actualizando mi modelo de amenazas.",
+"scripts/economy/data.gd"
+],
+[
+313,
+"Felicitaciones por {r}. Esto es un mensaje automático.",
+"scripts/economy/data.gd"
+],
+[
+314,
+"Adquisición detectada. Respuesta emocional: no disponible. Respuesta comercial: en camino.",
+"scripts/economy/data.gd"
+],
+[
+315,
+"Mi Empresa",
+"scripts/economy/sim.gd"
+],
+[
+316,
+"Puesto de café",
+"scripts/economy/sim.gd"
+],
+[
+317,
+"Abriste tu primer puesto de café con %s en caja. ¡A vender!",
+"scripts/economy/sim.gd"
+],
+[
+318,
+"Modo inversionista: tienes capital para crecer rápido. No hay final: llega a Mil millonario.",
+"scripts/economy/sim.gd"
+],
+[
+319,
+"Consejo: en Mercado puedes ver la curva de precio y el precio que maximiza tu utilidad.",
+"scripts/economy/sim.gd"
+],
+[
+320,
+"%s (%s): «%s»",
+"scripts/economy/sim.gd"
+],
+[
+321,
+"Día %d · %s · Año %d",
+"scripts/economy/sim.gd"
+],
+[
+322,
+"Primero desbloquea ese negocio.",
+"scripts/economy/sim.gd"
+],
+[
+323,
+"Necesitas %s en caja.",
+"scripts/economy/sim.gd"
+],
+[
+324,
+"Abriste un %s.",
+"scripts/economy/sim.gd"
+],
+[
+325,
+"Ya es del tamaño máximo.",
+"scripts/economy/sim.gd"
+],
+[
+326,
+"Ampliación a %s",
+"scripts/economy/sim.gd"
+],
+[
+327,
+"Sucursal ampliada a %s.",
+"scripts/economy/sim.gd"
+],
+[
+328,
+"Vendiste la sucursal por %s (valor en libros %s).",
+"scripts/economy/sim.gd"
+],
+[
+329,
+"No caben más empleados. Amplía la sucursal.",
+"scripts/economy/sim.gd"
+],
+[
+330,
+"Empleado contratado.",
+"scripts/economy/sim.gd"
+],
+[
+331,
+"No hay empleados.",
+"scripts/economy/sim.gd"
+],
+[
+332,
+"Empleado despedido (se pagó indemnización).",
+"scripts/economy/sim.gd"
+],
+[
+333,
+"Ya está desbloqueado.",
+"scripts/economy/sim.gd"
+],
+[
+334,
+"Licencias y desarrollo: %s",
+"scripts/economy/sim.gd"
+],
+[
+335,
+"Nueva línea de negocio: %s. Abre tu primera sucursal.",
+"scripts/economy/sim.gd"
+],
+[
+336,
+"Desbloqueaste %s.",
+"scripts/economy/sim.gd"
+],
+[
+337,
+"Ya tienes fábrica.",
+"scripts/economy/sim.gd"
+],
+[
+338,
+"Fábrica de %s",
+"scripts/economy/sim.gd"
+],
+[
+339,
+"Fábrica propia de %s: tu costo unitario baja 30%%.",
+"scripts/economy/sim.gd"
+],
+[
+340,
+"Fábrica construida.",
+"scripts/economy/sim.gd"
+],
+[
+341,
+"Gerente contratado.",
+"scripts/economy/sim.gd"
+],
+[
+342,
+"Gerente despedido.",
+"scripts/economy/sim.gd"
+],
+[
+343,
+"No quedan competidores.",
+"scripts/economy/sim.gd"
+],
+[
+344,
+"Local adquirido de %s",
+"scripts/economy/sim.gd"
+],
+[
+345,
+"Plusvalía (goodwill): %s",
+"scripts/economy/sim.gd"
+],
+[
+346,
+"Adquiriste un competidor de %s: ahora es tu local.",
+"scripts/economy/sim.gd"
+],
+[
+347,
+"Adquisición completada.",
+"scripts/economy/sim.gd"
+],
+[
+348,
+"Ya tienes el armario.",
+"scripts/economy/sim.gd"
+],
+[
+349,
+"Necesitas %s en caja para comprar el armario.",
+"scripts/economy/sim.gd"
+],
+[
+350,
+"Compraste el armario de la oficina por %s: ya puedes renovar tu imagen.",
+"scripts/economy/sim.gd"
+],
+[
+351,
+"Armario comprado. ¡Elige tu ropa!",
+"scripts/economy/sim.gd"
+],
+[
+352,
+"Compraste %s por %s.",
+"scripts/economy/sim.gd"
+],
+[
+353,
+"Elige un monto.",
+"scripts/economy/sim.gd"
+],
+[
+354,
+"El banco no te presta tanto.",
+"scripts/economy/sim.gd"
+],
+[
+355,
+"Préstamo de %s al %s anual.",
+"scripts/economy/sim.gd"
+],
+[
+356,
+"Préstamo pagado por completo (%s de intereses del mes).",
+"scripts/economy/sim.gd"
+],
+[
+357,
+"No tienes caja disponible.",
+"scripts/economy/sim.gd"
+],
+[
+358,
+"Invertiste %s en bonos.",
+"scripts/economy/sim.gd"
+],
+[
+359,
+"No tienes bonos.",
+"scripts/economy/sim.gd"
+],
+[
+360,
+"Retiraste %s de bonos.",
+"scripts/economy/sim.gd"
+],
+[
+361,
+"Ya tienes el mejor sistema de gestión.",
+"scripts/economy/sim.gd"
+],
+[
+362,
+"Sistemas de gestión: %s",
+"scripts/economy/sim.gd"
+],
+[
+363,
+"Oficina central: %s. Tus gastos corporativos bajan.",
+"scripts/economy/sim.gd"
+],
+[
+364,
+"Instalaste %s.",
+"scripts/economy/sim.gd"
+],
+[
+365,
+"La próxima reunión de estrategia es en %d días.",
+"scripts/economy/sim.gd"
+],
+[
+366,
+"Reunión de estrategia: %s (%s).",
+"scripts/economy/sim.gd"
+],
+[
+367,
+"%s: en marcha.",
+"scripts/economy/sim.gd"
+],
+[
+368,
+"Podrás volver a hacerlo en %d día%s.",
+"scripts/economy/sim.gd"
+],
+[
+369,
+"Primero necesitas un negocio abierto.",
+"scripts/economy/sim.gd"
+],
+[
+370,
+"Repartiste muestras en el parque (%s): más gente conoce tus marcas.",
+"scripts/economy/sim.gd"
+],
+[
+371,
+"Encuesta: a los vecinos les parecen justos tus precios. Sigue así.",
+"scripts/economy/sim.gd"
+],
+[
+372,
+"Encuesta: por %s los vecinos pagarían alrededor de %s (cobras %s).",
+"scripts/economy/sim.gd"
+],
+[
+373,
+"Patrocinaste el torneo de vóley (%s): +5 de reputación y más clientes en la playa por 7 días.",
+"scripts/economy/sim.gd"
+],
+[
+374,
+"Pescaste y lo vendiste en el puerto: +%s.",
+"scripts/economy/sim.gd"
+],
+[
+375,
+"Invertiste %s en el fondo.",
+"scripts/economy/sim.gd"
+],
+[
+376,
+"No tienes dinero en el fondo.",
+"scripts/economy/sim.gd"
+],
+[
+377,
+"Retiraste %s del fondo.",
+"scripts/economy/sim.gd"
+],
+[
+378,
+"%s: pierdes %s de la demanda por falta de personal o espacio.",
+"scripts/economy/sim.gd"
+],
+[
+379,
+"%s: te quedaste sin inventario. Sube los días de inventario.",
+"scripts/economy/sim.gd"
+],
+[
+380,
+"%s: hay personal ocioso en %d sucursal(es). Cuesta salario sin vender.",
+"scripts/economy/sim.gd"
+],
+[
+381,
+"%s: el precio que maximiza tu utilidad ronda %s.",
+"scripts/economy/sim.gd"
+],
+[
+382,
+"%s: la inflación dejó tu precio muy por debajo del mercado.",
+"scripts/economy/sim.gd"
+],
+[
+383,
+"Estás en sobregiro: pagas %s anual sobre el saldo negativo.",
+"scripts/economy/sim.gd"
+],
+[
+384,
+"Tienes mucha caja quieta. Invertirla o ponerla en bonos evita el costo de oportunidad.",
+"scripts/economy/sim.gd"
+],
+[
+385,
+"Ya puedes desbloquear %s en Negocios.",
+"scripts/economy/sim.gd"
+],
+[
+386,
+"Caja negativa: se vendieron %s en inversiones para cubrirla.",
+"scripts/economy/sim.gd"
+],
+[
+387,
+"¡Superaste el límite de sobregiro! Si sigues así 20 días, el banco te declara en quiebra.",
+"scripts/economy/sim.gd"
+],
+[
+388,
+"Quiebra: el banco cerró tus cuentas.",
+"scripts/economy/sim.gd"
+],
+[
+389,
+"¡Récord de ventas en un día: %s!",
+"scripts/economy/sim.gd"
+],
+[
+390,
+"El costo de %s volvió a la normalidad.",
+"scripts/economy/sim.gd"
+],
+[
+391,
+"Tu %s subió a %d estrellas.",
+"scripts/economy/sim.gd"
+],
+[
+392,
+"¡La guía de la ciudad recomienda tu %s! Más gente conoce tu marca.",
+"scripts/economy/sim.gd"
+],
+[
+393,
+"Tu %s bajó a %d %s: revisa la atención, el precio o la calidad.",
+"scripts/economy/sim.gd"
+],
+[
+394,
+"Helada en Brasil: el café en grano sube 30% durante 45 días.",
+"scripts/economy/sim.gd"
+],
+[
+395,
+"Escasez mundial de chips: la electrónica cuesta 25% más por 60 días.",
+"scripts/economy/sim.gd"
+],
+[
+396,
+"Festival gastronómico en la ciudad: +25% de demanda de comida por 10 días.",
+"scripts/economy/sim.gd"
+],
+[
+397,
+"¡Viral en redes! Tu marca de %s gana reputación.",
+"scripts/economy/sim.gd"
+],
+[
+398,
+"Inspección sanitaria: multa de %s",
+"scripts/economy/sim.gd"
+],
+[
+399,
+" (la calidad económica aumenta el riesgo).",
+"scripts/economy/sim.gd"
+],
+[
+400,
+"El gobierno sube el salario mínimo 8%. Tus costos laborales aumentan.",
+"scripts/economy/sim.gd"
+],
+[
+401,
+"Robo en una bodega de %s: perdiste 25%% del inventario.",
+"scripts/economy/sim.gd"
+],
+[
+402,
+"Crisis financiera internacional: la economía entra en recesión.",
+"scripts/economy/sim.gd"
+],
+[
+403,
+"Reforma tributaria: el impuesto a las utilidades sube a %s.",
+"scripts/economy/sim.gd"
+],
+[
+404,
+"Reforma tributaria: el impuesto a las utilidades baja a %s.",
+"scripts/economy/sim.gd"
+],
+[
+405,
+"Una cadena nueva de %s llega a la ciudad.",
+"scripts/economy/sim.gd"
+],
+[
+406,
+"Terminaste de pagar un préstamo.",
+"scripts/economy/sim.gd"
+],
+[
+407,
+"Ciclo económico: la economía entra en %s.",
+"scripts/economy/sim.gd"
+],
+[
+408,
+"Cierre de %s: utilidad neta %s.",
+"scripts/economy/sim.gd"
+],
+[
+409,
+"¡Racha de %d meses seguidos con utilidad!",
+"scripts/economy/sim.gd"
+],
+[
+410,
+"Se rompió tu racha de %d meses con utilidad.",
+"scripts/economy/sim.gd"
+],
+[
+411,
+"¡Nuevo rango: %s! Tu empresa vale %s.",
+"scripts/economy/sim.gd"
+],
+[
+412,
+"un imperio de más de $10 millones",
+"scripts/economy/sim.gd"
+],
+[
+413,
+"una fortuna de mil millones",
+"scripts/economy/sim.gd"
+],
+[
+414,
+"¡Construiste %s en %d minutos de juego!",
+"scripts/economy/sim.gd"
+],
+[
+415,
+"Atraído por las ganancias del mercado de %s, abre un nuevo competidor.",
+"scripts/economy/sim.gd"
+],
+[
+416,
+"La recesión hace cerrar a un competidor de %s.",
+"scripts/economy/sim.gd"
+],
+[
+417,
+"Tus precios bajos sacaron del mercado a un competidor de %s.",
+"scripts/economy/sim.gd"
+],
+[
+418,
+"%s cerró su local del terreno %d: vuelve a estar en venta.",
+"scripts/economy/sim.gd"
+],
+[
+419,
+" en la playa",
+"scripts/economy/sim.gd"
+],
+[
+420,
+"%s compró el terreno %d%s y abrió un local de %s.",
+"scripts/economy/sim.gd"
+],
+[
+421,
+"Decisión urgente: %s",
+"scripts/economy/sim.gd"
+],
+[
+422,
+"Un inspector quiere «colaboración»",
+"scripts/economy/sim.gd"
+],
+[
+423,
+"Un inspector sanitario revisó tu %s y dice haber encontrado «irregularidades». Te ofrece olvidarlo todo por %s en efectivo, sin factura. Te mira esperando.",
+"scripts/economy/sim.gd"
+],
+[
+424,
+"Pagar el soborno (%s)",
+"scripts/economy/sim.gd"
+],
+[
+425,
+"75%%: nadie se entera. 25%%: sale en las noticias, multa de %s y tu reputación se desploma (−25).",
+"scripts/economy/sim.gd"
+],
+[
+426,
+"Rechazarlo y aceptar la inspección",
+"scripts/economy/sim.gd"
+],
+[
+427,
+"Multa segura de %s, pero ganas reputación por ser honesto (+5).",
+"scripts/economy/sim.gd"
+],
+[
+428,
+"¡Escándalo! Un periodista grabó el soborno: multa de %s y tu reputación se hunde.",
+"scripts/economy/sim.gd"
+],
+[
+429,
+"Pagaste y el inspector desapareció. Nadie se enteró... por ahora.",
+"scripts/economy/sim.gd"
+],
+[
+430,
+"Pagaste la multa de %s. Los clientes valoran tu transparencia (+5 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+431,
+"Una influencer quiere promocionarte",
+"scripts/economy/sim.gd"
+],
+[
+432,
+"Una influencer con 2 millones de seguidores quiere hacer un video de tu %s. Cobra %s por adelantado. «Mis videos o explotan o no los ve nadie», admite.",
+"scripts/economy/sim.gd"
+],
+[
+433,
+"Contratarla (%s)",
+"scripts/economy/sim.gd"
+],
+[
+434,
+"55%: se vuelve viral: +20 reputación y +40% de demanda por 20 días. 45%: nadie lo ve y pierdes el dinero.",
+"scripts/economy/sim.gd"
+],
+[
+435,
+"No, gracias",
+"scripts/economy/sim.gd"
+],
+[
+436,
+"No gastas nada. Nunca sabrás qué habría pasado.",
+"scripts/economy/sim.gd"
+],
+[
+437,
+"Dejaste pasar a la influencer. Tu caja queda igual.",
+"scripts/economy/sim.gd"
+],
+[
+438,
+"¡EL VIDEO EXPLOTÓ! Millones de vistas: +40% de demanda por 20 días y +20 de reputación.",
+"scripts/economy/sim.gd"
+],
+[
+439,
+"El video pasó sin pena ni gloria. Perdiste %s.",
+"scripts/economy/sim.gd"
+],
+[
+440,
+"Tu mejor empleada pide un bono",
+"scripts/economy/sim.gd"
+],
+[
+441,
+"Camila, tu mejor empleada de %s, lleva meses haciendo doble turno. Pide un bono de %s. «Si no, me voy con %s: ya me ofrecieron trabajo.»",
+"scripts/economy/sim.gd"
+],
+[
+442,
+"Darle el bono (%s)",
+"scripts/economy/sim.gd"
+],
+[
+443,
+"El equipo se motiva y se nota en la atención: +8 de reputación.",
+"scripts/economy/sim.gd"
+],
+[
+444,
+"Decirle que no",
+"scripts/economy/sim.gd"
+],
+[
+445,
+"50%: se queda, molesta. 50%: renuncia, pierdes un empleado y se lleva clientes al rival (−10 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+446,
+"Camila sonríe: «No te vas a arrepentir». El equipo trabaja con más ganas (+8 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+447,
+"Camila se quedó, pero ya no saluda igual.",
+"scripts/economy/sim.gd"
+],
+[
+448,
+"Camila renunció y ahora trabaja para %s. Se llevó a varios clientes (−10 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+449,
+"la competencia",
+"scripts/economy/sim.gd"
+],
+[
+450,
+"Una ganga sospechosa",
+"scripts/economy/sim.gd"
+],
+[
+451,
+"Un proveedor que nadie conoce ofrece un lote de %s: %d unidades por %s. Valen %s. No da factura ni dirección.",
+"scripts/economy/sim.gd"
+],
+[
+452,
+"Comprar el lote (%s)",
+"scripts/economy/sim.gd"
+],
+[
+453,
+"65%%: ahorras %s. 35%%: estaba en mal estado, lo botas y algunos clientes se enferman (−15 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+454,
+"Rechazarlo",
+"scripts/economy/sim.gd"
+],
+[
+455,
+"Sigues con tu proveedor de siempre.",
+"scripts/economy/sim.gd"
+],
+[
+456,
+"Rechazaste el lote. Más vale malo conocido que bueno por conocer.",
+"scripts/economy/sim.gd"
+],
+[
+457,
+"¡Era bueno! Tu inventario creció y tu costo promedio bajó. Ahorraste %s.",
+"scripts/economy/sim.gd"
+],
+[
+458,
+"El lote estaba podrido. Lo botaste, pero algunos clientes ya se habían enfermado (−15 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+459,
+"Te demandan",
+"scripts/economy/sim.gd"
+],
+[
+460,
+"Un cliente asegura que se enfermó en tu %s y te demanda. Su abogado te llama: «Firmamos un acuerdo por %s y aquí no pasó nada».",
+"scripts/economy/sim.gd"
+],
+[
+461,
+"Pagar el acuerdo (%s)",
+"scripts/economy/sim.gd"
+],
+[
+462,
+"El caso se cierra en silencio.",
+"scripts/economy/sim.gd"
+],
+[
+463,
+"Ir a juicio",
+"scripts/economy/sim.gd"
+],
+[
+464,
+"50%%: ganas y no pagas nada (+5 reputación). 50%%: pierdes, pagas %s y sale en las noticias (−20 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+465,
+"Pagaste el acuerdo. El caso se cerró sin ruido.",
+"scripts/economy/sim.gd"
+],
+[
+466,
+"¡GANASTE EL JUICIO! El juez falló a tu favor. No pagas nada y tu reputación sube.",
+"scripts/economy/sim.gd"
+],
+[
+467,
+"Perdiste el juicio: pagas %s y tu marca aparece en todos los noticieros.",
+"scripts/economy/sim.gd"
+],
+[
+468,
+"%s te propone un pacto",
+"scripts/economy/sim.gd"
+],
+[
+469,
+"%s, de %s, te invita a cenar. «Subamos los precios de %s los dos y dejemos de pelear. Ganamos todos... menos los clientes.» Es ilegal.",
+"scripts/economy/sim.gd"
+],
+[
+470,
+"Aceptar el pacto",
+"scripts/economy/sim.gd"
+],
+[
+471,
+"Tu demanda de %s sube 30%% por 60 días. 30%%: la autoridad descubre el cartel: multa de %s y −30 de reputación.",
+"scripts/economy/sim.gd"
+],
+[
+472,
+"Se ofende: 50% de que abra otro local en tu mercado.",
+"scripts/economy/sim.gd"
+],
+[
+473,
+"Denunciarlo a la autoridad",
+"scripts/economy/sim.gd"
+],
+[
+474,
+"50%: le cierran un local (un competidor menos). 50%: no hay pruebas y abre dos locales para vengarse.",
+"scripts/economy/sim.gd"
+],
+[
+475,
+"¡La fiscalía allanó tus oficinas! El cartel quedó al descubierto: multa de %s.",
+"scripts/economy/sim.gd"
+],
+[
+476,
+"Pacto sellado. Los precios suben en toda la ciudad y tus ventas también... por ahora.",
+"scripts/economy/sim.gd"
+],
+[
+477,
+"%s: «Te vas a arrepentir.» Abrió otro local en tu mercado.",
+"scripts/economy/sim.gd"
+],
+[
+478,
+"%s se fue de la cena sin pagar. Por ahora no pasó nada más.",
+"scripts/economy/sim.gd"
+],
+[
+479,
+"¡La autoridad multó a %s y le cerró un local! Un competidor menos.",
+"scripts/economy/sim.gd"
+],
+[
+480,
+"No hubo pruebas y, como venganza, %s abrió dos locales nuevos.",
+"scripts/economy/sim.gd"
+],
+[
+481,
+"Quieren comprarte una sucursal",
+"scripts/economy/sim.gd"
+],
+[
+482,
+"Un inversionista quiere comprar tu %s por %s al contado. En libros vale %s y el mes pasado aportó %s. La oferta vence hoy.",
+"scripts/economy/sim.gd"
+],
+[
+483,
+"Vender (%s)",
+"scripts/economy/sim.gd"
+],
+[
+484,
+"Recibes el dinero ahora y pierdes las ganancias futuras de esa sucursal. Compara la oferta con lo que te dejaría en los próximos meses.",
+"scripts/economy/sim.gd"
+],
+[
+485,
+"No vender",
+"scripts/economy/sim.gd"
+],
+[
+486,
+"Te quedas con la sucursal y sus ganancias futuras.",
+"scripts/economy/sim.gd"
+],
+[
+487,
+"Rechazaste la oferta: la sucursal sigue siendo tuya.",
+"scripts/economy/sim.gd"
+],
+[
+488,
+"Vendiste la sucursal por %s: %s más que su valor en libros.",
+"scripts/economy/sim.gd"
+],
+[
+489,
+" del terreno %d",
+"scripts/economy/sim.gd"
+],
+[
+490,
+"%s quiere comprarte un local",
+"scripts/economy/sim.gd"
+],
+[
+491,
+"%s, de %s, te ofrece %s por tu %s%s. «Véndemelo y nos ahorramos la pelea.» En libros vale %s y el mes pasado aportó %s. Si aceptas, ese local pasa a ser de la competencia.",
+"scripts/economy/sim.gd"
+],
+[
+492,
+"Recibes el dinero ahora. El local queda en manos del rival: tienes un competidor más en ese mercado.",
+"scripts/economy/sim.gd"
+],
+[
+493,
+"Te quedas con el local. 30%: el rival se enoja y compra un terreno vacío para abrir cerca.",
+"scripts/economy/sim.gd"
+],
+[
+494,
+"La oferta ya no corre: ese local ya no es tuyo.",
+"scripts/economy/sim.gd"
+],
+[
+495,
+"%s: «Como quieras.» Compró el terreno %d para abrir cerca de ti.",
+"scripts/economy/sim.gd"
+],
+[
+496,
+"%s: «Ya cambiarás de opinión.» El local sigue siendo tuyo.",
+"scripts/economy/sim.gd"
+],
+[
+497,
+"Vendiste el local a %s por %s. Ahora es de la competencia.",
+"scripts/economy/sim.gd"
+],
+[
+498,
+"Tus empleados amenazan con una huelga",
+"scripts/economy/sim.gd"
+],
+[
+499,
+"El sindicato de tus locales de %s dice que los sueldos no alcanzan con la inflación. Piden un bono de %s para todos. «Si no, mañana nadie abre la cortina.»",
+"scripts/economy/sim.gd"
+],
+[
+500,
+"Pagar el bono (%s)",
+"scripts/economy/sim.gd"
+],
+[
+501,
+"Se acaba el conflicto y el equipo queda contento: +4 de reputación.",
+"scripts/economy/sim.gd"
+],
+[
+502,
+"Negarte",
+"scripts/economy/sim.gd"
+],
+[
+503,
+"50%%: se echan para atrás. 50%%: huelga de 7 días: la demanda de %s cae a la mitad y −8 de reputación.",
+"scripts/economy/sim.gd"
+],
+[
+504,
+"Firmaron el acuerdo. Tus empleados vuelven a trabajar con ganas (+4 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+505,
+"El sindicato se echó para atrás. Por ahora no hay huelga.",
+"scripts/economy/sim.gd"
+],
+[
+506,
+"¡HUELGA! Tus locales de %s atienden a medias por 7 días (−8 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+507,
+"Quieren comprar una franquicia",
+"scripts/economy/sim.gd"
+],
+[
+508,
+"Un empresario de otra ciudad quiere abrir locales de %s con tu marca. Te paga %s por la franquicia y él pone todo lo demás. Nadie sabe qué tan bien los va a manejar.",
+"scripts/economy/sim.gd"
+],
+[
+509,
+"Vender la franquicia (+%s)",
+"scripts/economy/sim.gd"
+],
+[
+510,
+"Recibes el dinero hoy. 35%: atiende mal y tu marca sufre (−12 de reputación).",
+"scripts/economy/sim.gd"
+],
+[
+511,
+"No, la marca es solo mía",
+"scripts/economy/sim.gd"
+],
+[
+512,
+"Nada cambia.",
+"scripts/economy/sim.gd"
+],
+[
+513,
+"Rechazaste la franquicia. Tu marca sigue siendo solo tuya.",
+"scripts/economy/sim.gd"
+],
+[
+514,
+"Cobraste %s, pero el franquiciado atiende pésimo y los clientes lo confunden contigo (−12 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+515,
+"¡Franquicia vendida por %s! Tu marca llega a otra ciudad.",
+"scripts/economy/sim.gd"
+],
+[
+516,
+"Hackearon tus computadoras",
+"scripts/economy/sim.gd"
+],
+[
+517,
+"Un virus bloqueó las cajas y el sistema de inventario de todos tus locales. En la pantalla aparece un mensaje: pagas %s en criptomonedas o borran todo.",
+"scripts/economy/sim.gd"
+],
+[
+518,
+"Pagar el rescate (%s)",
+"scripts/economy/sim.gd"
+],
+[
+519,
+"Recuperas el sistema. 20%: igual filtran los datos de tus clientes (−10 de reputación en todo).",
+"scripts/economy/sim.gd"
+],
+[
+520,
+"No pagar y llamar a un técnico",
+"scripts/economy/sim.gd"
+],
+[
+521,
+"50%%: el técnico lo arregla por %s. 50%%: pierdes 40%% del inventario y 3 días de ventas lentas.",
+"scripts/economy/sim.gd"
+],
+[
+522,
+"Pagaste, pero los hackers igual publicaron los datos de tus clientes (−10 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+523,
+"Pagaste el rescate y el sistema volvió. Mejor no contarle a nadie.",
+"scripts/economy/sim.gd"
+],
+[
+524,
+"¡El técnico era un genio! Limpió el virus por %s y no perdiste nada.",
+"scripts/economy/sim.gd"
+],
+[
+525,
+"El virus borró todo: perdiste 40% del inventario y las cajas andan lentas por 3 días.",
+"scripts/economy/sim.gd"
+],
+[
+526,
+"El club del barrio busca auspiciador",
+"scripts/economy/sim.gd"
+],
+[
+527,
+"Deportivo Las Lomas, el equipo de fútbol del barrio, está por jugar la final del campeonato regional y no tiene plata para camisetas. El presidente del club te pide ayuda.",
+"scripts/economy/sim.gd"
+],
+[
+528,
+"Auspicio chico (%s)",
+"scripts/economy/sim.gd"
+],
+[
+529,
+"Tu logo en la manga: +5 de reputación en todos tus negocios.",
+"scripts/economy/sim.gd"
+],
+[
+530,
+"Auspicio grande (%s)",
+"scripts/economy/sim.gd"
+],
+[
+531,
+"Tu logo en el pecho. 55%: ganan la final: +12 de reputación y +15% de demanda por 10 días. 45%: pierden: +3 de reputación.",
+"scripts/economy/sim.gd"
+],
+[
+532,
+"No auspiciar",
+"scripts/economy/sim.gd"
+],
+[
+533,
+"No gastas nada. Algunos vecinos lo notan (−2 de reputación).",
+"scripts/economy/sim.gd"
+],
+[
+534,
+"El equipo salió a la cancha con tu logo. El barrio te quiere un poco más (+5 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+535,
+"El club consiguió otro auspiciador. En el barrio comentan que no ayudaste (−2 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+536,
+"¡CAMPEONES! Tu logo salió en todas las fotos de la celebración: +12 reputación y +15% de demanda por 10 días.",
+"scripts/economy/sim.gd"
+],
+[
+537,
+"Perdieron la final por penales. Al menos el barrio agradece el apoyo (+3 reputación).",
+"scripts/economy/sim.gd"
+],
+[
+538,
+"Un proveedor ofrece exclusividad",
+"scripts/economy/sim.gd"
+],
+[
+539,
+"Un distribuidor nuevo te ofrece la mercadería de %s 15%% más barata durante 60 días si le compras solo a él. Es una empresa chica y no tiene mucha experiencia.",
+"scripts/economy/sim.gd"
+],
+[
+540,
+"Firmar la exclusividad",
+"scripts/economy/sim.gd"
+],
+[
+541,
+"Tu costo unitario baja 15% por 60 días. 25%: no cumple una entrega: pierdes la mitad del inventario y −8 de reputación.",
+"scripts/economy/sim.gd"
+],
+[
+542,
+"Seguir con tus proveedores de siempre",
+"scripts/economy/sim.gd"
+],
+[
+543,
+"Seguiste con tus proveedores de siempre.",
+"scripts/economy/sim.gd"
+],
+[
+544,
+"El proveedor nuevo falló la primera entrega: perdiste la mitad del inventario y hubo quejas (−8 reputación). Al menos el precio bajó 15%.",
+"scripts/economy/sim.gd"
+],
+[
+545,
+"Contrato firmado: tu mercadería de %s cuesta 15%% menos por 60 días.",
+"scripts/economy/sim.gd"
+],
+[
+546,
+"Bajo",
+"scripts/systems/graphics.gd"
+],
+[
+547,
+"Medio",
+"scripts/systems/graphics.gd"
+],
+[
+548,
+"Alto",
+"scripts/systems/graphics.gd"
+],
+[
+549,
+"Personalizado",
+"scripts/systems/graphics.gd"
+],
+[
+550,
+"Apagadas",
+"scripts/systems/graphics.gd"
+],
+[
+551,
+"Bajas",
+"scripts/systems/graphics.gd"
+],
+[
+552,
+"Medias",
+"scripts/systems/graphics.gd"
+],
+[
+553,
+"Altas",
+"scripts/systems/graphics.gd"
+],
+[
+554,
+"Cerca",
+"scripts/systems/graphics.gd"
+],
+[
+555,
+"Normal",
+"scripts/systems/graphics.gd"
+],
+[
+556,
+"Lejos",
+"scripts/systems/graphics.gd"
+],
+[
+557,
+"Según nivel",
+"scripts/systems/graphics.gd"
+],
+[
+558,
+"Duras",
+"scripts/systems/graphics.gd"
+],
+[
+559,
+"Suaves",
+"scripts/systems/graphics.gd"
+],
+[
+560,
+"Muy suaves",
+"scripts/systems/graphics.gd"
+],
+[
+561,
+"Fílmico",
+"scripts/systems/graphics.gd"
+],
+[
+562,
+"ACES",
+"scripts/systems/graphics.gd"
+],
+[
+563,
+"Reinhard",
+"scripts/systems/graphics.gd"
+],
+[
+564,
+"Lineal",
+"scripts/systems/graphics.gd"
+],
+[
+565,
+"Sin límite",
+"scripts/systems/graphics.gd"
+],
+[
+566,
+"Corta",
+"scripts/systems/graphics.gd"
+],
+[
+567,
+"Media",
+"scripts/systems/graphics.gd"
+],
+[
+568,
+"Larga",
+"scripts/systems/graphics.gd"
+],
+[
+569,
+"Máxima",
+"scripts/systems/graphics.gd"
+],
+[
+570,
+"Poca",
+"scripts/systems/graphics.gd"
+],
+[
+571,
+"Mucha",
+"scripts/systems/graphics.gd"
+],
+[
+572,
+"Apagados",
+"scripts/systems/graphics.gd"
+],
+[
+573,
+"MSAA 2x",
+"scripts/systems/graphics.gd"
+],
+[
+574,
+"MSAA 4x",
+"scripts/systems/graphics.gd"
+],
+[
+575,
+"Caminar hacia adelante",
+"scripts/systems/keys.gd"
+],
+[
+576,
+"MOVERTE",
+"scripts/systems/keys.gd"
+],
+[
+577,
+"Caminar hacia atrás",
+"scripts/systems/keys.gd"
+],
+[
+578,
+"Caminar a la izquierda",
+"scripts/systems/keys.gd"
+],
+[
+579,
+"Caminar a la derecha",
+"scripts/systems/keys.gd"
+],
+[
+580,
+"Correr (mantener)",
+"scripts/systems/keys.gd"
+],
+[
+581,
+"Saltar",
+"scripts/systems/keys.gd"
+],
+[
+582,
+"Primera o tercera persona",
+"scripts/systems/keys.gd"
+],
+[
+583,
+"Interactuar",
+"scripts/systems/keys.gd"
+],
+[
+584,
+"ACCIONES",
+"scripts/systems/keys.gd"
+],
+[
+585,
+"Abrir la tablet",
+"scripts/systems/keys.gd"
+],
+[
+586,
+"Ir a la oficina",
+"scripts/systems/keys.gd"
+],
+[
+587,
+"Pausa rápida (sin menú)",
+"scripts/systems/keys.gd"
+],
+[
+588,
+"JUEGO",
+"scripts/systems/keys.gd"
+],
+[
+589,
+"Velocidad x1",
+"scripts/systems/keys.gd"
+],
+[
+590,
+"Velocidad x2",
+"scripts/systems/keys.gd"
+],
+[
+591,
+"Velocidad x4",
+"scripts/systems/keys.gd"
+],
+[
+592,
+"Música sí / no",
+"scripts/systems/keys.gd"
+],
+[
+593,
+"Ayuda en pantalla",
+"scripts/systems/keys.gd"
+],
+[
+594,
+"Pantalla completa",
+"scripts/systems/keys.gd"
+],
+[
+595,
+"Espacio",
+"scripts/systems/keys.gd"
+],
+[
+596,
+"Shift",
+"scripts/systems/keys.gd"
+],
+[
+597,
+"Tab",
+"scripts/systems/keys.gd"
+],
+[
+598,
+"Ctrl",
+"scripts/systems/keys.gd"
+],
+[
+599,
+"Enter",
+"scripts/systems/keys.gd"
+],
+[
+600,
+"Borrar",
+"scripts/systems/keys.gd"
+],
+[
+601,
+"Bloq Mayús",
+"scripts/systems/keys.gd"
+],
+[
+602,
+"Arriba",
+"scripts/systems/keys.gd"
+],
+[
+603,
+"Abajo",
+"scripts/systems/keys.gd"
+],
+[
+604,
+"Izquierda",
+"scripts/systems/keys.gd"
+],
+[
+605,
+"Derecha",
+"scripts/systems/keys.gd"
+],
+[
+606,
+"Rain",
+"scripts/systems/sfx.gd"
+],
+[
+607,
+"Royalty free",
+"scripts/systems/sfx.gd"
+],
+[
+608,
+"Resumen",
+"scripts/ui/admin.gd"
+],
+[
+609,
+"Negocios",
+"scripts/ui/admin.gd"
+],
+[
+610,
+"Mercado",
+"scripts/ui/admin.gd"
+],
+[
+611,
+"Finanzas",
+"scripts/ui/admin.gd"
+],
+[
+612,
+"Crecimiento",
+"scripts/ui/admin.gd"
+],
+[
+613,
+"Reportes",
+"scripts/ui/admin.gd"
+],
+[
+614,
+"Noticias",
+"scripts/ui/admin.gd"
+],
+[
+615,
+"Conceptos",
+"scripts/ui/admin.gd"
+],
+[
+616,
+"Grupo Horizonte",
+"scripts/ui/admin.gd"
+],
+[
+617,
+"Inversiones Faro",
+"scripts/ui/admin.gd"
+],
+[
+618,
+"Café & Cía.",
+"scripts/ui/admin.gd"
+],
+[
+619,
+"Capital Andina",
+"scripts/ui/admin.gd"
+],
+[
+620,
+"Empresas del Sur",
+"scripts/ui/admin.gd"
+],
+[
+621,
+"Comercial Las Lomas",
+"scripts/ui/admin.gd"
+],
+[
+622,
+"Holding Aurora",
+"scripts/ui/admin.gd"
+],
+[
+623,
+"Grupo Puerto",
+"scripts/ui/admin.gd"
+],
+[
+624,
+"Alfa Retail",
+"scripts/ui/admin.gd"
+],
+[
+625,
+"Corporación Brisa",
+"scripts/ui/admin.gd"
+],
+[
+626,
+"Imperio Dorado",
+"scripts/ui/admin.gd"
+],
+[
+627,
+"Mercantil del Pacífico",
+"scripts/ui/admin.gd"
+],
+[
+628,
+"No se pudo guardar la partida (¿disco lleno o carpeta bloqueada?).",
+"scripts/ui/admin.gd"
+],
+[
+629,
+"Partida guardada en el espacio %d.",
+"scripts/ui/admin.gd"
+],
+[
+630,
+"No se pudo cargar la partida del espacio %d.",
+"scripts/ui/admin.gd"
+],
+[
+631,
+"Partida del espacio %d cargada. Presiona P para continuar.",
+"scripts/ui/admin.gd"
+],
+[
+632,
+"%s/%s/%s %s",
+"scripts/ui/admin.gd"
+],
+[
+633,
+"Día %d de %s, año %d",
+"scripts/ui/admin.gd"
+],
+[
+634,
+"%d %s, año %d",
+"scripts/ui/admin.gd"
+],
+[
+635,
+"SIMULADOR DE NEGOCIOS",
+"scripts/ui/admin.gd"
+],
+[
+636,
+"Vende, invierte y construye tu imperio",
+"scripts/ui/admin.gd"
+],
+[
+637,
+"CONTINUAR",
+"scripts/ui/admin.gd"
+],
+[
+638,
+"NUEVA PARTIDA",
+"scripts/ui/admin.gd"
+],
+[
+639,
+"CARGAR PARTIDA",
+"scripts/ui/admin.gd"
+],
+[
+640,
+"AJUSTES",
+"scripts/ui/admin.gd"
+],
+[
+641,
+"SALIR",
+"scripts/ui/admin.gd"
+],
+[
+642,
+"© 2026 Brandon Alvis (NoName-IA)  ·  ",
+"scripts/ui/admin.gd"
+],
+[
+643,
+"Créditos",
+"scripts/ui/admin.gd"
+],
+[
+644,
+"hace un momento",
+"scripts/ui/admin.gd"
+],
+[
+645,
+"hace %d min",
+"scripts/ui/admin.gd"
+],
+[
+646,
+"hace %d h",
+"scripts/ui/admin.gd"
+],
+[
+647,
+"hace %d días",
+"scripts/ui/admin.gd"
+],
+[
+648,
+"Todavía sin datos",
+"scripts/ui/admin.gd"
+],
+[
+649,
+"Rango máximo alcanzado",
+"scripts/ui/admin.gd"
+],
+[
+650,
+"Siguiente: %s",
+"scripts/ui/admin.gd"
+],
+[
+651,
+"%s / %s",
+"scripts/ui/admin.gd"
+],
+[
+652,
+"¿Dónde la guardamos?",
+"scripts/ui/admin.gd"
+],
+[
+653,
+"Tus partidas",
+"scripts/ui/admin.gd"
+],
+[
+654,
+"Cada espacio guarda una partida distinta. El juego se guarda solo en el espacio que estás usando.",
+"scripts/ui/admin.gd"
+],
+[
+655,
+"Elige la partida que quieres seguir jugando.",
+"scripts/ui/admin.gd"
+],
+[
+656,
+"Volver",
+"scripts/ui/admin.gd"
+],
+[
+657,
+"slot:%d",
+"scripts/ui/admin.gd"
+],
+[
+658,
+"ESPACIO %d",
+"scripts/ui/admin.gd"
+],
+[
+659,
+"Espacio libre",
+"scripts/ui/admin.gd"
+],
+[
+660,
+"Aquí puedes empezar una partida nueva.",
+"scripts/ui/admin.gd"
+],
+[
+661,
+"Para usarlo, elige este espacio",
+"scripts/ui/admin.gd"
+],
+[
+662,
+"al empezar una partida nueva.",
+"scripts/ui/admin.gd"
+],
+[
+663,
+"Empezar aquí",
+"scripts/ui/admin.gd"
+],
+[
+664,
+"ÚLTIMA",
+"scripts/ui/admin.gd"
+],
+[
+665,
+"Archivo dañado",
+"scripts/ui/admin.gd"
+],
+[
+666,
+"No se pudo leer esta partida. Puedes borrarla para usar el espacio otra vez.",
+"scripts/ui/admin.gd"
+],
+[
+667,
+"Guardada el %s",
+"scripts/ui/admin.gd"
+],
+[
+668,
+"QUIEBRA",
+"scripts/ui/admin.gd"
+],
+[
+669,
+"%d %s",
+"scripts/ui/admin.gd"
+],
+[
+670,
+"Caja · últimos 60 días",
+"scripts/ui/admin.gd"
+],
+[
+671,
+"Valor de la empresa",
+"scripts/ui/admin.gd"
+],
+[
+672,
+"Caja",
+"scripts/ui/admin.gd"
+],
+[
+673,
+"Fecha del juego",
+"scripts/ui/admin.gd"
+],
+[
+674,
+"Tiempo jugado",
+"scripts/ui/admin.gd"
+],
+[
+675,
+"%d min",
+"scripts/ui/admin.gd"
+],
+[
+676,
+"Guardada %s",
+"scripts/ui/admin.gd"
+],
+[
+677,
+"¿Sobrescribir esta partida?",
+"scripts/ui/admin.gd"
+],
+[
+678,
+"¿Borrar esta partida?",
+"scripts/ui/admin.gd"
+],
+[
+679,
+"Esto no se puede deshacer.",
+"scripts/ui/admin.gd"
+],
+[
+680,
+"Sí, sobrescribir",
+"scripts/ui/admin.gd"
+],
+[
+681,
+"Sí, borrar",
+"scripts/ui/admin.gd"
+],
+[
+682,
+"Cancelar",
+"scripts/ui/admin.gd"
+],
+[
+683,
+"Sobrescribir",
+"scripts/ui/admin.gd"
+],
+[
+684,
+"Cargar",
+"scripts/ui/admin.gd"
+],
+[
+685,
+"Esta partida terminó en quiebra: ya no se puede seguir.",
+"scripts/ui/admin.gd"
+],
+[
+686,
+"¿Cómo se llama tu empresa?",
+"scripts/ui/admin.gd"
+],
+[
+687,
+"Aparece en tus locales, tu oficina y en lo que dicen los clientes y los rivales.",
+"scripts/ui/admin.gd"
+],
+[
+688,
+"Escribe un nombre…",
+"scripts/ui/admin.gd"
+],
+[
+689,
+"%d / 24",
+"scripts/ui/admin.gd"
+],
+[
+690,
+"IDEAS",
+"scripts/ui/admin.gd"
+],
+[
+691,
+"EMPEZAR",
+"scripts/ui/admin.gd"
+],
+[
+692,
+"VOLVER",
+"scripts/ui/admin.gd"
+],
+[
+693,
+"Esc",
+"scripts/ui/admin.gd"
+],
+[
+694,
+"ASÍ EMPIEZAS",
+"scripts/ui/admin.gd"
+],
+[
+695,
+"Tu empresa",
+"scripts/ui/admin.gd"
+],
+[
+696,
+"Capital inicial",
+"scripts/ui/admin.gd"
+],
+[
+697,
+"Rango inicial",
+"scripts/ui/admin.gd"
+],
+[
+698,
+"Escribe un nombre de al menos 2 letras.",
+"scripts/ui/admin.gd"
+],
+[
+699,
+"Fundaste %s con un puesto de café y %s en caja. ¡A vender!",
+"scripts/ui/admin.gd"
+],
+[
+700,
+"Modo",
+"scripts/ui/admin.gd"
+],
+[
+701,
+"Nombre",
+"scripts/ui/admin.gd"
+],
+[
+702,
+"¿Cómo quieres jugar?",
+"scripts/ui/admin.gd"
+],
+[
+703,
+"Se guardará en el espacio %d.",
+"scripts/ui/admin.gd"
+],
+[
+704,
+"Empiezas desde abajo con un puesto de café. Sube rango por rango hasta construir tu imperio.",
+"scripts/ui/admin.gd"
+],
+[
+705,
+"Meta",
+"scripts/ui/admin.gd"
+],
+[
+706,
+"Imperio · %s",
+"scripts/ui/admin.gd"
+],
+[
+707,
+"Duración",
+"scripts/ui/admin.gd"
+],
+[
+708,
+"Unos 40 min",
+"scripts/ui/admin.gd"
+],
+[
+709,
+"Rangos",
+"scripts/ui/admin.gd"
+],
+[
+710,
+"Tienes capital para crecer rápido. No hay final: usa la bolsa, la gestión y las adquisiciones para llegar a Mil millonario.",
+"scripts/ui/admin.gd"
+],
+[
+711,
+"Sin final",
+"scripts/ui/admin.gd"
+],
+[
+712,
+"Libre",
+"scripts/ui/admin.gd"
+],
+[
+713,
+"MODO",
+"scripts/ui/admin.gd"
+],
+[
+714,
+"Modo ",
+"scripts/ui/admin.gd"
+],
+[
+715,
+"Del rango",
+"scripts/ui/admin.gd"
+],
+[
+716,
+"Elegir modo %s",
+"scripts/ui/admin.gd"
+],
+[
+717,
+"Fecha",
+"scripts/ui/admin.gd"
+],
+[
+718,
+"Dinero disponible. Puede ser negativa (sobregiro), pero pagas un interés muy alto.",
+"scripts/ui/admin.gd"
+],
+[
+719,
+"Valor empresa",
+"scripts/ui/admin.gd"
+],
+[
+720,
+"Valoración: EBITDA anual × múltiplo + caja + bonos + inventario − deuda. Define tu rango.",
+"scripts/ui/admin.gd"
+],
+[
+721,
+"Economía",
+"scripts/ui/admin.gd"
+],
+[
+722,
+"%s (%s)",
+"scripts/ui/admin.gd"
+],
+[
+723,
+"Índice de actividad económica (1,00 = normal). Afecta la demanda según la elasticidad ingreso de cada producto.",
+"scripts/ui/admin.gd"
+],
+[
+724,
+"Inflación anual. Tus costos, salarios y alquileres suben; el precio de referencia del mercado también.",
+"scripts/ui/admin.gd"
+],
+[
+725,
+"Tasa BC",
+"scripts/ui/admin.gd"
+],
+[
+726,
+"Tasa del banco central. Sube cuando hay inflación. Define el costo de los préstamos y el rendimiento de los bonos.",
+"scripts/ui/admin.gd"
+],
+[
+727,
+"II",
+"scripts/ui/admin.gd"
+],
+[
+728,
+"Pausa (P)",
+"scripts/ui/admin.gd"
+],
+[
+729,
+"Velocidad %s (tecla %d)",
+"scripts/ui/admin.gd"
+],
+[
+730,
+" (%d)",
+"scripts/ui/admin.gd"
+],
+[
+731,
+"Rango",
+"scripts/ui/admin.gd"
+],
+[
+732,
+"Llega a un valor de empresa de %s para ser %s.",
+"scripts/ui/admin.gd"
+],
+[
+733,
+"Guardar",
+"scripts/ui/admin.gd"
+],
+[
+734,
+"Nuevo juego",
+"scripts/ui/admin.gd"
+],
+[
+735,
+"Menú principal",
+"scripts/ui/admin.gd"
+],
+[
+736,
+"Tu empresa no pudo pagar al banco y cerró después de %s años. Revisa en Reportes qué costos se comieron tu utilidad: casi siempre es crecer con deuda más rápido que la caja.",
+"scripts/ui/admin.gd"
+],
+[
+737,
+"¡Eres mil millonario!",
+"scripts/ui/admin.gd"
+],
+[
+738,
+"Tu empresa vale %s. Lo lograste en %d minutos de juego (%s años dentro del juego). ",
+"scripts/ui/admin.gd"
+],
+[
+739,
+"Fin de la partida. ¿Quieres más títulos? Prueba el modo inversionista.",
+"scripts/ui/admin.gd"
+],
+[
+740,
+"Llegaste a la cima. Puedes seguir jugando todo lo que quieras.",
+"scripts/ui/admin.gd"
+],
+[
+741,
+"Seguir jugando",
+"scripts/ui/admin.gd"
+],
+[
+742,
+"¿Empezar de nuevo?",
+"scripts/ui/admin.gd"
+],
+[
+743,
+"Vas a elegir un espacio para la partida nueva. La actual se guarda ahora en su espacio.",
+"scripts/ui/admin.gd"
+],
+[
+744,
+"Sí, juego nuevo",
+"scripts/ui/admin.gd"
+],
+[
+745,
+"DECISIÓN URGENTE · DÍA %d DE %s",
+"scripts/ui/admin.gd"
+],
+[
+746,
+"Caja: %s",
+"scripts/ui/admin.gd"
+],
+[
+747,
+"dilema%d",
+"scripts/ui/admin.gd"
+],
+[
+748,
+"Lee las probabilidades: el valor esperado y el riesgo no siempre van juntos (ver Conceptos).",
+"scripts/ui/admin.gd"
+],
+[
+749,
+"Bonos: %s",
+"scripts/ui/admin.gd"
+],
+[
+750,
+"Dinero disponible para invertir y pagar costos.",
+"scripts/ui/admin.gd"
+],
+[
+751,
+"Ingresos del mes",
+"scripts/ui/admin.gd"
+],
+[
+752,
+"Mes pasado: %s",
+"scripts/ui/admin.gd"
+],
+[
+753,
+"Tu primer mes",
+"scripts/ui/admin.gd"
+],
+[
+754,
+"Precio × unidades vendidas en lo que va del mes.",
+"scripts/ui/admin.gd"
+],
+[
+755,
+"Utilidad neta (mes pasado)",
+"scripts/ui/admin.gd"
+],
+[
+756,
+"Margen neto: %s",
+"scripts/ui/admin.gd"
+],
+[
+757,
+"Lo que quedó después de TODOS los costos, intereses, depreciación e impuestos.",
+"scripts/ui/admin.gd"
+],
+[
+758,
+"Múltiplo: %s × EBITDA",
+"scripts/ui/admin.gd"
+],
+[
+759,
+"Cuánto pagaría un inversionista por tu empresa. El múltiplo sube en auge y baja en recesión.",
+"scripts/ui/admin.gd"
+],
+[
+760,
+"Rango:",
+"scripts/ui/admin.gd"
+],
+[
+761,
+"Siguiente rango: %s al valer %s",
+"scripts/ui/admin.gd"
+],
+[
+762,
+"¡Llegaste al rango máximo!",
+"scripts/ui/admin.gd"
+],
+[
+763,
+"Caja (últimos 365 días)",
+"scripts/ui/admin.gd"
+],
+[
+764,
+"Ingresos y EBITDA por día (promedio de 7 días)",
+"scripts/ui/admin.gd"
+],
+[
+765,
+"Alertas y consejos",
+"scripts/ui/admin.gd"
+],
+[
+766,
+"tips%d",
+"scripts/ui/admin.gd"
+],
+[
+767,
+"Todo en orden. Busca la siguiente inversión con mejor retorno.",
+"scripts/ui/admin.gd"
+],
+[
+768,
+"Últimas noticias",
+"scripts/ui/admin.gd"
+],
+[
+769,
+"Bloqueado",
+"scripts/ui/admin.gd"
+],
+[
+770,
+"Desbloquear: %s",
+"scripts/ui/admin.gd"
+],
+[
+771,
+"%d sucursal(es)%s",
+"scripts/ui/admin.gd"
+],
+[
+772,
+" · fábrica",
+"scripts/ui/admin.gd"
+],
+[
+773,
+"Ventas ayer: %s %s",
+"scripts/ui/admin.gd"
+],
+[
+774,
+"Contribución mes: %s",
+"scripts/ui/admin.gd"
+],
+[
+775,
+"Inversión (CAPEX): %s, se deprecia en 5 años. Alquiler: %s/mes. Tráfico de clientes ×%s y hasta %d empleados. Cada sucursal nueva del mismo producto canibaliza un poco a las demás.",
+"scripts/ui/admin.gd"
+],
+[
+776,
+"Abrir %s (%s)",
+"scripts/ui/admin.gd"
+],
+[
+777,
+"Integración vertical: fabricar tú mismo baja el costo unitario 30%%. Costo fijo de mantenimiento: %s/mes. Con tus ventas actuales ahorrarías ~%s/mes. Solo conviene si el ahorro supera el mantenimiento y la depreciación (%s/mes).",
+"scripts/ui/admin.gd"
+],
+[
+778,
+"Fábrica propia activa",
+"scripts/ui/admin.gd"
+],
+[
+779,
+"Construir fábrica (%s)",
+"scripts/ui/admin.gd"
+],
+[
+780,
+"Delegación: un gerente cuesta %s/mes y ajusta solo el personal de cada sucursal y los días de inventario de esta línea.",
+"scripts/ui/admin.gd"
+],
+[
+781,
+"Despedir gerente",
+"scripts/ui/admin.gd"
+],
+[
+782,
+"Contratar gerente (%s/mes)",
+"scripts/ui/admin.gd"
+],
+[
+783,
+"Fusiones y adquisiciones: compras un competidor (%d en el mercado). Recibes su local con 3 empleados y hay un rival menos. Lo que pagas por encima del valor del local es plusvalía (goodwill). Cada competidor que queda es más caro.",
+"scripts/ui/admin.gd"
+],
+[
+784,
+"Adquirir competidor (%s)",
+"scripts/ui/admin.gd"
+],
+[
+785,
+"Ayer: demanda %s · capacidad %s · vendido %s %s · nivel de servicio %s",
+"scripts/ui/admin.gd"
+],
+[
+786,
+"Sucursal",
+"scripts/ui/admin.gd"
+],
+[
+787,
+"Empleados",
+"scripts/ui/admin.gd"
+],
+[
+788,
+"Demanda",
+"scripts/ui/admin.gd"
+],
+[
+789,
+"Capacidad",
+"scripts/ui/admin.gd"
+],
+[
+790,
+"Vendido",
+"scripts/ui/admin.gd"
+],
+[
+791,
+"Contrib.",
+"scripts/ui/admin.gd"
+],
+[
+792,
+"ROI anual",
+"scripts/ui/admin.gd"
+],
+[
+793,
+"Contribución = ingresos − mercancía − salarios − alquiler de la sucursal (último mes cerrado). ROI anual = contribución × 12 ÷ inversión total en la sucursal.",
+"scripts/ui/admin.gd"
+],
+[
+794,
+" · T%d",
+"scripts/ui/admin.gd"
+],
+[
+795,
+"%s #%d%s",
+"scripts/ui/admin.gd"
+],
+[
+796,
+"Estrellas: %s de 5 (con 5 vende 15%% más que con 3; suben atendiendo a todos, con buena reputación, calidad y precio justo). Inversión total: %s. Valor en libros: %s. Productividad: %s %s por empleado al día.",
+"scripts/ui/admin.gd"
+],
+[
+797,
+"Despedir: pagas %d días de salario de indemnización.",
+"scripts/ui/admin.gd"
+],
+[
+798,
+"Contratar: %s de reclutamiento y %s/mes de salario.",
+"scripts/ui/admin.gd"
+],
+[
+799,
+"Ampliar a %s por %s: más tráfico y más empleados posibles.",
+"scripts/ui/admin.gd"
+],
+[
+800,
+"Ya es una megatienda.",
+"scripts/ui/admin.gd"
+],
+[
+801,
+"Ampliar",
+"scripts/ui/admin.gd"
+],
+[
+802,
+"Recibes %s: la mitad de su valor en libros. La otra mitad es un costo hundido y se registra como pérdida. También pagas indemnizaciones.",
+"scripts/ui/admin.gd"
+],
+[
+803,
+"¿Seguro?",
+"scripts/ui/admin.gd"
+],
+[
+804,
+"Vender",
+"scripts/ui/admin.gd"
+],
+[
+805,
+"Todavía no tienes sucursales de esta línea. Abre una arriba.",
+"scripts/ui/admin.gd"
+],
+[
+806,
+"Precio de referencia",
+"scripts/ui/admin.gd"
+],
+[
+807,
+"Costo unitario",
+"scripts/ui/admin.gd"
+],
+[
+808,
+"Margen bruto típico",
+"scripts/ui/admin.gd"
+],
+[
+809,
+"Elasticidad precio",
+"scripts/ui/admin.gd"
+],
+[
+810,
+"Con 2,0, subir el precio 10% baja la demanda cerca de 20%.",
+"scripts/ui/admin.gd"
+],
+[
+811,
+"Elasticidad ingreso",
+"scripts/ui/admin.gd"
+],
+[
+812,
+"Cuánto sube o baja la demanda con la economía.",
+"scripts/ui/admin.gd"
+],
+[
+813,
+"Ventas por empleado al día",
+"scripts/ui/admin.gd"
+],
+[
+814,
+"%s %s",
+"scripts/ui/admin.gd"
+],
+[
+815,
+"Merma diaria del inventario",
+"scripts/ui/admin.gd"
+],
+[
+816,
+"Parte del inventario que se pierde cada día.",
+"scripts/ui/admin.gd"
+],
+[
+817,
+"Temporada alta",
+"scripts/ui/admin.gd"
+],
+[
+818,
+"Competidores",
+"scripts/ui/admin.gd"
+],
+[
+819,
+"Desbloquear por %s",
+"scripts/ui/admin.gd"
+],
+[
+820,
+"Licencias, recetas y desarrollo. Se registra como activo intangible y se amortiza en 5 años.",
+"scripts/ui/admin.gd"
+],
+[
+821,
+"Te faltan %s. Ahorra o pide un préstamo en Finanzas.",
+"scripts/ui/admin.gd"
+],
+[
+822,
+"Precio y demanda",
+"scripts/ui/admin.gd"
+],
+[
+823,
+"La demanda baja cuando subes el precio (elasticidad). El mejor precio no es el más alto ni el más bajo: es el que maximiza ventas × margen.",
+"scripts/ui/admin.gd"
+],
+[
+824,
+"curve%d|%s|%f|%d|%d|%d",
+"scripts/ui/admin.gd"
+],
+[
+825,
+"Usar precio óptimo (%s)",
+"scripts/ui/admin.gd"
+],
+[
+826,
+"Precio que maximiza la utilidad diaria con tu personal y sucursales actuales. Ojo: precios muy altos también bajan la reputación.",
+"scripts/ui/admin.gd"
+],
+[
+827,
+"Precio de referencia del mercado",
+"scripts/ui/admin.gd"
+],
+[
+828,
+"Lo que cobra la competencia por esta calidad. Sube con la inflación.",
+"scripts/ui/admin.gd"
+],
+[
+829,
+"Tu precio frente al mercado",
+"scripts/ui/admin.gd"
+],
+[
+830,
+"Más del 25% por encima daña tu reputación. Mucho más barato la mejora un poco, pero sacrificas margen.",
+"scripts/ui/admin.gd"
+],
+[
+831,
+"Si es 2, subir el precio 1% baja la demanda cerca de 2%.",
+"scripts/ui/admin.gd"
+],
+[
+832,
+"Costo base × calidad × inflación. Descuento por volumen: %s%s",
+"scripts/ui/admin.gd"
+],
+[
+833,
+" · fábrica propia −30%.",
+"scripts/ui/admin.gd"
+],
+[
+834,
+"Margen de contribución por unidad",
+"scripts/ui/admin.gd"
+],
+[
+835,
+"Precio − costo variable. Lo que cada venta aporta para pagar los costos fijos.",
+"scripts/ui/admin.gd"
+],
+[
+836,
+"Demanda / capacidad (ayer)",
+"scripts/ui/admin.gd"
+],
+[
+837,
+"Capacidad = empleados × productividad. Si la demanda la supera, pierdes ventas.",
+"scripts/ui/admin.gd"
+],
+[
+838,
+"Ventas ayer · nivel de servicio",
+"scripts/ui/admin.gd"
+],
+[
+839,
+"Porcentaje de la demanda que lograste atender. Si es bajo, baja tu reputación.",
+"scripts/ui/admin.gd"
+],
+[
+840,
+"%s %s/día",
+"scripts/ui/admin.gd"
+],
+[
+841,
+"precio bajo el costo",
+"scripts/ui/admin.gd"
+],
+[
+842,
+"Costos fijos diarios de la línea (%s) ÷ margen de contribución.",
+"scripts/ui/admin.gd"
+],
+[
+843,
+"Utilidad diaria",
+"scripts/ui/admin.gd"
+],
+[
+844,
+"Utilidad diaria según precio (%s a %s)",
+"scripts/ui/admin.gd"
+],
+[
+845,
+"óptimo",
+"scripts/ui/admin.gd"
+],
+[
+846,
+"tu precio",
+"scripts/ui/admin.gd"
+],
+[
+847,
+"Utilidad diaria según precio",
+"scripts/ui/admin.gd"
+],
+[
+848,
+"Abre una sucursal para ver la curva.",
+"scripts/ui/admin.gd"
+],
+[
+849,
+"Estrategia comercial",
+"scripts/ui/admin.gd"
+],
+[
+850,
+"Calidad",
+"scripts/ui/admin.gd"
+],
+[
+851,
+"Bien inferior: se vende MÁS en recesión, pero más riesgo de multas.",
+"scripts/ui/admin.gd"
+],
+[
+852,
+"El punto medio.",
+"scripts/ui/admin.gd"
+],
+[
+853,
+"Clientes menos sensibles al precio, pero cae fuerte en recesión.",
+"scripts/ui/admin.gd"
+],
+[
+854,
+"Costo ×%s · precio de referencia ×%s · reputación objetivo %d. %s",
+"scripts/ui/admin.gd"
+],
+[
+855,
+"Marketing",
+"scripts/ui/admin.gd"
+],
+[
+856,
+"Rendimientos decrecientes: el reconocimiento de marca sube con el presupuesto, pero cada dólar extra rinde menos. Si dejas de invertir, la gente se olvida de ti poco a poco.",
+"scripts/ui/admin.gd"
+],
+[
+857,
+"Reconocimiento de marca: %s (demanda +%s)",
+"scripts/ui/admin.gd"
+],
+[
+858,
+"Reputación: %s/100 (demanda ×%s)",
+"scripts/ui/admin.gd"
+],
+[
+859,
+"Depende de la calidad, de atender toda la demanda y de no cobrar mucho más que el mercado.",
+"scripts/ui/admin.gd"
+],
+[
+860,
+"Inventario",
+"scripts/ui/admin.gd"
+],
+[
+861,
+"Compras cada mañana lo necesario para cubrir N días de ventas. Poco inventario = te quedas sin producto si sube la demanda. Mucho = más merma y costo de almacenamiento.",
+"scripts/ui/admin.gd"
+],
+[
+862,
+"%d día%s",
+"scripts/ui/admin.gd"
+],
+[
+863,
+"En bodega",
+"scripts/ui/admin.gd"
+],
+[
+864,
+"%s %s (%s)",
+"scripts/ui/admin.gd"
+],
+[
+865,
+"Merma diaria",
+"scripts/ui/admin.gd"
+],
+[
+866,
+"Inventario que se pierde cada día (se pudre o se vuelve obsoleto).",
+"scripts/ui/admin.gd"
+],
+[
+867,
+"El gerente administra el inventario de esta línea.",
+"scripts/ui/admin.gd"
+],
+[
+868,
+"Proveedores y competencia",
+"scripts/ui/admin.gd"
+],
+[
+869,
+"Descuento por volumen",
+"scripts/ui/admin.gd"
+],
+[
+870,
+"Economías de escala: el proveedor te da mejor precio si el mes pasado le compraste más.",
+"scripts/ui/admin.gd"
+],
+[
+871,
+"Siguiente: %s al comprar",
+"scripts/ui/admin.gd"
+],
+[
+872,
+"Compras del mes pasado",
+"scripts/ui/admin.gd"
+],
+[
+873,
+"Más competidores = menos clientes para ti. Llegan cuando el mercado deja mucho margen.",
+"scripts/ui/admin.gd"
+],
+[
+874,
+"Cuota de mercado estimada",
+"scripts/ui/admin.gd"
+],
+[
+875,
+"Préstamos bancarios",
+"scripts/ui/admin.gd"
+],
+[
+876,
+"Apalancamiento: el préstamo te permite invertir antes, pero pagas intereses aunque vendas poco. Más deuda frente a tu patrimonio = tasa más alta.",
+"scripts/ui/admin.gd"
+],
+[
+877,
+"Tasa del banco central",
+"scripts/ui/admin.gd"
+],
+[
+878,
+"Tasa que te ofrece el banco",
+"scripts/ui/admin.gd"
+],
+[
+879,
+"Tasa del banco central + 3% + prima por riesgo según tu deuda/patrimonio.",
+"scripts/ui/admin.gd"
+],
+[
+880,
+"Crédito disponible",
+"scripts/ui/admin.gd"
+],
+[
+881,
+"Depende de tus activos fijos, tu inventario y tu EBITDA reciente.",
+"scripts/ui/admin.gd"
+],
+[
+882,
+"Deuda actual",
+"scripts/ui/admin.gd"
+],
+[
+883,
+"Deuda / patrimonio",
+"scripts/ui/admin.gd"
+],
+[
+884,
+"patrimonio negativo",
+"scripts/ui/admin.gd"
+],
+[
+885,
+"Monto",
+"scripts/ui/admin.gd"
+],
+[
+886,
+"Plazo",
+"scripts/ui/admin.gd"
+],
+[
+887,
+"%d meses",
+"scripts/ui/admin.gd"
+],
+[
+888,
+"Cuota mensual (sistema francés)",
+"scripts/ui/admin.gd"
+],
+[
+889,
+"Cuotas iguales. Al principio pagas más interés; al final, más capital.",
+"scripts/ui/admin.gd"
+],
+[
+890,
+"Intereses totales",
+"scripts/ui/admin.gd"
+],
+[
+891,
+"Solicitar préstamo",
+"scripts/ui/admin.gd"
+],
+[
+892,
+"Préstamos activos",
+"scripts/ui/admin.gd"
+],
+[
+893,
+"No tienes deudas.",
+"scripts/ui/admin.gd"
+],
+[
+894,
+"%s al %s · %d cuotas de %s",
+"scripts/ui/admin.gd"
+],
+[
+895,
+"Prepagar",
+"scripts/ui/admin.gd"
+],
+[
+896,
+"Pagas hoy %s (el saldo más el interés de los días que van del mes) y te ahorras los intereses futuros.",
+"scripts/ui/admin.gd"
+],
+[
+897,
+"Bonos del gobierno",
+"scripts/ui/admin.gd"
+],
+[
+898,
+"Inversión sin riesgo que paga la tasa del banco central. Es el costo de oportunidad de tu dinero: cualquier inversión en el negocio debería rendir más que esto.",
+"scripts/ui/admin.gd"
+],
+[
+899,
+"Rendimiento anual",
+"scripts/ui/admin.gd"
+],
+[
+900,
+"Invertido",
+"scripts/ui/admin.gd"
+],
+[
+901,
+"Interés mensual estimado",
+"scripts/ui/admin.gd"
+],
+[
+902,
+"Invertir",
+"scripts/ui/admin.gd"
+],
+[
+903,
+"Retirar",
+"scripts/ui/admin.gd"
+],
+[
+904,
+"Retirar todo",
+"scripts/ui/admin.gd"
+],
+[
+905,
+"Costo de oportunidad: si una sucursal te rinde menos que estos bonos, ese dinero estaría mejor aquí. Si rinde más, conviene invertirlo en el negocio.",
+"scripts/ui/admin.gd"
+],
+[
+906,
+"Impuestos y riesgo",
+"scripts/ui/admin.gd"
+],
+[
+907,
+"Impuesto a las utilidades",
+"scripts/ui/admin.gd"
+],
+[
+908,
+"Se paga cada mes sobre la utilidad antes de impuestos. Intereses y depreciación reducen la base (escudo fiscal).",
+"scripts/ui/admin.gd"
+],
+[
+909,
+"Pérdidas por compensar",
+"scripts/ui/admin.gd"
+],
+[
+910,
+"Las pérdidas de meses anteriores se descuentan de las utilidades futuras antes de pagar impuestos.",
+"scripts/ui/admin.gd"
+],
+[
+911,
+"Impuestos pagados (12 meses)",
+"scripts/ui/admin.gd"
+],
+[
+912,
+"Límite de sobregiro",
+"scripts/ui/admin.gd"
+],
+[
+913,
+"Si tu caja baja de este límite durante 20 días seguidos, el banco te declara en quiebra.",
+"scripts/ui/admin.gd"
+],
+[
+914,
+"Días por debajo del límite",
+"scripts/ui/admin.gd"
+],
+[
+915,
+"Sistemas de gestión (oficina central)",
+"scripts/ui/admin.gd"
+],
+[
+916,
+"Deseconomías de escala: coordinar muchas sucursales cuesta cada vez más. Invertir en sistemas baja ese costo y te deja seguir creciendo.",
+"scripts/ui/admin.gd"
+],
+[
+917,
+"Nivel actual",
+"scripts/ui/admin.gd"
+],
+[
+918,
+"%d · %s",
+"scripts/ui/admin.gd"
+],
+[
+919,
+"Sucursales",
+"scripts/ui/admin.gd"
+],
+[
+920,
+"Gastos corporativos al mes",
+"scripts/ui/admin.gd"
+],
+[
+921,
+"Crecen más rápido que el número de sucursales (a partir de la sexta).",
+"scripts/ui/admin.gd"
+],
+[
+922,
+"Tienes el mejor sistema de gestión. Tus gastos corporativos son 88% más bajos que al empezar.",
+"scripts/ui/admin.gd"
+],
+[
+923,
+"−%d%% de gastos",
+"scripts/ui/admin.gd"
+],
+[
+924,
+"Ahorro mensual hoy",
+"scripts/ui/admin.gd"
+],
+[
+925,
+"Con más sucursales el ahorro crece. La inversión se deprecia en 5 años como cualquier activo.",
+"scripts/ui/admin.gd"
+],
+[
+926,
+"Se paga sola en",
+"scripts/ui/admin.gd"
+],
+[
+927,
+"aún no conviene",
+"scripts/ui/admin.gd"
+],
+[
+928,
+"Instalar por %s",
+"scripts/ui/admin.gd"
+],
+[
+929,
+"Fondo de inversión (bolsa)",
+"scripts/ui/admin.gd"
+],
+[
+930,
+"Riesgo y rentabilidad: en promedio rinde más que los bonos, pero sube y baja todos los días y cae fuerte en recesión.",
+"scripts/ui/admin.gd"
+],
+[
+931,
+"Invertido (valor de mercado)",
+"scripts/ui/admin.gd"
+],
+[
+932,
+"Rendimiento esperado en %s",
+"scripts/ui/admin.gd"
+],
+[
+933,
+"Cambia con el ciclo económico. Los bonos rinden la tasa del banco central.",
+"scripts/ui/admin.gd"
+],
+[
+934,
+"Bonos (sin riesgo)",
+"scripts/ui/admin.gd"
+],
+[
+935,
+"Títulos",
+"scripts/ui/admin.gd"
+],
+[
+936,
+"Tiempo de juego",
+"scripts/ui/admin.gd"
+],
+[
+937,
+"%d h %02d min",
+"scripts/ui/admin.gd"
+],
+[
+938,
+"Meta cumplida en",
+"scripts/ui/admin.gd"
+],
+[
+939,
+"Imperio ($10 M) en unos 40 min",
+"scripts/ui/admin.gd"
+],
+[
+940,
+"Mil millonario ($1.000 M)",
+"scripts/ui/admin.gd"
+],
+[
+941,
+"En modo normal el juego termina en Imperio. Para seguir con más títulos, empieza una partida en modo inversionista.",
+"scripts/ui/admin.gd"
+],
+[
+942,
+"Para seguir creciendo: sistemas de gestión para que los gastos corporativos no se coman la utilidad, y la caja trabajando en el fondo o en bonos.",
+"scripts/ui/admin.gd"
+],
+[
+943,
+"Estado de resultados",
+"scripts/ui/admin.gd"
+],
+[
+944,
+"Mes en curso",
+"scripts/ui/admin.gd"
+],
+[
+945,
+"Mes pasado",
+"scripts/ui/admin.gd"
+],
+[
+946,
+"Hace 2 meses",
+"scripts/ui/admin.gd"
+],
+[
+947,
+"Costo de ventas",
+"scripts/ui/admin.gd"
+],
+[
+948,
+"Utilidad bruta",
+"scripts/ui/admin.gd"
+],
+[
+949,
+"Salarios",
+"scripts/ui/admin.gd"
+],
+[
+950,
+"Alquiler",
+"scripts/ui/admin.gd"
+],
+[
+951,
+"Almacenamiento",
+"scripts/ui/admin.gd"
+],
+[
+952,
+"Mermas",
+"scripts/ui/admin.gd"
+],
+[
+953,
+"Gerentes",
+"scripts/ui/admin.gd"
+],
+[
+954,
+"Mantenimiento de fábricas",
+"scripts/ui/admin.gd"
+],
+[
+955,
+"Gastos corporativos",
+"scripts/ui/admin.gd"
+],
+[
+956,
+"Contratación e indemnizaciones",
+"scripts/ui/admin.gd"
+],
+[
+957,
+"Multas y representación",
+"scripts/ui/admin.gd"
+],
+[
+958,
+"Depreciación y amortización",
+"scripts/ui/admin.gd"
+],
+[
+959,
+"Utilidad operativa (EBIT)",
+"scripts/ui/admin.gd"
+],
+[
+960,
+"Intereses pagados",
+"scripts/ui/admin.gd"
+],
+[
+961,
+"Ingresos financieros",
+"scripts/ui/admin.gd"
+],
+[
+962,
+"Pérdida por venta de activos",
+"scripts/ui/admin.gd"
+],
+[
+963,
+"Utilidad antes de impuestos",
+"scripts/ui/admin.gd"
+],
+[
+964,
+"Impuestos",
+"scripts/ui/admin.gd"
+],
+[
+965,
+"Utilidad neta",
+"scripts/ui/admin.gd"
+],
+[
+966,
+"Lo que genera la operación antes de intereses, impuestos, depreciación y amortización.",
+"scripts/ui/admin.gd"
+],
+[
+967,
+"Ingresos − costo de la mercancía vendida.",
+"scripts/ui/admin.gd"
+],
+[
+968,
+"La inversión en sucursales, fábricas y licencias repartida en 5 años. No es salida de caja.",
+"scripts/ui/admin.gd"
+],
+[
+969,
+"Deseconomías de escala: la oficina central crece más rápido que el número de sucursales (desde la 6.ª).",
+"scripts/ui/admin.gd"
+],
+[
+970,
+"Producto que se pudrió, se volvió obsoleto o se perdió.",
+"scripts/ui/admin.gd"
+],
+[
+971,
+"Lo que realmente ganaste. Esta es la última línea.",
+"scripts/ui/admin.gd"
+],
+[
+972,
+"Balance general",
+"scripts/ui/admin.gd"
+],
+[
+973,
+"Foto de la empresa hoy: lo que tienes (activos) = lo que debes (pasivos) + lo que es tuyo (patrimonio).",
+"scripts/ui/admin.gd"
+],
+[
+974,
+"Bonos",
+"scripts/ui/admin.gd"
+],
+[
+975,
+"Fondo de inversión",
+"scripts/ui/admin.gd"
+],
+[
+976,
+"Activos fijos netos",
+"scripts/ui/admin.gd"
+],
+[
+977,
+"Total activos",
+"scripts/ui/admin.gd"
+],
+[
+978,
+"Préstamos",
+"scripts/ui/admin.gd"
+],
+[
+979,
+"Sobregiro",
+"scripts/ui/admin.gd"
+],
+[
+980,
+"Total pasivos",
+"scripts/ui/admin.gd"
+],
+[
+981,
+"Patrimonio",
+"scripts/ui/admin.gd"
+],
+[
+982,
+"Indicadores clave (mes pasado)",
+"scripts/ui/admin.gd"
+],
+[
+983,
+"Disponibles al cerrar el primer mes.",
+"scripts/ui/admin.gd"
+],
+[
+984,
+"Margen bruto",
+"scripts/ui/admin.gd"
+],
+[
+985,
+"Margen EBITDA",
+"scripts/ui/admin.gd"
+],
+[
+986,
+"Margen neto",
+"scripts/ui/admin.gd"
+],
+[
+987,
+"ROE anualizado",
+"scripts/ui/admin.gd"
+],
+[
+988,
+"Retorno sobre el patrimonio: utilidad neta anual ÷ patrimonio.",
+"scripts/ui/admin.gd"
+],
+[
+989,
+"ROA anualizado",
+"scripts/ui/admin.gd"
+],
+[
+990,
+"Retorno sobre activos: qué tan bien usas todo lo que tienes.",
+"scripts/ui/admin.gd"
+],
+[
+991,
+"Meses de caja",
+"scripts/ui/admin.gd"
+],
+[
+992,
+"Cuántos meses podrías pagar los costos fijos con la caja actual si no vendieras nada.",
+"scripts/ui/admin.gd"
+],
+[
+993,
+"Costo de oportunidad del capital",
+"scripts/ui/admin.gd"
+],
+[
+994,
+"Lo que tu patrimonio ganaría en otra inversión de riesgo similar (tasa BC + 4%% = %s).",
+"scripts/ui/admin.gd"
+],
+[
+995,
+"Utilidad neta − costo de oportunidad. Si es negativo, tu dinero rendiría más en otro lado.",
+"scripts/ui/admin.gd"
+],
+[
+996,
+"Valor",
+"scripts/ui/admin.gd"
+],
+[
+997,
+"Noticias y eventos",
+"scripts/ui/admin.gd"
+],
+[
+998,
+"%s año %d",
+"scripts/ui/admin.gd"
+],
+[
+999,
+"Conceptos de economía y rentabilidad que usa el juego",
+"scripts/ui/admin.gd"
+],
+[
+1000,
+"Pan",
+"scripts/ui/hud.gd"
+],
+[
+1001,
+"Burger",
+"scripts/ui/hud.gd"
+],
+[
+1002,
+"Tech",
+"scripts/ui/hud.gd"
+],
+[
+1003,
+"Día",
+"scripts/ui/hud.gd"
+],
+[
+1004,
+"Tarde",
+"scripts/ui/hud.gd"
+],
+[
+1005,
+"Noche",
+"scripts/ui/hud.gd"
+],
+[
+1006,
+"Sin racha",
+"scripts/ui/hud.gd"
+],
+[
+1007,
+"Día %d %s · Año %d",
+"scripts/ui/hud.gd"
+],
+[
+1008,
+"CAJA",
+"scripts/ui/hud.gd"
+],
+[
+1009,
+"VALOR DE LA EMPRESA",
+"scripts/ui/hud.gd"
+],
+[
+1010,
+"%s hacia %s",
+"scripts/ui/hud.gd"
+],
+[
+1011,
+"Rango máximo",
+"scripts/ui/hud.gd"
+],
+[
+1012,
+"Promedio de estrellas de tus locales. Con 5 estrellas un local vende 15% más que con 3.",
+"scripts/ui/hud.gd"
+],
+[
+1013,
+"Meses seguidos con utilidad",
+"scripts/ui/hud.gd"
+],
+[
+1014,
+"café",
+"scripts/ui/hud.gd"
+],
+[
+1015,
+"electrónica",
+"scripts/ui/hud.gd"
+],
+[
+1016,
+"gente en la calle",
+"scripts/ui/hud.gd"
+],
+[
+1017,
+"%s %s%d%%",
+"scripts/ui/hud.gd"
+],
+[
+1018,
+"Hoy: %s. ",
+"scripts/ui/hud.gd"
+],
+[
+1019,
+"Efectos:",
+"scripts/ui/hud.gd"
+],
+[
+1020,
+"Sin efectos en la demanda.",
+"scripts/ui/hud.gd"
+],
+[
+1021,
+" Pronóstico: %s en %d días.",
+"scripts/ui/hud.gd"
+],
+[
+1022,
+"Reputación de %s: %d de 100",
+"scripts/ui/hud.gd"
+],
+[
+1023,
+"Ir a la oficina  [%s]",
+"scripts/ui/hud.gd"
+],
+[
+1024,
+"Tablet  [%s]",
+"scripts/ui/hud.gd"
+],
+[
+1025,
+"PAUSA",
+"scripts/ui/hud.gd"
+],
+[
+1026,
+"Velocidad %s",
+"scripts/ui/hud.gd"
+],
+[
+1027,
+"%d FPS  ·  ",
+"scripts/ui/hud.gd"
+],
+[
+1028,
+"  ·  %d min de juego",
+"scripts/ui/hud.gd"
+],
+[
+1029,
+"+%d sucursales fuera del centro",
+"scripts/ui/hud.gd"
+],
+[
+1030,
+"%s%s%s%s: caminar · %s: correr · %s: saltar · Mouse: mirar · Rueda/%s: cámara · %s: música",
+"scripts/ui/hud.gd"
+],
+[
+1031,
+"%s: interactuar · %s: tablet · %s: pausa · %s/%s/%s: velocidad · %s: pantalla completa · Esc: menú · Alt: mouse libre",
+"scripts/ui/hud.gd"
+],
+[
+1032,
+"¡Quiebra en %d día%s!",
+"scripts/ui/hud.gd"
+],
+[
+1033,
+"Pasaste el límite de sobregiro: vende algo, pide un préstamo o recorta costos (Tab).",
+"scripts/ui/hud.gd"
+],
+[
+1034,
+"Estás en sobregiro",
+"scripts/ui/hud.gd"
+],
+[
+1035,
+"Caja negativa: pagas %s anual de interés sobre ese saldo.",
+"scripts/ui/hud.gd"
+],
+[
+1036,
+"ABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚabcdefghijklmnñopqrstuvwxyzáéíóúü0123456789$%.,:;·()+-−×=/?¡!¿«»",
+"scripts/ui/imui.gd"
+],
+[
+1037,
+"Sin datos todavía",
+"scripts/ui/imui.gd"
+],
+[
+1038,
+"BANCO",
+"scripts/ui/notifications.gd"
+],
+[
+1039,
+"VENTAS",
+"scripts/ui/notifications.gd"
+],
+[
+1040,
+"NOTICIAS",
+"scripts/ui/notifications.gd"
+],
+[
+1041,
+"MENSAJES",
+"scripts/ui/notifications.gd"
+],
+[
+1042,
+"OFICINA",
+"scripts/ui/notifications.gd"
+],
+[
+1043,
+"DECISIONES",
+"scripts/ui/notifications.gd"
+],
+[
+1044,
+"ALERTA",
+"scripts/ui/notifications.gd"
+],
+[
+1045,
+"CLIMA",
+"scripts/ui/notifications.gd"
+],
+[
+1046,
+"RESEÑAS",
+"scripts/ui/notifications.gd"
+],
+[
+1047,
+"CIUDAD",
+"scripts/ui/notifications.gd"
+],
+[
+1048,
+"Día %d %s",
+"scripts/ui/notifications.gd"
+],
+[
+1049,
+"x%d",
+"scripts/ui/notifications.gd"
+],
+[
+1050,
+"ALERTA DEL BANCO",
+"scripts/ui/notifications.gd"
+],
+[
+1051,
+"Bronce",
+"scripts/ui/overlays.gd"
+],
+[
+1052,
+"Plata",
+"scripts/ui/overlays.gd"
+],
+[
+1053,
+"Oro",
+"scripts/ui/overlays.gd"
+],
+[
+1054,
+"Diamante",
+"scripts/ui/overlays.gd"
+],
+[
+1055,
+"Leyenda",
+"scripts/ui/overlays.gd"
+],
+[
+1056,
+"Bienvenido a Capital",
+"scripts/ui/overlays.gd"
+],
+[
+1057,
+"Tienes un puestito de café y un poco de plata. Vende, invierte y conviértelo en un imperio.\n\nTu meta: que tu empresa valga $10 millones. Arriba a la izquierda siempre ves cuánto vale.\n\nVas a aprender jugando. Sigue la flecha amarilla, son pasos cortos.",
+"scripts/ui/overlays.gd"
+],
+[
+1058,
+"Cómo se gana",
+"scripts/ui/overlays.gd"
+],
+[
+1059,
+"El precio justo",
+"scripts/ui/overlays.gd"
+],
+[
+1060,
+"Toca «Usar precio óptimo» en Mercado de vez en cuando. El mejor precio cambia con el tiempo.",
+"scripts/ui/overlays.gd"
+],
+[
+1061,
+"Que nadie se vaya sin comprar",
+"scripts/ui/overlays.gd"
+],
+[
+1062,
+"Si llega más gente de la que puedes atender, contrata o agranda tu tienda.",
+"scripts/ui/overlays.gd"
+],
+[
+1063,
+"Abre más tiendas",
+"scripts/ui/overlays.gd"
+],
+[
+1064,
+"Compra terrenos SE VENDE. Los de la playa venden más. Cada tienda te trae más plata.",
+"scripts/ui/overlays.gd"
+],
+[
+1065,
+"No te quedes sin plata",
+"scripts/ui/overlays.gd"
+],
+[
+1066,
+"Si estás en rojo 20 días seguidos, quiebras. Pide préstamos solo para crecer.",
+"scripts/ui/overlays.gd"
+],
+[
+1067,
+"Haz crecer tu imperio",
+"scripts/ui/overlays.gd"
+],
+[
+1068,
+"Desbloquea negocios nuevos, elige la jugada del mes y convierte tus tiendas en megatiendas.",
+"scripts/ui/overlays.gd"
+],
+[
+1069,
+"Así se gana",
+"scripts/ui/overlays.gd"
+],
+[
+1070,
+"Terreno %d en venta%s",
+"scripts/ui/overlays.gd"
+],
+[
+1071,
+" · en la playa",
+"scripts/ui/overlays.gd"
+],
+[
+1072,
+"Frente al mar: +%d%% de clientes por los turistas.",
+"scripts/ui/overlays.gd"
+],
+[
+1073,
+"Elige qué negocio construir aquí. La construcción es una inversión (CAPEX) que se deprecia en 5 años; el alquiler es un costo fijo que pagas cada mes vendas o no. Más grande = más clientes y más empleados, pero también más costo fijo.",
+"scripts/ui/overlays.gd"
+],
+[
+1074,
+"Caja disponible: %s",
+"scripts/ui/overlays.gd"
+],
+[
+1075,
+"Bloqueado: desbloquéalo en la tablet (Negocios) por %s",
+"scripts/ui/overlays.gd"
+],
+[
+1076,
+"%s: inversión %s, alquiler %s/mes, hasta %d empleados, tráfico ×%d.",
+"scripts/ui/overlays.gd"
+],
+[
+1077,
+"Cancelar (Esc)",
+"scripts/ui/overlays.gd"
+],
+[
+1078,
+"GRÁFICOS",
+"scripts/ui/overlays.gd"
+],
+[
+1079,
+"CONTROLES",
+"scripts/ui/overlays.gd"
+],
+[
+1080,
+"JUEGO EN PAUSA",
+"scripts/ui/overlays.gd"
+],
+[
+1081,
+"GUARDAR PARTIDA",
+"scripts/ui/overlays.gd"
+],
+[
+1082,
+"¡Guardada en el espacio %d!",
+"scripts/ui/overlays.gd"
+],
+[
+1083,
+"MENÚ PRINCIPAL",
+"scripts/ui/overlays.gd"
+],
+[
+1084,
+"SALIR DEL JUEGO",
+"scripts/ui/overlays.gd"
+],
+[
+1085,
+"Esc: volver al juego · se guarda al salir",
+"scripts/ui/overlays.gd"
+],
+[
+1086,
+"Sí",
+"scripts/ui/overlays.gd"
+],
+[
+1087,
+"No",
+"scripts/ui/overlays.gd"
+],
+[
+1088,
+"Ajustes",
+"scripts/ui/overlays.gd"
+],
+[
+1089,
+"Los cambios se guardan solos.",
+"scripts/ui/overlays.gd"
+],
+[
+1090,
+"SONIDO",
+"scripts/ui/overlays.gd"
+],
+[
+1091,
+"Música",
+"scripts/ui/overlays.gd"
+],
+[
+1092,
+"Volumen de la música. La música se pone tensa cuando estás cerca de la quiebra.",
+"scripts/ui/overlays.gd"
+],
+[
+1093,
+"Efectos de sonido",
+"scripts/ui/overlays.gd"
+],
+[
+1094,
+"Monedas, clientes enojados, avisos y el latido del peligro.",
+"scripts/ui/overlays.gd"
+],
+[
+1095,
+"CÁMARA Y MOUSE",
+"scripts/ui/overlays.gd"
+],
+[
+1096,
+"Sensibilidad del mouse",
+"scripts/ui/overlays.gd"
+],
+[
+1097,
+"Qué tan rápido gira la cámara al mover el mouse.",
+"scripts/ui/overlays.gd"
+],
+[
+1098,
+"Campo de visión",
+"scripts/ui/overlays.gd"
+],
+[
+1099,
+"Cuánto se ve a los lados. Más alto se ve más ciudad, pero las cosas se ven más chicas.",
+"scripts/ui/overlays.gd"
+],
+[
+1100,
+"Invertir el mouse vertical",
+"scripts/ui/overlays.gd"
+],
+[
+1101,
+"Mover el mouse hacia arriba mira hacia abajo, como en los simuladores de vuelo.",
+"scripts/ui/overlays.gd"
+],
+[
+1102,
+"PANTALLA Y JUEGO",
+"scripts/ui/overlays.gd"
+],
+[
+1103,
+"Ocupa toda la pantalla (también con %s).",
+"scripts/ui/overlays.gd"
+],
+[
+1104,
+"Desenfocar menús",
+"scripts/ui/overlays.gd"
+],
+[
+1105,
+"La ciudad se ve borrosa detrás de los menús.",
+"scripts/ui/overlays.gd"
+],
+[
+1106,
+"Idioma",
+"scripts/ui/overlays.gd"
+],
+[
+1107,
+"El idioma de todo el juego. Language · 语言 · Язык · Idioma · Sprache",
+"scripts/ui/overlays.gd"
+],
+[
+1108,
+"Velocidad",
+"scripts/ui/overlays.gd"
+],
+[
+1109,
+"Qué tan rápido pasan los días. También con %s, %s y %s.",
+"scripts/ui/overlays.gd"
+],
+[
+1110,
+"Brandon Alvis (NoName-IA)",
+"scripts/ui/overlays.gd"
+],
+[
+1111,
+"Idea, diseño y desarrollo",
+"scripts/ui/overlays.gd"
+],
+[
+1112,
+"AUTORES",
+"scripts/ui/overlays.gd"
+],
+[
+1113,
+"MÚSICA",
+"scripts/ui/overlays.gd"
+],
+[
+1114,
+"Hecho con Godot Engine",
+"scripts/ui/overlays.gd"
+],
+[
+1115,
+"Volver (Esc)",
+"scripts/ui/overlays.gd"
+],
+[
+1116,
+"BIENVENIDA",
+"scripts/ui/overlays.gd"
+],
+[
+1117,
+"TUTORIAL · %d de %d",
+"scripts/ui/overlays.gd"
+],
+[
+1118,
+"Saltar (Esc)",
+"scripts/ui/overlays.gd"
+],
+[
+1119,
+"< Anterior",
+"scripts/ui/overlays.gd"
+],
+[
+1120,
+"Empezar el tutorial",
+"scripts/ui/overlays.gd"
+],
+[
+1121,
+"Siguiente >",
+"scripts/ui/overlays.gd"
+],
+[
+1122,
+"TUTORIAL",
+"scripts/ui/overlays.gd"
+],
+[
+1123,
+"Ganas cuando tu empresa vale %s. Así se calcula:",
+"scripts/ui/overlays.gd"
+],
+[
+1124,
+"Lo que ganas en un año × %s",
+"scripts/ui/overlays.gd"
+],
+[
+1125,
+"+ Tu plata",
+"scripts/ui/overlays.gd"
+],
+[
+1126,
+"− Lo que debes",
+"scripts/ui/overlays.gd"
+],
+[
+1127,
+"Hoy vale %s",
+"scripts/ui/overlays.gd"
+],
+[
+1128,
+"Para que suba: gana más cada mes (buen precio, que nadie se quede sin atender y más tiendas) y no te endeudes de más. En la tablet lo ves siempre arriba, en «Valor empresa».",
+"scripts/ui/overlays.gd"
+],
+[
+1129,
+"Entendido",
+"scripts/ui/overlays.gd"
+],
+[
+1130,
+"TUTORIAL COMPLETO",
+"scripts/ui/overlays.gd"
+],
+[
+1131,
+"Haz que tu empresa valga %s. Mientras más ganes cada mes y menos debas, más vale.",
+"scripts/ui/overlays.gd"
+],
+[
+1132,
+"¡A jugar!",
+"scripts/ui/overlays.gd"
+],
+[
+1133,
+"Controles",
+"scripts/ui/overlays.gd"
+],
+[
+1134,
+"Haz clic en una tecla y aprieta la nueva. Si otra acción la usaba, se intercambian.",
+"scripts/ui/overlays.gd"
+],
+[
+1135,
+"Restablecer teclas",
+"scripts/ui/overlays.gd"
+],
+[
+1136,
+"Ver el tutorial",
+"scripts/ui/overlays.gd"
+],
+[
+1137,
+"Clic para cambiar la tecla de «%s».",
+"scripts/ui/overlays.gd"
+],
+[
+1138,
+"Aprieta una tecla…",
+"scripts/ui/overlays.gd"
+],
+[
+1139,
+"FIJAS",
+"scripts/ui/overlays.gd"
+],
+[
+1140,
+"Menú de pausa",
+"scripts/ui/overlays.gd"
+],
+[
+1141,
+"Alt",
+"scripts/ui/overlays.gd"
+],
+[
+1142,
+"Soltar o capturar el mouse",
+"scripts/ui/overlays.gd"
+],
+[
+1143,
+"Mouse",
+"scripts/ui/overlays.gd"
+],
+[
+1144,
+"Mirar · rueda: acercar la cámara",
+"scripts/ui/overlays.gd"
+],
+[
+1145,
+"Aprieta la tecla nueva para «%s». Esc cancela.",
+"scripts/ui/overlays.gd"
+],
+[
+1146,
+"Esa tecla no se puede usar.",
+"scripts/ui/overlays.gd"
+],
+[
+1147,
+"«%s» ahora usa %s.",
+"scripts/ui/overlays.gd"
+],
+[
+1148,
+"Imagen",
+"scripts/ui/overlays.gd"
+],
+[
+1149,
+"Rendimiento",
+"scripts/ui/overlays.gd"
+],
+[
+1150,
+"Gráficos",
+"scripts/ui/overlays.gd"
+],
+[
+1151,
+"Alto imita el shader Eclipse: sombras nítidas hasta lejos y rincones oscurecidos.",
+"scripts/ui/overlays.gd"
+],
+[
+1152,
+"%d FPS",
+"scripts/ui/overlays.gd"
+],
+[
+1153,
+"Nivel de gráficos",
+"scripts/ui/overlays.gd"
+],
+[
+1154,
+"Bajo va más rápido; Alto se ve mejor. Si cambias Sombras, Bordes, Oclusión, Resplandor o Destello pasa a Personalizado.",
+"scripts/ui/overlays.gd"
+],
+[
+1155,
+"SOMBRAS",
+"scripts/ui/overlays.gd"
+],
+[
+1156,
+"Calidad de sombras",
+"scripts/ui/overlays.gd"
+],
+[
+1157,
+"Las sombras altas se dibujan más nítidas y en más tramos, pero cuestan más.",
+"scripts/ui/overlays.gd"
+],
+[
+1158,
+"Distancia de sombras",
+"scripts/ui/overlays.gd"
+],
+[
+1159,
+"Hasta dónde se ven sombras. Más cerca se ven más nítidas y van más rápido.",
+"scripts/ui/overlays.gd"
+],
+[
+1160,
+"Borde de las sombras",
+"scripts/ui/overlays.gd"
+],
+[
+1161,
+"Sombras duras o difuminadas. Las muy suaves cuestan un poco más.",
+"scripts/ui/overlays.gd"
+],
+[
+1162,
+"EFECTOS",
+"scripts/ui/overlays.gd"
+],
+[
+1163,
+"Bordes suaves (MSAA)",
+"scripts/ui/overlays.gd"
+],
+[
+1164,
+"Quita los dientes de sierra de los bordes. Es lo que más cuesta en tarjetas sencillas.",
+"scripts/ui/overlays.gd"
+],
+[
+1165,
+"Oclusión ambiental",
+"scripts/ui/overlays.gd"
+],
+[
+1166,
+"Oscurece rincones y bases de los objetos. Se ve más real, pero cuesta bastante.",
+"scripts/ui/overlays.gd"
+],
+[
+1167,
+"Destello del sol",
+"scripts/ui/overlays.gd"
+],
+[
+1168,
+"Reflejo en la cámara al mirar el sol.",
+"scripts/ui/overlays.gd"
+],
+[
+1169,
+"Resplandor",
+"scripts/ui/overlays.gd"
+],
+[
+1170,
+"Brillo suave alrededor de las luces y el sol.",
+"scripts/ui/overlays.gd"
+],
+[
+1171,
+"Intensidad",
+"scripts/ui/overlays.gd"
+],
+[
+1172,
+"Cuánto brillan las luces y el sol cuando el resplandor está prendido.",
+"scripts/ui/overlays.gd"
+],
+[
+1173,
+"COLOR Y LUZ",
+"scripts/ui/overlays.gd"
+],
+[
+1174,
+"Brillo",
+"scripts/ui/overlays.gd"
+],
+[
+1175,
+"Más claro o más oscuro (de día y de noche).",
+"scripts/ui/overlays.gd"
+],
+[
+1176,
+"Contraste",
+"scripts/ui/overlays.gd"
+],
+[
+1177,
+"Diferencia entre las zonas claras y las oscuras.",
+"scripts/ui/overlays.gd"
+],
+[
+1178,
+"Saturación",
+"scripts/ui/overlays.gd"
+],
+[
+1179,
+"Qué tan vivos son los colores.",
+"scripts/ui/overlays.gd"
+],
+[
+1180,
+"Tono de color",
+"scripts/ui/overlays.gd"
+],
+[
+1181,
+"Cómo se convierte la luz en colores de pantalla. AgX es el del juego; Fílmico y ACES se ven más de cine.",
+"scripts/ui/overlays.gd"
+],
+[
+1182,
+"AMBIENTE",
+"scripts/ui/overlays.gd"
+],
+[
+1183,
+"Niebla a lo lejos",
+"scripts/ui/overlays.gd"
+],
+[
+1184,
+"Neblina suave en la distancia, más espesa con lluvia.",
+"scripts/ui/overlays.gd"
+],
+[
+1185,
+"Lluvia y relámpagos",
+"scripts/ui/overlays.gd"
+],
+[
+1186,
+"Las gotas y los destellos de la tormenta. El clima igual cuenta para tus ventas.",
+"scripts/ui/overlays.gd"
+],
+[
+1187,
+"Luces de noche",
+"scripts/ui/overlays.gd"
+],
+[
+1188,
+"Faroles, vitrinas y locales que iluminan la calle de noche.",
+"scripts/ui/overlays.gd"
+],
+[
+1189,
+"CUADROS POR SEGUNDO",
+"scripts/ui/overlays.gd"
+],
+[
+1190,
+"Límite de FPS",
+"scripts/ui/overlays.gd"
+],
+[
+1191,
+"Cuántos cuadros por segundo dibuja como máximo. Un límite más bajo calienta menos la tarjeta.",
+"scripts/ui/overlays.gd"
+],
+[
+1192,
+"Sincronía vertical (VSync)",
+"scripts/ui/overlays.gd"
+],
+[
+1193,
+"Evita que la imagen se corte en dos al moverse. Puede sumar un poco de retraso.",
+"scripts/ui/overlays.gd"
+],
+[
+1194,
+"MUNDO",
+"scripts/ui/overlays.gd"
+],
+[
+1195,
+"Distancia de visión",
+"scripts/ui/overlays.gd"
+],
+[
+1196,
+"Hasta dónde se dibuja la ciudad. Más corta va más rápido.",
+"scripts/ui/overlays.gd"
+],
+[
+1197,
+"Gente en la ciudad",
+"scripts/ui/overlays.gd"
+],
+[
+1198,
+"Cuántos peatones y clientes hay a la vez. No cambia tus ventas: solo lo que se ve.",
+"scripts/ui/overlays.gd"
+],
+[
+1199,
+"Mostrar FPS en pantalla",
+"scripts/ui/overlays.gd"
+],
+[
+1200,
+"Un contador de cuadros por segundo arriba a la derecha.",
+"scripts/ui/overlays.gd"
+],
+[
+1201,
+"Armario",
+"scripts/ui/overlays.gd"
+],
+[
+1202,
+"Lo que tiene precio se compra con la caja de la empresa (gasto de representación).",
+"scripts/ui/overlays.gd"
+],
+[
+1203,
+"Piel",
+"scripts/ui/overlays.gd"
+],
+[
+1204,
+"Peinado",
+"scripts/ui/overlays.gd"
+],
+[
+1205,
+"Color de pelo",
+"scripts/ui/overlays.gd"
+],
+[
+1206,
+"Sombrero",
+"scripts/ui/overlays.gd"
+],
+[
+1207,
+"Camisa",
+"scripts/ui/overlays.gd"
+],
+[
+1208,
+"Chaqueta",
+"scripts/ui/overlays.gd"
+],
+[
+1209,
+"Color de la chaqueta (el cuero siempre es negro)",
+"scripts/ui/overlays.gd"
+],
+[
+1210,
+"Pantalón",
+"scripts/ui/overlays.gd"
+],
+[
+1211,
+"Color del pantalón",
+"scripts/ui/overlays.gd"
+],
+[
+1212,
+"Zapatos",
+"scripts/ui/overlays.gd"
+],
+[
+1213,
+"Haz clic para ponerte o quitarte cada accesorio",
+"scripts/ui/overlays.gd"
+],
+[
+1214,
+"Al azar (con lo que tienes)",
+"scripts/ui/overlays.gd"
+],
+[
+1215,
+"Listo (Esc)",
+"scripts/ui/overlays.gd"
+],
+[
+1216,
+"Arrastra para girar · Rueda: acercar · Clic derecho: subir o bajar",
+"scripts/ui/overlays.gd"
+],
+[
+1217,
+"< Girar",
+"scripts/ui/overlays.gd"
+],
+[
+1218,
+"Girar >",
+"scripts/ui/overlays.gd"
+],
+[
+1219,
+"+ Cerca",
+"scripts/ui/overlays.gd"
+],
+[
+1220,
+"- Lejos",
+"scripts/ui/overlays.gd"
+],
+[
+1221,
+"Centrar (R)",
+"scripts/ui/overlays.gd"
+],
+[
+1222,
+"Compra hecha: %s.",
+"scripts/ui/overlays.gd"
+],
+[
+1223,
+"Tuyo",
+"scripts/ui/overlays.gd"
+],
+[
+1224,
+"Gratis",
+"scripts/ui/overlays.gd"
+],
+[
+1225,
+"TU OFICINA",
+"scripts/ui/overlays.gd"
+],
+[
+1226,
+"Vitrina de trofeos",
+"scripts/ui/overlays.gd"
+],
+[
+1227,
+"Un trofeo por cada título que consigues · %s",
+"scripts/ui/overlays.gd"
+],
+[
+1228,
+"Te faltan %s",
+"scripts/ui/overlays.gd"
+],
+[
+1229,
+"¡Los tienes todos!",
+"scripts/ui/overlays.gd"
+],
+[
+1230,
+"Cerrar (E)",
+"scripts/ui/overlays.gd"
+],
+[
+1231,
+"trophy:%d",
+"scripts/ui/overlays.gd"
+],
+[
+1232,
+"SIGUIENTE",
+"scripts/ui/overlays.gd"
+],
+[
+1233,
+"#%d",
+"scripts/ui/overlays.gd"
+],
+[
+1234,
+"%d de %s, año %d",
+"scripts/ui/overlays.gd"
+],
+[
+1235,
+"a los %d min de juego",
+"scripts/ui/overlays.gd"
+],
+[
+1236,
+"Conseguido",
+"scripts/ui/overlays.gd"
+],
+[
+1237,
+"%d %%",
+"scripts/ui/overlays.gd"
+],
+[
+1238,
+"Reunión de estrategia",
+"scripts/ui/overlays.gd"
+],
+[
+1239,
+"Elige una estrategia para este mes.",
+"scripts/ui/overlays.gd"
+],
+[
+1240,
+"Ya hubo reunión este mes: la próxima es en %d días.",
+"scripts/ui/overlays.gd"
+],
+[
+1241,
+"Costo: %s",
+"scripts/ui/overlays.gd"
+],
+[
+1242,
+"Elegir",
+"scripts/ui/overlays.gd"
+],
+[
+1243,
+"Camina por la ciudad",
+"scripts/ui/tutorial.gd"
+],
+[
+1244,
+"Muévete con %s %s %s %s y mira con el mouse. Mantén %s para correr.",
+"scripts/ui/tutorial.gd"
+],
+[
+1245,
+"Esta ciudad es tuya para conquistar: tus tiendas, tu oficina y los terrenos que vas a comprar.",
+"scripts/ui/tutorial.gd"
+],
+[
+1246,
+"¡Salta!",
+"scripts/ui/tutorial.gd"
+],
+[
+1247,
+"Aprieta %s. Puedes subirte a bancas, jardineras y a los cercos del parque.",
+"scripts/ui/tutorial.gd"
+],
+[
+1248,
+"Ve a tu puesto de café",
+"scripts/ui/tutorial.gd"
+],
+[
+1249,
+"Sigue la flecha amarilla. Ahí empieza tu imperio.",
+"scripts/ui/tutorial.gd"
+],
+[
+1250,
+"Empiezas con un puestito de café y $1.500. De aquí sale todo lo demás.",
+"scripts/ui/tutorial.gd"
+],
+[
+1251,
+"Atiende a tus clientes",
+"scripts/ui/tutorial.gd"
+],
+[
+1252,
+"Ponte detrás del mostrador y aprieta %s.",
+"scripts/ui/tutorial.gd"
+],
+[
+1253,
+"Si atiendes tú, es como tener un ayudante gratis: atiendes a más gente y ganas más.",
+"scripts/ui/tutorial.gd"
+],
+[
+1254,
+"Abre tu tablet",
+"scripts/ui/tutorial.gd"
+],
+[
+1255,
+"Aprieta %s o haz clic en el botón Tablet.",
+"scripts/ui/tutorial.gd"
+],
+[
+1256,
+"Desde la tablet controlas todo: precios, empleados, mercadería y préstamos.",
+"scripts/ui/tutorial.gd"
+],
+[
+1257,
+"Lee la tarjeta y aprieta Entendido.",
+"scripts/ui/tutorial.gd"
+],
+[
+1258,
+"Haz que tu empresa valga %s y ganas. Mientras más ganes cada mes, más vale.",
+"scripts/ui/tutorial.gd"
+],
+[
+1259,
+"Ponle precio al café",
+"scripts/ui/tutorial.gd"
+],
+[
+1260,
+"Entra a Mercado y toca «Usar precio óptimo». También puedes subirlo o bajarlo tú.",
+"scripts/ui/tutorial.gd"
+],
+[
+1261,
+"Muy barato: vendes mucho pero no ganas nada. Muy caro: nadie compra. El precio óptimo te deja más plata.",
+"scripts/ui/tutorial.gd"
+],
+[
+1262,
+"Contrata a alguien",
+"scripts/ui/tutorial.gd"
+],
+[
+1263,
+"Entra a Negocios y toca el + de tu puesto.",
+"scripts/ui/tutorial.gd"
+],
+[
+1264,
+"Si llega más gente de la que puedes atender, se van sin comprar. Con más empleados no se te escapa nadie.",
+"scripts/ui/tutorial.gd"
+],
+[
+1265,
+"Haz correr el tiempo",
+"scripts/ui/tutorial.gd"
+],
+[
+1266,
+"Cierra la tablet y aprieta %s o %s para adelantar el tiempo. %s vuelve a la normalidad y %s pausa.",
+"scripts/ui/tutorial.gd"
+],
+[
+1267,
+"Cada día vendes y pagas tus gastos. Mira cómo crece tu plata arriba a la izquierda.",
+"scripts/ui/tutorial.gd"
+],
+[
+1268,
+"Visita tu oficina",
+"scripts/ui/tutorial.gd"
+],
+[
+1269,
+"Aprieta %s para ir directo o camina hasta la torre.",
+"scripts/ui/tutorial.gd"
+],
+[
+1270,
+"Ahí eliges la jugada del mes, inviertes en la bolsa y guardas tus trofeos.",
+"scripts/ui/tutorial.gd"
+],
+[
+1271,
+"Busca dónde abrir otra tienda",
+"scripts/ui/tutorial.gd"
+],
+[
+1272,
+"Acércate a un letrero SE VENDE y aprieta %s.",
+"scripts/ui/tutorial.gd"
+],
+[
+1273,
+"Cada tienda nueva te trae más plata y hace que tu empresa valga más.",
+"scripts/ui/tutorial.gd"
+],
+[
+1274,
+"TUTORIAL · PASO %d DE %d",
+"scripts/ui/tutorial.gd"
+],
+[
+1275,
+"%d m",
+"scripts/ui/tutorial.gd"
+],
+[
+1276,
+"Segoe UI Symbol",
+"scripts/world/actors.gd"
+],
+[
+1277,
+"SE VENDE",
+"scripts/world/actors.gd"
+],
+[
+1278,
+"Terreno %d%s · desde %s",
+"scripts/world/actors.gd"
+],
+[
+1279,
+" · Playa",
+"scripts/world/actors.gd"
+],
+[
+1280,
+"COMPETENCIA",
+"scripts/world/actors.gd"
+],
+[
+1281,
+"OFICINA CENTRAL",
+"scripts/world/blueprints.gd"
+],
+[
+1282,
+"Vende · Invierte · Crece",
+"scripts/world/blueprints.gd"
+],
+[
+1283,
+"ARMARIO",
+"scripts/world/blueprints.gd"
+],
+[
+1284,
+"BODEGA",
+"scripts/world/blueprints.gd"
+],
+[
+1285,
+"¡Sí! Yo siempre compro acá.",
+"scripts/world/customer.gd"
+],
+[
+1286,
+"¡Llévalo, está buenísimo!",
+"scripts/world/customer.gd"
+],
+[
+1287,
+"Este local tiene %s estrellas, confía.",
+"scripts/world/customer.gd"
+],
+[
+1288,
+"A ese precio, ni lo pienses.",
+"scripts/world/customer.gd"
+],
+[
+1289,
+"Mmm... está caro para lo que es.",
+"scripts/world/customer.gd"
+],
+[
+1290,
+"Yo no lo compraría, dicen que es malo.",
+"scripts/world/customer.gd"
+],
+[
+1291,
+"Donde %s es más barato.",
+"scripts/world/customer.gd"
+],
+[
+1292,
+"Mejor no, ya comimos.",
+"scripts/world/customer.gd"
+],
+[
+1293,
+"¿Lo llevo? ¿Qué dices?",
+"scripts/world/customer.gd"
+],
+[
+1294,
+"¿Este %s vale la pena?",
+"scripts/world/customer.gd"
+],
+[
+1295,
+"¿Tú has probado este?",
+"scripts/world/customer.gd"
+],
+[
+1296,
+"¡Lo llevo!",
+"scripts/world/customer.gd"
+],
+[
+1297,
+"Tienes razón, lo dejo.",
+"scripts/world/customer.gd"
+],
+[
+1298,
+"mi amor",
+"scripts/world/customer.gd"
+],
+[
+1299,
+"mamá",
+"scripts/world/customer.gd"
+],
+[
+1300,
+"Aló, %s... ¿compro %s?",
+"scripts/world/customer.gd"
+],
+[
+1301,
+"Ya, llevo uno.",
+"scripts/world/customer.gd"
+],
+[
+1302,
+"Ok, ok, lo llevo.",
+"scripts/world/customer.gd"
+],
+[
+1303,
+"¿Que no? Bueno, lo dejo.",
+"scripts/world/customer.gd"
+],
+[
+1304,
+"Ya, mejor no.",
+"scripts/world/customer.gd"
+],
+[
+1305,
+"¿%s? ¡Qué barato!",
+"scripts/world/customer.gd"
+],
+[
+1306,
+"¿%s? Uf, carísimo...",
+"scripts/world/customer.gd"
+],
+[
+1307,
+"%s... está bien.",
+"scripts/world/customer.gd"
+],
+[
+1308,
+"Mmm... ¿cuál será el mejor?",
+"scripts/world/customer.gd"
+],
+[
+1309,
+"¡Ese es el más vendido!",
+"scripts/world/customer.gd"
+],
+[
+1310,
+"Ese salió hoy, fresquito.",
+"scripts/world/customer.gd"
+],
+[
+1311,
+"Le va a encantar.",
+"scripts/world/customer.gd"
+],
+[
+1312,
+"Llévese dos, sale mejor.",
+"scripts/world/customer.gd"
+],
+[
+1313,
+"Disculpe, ¿este es bueno?",
+"scripts/world/customer.gd"
+],
+[
+1314,
+"¡Perfecto, gracias!",
+"scripts/world/customer.gd"
+],
+[
+1315,
+"Lo voy a pensar...",
+"scripts/world/customer.gd"
+],
+[
+1316,
+"¡Foto para mis historias!",
+"scripts/world/customer.gd"
+],
+[
+1317,
+"¡Este local es lo máximo!",
+"scripts/world/customer.gd"
+],
+[
+1318,
+"#%s",
+"scripts/world/customer.gd"
+],
+[
+1319,
+"Mmm... ¿este o el otro?",
+"scripts/world/customer.gd"
+],
+[
+1320,
+"¡Esta fila no avanza!",
+"scripts/world/customer.gd"
+],
+[
+1321,
+"Vale la pena esperar, ya verás.",
+"scripts/world/customer.gd"
+],
+[
+1322,
+"¿Siempre está así de lleno?",
+"scripts/world/customer.gd"
+],
+[
+1323,
+"Dicen que este local es el mejor.",
+"scripts/world/customer.gd"
+],
+[
+1324,
+"¡Contraten más gente!",
+"scripts/world/customer.gd"
+],
+[
+1325,
+"Con %s estrellas, normal que haya fila.",
+"scripts/world/customer.gd"
+],
+[
+1326,
+"¡Qué lindo día!",
+"scripts/world/customer.gd"
+],
+[
+1327,
+"Día perfecto para la playa.",
+"scripts/world/customer.gd"
+],
+[
+1328,
+"Se viene la lluvia...",
+"scripts/world/customer.gd"
+],
+[
+1329,
+"Qué día más gris.",
+"scripts/world/customer.gd"
+],
+[
+1330,
+"¡Qué lluvia!",
+"scripts/world/customer.gd"
+],
+[
+1331,
+"¡Me estoy mojando!",
+"scripts/world/customer.gd"
+],
+[
+1332,
+"Hoy es día de café.",
+"scripts/world/customer.gd"
+],
+[
+1333,
+"¡Qué calor!",
+"scripts/world/customer.gd"
+],
+[
+1334,
+"¡Me derrito!",
+"scripts/world/customer.gd"
+],
+[
+1335,
+"Vamos a la playa.",
+"scripts/world/customer.gd"
+],
+[
+1336,
+"¡Qué tormenta!",
+"scripts/world/customer.gd"
+],
+[
+1337,
+"¡Corran!",
+"scripts/world/customer.gd"
+],
+[
+1338,
+"¡Se corta la luz!",
+"scripts/world/customer.gd"
+],
+[
+1339,
+"Mmm, se ve rico...",
+"scripts/world/customer.gd"
+],
+[
+1340,
+"¡%s estrellas! Tengo que probar.",
+"scripts/world/customer.gd"
+],
+[
+1341,
+"Dicen que acá atienden mal.",
+"scripts/world/customer.gd"
+],
+[
+1342,
+"Mmm... no sé.",
+"scripts/world/customer.gd"
+],
+[
+1343,
+"¡Mira esa vitrina!",
+"scripts/world/customer.gd"
+],
+[
+1344,
+"Qué lindo eso...",
+"scripts/world/customer.gd"
+],
+[
+1345,
+"Muy caro para mí.",
+"scripts/world/customer.gd"
+],
+[
+1346,
+"rico el %s",
+"scripts/world/customer.gd"
+],
+[
+1347,
+"Mmm, se ve",
+"scripts/world/customer.gd"
+],
+[
+1348,
+"¿Probaste el %s de %s?",
+"scripts/world/customer.gd"
+],
+[
+1349,
+"¡Sí! Tiene %s estrellas.",
+"scripts/world/customer.gd"
+],
+[
+1350,
+"Es mi favorito.",
+"scripts/world/customer.gd"
+],
+[
+1351,
+"¡Buenísimo y a buen precio!",
+"scripts/world/customer.gd"
+],
+[
+1352,
+"Uf, la fila era eterna.",
+"scripts/world/customer.gd"
+],
+[
+1353,
+"Me atendieron mal...",
+"scripts/world/customer.gd"
+],
+[
+1354,
+"Muy caro para lo que es.",
+"scripts/world/customer.gd"
+],
+[
+1355,
+"¡Voy a ir!",
+"scripts/world/customer.gd"
+],
+[
+1356,
+"Entonces no voy.",
+"scripts/world/customer.gd"
+],
+[
+1357,
+"¿Viste el clima? %s.",
+"scripts/world/customer.gd"
+],
+[
+1358,
+"Dicen que en %d días viene %s.",
+"scripts/world/customer.gd"
+],
+[
+1359,
+"¿Supiste de %s?",
+"scripts/world/customer.gd"
+],
+[
+1360,
+"Dicen que va a abrir otro local.",
+"scripts/world/customer.gd"
+],
+[
+1361,
+"¡%s siempre está peleando!",
+"scripts/world/customer.gd"
+],
+[
+1362,
+"Prefiero a %s.",
+"scripts/world/customer.gd"
+],
+[
+1363,
+"Consejo",
+"scripts/world/customer.gd"
+],
+[
+1364,
+"¿Leíste el diario?",
+"scripts/world/customer.gd"
+],
+[
+1365,
+"No, ¿qué pasó?",
+"scripts/world/customer.gd"
+],
+[
+1366,
+"¡Gracias, vuelva pronto!",
+"scripts/world/customer.gd"
+],
+[
+1367,
+"¡Que le vaya bien!",
+"scripts/world/customer.gd"
+],
+[
+1368,
+"Hoy viene buenísimo.",
+"scripts/world/customer.gd"
+],
+[
+1369,
+"Permiso...",
+"scripts/world/customer.gd"
+],
+[
+1370,
+"Con permiso.",
+"scripts/world/customer.gd"
+],
+[
+1371,
+"¿Me deja pasar?",
+"scripts/world/customer.gd"
+],
+[
+1372,
+"¡Muévete!",
+"scripts/world/customer.gd"
+],
+[
+1373,
+"¡Oye, quítate del medio!",
+"scripts/world/customer.gd"
+],
+[
+1374,
+"¡Que me dejes pasar!",
+"scripts/world/customer.gd"
+],
+[
+1375,
+"Uf, qué gente...",
+"scripts/world/customer.gd"
+],
+[
+1376,
+"¿En serio?",
+"scripts/world/customer.gd"
+],
+[
+1377,
+"Ay, por favor...",
+"scripts/world/customer.gd"
+],
+[
+1378,
+"¡Toma!",
+"scripts/world/customer.gd"
+],
+[
+1379,
+"¡Te dije que te movieras!",
+"scripts/world/customer.gd"
+],
+[
+1380,
+"¡Quítate!",
+"scripts/world/customer.gd"
+],
+[
+1381,
+"¿Qué me recomienda?",
+"scripts/world/customer.gd"
+],
+[
+1382,
+"¡Lo de siempre!",
+"scripts/world/customer.gd"
+],
+[
+1383,
+"¿Qué hay de nuevo hoy?",
+"scripts/world/customer.gd"
+],
+[
+1384,
+"%s de 5 · reseñas",
+"scripts/world/store.gd"
+],
+[
+1385,
+"+1 estrella",
+"scripts/world/store.gd"
+],
+[
+1386,
+"−1 estrella",
+"scripts/world/store.gd"
+],
+[
+1387,
+"CAJA %d",
+"scripts/world/store.gd"
+],
+[
+1388,
+"Corto",
+"scripts/world/wardrobe.gd"
+],
+[
+1389,
+"Largo",
+"scripts/world/wardrobe.gd"
+],
+[
+1390,
+"Cresta",
+"scripts/world/wardrobe.gd"
+],
+[
+1391,
+"Calvo",
+"scripts/world/wardrobe.gd"
+],
+[
+1392,
+"Ninguno",
+"scripts/world/wardrobe.gd"
+],
+[
+1393,
+"Gorra",
+"scripts/world/wardrobe.gd"
+],
+[
+1394,
+"Gorro de lana",
+"scripts/world/wardrobe.gd"
+],
+[
+1395,
+"Vaquero",
+"scripts/world/wardrobe.gd"
+],
+[
+1396,
+"Sombrero de copa",
+"scripts/world/wardrobe.gd"
+],
+[
+1397,
+"Corona",
+"scripts/world/wardrobe.gd"
+],
+[
+1398,
+"Ninguna",
+"scripts/world/wardrobe.gd"
+],
+[
+1399,
+"Sudadera",
+"scripts/world/wardrobe.gd"
+],
+[
+1400,
+"Blazer",
+"scripts/world/wardrobe.gd"
+],
+[
+1401,
+"Cuero",
+"scripts/world/wardrobe.gd"
+],
+[
+1402,
+"Jeans",
+"scripts/world/wardrobe.gd"
+],
+[
+1403,
+"De vestir",
+"scripts/world/wardrobe.gd"
+],
+[
+1404,
+"Cortos",
+"scripts/world/wardrobe.gd"
+],
+[
+1405,
+"Corbata",
+"scripts/world/wardrobe.gd"
+],
+[
+1406,
+"Lentes de sol",
+"scripts/world/wardrobe.gd"
+],
+[
+1407,
+"Barba",
+"scripts/world/wardrobe.gd"
+],
+[
+1408,
+"Reloj de oro",
+"scripts/world/wardrobe.gd"
+],
+[
+1409,
+"Audífonos",
+"scripts/world/wardrobe.gd"
+],
+[
+1410,
+"Mochila",
+"scripts/world/wardrobe.gd"
+],
+[
+1411,
+"Bufanda",
+"scripts/world/wardrobe.gd"
+],
+[
+1412,
+"Cabeza",
+"scripts/world/wardrobe.gd"
+],
+[
+1413,
+"Sombreros",
+"scripts/world/wardrobe.gd"
+],
+[
+1414,
+"Piernas",
+"scripts/world/wardrobe.gd"
+],
+[
+1415,
+"Accesorios",
+"scripts/world/wardrobe.gd"
+],
+[
+1416,
+"hair=[230, 110, 160]",
+"scripts/world/wardrobe.gd"
+],
+[
+1417,
+"hair=[70, 110, 210]",
+"scripts/world/wardrobe.gd"
+],
+[
+1418,
+"shoes=[227, 179, 65]",
+"scripts/world/wardrobe.gd"
+],
+[
+1419,
+"ELDIARIO",
+"scripts/world/world_builder.gd"
+],
+[
+1420,
+"24°C",
+"scripts/world/world_builder.gd"
+],
+[
+1421,
+"En 3 días: Nublado",
+"scripts/world/world_builder.gd"
+],
+[
+1422,
+"EL CLIMA HOY",
+"scripts/world/world_builder.gd"
+],
+[
+1423,
+"Mar",
+"scripts/world/world_builder.gd"
+],
+[
+1424,
+"Montaña",
+"scripts/world/world_builder.gd"
+],
+[
+1425,
+"MUESTRAS GRATIS",
+"scripts/world/world_builder.gd"
+],
+[
+1426,
+"VECINOS",
+"scripts/world/world_builder.gd"
+],
+[
+1427,
+"TORNEO DE VÓLEY",
+"scripts/world/world_builder.gd"
+],
+[
+1428,
+"PARQUE CENTRAL",
+"scripts/world/world_builder.gd"
+]
+]

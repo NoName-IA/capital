@@ -1,5 +1,5 @@
 class_name Fmt
-## Números como se escriben en español: punto para los miles y coma para los decimales.
+## Números como se escriben en el idioma elegido (en español: punto para los miles y coma para los decimales).
 
 
 ## 1234567.891 con 2 decimales -> "1.234.567,89"
@@ -9,16 +9,17 @@ static func num(x: float, decimals := 0) -> String:
 	var s := ("%." + str(decimals) + "f") % x
 	var parts := s.split(".")
 	var whole: String = parts[0]
+	var sep: Array = Lang.SEPARATORS[Lang.code]
 	var out := ""
 	var count := 0
 	for i in range(whole.length() - 1, -1, -1):
 		out = whole[i] + out
 		count += 1
 		if count % 3 == 0 and i > 0:
-			out = "." + out
+			out = sep[0] + out
 	if decimals > 0:
-		out += "," + parts[1]
-	return ("-" if neg and out.replace("0", "").replace(".", "").replace(",", "") != "" else "") + out
+		out += sep[1] + parts[1]
+	return ("-" if neg and out.replace("0", "").replace(sep[0], "").replace(sep[1], "") != "" else "") + out
 
 
 ## $1.234.567 (o $1,23 M desde un millón).
@@ -46,6 +47,6 @@ static func short(x: float) -> String:
 	if x >= 1e4:
 		return "%s$%s k" % [sign, num(x / 1e3)]
 	if x >= 1e3:
-		var k := ("%.1f" % (x / 1e3)).rstrip("0").rstrip(".").replace(".", ",")
+		var k := ("%.1f" % (x / 1e3)).rstrip("0").rstrip(".").replace(".", Lang.SEPARATORS[Lang.code][1])
 		return "%s$%s k" % [sign, k]
 	return "%s$%s" % [sign, num(x)]

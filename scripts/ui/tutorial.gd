@@ -94,23 +94,23 @@ func text(id: String) -> Array:
 	var k := func(a: String) -> String: return Keys.label(a)
 	match id:
 		"caminar":
-			return ["Camina por la ciudad", "Muévete con %s %s %s %s y mira con el mouse. Mantén %s para correr." % [
-					k.call("forward"), k.call("left"), k.call("back"), k.call("right"), k.call("run")],
+			return ["Camina por la ciudad", Lang.f("Muévete con %s %s %s %s y mira con el mouse. Mantén %s para correr.", [
+					k.call("forward"), k.call("left"), k.call("back"), k.call("right"), k.call("run")]),
 					"Esta ciudad es tuya para conquistar: tus tiendas, tu oficina y los terrenos que vas a comprar."]
 		"saltar":
-			return ["¡Salta!", "Aprieta %s. Puedes subirte a bancas, jardineras y a los cercos del parque." % k.call("jump"), ""]
+			return ["¡Salta!", Lang.f("Aprieta %s. Puedes subirte a bancas, jardineras y a los cercos del parque.", k.call("jump")), ""]
 		"puesto":
 			return ["Ve a tu puesto de café", "Sigue la flecha amarilla. Ahí empieza tu imperio.",
 					"Empiezas con un puestito de café y $1.500. De aquí sale todo lo demás."]
 		"atender":
-			return ["Atiende a tus clientes", "Ponte detrás del mostrador y aprieta %s." % k.call("interact"),
+			return ["Atiende a tus clientes", Lang.f("Ponte detrás del mostrador y aprieta %s.", k.call("interact")),
 					"Si atiendes tú, es como tener un ayudante gratis: atiendes a más gente y ganas más."]
 		"tablet":
-			return ["Abre tu tablet", "Aprieta %s o haz clic en el botón Tablet." % k.call("phone"),
+			return ["Abre tu tablet", Lang.f("Aprieta %s o haz clic en el botón Tablet.", k.call("phone")),
 					"Desde la tablet controlas todo: precios, empleados, mercadería y préstamos."]
 		"valor":
 			return ["Así se gana", "Lee la tarjeta y aprieta Entendido.",
-					"Haz que tu empresa valga %s y ganas. Mientras más ganes cada mes, más vale." % Fmt.short(D.WIN_VALUE)]
+					Lang.f("Haz que tu empresa valga %s y ganas. Mientras más ganes cada mes, más vale.", Fmt.short(D.WIN_VALUE))]
 		"precio":
 			return ["Ponle precio al café", "Entra a Mercado y toca «Usar precio óptimo». También puedes subirlo o bajarlo tú.",
 					"Muy barato: vendes mucho pero no ganas nada. Muy caro: nadie compra. El precio óptimo te deja más plata."]
@@ -118,14 +118,14 @@ func text(id: String) -> Array:
 			return ["Contrata a alguien", "Entra a Negocios y toca el + de tu puesto.",
 					"Si llega más gente de la que puedes atender, se van sin comprar. Con más empleados no se te escapa nadie."]
 		"tiempo":
-			return ["Haz correr el tiempo", "Cierra la tablet y aprieta %s o %s para adelantar el tiempo. %s vuelve a la normalidad y %s pausa." % [
-					k.call("speed2"), k.call("speed3"), k.call("speed1"), k.call("pause_quick")],
+			return ["Haz correr el tiempo", Lang.f("Cierra la tablet y aprieta %s o %s para adelantar el tiempo. %s vuelve a la normalidad y %s pausa.", [
+					k.call("speed2"), k.call("speed3"), k.call("speed1"), k.call("pause_quick")]),
 					"Cada día vendes y pagas tus gastos. Mira cómo crece tu plata arriba a la izquierda."]
 		"oficina":
-			return ["Visita tu oficina", "Aprieta %s para ir directo o camina hasta la torre." % k.call("office"),
+			return ["Visita tu oficina", Lang.f("Aprieta %s para ir directo o camina hasta la torre.", k.call("office")),
 					"Ahí eliges la jugada del mes, inviertes en la bolsa y guardas tus trofeos."]
 		"terreno":
-			return ["Busca dónde abrir otra tienda", "Acércate a un letrero SE VENDE y aprieta %s." % k.call("interact"),
+			return ["Busca dónde abrir otra tienda", Lang.f("Acércate a un letrero SE VENDE y aprieta %s.", k.call("interact")),
 					"Cada tienda nueva te trae más plata y hace que tu empresa valga más."]
 	return ["", "", ""]
 
@@ -302,7 +302,7 @@ func draw(ui: ImUI) -> void:
 	var y := box.position.y
 	ui.rect(box, Color(0.05, 0.065, 0.09, 0.9), 14)
 	ui.rect(box, Color(ImUI.COL.accent, 0.6), 14, 1.5)
-	ui.text("TUTORIAL · PASO %d DE %d" % [step + 1, rows], Vector2(x + 18, y + 14), 11, "accent", true)
+	ui.text(Lang.f("TUTORIAL · PASO %d DE %d", [step + 1, rows]), Vector2(x + 18, y + 14), 11, "accent", true)
 	var sk := Rect2(box.end.x - 74, y + 9, 62, 24)
 	var hot := ui.hover(sk)
 	ui.rect(sk, ImUI.COL.button_hot if hot else Color(1, 1, 1, 0.06), 12)
@@ -379,7 +379,7 @@ func _note_by_arrow(ui: ImUI, goal: Rect2, how: String) -> void:
 	var r := Rect2(_by_arrow(ui, goal, Vector2(w, h)) + Vector2(0, 10 * (1.0 - k)), Vector2(w, h))
 	ui.rect(r, Color(0.05, 0.067, 0.09, 0.97), 14)
 	ui.rect(r, Color(ImUI.COL.accent, 0.95), 14, 2)
-	ui.text("TUTORIAL · PASO %d DE %d" % [step + 1, STEPS.size()], r.position + Vector2(18, 14), 11, "accent", true)
+	ui.text(Lang.f("TUTORIAL · PASO %d DE %d", [step + 1, STEPS.size()]), r.position + Vector2(18, 14), 11, "accent", true)
 	ui.wrap_text(how, Rect2(r.position.x + 18, r.position.y + 36, w - 36, text_h + 4), 16, Color(1, 1, 1, k))
 
 
@@ -411,4 +411,4 @@ func _edge_arrow(ui: ImUI) -> void:
 	ui.circle(at, 36 * pulse, Color(0.05, 0.065, 0.09, 0.9))
 	ui.ring(at, 36 * pulse, ImUI.COL.accent, 3)
 	ui.polygon(PackedVector2Array([at + dir * 26, at - dir * 14 + n * 18, at - dir * 14 - n * 18]), ImUI.COL.accent)
-	ui.text("%d m" % roundi(dist), at - dir * 58, 15, "accent", true, "center")
+	ui.text(Lang.f("%d m", roundi(dist)), at - dir * 58, 15, "accent", true, "center")
