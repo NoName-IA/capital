@@ -138,7 +138,7 @@ static func draw_ground(ui: ImUI, view: Rect2, center: Vector2, scale: float) ->
 				ui.rect(f.call(Rect2(x - 4, zc - 3.5, 8, 7)), Color8(196, 170, 150), 1)
 	for side in [-1, 1]:   # edificios altos del centro
 		for x in range(-130, -39, 14):
-			if side == -1 and x >= -120 and x <= -60:
+			if side == -1 and x >= -102 and x <= -40:
 				continue
 			ui.rect(f.call(Rect2(x - 5, side * 54 - 5, 10, 10)), Color8(120, 128, 140), 1)
 	ui.rect(f.call(Rect2(150, 22.8, 55, 2.4)), Color8(150, 110, 70))                # muelle

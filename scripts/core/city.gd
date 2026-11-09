@@ -59,6 +59,7 @@ var settings := {}
 var game = null
 var stores := {}     # índice de terreno -> Store
 var lots := {}       # índice de terreno -> {root, manage}
+var factories := {}  # negocio -> {root, rects, sig}: tus fábricas en el parque industrial
 var comps := {}      # "c3" (local fijo de los extremos) o "p5" (terreno que compró el rival) -> competidor
 var customers := []
 var pops := []
@@ -767,6 +768,13 @@ func react(n: Dictionary) -> void:
 			for st in stores.values():
 				if int(st.loc.id) == int(v[0]):
 					st.star_burst(up)
+		"passed":
+			var r := D.rival_by_key(v)
+			notes.push_hero("RANKING DE LA CIUDAD", Lang.f("¡Superaste a %s!", r.company), "Mira el ranking en la tablet (Rivales)", gold, "fanfare", 80, null, "crown")
+		"staff_quit":
+			notes.push("oficina", "Renunció un empleado", n.text, {"col": red, "sound": "bad", "icon": "person"})
+		"danger_soft":
+			notes.push("alerta", "Inspección del trabajo", n.text, {"sound": "bad"})
 		"quiet":
 			pass
 		"gameover":
@@ -867,6 +875,9 @@ func reset_world(g) -> void:
 	for c in comps.values():
 		Actors.free_competitor(c)
 	comps = {}
+	for f in factories.values():
+		f.root.queue_free()
+	factories = {}
 	game = g
 	player.visible = g != null
 	if g != null:
@@ -929,7 +940,9 @@ func sync(g: Game) -> void:
 		s.loc = by_plot[i]
 		s.sync_staff()
 		s.sync_stars()
+		s.sync_decor()
 	sync_competitors(g)
+	sync_factories(g)
 	sync_office(g)
 
 
@@ -993,6 +1006,20 @@ func sync_competitors(g: Game) -> void:
 					break
 
 
+## Las fábricas que tienes se ven en el parque industrial (con paneles solares si los pusiste).
+func sync_factories(g) -> void:
+	for k in D.PRODUCT_ORDER:
+		var p: Dictionary = g.products[k] if g != null else {}
+		var want = [true, bool(p.get("solar", false))] if g != null and p.get("factory", false) else null
+		var have = factories.get(k)
+		if have != null and (want == null or have.sig != want):
+			have.root.queue_free()
+			factories.erase(k)
+			have = null
+		if want != null and have == null:
+			factories[k] = builder.build_factory(k, want[1])
+
+
 func drop_store(i: int) -> void:
 	var store: Store = stores[i]
 	stores.erase(i)
@@ -1033,6 +1060,8 @@ func all_rects() -> Array:
 		out.append(s.rects)
 	for c in comps.values():
 		out.append(c.rects)
+	for f in factories.values():
+		out.append(f.rects)
 	if cars_frozen:  # detenidos en pausa no atropellan, pero tampoco se pueden atravesar: son como una pared
 		var car_rects := []
 		for car in cars:
@@ -1445,7 +1474,9 @@ func _custom_camera(dt: float) -> void:
 func update_zone() -> void:
 	var p := player.position
 	var z := ["Avenida Comercial", "Tus locales y la competencia"]
-	if p.x < -106:
+	if p.z < -38 and p.x < -40 and p.x > -104:
+		z = ["Parque industrial", "Tus fábricas"]
+	elif p.x < -106:
 		z = ["Entrada de la ciudad", "El camino a los cerros y locales de la competencia"]
 	elif p.x < -66:
 		z = ["Distrito Financiero", "Rascacielos y tu oficina central"]

@@ -456,12 +456,20 @@ static func _varied(kind: int, variant: int, product: String) -> Array:
 	var wood: Color = WOODS[rng.randi() % WOODS.size()]
 	var shelf_col: Color = SHELVES[rng.randi() % SHELVES.size()]
 	var rug: Color = RUGS[rng.randi() % RUGS.size()]
+	# La decoración propia del negocio usa su propio azar: así los locales que ya existían no cambian de distribución
+	var deco := RandomNumberGenerator.new()
+	deco.seed = rng.seed + 31
 	if kind == 0:
 		_varied_stall(boxes, spots, rng, pcol, wood)
+		_stall_theme(boxes, product, deco)
 	elif kind == 1:
 		_varied_local(boxes, spots, rng, pcol, wood, shelf_col, rug, food, product)
+		var cxl: float = spots.serve[0]
+		var cwl := 6.0 if cxl == 0.0 else 4.2
+		_theme(boxes, 1, product, deco, 14.0, 4.5, 2.0, 14.0, cxl, cwl, 9.5)
 	else:
 		_varied_mega(boxes, spots, rng, pcol, wood, shelf_col, rug, food, product)
+		_theme(boxes, 2, product, deco, MEGA_W, 7.0, 2.0, 20.0, 0.0, 12.4, 15.5)
 	if rng.randf() < 0.5:
 		_mirror(boxes, spots)
 	return [boxes, spots]
@@ -698,3 +706,188 @@ static func _varied_mega(boxes: Array, spots: Dictionary, rng: RandomNumberGener
 			"indoor_lights": [[-6, 5.5, 6, 9.0], [6, 5.5, 6, 9.0], [-6, 5.5, 14, 9.0], [6, 5.5, 14, 9.0], [0, 5.5, 10, 8.0]],
 			"shelf_rows": rows, "levels": levels, "registers": regs,
 			"restock": {"x": half - 2.25, "z_to": 5.4, "sides": [-1, 1]}, "seats": [[-0.6, 19.4], [0.6, 19.4]]})
+
+
+# ---------- decoración propia de cada negocio ----------
+## Color que brilla igual de día y de noche (pantallas, neones, el fuego del horno). Ver Building.
+static func GLOW(c: Color) -> Array:
+	return ["glow", c]
+
+
+## Zócalo y franja de color en las paredes, pósters arriba de las repisas, cosas sobre el mostrador, carteles que
+## cuelgan del techo y lo típico de cada negocio. Todo va pegado a las paredes, sobre el mostrador o arriba de las
+## cabezas, así no estorba a los clientes ni a los empleados. `cx`, `cw` = centro y ancho del mostrador; `cz` = su z.
+static func _theme(boxes: Array, kind: int, product: String, rng: RandomNumberGenerator, w: float, h: float,
+		z0: float, z1: float, cx: float, cw: float, cz: float) -> void:
+	var first := boxes.size()
+	_theme_boxes(boxes, kind, product, rng, w, h, z0, z1, cx, cw, cz)
+	for i in range(first, boxes.size()):
+		boxes[i].append("deco")   # va en la pared, el mostrador o el techo: no corta el camino (ver Store._build_nav)
+
+
+static func _theme_boxes(boxes: Array, kind: int, product: String, rng: RandomNumberGenerator, w: float, h: float,
+		z0: float, z1: float, cx: float, cw: float, cz: float) -> void:
+	var pcol: Color = PRODUCT_COLORS.get(product, Color8(150, 150, 150))
+	var half := w / 2
+	var inner := half - 0.17
+	var zc := (z0 + z1) / 2
+	var depth := z1 - z0
+	# Zócalo (madera o color de la marca) con su moldura, y una franja de la marca arriba
+	var wains: Color = [pcol.lightened(0.45), pcol.darkened(0.2), Color8(150, 110, 75), Color8(70, 74, 82)][rng.randi() % 4]
+	for s in [-1, 1]:
+		boxes.append(B([s * inner, 0.5, zc], [0.04, 1.0, depth - 0.4], wains))
+		boxes.append(B([s * (inner - 0.02), 1.02, zc], [0.05, 0.06, depth - 0.4], Color8(60, 55, 50)))
+		boxes.append(B([s * inner, h - 0.45, zc], [0.04, 0.22, depth - 0.4], pcol))
+	boxes.append(B([0, 0.5, z1 - 0.17], [w - 0.4, 1.0, 0.04], wains))
+	boxes.append(B([0, 1.02, z1 - 0.19], [w - 0.4, 0.06, 0.05], Color8(60, 55, 50)))
+	boxes.append(B([0, h - 0.45, z1 - 0.17], [w - 0.4, 0.22, 0.04], pcol))
+	# Pósters con marco en las paredes de los costados, arriba de las repisas
+	var poster_y := 3.25 if kind == 1 else 4.6
+	var poster_zs := [z0 + depth * 0.3, z0 + depth * 0.62] if kind == 1 else [z0 + depth * 0.25, z0 + depth * 0.5, z0 + depth * 0.75]
+	for s in [-1, 1]:
+		for pz in poster_zs:
+			var big := 1.0 if kind == 1 else 1.6
+			boxes.append(B([s * (inner - 0.03), poster_y, pz], [0.05, 1.1 * big, 0.85 * big], Color8(35, 32, 30)))
+			var art: Color = [pcol, pcol.lightened(0.35), ART[rng.randi() % ART.size()], Color8(245, 235, 210)][rng.randi() % 4]
+			boxes.append(B([s * (inner - 0.06), poster_y, pz], [0.03, 0.95 * big, 0.7 * big], art))
+			boxes.append(B([s * (inner - 0.08), poster_y - 0.2 * big, pz], [0.02, 0.12 * big, 0.5 * big], Color8(250, 250, 245)))
+	# Cartel colgante con la marca sobre la entrada (por dentro)
+	boxes.append(B([0, h - 0.9, z0 + 1.0], [3.2 if kind == 1 else 5.0, 0.6, 0.06], pcol))
+	boxes.append(B([0, h - 0.9, z0 + 0.97], [2.6 if kind == 1 else 4.2, 0.12, 0.02], Color8(250, 250, 245)))
+	for dx in [-1.2, 1.2] if kind == 1 else [-2.0, 2.0]:
+		boxes.append(B([dx, h - 0.45, z0 + 1.0], [0.02, 0.3, 0.02], Color8(40, 40, 45)))
+	var top := 1.15   # altura de la cubierta del mostrador
+	var ends := [cx - cw / 2 + 0.45, cx + cw / 2 - 0.45]
+	var back_z := cz + 0.22
+	match product:
+		"cafe":
+			_espresso(boxes, ends[0], top, back_z)
+			for i in 3:   # torre de vasos
+				boxes.append(B([ends[1], top + 0.08 + i * 0.13, back_z], [0.16, 0.12, 0.16], Color8(245, 245, 240)))
+			boxes.append(B([ends[1] - 0.3, top + 0.12, back_z], [0.22, 0.24, 0.22], Color8(120, 75, 45)))   # bolsa de café
+			_menu_boards(boxes, cx, h, cz + 1.6, 3 if kind == 1 else 5, Color8(35, 45, 40), Color8(235, 230, 215))
+			_fans(boxes, kind, h, zc, half)
+		"pan":
+			for e in ends:   # canastos con panes
+				boxes.append(B([e, top + 0.08, back_z], [0.7, 0.14, 0.45], Color8(160, 115, 60)))
+				for k in 4:
+					boxes.append(B([e - 0.22 + (k % 2) * 0.44, top + 0.2, back_z - 0.1 + (k / 2) * 0.2], [0.3, 0.12, 0.14], Color8(205, 145, 70).darkened(rng.randf_range(0.0, 0.25))))
+			if kind == 1:   # vitrina de tortas sobre el mostrador, entre las dos cajas
+				boxes.append(B([cx, top + 0.25, cz - 0.15], [0.9, 0.5, 0.5], "glass"))
+				boxes.append(B([cx, top + 0.18, cz - 0.15], [0.45, 0.22, 0.3], Color8(240, 200, 210)))
+			_oven(boxes, kind, z1, -2.6 if cx >= 0 else 2.6)
+			_menu_boards(boxes, cx, h, cz + 1.6, 2 if kind == 1 else 4, Color8(110, 70, 40), Color8(250, 235, 200))
+			_fans(boxes, kind, h, zc, half)
+		"burger":
+			# Máquina de bebidas con sus vasos de colores
+			boxes.append(B([ends[0], top + 0.35, back_z], [0.7, 0.7, 0.45], Color8(40, 40, 45)))
+			for k in 3:
+				boxes.append(B([ends[0] - 0.22 + k * 0.22, top + 0.5, back_z - 0.235], [0.16, 0.2, 0.02], [Color8(220, 40, 40), Color8(240, 160, 30), Color8(60, 160, 220)][k]))
+			boxes.append(B([ends[1], top + 0.1, back_z], [0.5, 0.2, 0.35], Color8(245, 200, 40)))   # papas fritas
+			# Pantallas de menú brillantes sobre el mostrador
+			var n := 3 if kind == 1 else 5
+			for i in n:
+				var x := cx + (i - (n - 1) / 2.0) * 1.5
+				boxes.append(B([x, h - 1.1, cz + 1.6], [1.35, 0.8, 0.08], Color8(25, 25, 30)))
+				boxes.append(B([x, h - 1.1, cz + 1.55], [1.2, 0.68, 0.02], GLOW([Color8(230, 60, 40), Color8(250, 190, 50), Color8(240, 120, 40)][i % 3])))
+			# Franjas rojas y blancas en el zócalo del fondo y un neón ABIERTO
+			for i in int((w - 0.6) / 0.6):
+				if i % 2 == 0:
+					boxes.append(B([-half + 0.6 + i * 0.6, 0.5, z1 - 0.24], [0.6, 1.0, 0.03], Color8(220, 45, 40)))
+			boxes.append(B([half - 2.4, 3.0 if kind == 1 else 4.5, z0 + 0.25], [1.4, 0.35, 0.04], GLOW(Color8(255, 70, 80))))
+		"ropa":
+			for e in ends:   # ropa doblada
+				for k in 4:
+					boxes.append(B([e, top + 0.04 + k * 0.07, back_z], [0.45, 0.06, 0.35], ART[(k + rng.randi()) % ART.size()]))
+			# Espejos de cuerpo entero adelante, en las paredes de los costados
+			for s in [-1, 1]:
+				boxes.append(B([s * (inner - 0.03), 1.25, z0 + 1.3], [0.05, 2.0, 0.85], Color8(40, 40, 45)))
+				boxes.append(B([s * (inner - 0.06), 1.25, z0 + 1.3], [0.02, 1.85, 0.72], "glass"))
+			# Banderines de colores cruzando el techo
+			for i in int(w / 0.8):
+				boxes.append(B([-half + 0.5 + i * 0.8, h - 0.6 - 0.15 * sin(i * 0.8), zc], [0.4, 0.4, 0.02], ART[i % ART.size()]))
+		"tech":
+			# Notebooks abiertos y celulares en el mostrador
+			for e in ends:
+				boxes.append(B([e, top + 0.02, cz - 0.1], [0.5, 0.03, 0.35], Color8(180, 185, 195)))
+				boxes.append(B([e, top + 0.2, cz + 0.07], [0.5, 0.33, 0.02], GLOW(Color8(90, 170, 255))))
+			# Pared de televisores encendidos sobre la entrada (por dentro)
+			var tvs := 3 if kind == 1 else 5
+			for i in tvs:
+				var x := (i - (tvs - 1) / 2.0) * 1.7
+				boxes.append(B([x, h - 0.75, z0 + 0.25], [1.5, 0.9, 0.06], Color8(20, 20, 24)))
+				boxes.append(B([x, h - 0.75, z0 + 0.3], [1.38, 0.78, 0.02], GLOW([Color8(60, 140, 230), Color8(80, 200, 160), Color8(200, 90, 200)][i % 3])))
+			# Logo luminoso en la pared del fondo
+			boxes.append(B([0, h - 1.0, z1 - 0.22], [2.4, 0.5, 0.04], GLOW(Color8(120, 200, 255))))
+
+
+## Cafetera de espresso: cuerpo metálico, bandeja, dos tazas y la lucecita roja.
+static func _espresso(boxes: Array, x: float, top: float, z: float) -> void:
+	boxes.append(B([x, top + 0.25, z], [0.65, 0.5, 0.42], Color8(190, 195, 200)))
+	boxes.append(B([x, top + 0.52, z], [0.7, 0.05, 0.45], Color8(60, 60, 66)))
+	boxes.append(B([x, top + 0.06, z - 0.25], [0.55, 0.04, 0.12], Color8(60, 60, 66)))
+	for dx in [-0.15, 0.15]:
+		boxes.append(B([x + dx, top + 0.12, z - 0.25], [0.09, 0.09, 0.09], Color8(245, 245, 240)))
+	boxes.append(B([x + 0.25, top + 0.4, z - 0.215], [0.05, 0.05, 0.02], GLOW(Color8(255, 60, 50))))
+
+
+## Pizarras de menú colgando del techo sobre el mostrador, mirando a los clientes.
+static func _menu_boards(boxes: Array, cx: float, h: float, z: float, n: int, board: Color, chalk: Color) -> void:
+	for i in n:
+		var x := cx + (i - (n - 1) / 2.0) * 1.45
+		boxes.append(B([x, h - 1.15, z], [1.3, 0.8, 0.06], board))
+		for k in 3:
+			boxes.append(B([x - 0.1, h - 0.95 - k * 0.2, z - 0.035], [0.8 - k * 0.15, 0.05, 0.01], chalk))
+		boxes.append(B([x, h - 0.4, z], [0.02, 0.7, 0.02], Color8(40, 40, 45)))
+
+
+## Ventiladores de techo (aspas en cruz) para el café y la panadería.
+static func _fans(boxes: Array, kind: int, h: float, zc: float, half: float) -> void:
+	var xs := [0.0] if kind == 1 else [-half / 2, half / 2]
+	for x in xs:
+		boxes.append(B([x, h - 0.2, zc], [0.06, 0.3, 0.06], Color8(40, 40, 45)))
+		boxes.append(B([x, h - 0.36, zc], [0.3, 0.1, 0.3], Color8(60, 55, 50)))
+		boxes.append(B([x, h - 0.38, zc], [1.6, 0.02, 0.22], Color8(120, 85, 55)))
+		boxes.append(B([x, h - 0.38, zc], [0.22, 0.02, 1.6], Color8(120, 85, 55)))
+
+
+## Horno de ladrillo de la panadería, empotrado arriba en la pared del fondo, con el fuego que brilla.
+static func _oven(boxes: Array, kind: int, z1: float, x: float) -> void:
+	if kind == 2:
+		x *= 1.6
+	var y := 2.0 if kind == 1 else 3.0
+	boxes.append(B([x, y, z1 - 0.35], [2.0, 1.3, 0.4], Color8(160, 75, 50)))
+	for k in 3:
+		boxes.append(B([x, y - 0.45 + k * 0.45, z1 - 0.56], [2.0, 0.04, 0.02], Color8(120, 55, 40)))
+	boxes.append(B([x, y - 0.1, z1 - 0.56], [0.9, 0.55, 0.02], GLOW(Color8(255, 140, 40))))
+	boxes.append(B([x, y + 0.7, z1 - 0.35], [0.4, 0.2, 0.3], Color8(70, 70, 75)))
+
+
+## Puesto: cosas sobre el mostrador según el negocio y una guirnalda de ampolletas en el toldo.
+static func _stall_theme(boxes: Array, product: String, rng: RandomNumberGenerator) -> void:
+	var first := boxes.size()
+	_stall_theme_boxes(boxes, product, rng)
+	for i in range(first, boxes.size()):
+		boxes[i].append("deco")
+
+
+static func _stall_theme_boxes(boxes: Array, product: String, rng: RandomNumberGenerator) -> void:
+	var top := 1.15
+	match product:
+		"cafe":
+			_espresso(boxes, 1.4, top, 4.6)
+		"pan":
+			boxes.append(B([1.4, top + 0.08, 4.6], [0.7, 0.14, 0.45], Color8(160, 115, 60)))
+			for k in 3:
+				boxes.append(B([1.2 + k * 0.2, top + 0.2, 4.6], [0.18, 0.12, 0.3], Color8(205, 145, 70)))
+		"burger":
+			boxes.append(B([1.4, top + 0.3, 4.6], [0.6, 0.6, 0.4], Color8(40, 40, 45)))
+			boxes.append(B([1.4, top + 0.45, 4.39], [0.4, 0.2, 0.02], Color8(220, 40, 40)))
+		"ropa":
+			for k in 4:
+				boxes.append(B([1.4, top + 0.04 + k * 0.07, 4.6], [0.45, 0.06, 0.35], ART[(k + rng.randi()) % ART.size()]))
+		"tech":
+			boxes.append(B([1.4, top + 0.02, 4.5], [0.5, 0.03, 0.35], Color8(180, 185, 195)))
+			boxes.append(B([1.4, top + 0.2, 4.67], [0.5, 0.33, 0.02], GLOW(Color8(90, 170, 255))))
+	for i in 9:   # guirnalda de ampolletas en el borde del toldo
+		boxes.append(B([-2.2 + i * 0.55, 2.62 - 0.08 * sin(i * 1.1), 2.42], [0.1, 0.12, 0.1], GLOW(Color8(255, 220, 140))))
