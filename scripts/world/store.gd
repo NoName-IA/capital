@@ -741,16 +741,16 @@ static func stock_shelves(root: Node3D, kind: int, product: String, layout := {}
 
 ## Cajas registradoras donde pagan los clientes (una por mostrador; en la megatienda, una por caja con su letrero).
 static func add_registers(root: Node3D, kind: int, layout := {}) -> void:
-	var spots := []   # [posición, giro]
+	var spots := []   # [posición, giro]: el teclado y la pantalla miran al cajero (giro PI = hacia el fondo)
 	if layout.has("registers"):
 		spots = layout.registers
 	elif kind == 0:
 		spots = [Blueprints.STALL_REGISTER]
 	elif kind == 1:
-		spots = [[Vector3(0.0, 1.15, 9.25), 0.0]]
+		spots = [[Vector3(0.0, 1.15, 9.25), PI]]
 	else:
 		for rx in [-6, -2, 2, 6]:
-			spots.append([Vector3(rx, 1.15, 15.25), 0.0])   # el cajero detrás, los clientes llegan desde la puerta
+			spots.append([Vector3(rx, 1.15, 15.25), PI])   # el cajero detrás, los clientes llegan desde la puerta
 	var n := 1
 	for s in spots:
 		var mi := MeshInstance3D.new()
@@ -762,7 +762,7 @@ static func add_registers(root: Node3D, kind: int, layout := {}) -> void:
 		root.add_child(mi)
 		if kind == 2:
 			var sign := Building.label(root, Lang.f("CAJA %d", n), s[0] + Vector3(0, 1.75, 0), 9, Color8(255, 220, 120), true, false)
-			sign.rotation.y = s[1]
+			sign.rotation.y = s[1] + PI   # el letrero mira a los clientes (al revés que la caja)
 			var pole := MeshInstance3D.new()
 			var pm := BoxMesh.new()
 			pm.size = Vector3(0.06, 1.3, 0.06)

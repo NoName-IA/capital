@@ -608,7 +608,7 @@ static func _varied_local(boxes: Array, spots: Dictionary, rng: RandomNumberGene
 			"manage": [-3.0, -1.2], "picks": picks, "pick_faces": faces,
 			"texts": [[Vector3(-4.8, 2.7, 13.82), "BODEGA", 6, "white"], [Vector3(4.8, 2.7, 13.82), "BODEGA", 6, "white"]],
 			"indoor_lights": [[0, 3.6, 4.0, 8.0], [0, 3.6, 10.0, 8.0], [0, 3.6, 16.0, 8.0]],
-			"shelf_rows": rows, "levels": levels, "registers": [[Vector3(cx - off, 1.15, 9.25), 0.0], [Vector3(cx + off, 1.15, 9.25), 0.0]],
+			"shelf_rows": rows, "levels": levels, "registers": [[Vector3(cx - off, 1.15, 9.25), PI], [Vector3(cx + off, 1.15, 9.25), PI]],
 			"restock": {"x": 4.75, "z_to": zf + 1.1, "sides": sides}, "tables": tables, "seats": [[-0.45, 13.4], [0.45, 13.4]]})
 
 
@@ -697,7 +697,7 @@ static func _varied_mega(boxes: Array, spots: Dictionary, rng: RandomNumberGener
 	staff += [[-7.4, 12.0], [7.4, 12.0], [0, 18.6]]
 	var regs := []
 	for rx in registers:
-		regs.append([Vector3(rx, 1.15, 15.25), 0.0])
+		regs.append([Vector3(rx, 1.15, 15.25), PI])
 	var tables := []
 	spots.merge({"front": [0, -1.5], "door": [0, 1.8], "sign": sh.sign, "ceiling": sh.ceiling, "aisles": [],
 			"lines": lines, "staff": staff, "serve": [2.5, 16.7], "manage": [-5.0, -1.2], "tables": tables,
