@@ -893,6 +893,14 @@ const DILEMMA_STYLE := {
 }
 
 
+## Iniciales de un rival para su ícono (sin "Dr." ni "Doña").
+static func initials(r: Dictionary) -> String:
+	var out := ""
+	for w in String(r.name).replace("Dr. ", "").replace("Doña ", "").split(" ").slice(0, 2):
+		out += w[0]
+	return out
+
+
 func _dilemma_look(c: Dictionary) -> Array:
 	var rival_key = c.data.get("rival")
 	if c.id in ["cartel", "compra_rival"] and rival_key != null:

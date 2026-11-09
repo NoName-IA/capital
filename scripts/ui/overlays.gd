@@ -46,6 +46,7 @@ const TUTORIAL_VALOR := [
 var tutorial_return := ""      # la ventana que estaba abierta antes de la tarjeta (para volver a ella)
 var tutorial_pages: Array = TUTORIAL   # la bienvenida o las claves para ganar
 var shop_tab := "cabeza"
+var buy_key := "cafe"        # negocio del local de la competencia que estás por comprar (modo "compra")
 var saved_at := -9999
 
 
@@ -95,6 +96,9 @@ func draw() -> void:
 		"lote":
 			ui.rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.35))
 			draw_lot()
+		"compra":
+			ui.rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.45))
+			draw_buy_competitor()
 		"pausa":
 			draw_pause()
 		"personaje":
@@ -171,6 +175,44 @@ func draw_lot() -> void:
 					return
 		y += 74
 	if ui.button(Rect2(W / 2 - 140, H - 100, 280, 44), "Cancelar (Esc)"):
+		hide()
+
+
+# ---------- comprar el local de la competencia que tienes enfrente ----------
+func draw_buy_competitor() -> void:
+	var g: Game = app.game
+	var key := buy_key
+	var r := D.rival_for(key)
+	var owner = g.plot_owner.get(str(lot))
+	if owner != null:
+		r = D.rival_by_key(owner)
+	var p: Dictionary = g.products[key]
+	var cost := g.acquire_cost(key)
+	var name: String = Lang.noun(D.PRODUCTS[key].name)
+	var box := Rect2(W / 2 - 330, H / 2 - 190, 660, 380)
+	ui.rect(box.grow(8), Color(0, 0, 0, 0.35), 24)
+	ui.rect(box, Color8(18, 22, 30), 20)
+	ui.rect(box, Color(r.color, 0.6), 20, 1.5)
+	var ic := box.position + Vector2(70, 72)
+	ui.circle(ic, 36, r.color)
+	ui.text(Admin.initials(r), ic + Vector2(0, 1), 26, Color8(16, 20, 30), true, "center")
+	ui.text("COMPRAR LOCAL DE LA COMPETENCIA", Vector2(box.position.x + 124, box.position.y + 40), 13, Notifications.light(r.color, 0.3), true)
+	ui.text(Lang.f("%s de %s", [r.company, name]), Vector2(box.position.x + 124, box.position.y + 60), 28, "text", true, "topleft", box.size.x - 150)
+	var text := Lang.f("Pagas %s y este mismo edificio pasa a ser tuyo: un local con 3 empleados que ya tiene clientes. %s pierde un local (te quedas con un competidor menos en %s). Lo que pagas por encima del valor del edificio es plusvalía.", [Fmt.money(cost), r.short, name])
+	if not p.unlocked:
+		text = Lang.f("Todavía no tienes el negocio de %s. Desbloquéalo primero en la tablet (Negocios) para poder comprar este local.", name)
+	ui.wrap_text(text, Rect2(box.position.x + 40, box.position.y + 130, box.size.x - 80, 120), 17, Color8(215, 222, 232))
+	ui.text(Lang.f("Caja disponible: %s", Fmt.money(g.cash)), Vector2(box.get_center().x, box.end.y - 104), 16, Admin.sc(g.cash), true, "center")
+	var can: bool = p.unlocked and g.cash >= cost and p.competitors > 0
+	if ui.button(Rect2(box.position.x + 40, box.end.y - 76, 280, 46), Lang.f("Sí, comprar (%s)", Fmt.short(cost)), can, "primary", 17):
+		var res := g.acquire(key, lot)
+		if res[0]:
+			hide()
+			city.sync(g)
+			city.sfx.play("record", 0.7)
+		city.toast(res[1], "good" if res[0] else "bad")
+		return
+	if ui.button(Rect2(box.end.x - 320, box.end.y - 76, 280, 46), "No (Esc)", true, "normal", 17):
 		hide()
 
 

@@ -29,7 +29,7 @@ var seated := {}                  # silla de los clientes (índice en spots.chai
 func _init(owner_city, index: int, location: Dictionary) -> void:
 	city = owner_city
 	plot_index = index
-	plot = owner_city.PLOTS[index]
+	plot = City.plot_pos(index)
 	loc = location
 	sig = [loc.id, loc.size, loc.product]
 	var name: String = D.PRODUCTS[loc.product].name

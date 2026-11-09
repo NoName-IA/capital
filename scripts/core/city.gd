@@ -13,6 +13,16 @@ const HQ := [-80, 1]
 # orden (ver competitor_plan).
 const COMP_PLOTS := [[77, 1], [77, -1], [99, 1], [99, -1], [-121, 1], [-121, -1], [-143, 1]]
 const SIDEWALK := 7.5
+
+
+## Posición de un terreno: los de la avenida (0 a 13) y después los locales de la competencia de los extremos
+## (14 en adelante), que pasan a ser tuyos si compras ese edificio.
+static func plot_pos(i: int) -> Array:
+	return PLOTS[i] if i < PLOTS.size() else COMP_PLOTS[i - PLOTS.size()]
+
+
+static func plot_count() -> int:
+	return PLOTS.size() + COMP_PLOTS.size()
 const ROAD_WEST_LIMIT := -150.0   # hasta dónde se puede caminar por la calle hacia los cerros
 const BOUNDS := [-100.0, 200.0, -58.0, 58.0]  # incluye el barrio, el parque, la playa y la orilla del mar
 const WADE_DEPTH := 0.75   # hasta dónde se puede entrar al mar (metros bajo el agua)
@@ -354,6 +364,12 @@ func manage_market(key: String) -> void:
 	app.tab = "negocios"
 	app.sel = key
 	overlays.show("admin")
+
+
+## Ventana para comprar el local de la competencia que tienes enfrente (el edificio pasa a ser tuyo).
+func buy_competitor(key: String, plot: int) -> void:
+	overlays.buy_key = key
+	overlays.show("compra", plot)
 
 
 func manage(store: Store) -> void:
@@ -844,7 +860,7 @@ func sync(g: Game) -> void:
 	for loc in g.locations:
 		if int(loc.plot) >= 0:
 			by_plot[int(loc.plot)] = loc
-	for i in PLOTS.size():
+	for i in plot_count():
 		var loc = by_plot.get(i)
 		var store = stores.get(i)
 		if store != null and (loc == null or store.sig != [loc.id, loc.size, loc.product]):
@@ -859,7 +875,7 @@ func sync(g: Game) -> void:
 		if rival and lots.has(i):
 			lots[i].root.queue_free()
 			lots.erase(i)
-		if loc == null and not rival and not lots.has(i):
+		if loc == null and not rival and not lots.has(i) and i < PLOTS.size():
 			lots[i] = Actors.lot(self, PLOTS[i], i, Fmt.short(g.location_cost(0)))
 	for i in stores:
 		var s: Store = stores[i]
@@ -898,15 +914,26 @@ func sync_competitors(g: Game) -> void:
 			comps.erase(slot)
 	for i in g.rival_plots:
 		if not comps.has("p" + i):
-			comps["p" + i] = Actors.competitor(self, g.rival_plots[i], PLOTS[int(i)])
+			comps["p" + i] = Actors.competitor(self, g.rival_plots[i], plot_pos(int(i)), g.plot_owner.get(i))
 	var need := {}
 	for k in competitor_plan(g):
 		need[k] = need.get(k, 0) + 1
+	# Los locales de los extremos que ya son tuyos (los compraste) o que un rival volvió a comprar no se llenan
+	var taken := {}
+	for loc in g.locations:
+		if Game.plot_of(loc) >= PLOTS.size():
+			taken[Game.plot_of(loc) - PLOTS.size()] = true
+	for i in g.rival_plots:
+		if int(i) >= PLOTS.size():
+			taken[int(i) - PLOTS.size()] = true
 	for slot in comps.keys():
 		if slot.begins_with("p"):
 			continue
 		var c: Dictionary = comps[slot]
-		if need.get(c.key, 0) > 0:
+		if taken.has(int(slot.substr(1))):
+			Actors.free_competitor(c)
+			comps.erase(slot)
+		elif need.get(c.key, 0) > 0:
 			need[c.key] -= 1
 		else:
 			Actors.free_competitor(c)
@@ -914,7 +941,7 @@ func sync_competitors(g: Game) -> void:
 	for k in need:
 		for n in need[k]:
 			for i in COMP_PLOTS.size():
-				if not comps.has(Lang.f("c%d", i)):
+				if not comps.has(Lang.f("c%d", i)) and not taken.has(i):
 					comps[Lang.f("c%d", i)] = Actors.competitor(self, k, COMP_PLOTS[i])
 					break
 
@@ -1418,9 +1445,12 @@ func interactables() -> Array:
 		elif cost > 0:
 			text += Lang.f(" (%s)", Fmt.money(cost))
 		items.append([builder.activity_spots[key], text, do_activity.bind(key)])
-	for c in comps.values():
+	for slot in comps:
+		var c: Dictionary = comps[slot]
 		var name: String = Lang.noun(D.PRODUCTS[c.key].name)
-		items.append([c.spots.manage, Lang.f("Competencia: %s (%s). Ver cómo comprarla", [c.rival.company, name]), manage_market.bind(c.key)])
+		var plot := int(slot.substr(1)) + (PLOTS.size() if slot.begins_with("c") else 0)
+		items.append([c.spots.manage, Lang.f("Comprar este local de %s (%s · %s)", [c.rival.company, name, Fmt.money(g.acquire_cost(c.key))]),
+				buy_competitor.bind(c.key, plot)])
 	return items
 
 
