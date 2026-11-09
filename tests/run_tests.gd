@@ -12,7 +12,8 @@ func _ready() -> void:
 			"test_strategies", "test_rivals_buy_empty_plots", "test_selling_to_a_rival", "test_beach_plots",
 			"test_formats", "test_no_stock_without_stores", "test_loan_interest_accrues",
 			"test_weather_moves_demand", "test_stars", "test_city_activities", "test_decor", "test_solar",
-			"test_labor", "test_every_micro_is_booked", "test_rivals_alive", "test_buy_that_building", "test_old_saves"]:
+			"test_labor", "test_every_micro_is_booked", "test_rivals_alive", "test_buy_that_building", "test_old_saves",
+			"test_mall_and_franchises", "test_homeless_become_franchises"]:
 		var before := failures
 		call(t)
 		print(("OK    " if failures == before else "FALLA ") + t)
@@ -524,3 +525,67 @@ func test_old_saves() -> void:
 	for i in 60:
 		b.step_day()
 	check(not b.game_over, "sigue")
+
+
+## Cada sucursal necesita un lugar: con la avenida llena no se abre nada hasta comprar el centro comercial; ahí solo
+## caben puestos y locales. Las franquicias pagan regalías y la contabilidad cuadra. Todo se guarda y se carga.
+func test_mall_and_franchises() -> void:
+	var g := Game.new(21)
+	g.cash += 5000000
+	g.unlock("pan")
+	var start: float = g.balance().patrimonio
+	while g.free_plots():
+		check(g.open_location("pan" if g.locations.size() % 2 else "cafe", 1)[0], "abrir en la avenida")
+	check(not g.open_location("cafe", 0)[0], "sin lugar no se abre")
+	check(not g.acquire("cafe")[0], "sin lugar no se compra un rival sin edificio")
+	check(g.buy_mall()[0], "comprar el centro comercial")
+	check(not g.open_location("cafe", 2)[0], "la megatienda no cabe en una vitrina")
+	check(g.open_location("cafe", 1)[0], "local en una vitrina")
+	var loc: Dictionary = g.locations[-1]
+	check(Game.mall_of(loc) == 0 and Game.plot_of(loc) == -1, "va a la vitrina 1")
+	check(g.upgrade_cost(loc) == null, "no se amplía a megatienda en la vitrina")
+	check(not g.open_location("pan", 0, null, 0)[0], "la vitrina ocupada no se repite")
+	check(g.open_location("pan", 0, null, 5)[0], "vitrina elegida")
+	check(Game.mall_of(g.locations[-1]) == 5, "queda en la vitrina 6")
+	check(g.open_franchise("cafe")[0], "franquicia de café")
+	check(g.open_franchise("pan")[0], "franquicia de pan")
+	var rent_mall := g.rent_daily(loc)
+	var rent_ave := g.rent_daily(g.locations[1])
+	near(rent_mall, rent_ave * D.MALL.rent_mult, 0.01, "mitad de alquiler en la vitrina")
+	for day in 120:
+		g.step_day()
+		g.pending_choice = null
+	for f in g.franchises:
+		check(f.last_royalty != null and f.last_royalty > 0, "la franquicia pagó regalías")
+	near(g.balance().patrimonio - start, net_income(g), 1.0, "patrimonio vs utilidad con centro comercial y franquicias")
+	var h := Game.from_json(g.to_json())
+	check(h.mall, "el centro comercial se guarda")
+	check(h.franchises.size() == g.franchises.size(), "las franquicias se guardan")
+	check(Game.mall_of(h.find_location(loc.id)) == 0, "la vitrina se guarda")
+
+
+## Partidas de antes: las sucursales sin terreno se acomodan; las que no caben pasan a ser franquicias y te
+## devuelven su valor en libros (el patrimonio no cambia).
+func test_homeless_become_franchises() -> void:
+	var g := Game.new(22)
+	g.cash += 5000000
+	while g.free_plots():
+		g.open_location("cafe", 2)
+	var state = JSON.parse_string(g.to_json())
+	for loc in state.locations:
+		loc.erase("mall")
+	for i in 7:   # como en las partidas viejas: las que pasaban de 14 quedaban sin terreno (plot −1)
+		var extra: Dictionary = state.locations[3].duplicate(true)
+		extra.id = 900 + i
+		extra.plot = -1
+		state.locations.append(extra)
+	var dup: Dictionary = state.locations[0].duplicate(true)   # y una repetida en el mismo terreno
+	dup.id = 999
+	state.locations.append(dup)
+	var h := Game.from_json(JSON.stringify(state))
+	check(h.locations.size() == 14, "quedan 14 en la avenida (%d)" % h.locations.size())
+	check(h.franchises.size() == 8, "las que no cabían son franquicias (%d)" % h.franchises.size())
+	var used := {}
+	for loc in h.locations:
+		check(Game.plot_of(loc) >= 0 and not used.has(Game.plot_of(loc)), "cada una en su terreno")
+		used[Game.plot_of(loc)] = true

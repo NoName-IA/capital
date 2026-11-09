@@ -130,6 +130,19 @@ const BEACH_PLOTS := [8, 9, 12, 13]
 const BEACH_BONUS := 1.2
 const RIVAL_PLOT_MAX := 4          # los rivales nunca se quedan con más de 4 terrenos
 const RIVAL_LAND_CHANCE := 0.25    # probabilidad mensual de que un rival compre un terreno vacío
+# Centro comercial: frente a tu oficina. Cada sucursal necesita un lugar en la ciudad: un terreno de la avenida o una
+# vitrina del centro comercial (solo puestos y locales: las megatiendas no caben). El edificio es tuyo, así que las
+# vitrinas pagan la mitad del alquiler, pero el centro tiene un costo fijo de mantenimiento y seguridad.
+const MALL := {"cost": 150000.0, "slots": 16, "traffic": 1.25, "rent_mult": 0.5, "upkeep": 2500.0}
+# Franquicias en otras ciudades: el franquiciado pone el local y la plata; tú pones la marca, el manual y la
+# capacitación, y cobras regalías sobre sus ventas. No se ven en la ciudad.
+# Contrato: setup + setup_share del costo de desbloquear el negocio (las marcas caras cuestan más de franquiciar).
+const FRANCHISE := {"setup": 8000.0, "setup_share": 0.04, "royalty": 0.05, "max": 6, "min_locs": 2, "min_rep": 50.0}
+const FRANCHISE_CITIES := ["Valle Alto", "Puerto Sol", "San Roque", "Villa Norte", "Las Palmas", "Río Claro",
+		"Monte Verde", "Bahía Azul", "Santa Inés", "Ciudad Jardín", "Altamira", "Costa Brava", "El Mirador",
+		"Los Robles", "Nueva Esperanza", "Puerto Viejo", "Cerro Grande", "La Pradera", "San Telmo", "Laguna Seca",
+		"Villa Rica", "Tres Ríos", "Campo Real", "La Floresta", "Pueblo Nuevo", "Santa Clara", "El Faro",
+		"Valle de Luna", "Piedra Blanca", "Arenales"]
 
 # Clima: cambia cada pocos días según la estación (enero = verano) y mueve la demanda de cada negocio.
 # Efectos: multiplicador por negocio, "all" para todos (gente en la calle), "beach" para los terrenos de la playa,

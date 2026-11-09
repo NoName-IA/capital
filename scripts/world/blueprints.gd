@@ -135,6 +135,103 @@ static func hq() -> Array:
 	return [boxes, spots]
 
 
+## Centro comercial (ver Mall): fachada de vidrio con el nombre de tu empresa, un pasillo alto con fuente y bancas, y
+## las divisiones de las 16 vitrinas (lo de adentro de cada una lo pone Mall según tus sucursales).
+static func mall() -> Array:
+	var w := Mall.W
+	var z0 := Mall.Z0
+	var z1 := Mall.Z1
+	var h := Mall.H
+	var top := h + 2.0          # la fachada es más alta que el cielo del pasillo
+	var hall := Mall.HALL
+	var sh := Mall.SHOP_H + 0.7  # techo de las vitrinas
+	var door := 6.0
+	var door_h := 4.2
+	var zc := (z0 + z1) / 2
+	var side_w := (w - door) / 2
+	var stone := Color8(214, 208, 198)
+	var trim := Color8(92, 98, 112)
+	var boxes := [
+		B([0, top / 2, z1], [w, top, 0.4], stone, true),
+		B([-w / 2, top / 2, zc], [0.4, top, z1 - z0], stone, true),
+		B([w / 2, top / 2, zc], [0.4, top, z1 - z0], stone, true),
+		B([-(door + side_w) / 2, top / 2, z0], [side_w, top, 0.4], stone, true),
+		B([(door + side_w) / 2, top / 2, z0], [side_w, top, 0.4], stone, true),
+		B([0, (top + door_h) / 2, z0], [door, top - door_h, 0.4], stone),
+		B([0, top + 0.2, zc], [w + 0.8, 0.4, z1 - z0 + 0.8], trim),
+		B([0, h, zc], [w - 0.4, 0.1, z1 - z0 - 0.4], Color8(240, 238, 232)),        # cielo del pasillo
+		B([0, 0.03, zc], [w - 0.4, 0.06, z1 - z0 - 0.4], "marble"),
+		B([0, 0.065, 15.0], [hall * 2 - 2, 0.01, 20], Color8(205, 200, 190)),       # franja del pasillo
+		# Entrada: marco, marquesina y alfombra
+		B([-door / 2 - 0.12, door_h / 2, z0 - 0.25], [0.24, door_h, 0.24], "gold"),
+		B([door / 2 + 0.12, door_h / 2, z0 - 0.25], [0.24, door_h, 0.24], "gold"),
+		B([0, door_h + 0.12, z0 - 0.25], [door + 0.5, 0.24, 0.24], "gold"),
+		B([0, door_h + 0.6, z0 - 1.6], [door + 4, 0.25, 3.2], trim),
+		B([0, 0.05, z0 - 1.2], [door + 2, 0.1, 2.4], "marble"),
+		B([0, 0.11, z0 + 1.2], [door - 1, 0.02, 2.0], "carpet"),
+		# Letrero del techo (dice el nombre de tu empresa)
+		B([0, top + 1.6, z0 + 0.4], [14, 2.4, 0.3], trim),
+	]
+	# Fachada: vidrios grandes a los lados de la puerta y una franja alta de vidrio que de noche se prende
+	for sx in [-1, 1]:
+		boxes.append(B([sx * (door + side_w) / 2, 2.4, z0 - 0.23], [side_w - 1.2, 3.8, 0.06], "hq_glass"))
+		boxes.append(B([sx * (door + side_w) / 2, 6.6, z0 - 0.23], [side_w - 1.2, 2.2, 0.06], "hq_glass"))
+	for mx in [-12.5, -8.5, -4.5, 4.5, 8.5, 12.5]:
+		boxes.append(B([mx, top / 2, z0 - 0.3], [0.25, top - 0.4, 0.12], trim))
+	for sx in [-1, 1]:   # maceteros afuera
+		boxes.append(B([sx * 6.5, 0.4, z0 - 1.6], [2.2, 0.8, 1.0], trim, true))
+		boxes.append(B([sx * 6.5, 1.05, z0 - 1.6], [1.9, 0.6, 0.8], "plant"))
+	# Vitrinas de los costados: divisiones, techo bajo y el muro de arriba que da al pasillo
+	var side_dz := (Mall.SIDE_Z[1] - Mall.SIDE_Z[0]) / 6.0
+	for sx in [-1, 1]:
+		var xc: float = sx * (hall + w / 2) / 2
+		var dw: float = w / 2 - hall
+		for k in 7:
+			var z: float = Mall.SIDE_Z[0] + k * side_dz
+			boxes.append(B([xc, sh / 2, z], [dw, sh, 0.2], stone, true))
+		boxes.append(B([xc, sh, (Mall.SIDE_Z[0] + Mall.SIDE_Z[1]) / 2], [dw, 0.12, Mall.SIDE_Z[1] - Mall.SIDE_Z[0]], Color8(236, 232, 224)))
+		boxes.append(B([sx * hall, (sh + h) / 2, (Mall.SIDE_Z[0] + Mall.SIDE_Z[1]) / 2], [0.3, h - sh, Mall.SIDE_Z[1] - Mall.SIDE_Z[0]], stone))
+		# Rincones sin vitrina: adelante (entre la fachada y la primera) y atrás (al lado de las del fondo)
+		boxes.append(B([xc, h / 2, (z0 + Mall.SIDE_Z[0]) / 2], [dw, h, Mall.SIDE_Z[0] - z0], stone, true))
+		boxes.append(B([xc, h / 2, (Mall.BACK_Z + z1) / 2], [dw, h, z1 - Mall.BACK_Z], stone, true))
+	# Vitrinas del fondo
+	var back_dw := hall * 2 / 4.0
+	for k in 5:
+		var x := -hall + k * back_dw
+		boxes.append(B([x, sh / 2, (Mall.BACK_Z + z1) / 2], [0.2, sh, z1 - Mall.BACK_Z], stone, true))
+	boxes.append(B([0, sh, (Mall.BACK_Z + z1) / 2], [hall * 2, 0.12, z1 - Mall.BACK_Z], Color8(236, 232, 224)))
+	boxes.append(B([0, (sh + h) / 2, Mall.BACK_Z], [hall * 2, h - sh, 0.3], stone))
+	# Pasillo: fuente al centro, bancas, maceteros y el directorio
+	var fz := 15.0
+	boxes += [B([0, 0.25, fz], [4.4, 0.5, 4.4], Color8(190, 185, 178), true),
+			B([0, 0.47, fz], [3.8, 0.06, 3.8], ["glow", Color8(90, 170, 220)]),
+			B([0, 1.0, fz], [0.6, 1.4, 0.6], Color8(190, 185, 178), true),
+			B([0, 1.75, fz], [1.6, 0.12, 1.6], Color8(190, 185, 178)),
+			B([0, 1.83, fz], [1.3, 0.04, 1.3], ["glow", Color8(110, 190, 235)])]
+	for bz in [9.0, 21.0]:
+		for sx in [-1, 1]:
+			_bench(boxes, sx * 4.5, bz, 2.2, PALETTE.hq_wood)
+			boxes.append(B([sx * 6.8, 0.45, bz], [1.1, 0.9, 1.1], trim, true))
+			boxes.append(B([sx * 6.8, 1.25, bz], [1.0, 0.8, 1.0], "plant"))
+	boxes += [B([5.5, 1.3, 5.2], [0.2, 2.6, 1.6], trim, true),
+			B([5.38, 1.6, 5.2], [0.04, 1.6, 1.4], ["glow", Color8(40, 60, 100)])]
+	# Paneles de luz del cielo del pasillo
+	for lx in [-4.5, 4.5]:
+		for lz in [6.0, 12.0, 18.0, 24.0]:
+			boxes.append(B([lx, h - 0.06, lz], [2.6, 0.06, 0.8], "lamp"))
+	for lz in [7.0, 15.0, 23.0]:   # tragaluz al centro
+		boxes.append(B([0, h - 0.04, lz], [3.0, 0.04, 5.0], ["glow", Color8(200, 225, 245)]))
+	var texts := [[Vector3(0, top + 1.95, z0 + 0.23), "CAPITAL", 34, "gold"],
+			[Vector3(0, top + 1.05, z0 + 0.23), "CENTRO COMERCIAL", 12, "white"],
+			[Vector3(0, door_h + 0.75, z0 - 3.22), "CENTRO COMERCIAL", 10, "white"]]
+	var spots := {"front": [0, -1.5], "door": [0, 1.8], "texts": texts, "ceiling": [-w / 2, w / 2, z0, z1, h],
+			"directory": [4.6, 5.2],
+			"indoor_lights": [[-4.5, h - 0.4, 6, 9.0], [4.5, h - 0.4, 6, 9.0], [-4.5, h - 0.4, 12, 9.0], [4.5, h - 0.4, 12, 9.0],
+					[-4.5, h - 0.4, 18, 9.0], [4.5, h - 0.4, 18, 9.0], [-4.5, h - 0.4, 24, 9.0], [4.5, h - 0.4, 24, 9.0]],
+			"lights": [[0, 3.5, 1.0, 8.0]]}
+	return [boxes, spots]
+
+
 ## Caja registradora del puesto: en el mostrador, justo frente al cajero (staff[0], en x = −0,9), girada para que la
 ## pantalla y el cajón miren hacia él, como en la vida real.
 const STALL_REGISTER := [Vector3(-0.9, 1.15, 4.8), PI]
@@ -154,7 +251,7 @@ static func stall_slots() -> Array:
 ## `variant` >= 0 arma un interior propio para ese local (ver _varied); -1 deja el plano clásico.
 static func blueprint(kind, variant := -1, product := "") -> Array:
 	if typeof(kind) == TYPE_STRING:
-		return hq()
+		return mall() if kind == "mall" else hq()
 	if variant >= 0:
 		return _varied(kind, variant, product)
 	var boxes := []

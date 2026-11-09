@@ -80,6 +80,17 @@ static func items(city) -> Array:
 				"name": Lang.f("Terreno %d en venta%s", [i + 1, " · playa" if beach else ""]),
 				"sub": Lang.f("Desde %s. Ve y apreta E para construir.", Fmt.short(g.location_cost(0))),
 				"color": LOT, "icon": "", "target": t[0], "yaw": t[1], "clients": 0.0, "lost": 0.0})
+	# Centro comercial (o su terreno en obra)
+	var mall_t := Mall.entrance()
+	if g.mall:
+		var used: int = g.locations.filter(func(l): return Game.mall_of(l) >= 0).size()
+		out.append({"id": "mall", "kind": "place", "rect": Mall.world_rect(), "name": "Tu centro comercial",
+				"sub": Lang.f("%d de %d vitrinas ocupadas. Entra y apreta E frente a una vitrina libre.", [used, int(D.MALL.slots)]),
+				"color": GOLD, "icon": "box", "target": mall_t, "yaw": 180.0, "clients": 0.0, "lost": 0.0})
+	else:
+		out.append({"id": "mall", "kind": "lot", "rect": Mall.world_rect(), "name": "Terreno del centro comercial",
+				"sub": Lang.f("%d vitrinas para puestos y locales · cómpralo por %s", [int(D.MALL.slots), Fmt.short(g.mall_cost())]),
+				"color": LOT, "icon": "", "target": mall_t, "yaw": 180.0, "clients": 0.0, "lost": 0.0})
 	# Tu oficina central
 	var hq_t := Blueprints.to_world(City.HQ, 0, -2.5)
 	out.append({"id": "hq", "kind": "place", "rect": Rect2(City.HQ[0] - 9, 11, 18, 16), "name": "Tu oficina central",

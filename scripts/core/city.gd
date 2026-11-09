@@ -59,6 +59,7 @@ var settings := {}
 var game = null
 var stores := {}     # índice de terreno -> Store
 var lots := {}       # índice de terreno -> {root, manage}
+var mall: Mall       # el centro comercial frente a la oficina (o su terreno en obra)
 var factories := {}  # negocio -> {root, rects, sig}: tus fábricas en el parque industrial
 var comps := {}      # "c3" (local fijo de los extremos) o "p5" (terreno que compró el rival) -> competidor
 var customers := []
@@ -133,6 +134,7 @@ func _ready() -> void:
 	builder = WorldBuilder.new(self)
 	builder.build()
 	static_rects = builder.rects
+	mall = Mall.new(self)
 	hq = builder.hq
 	hq_spots = hq.spots
 	sky = SkyLight.new(self)
@@ -859,6 +861,8 @@ func set_sky_lock(t: float) -> void:
 
 # ---------- sincronización con la simulación ----------
 func reset_world(g) -> void:
+	mall.destroy()
+	mall.built = false
 	for s in stores.values():
 		s.destroy()
 	for l in lots.values():
@@ -898,26 +902,11 @@ func reset_world(g) -> void:
 
 
 func sync(g: Game) -> void:
-	var used := {}
-	for loc in g.locations:
-		var plot = loc.get("plot")
-		if plot != null and int(plot) >= 0 and not used.has(int(plot)):
-			used[int(plot)] = true
-		else:
-			loc.plot = null
-	for loc in g.locations:
-		if loc.plot == null:
-			var free := []
-			for i in PLOTS.size():
-				if not used.has(i) and not g.rival_plots.has(str(i)):
-					free.append(i)
-			loc.plot = free[0] if free else -1
-			if free:
-				used[free[0]] = true
+	# Cada sucursal tiene su lugar (lo elige Game al abrirla; ver Game._place_homeless para las partidas viejas)
 	var by_plot := {}
 	for loc in g.locations:
-		if int(loc.plot) >= 0:
-			by_plot[int(loc.plot)] = loc
+		if Game.plot_of(loc) >= 0:
+			by_plot[Game.plot_of(loc)] = loc
 	for i in plot_count():
 		var loc = by_plot.get(i)
 		var store = stores.get(i)
@@ -944,6 +933,7 @@ func sync(g: Game) -> void:
 	sync_competitors(g)
 	sync_factories(g)
 	sync_office(g)
+	mall.sync(g)
 
 
 ## Qué competidores mostrar en los locales fijos de los extremos. Solo de los negocios donde ya compites: al empezar
@@ -1062,6 +1052,7 @@ func all_rects() -> Array:
 		out.append(c.rects)
 	for f in factories.values():
 		out.append(f.rects)
+	out.append(mall.collide)
 	if cars_frozen:  # detenidos en pausa no atropellan, pero tampoco se pueden atravesar: son como una pared
 		var car_rects := []
 		for car in cars:
@@ -1186,6 +1177,8 @@ func update_lights() -> void:
 	for c in comps.values():
 		if c.spots.get("ceiling") != null:
 			rooms.append(c.spots.ceiling)
+	if mall.spots.get("ceiling") != null:
+		rooms.append(mall.spots.ceiling)
 	lights.update(camera.global_position, rooms)
 
 
@@ -1196,6 +1189,7 @@ func ceiling_over(pos: Vector3) -> Array:
 		spot_sets.append(s.spots)
 	for c in comps.values():
 		spot_sets.append(c.spots)
+	spot_sets.append(mall.spots)
 	for sp in spot_sets:
 		var c = sp.get("ceiling")
 		if c != null and c[0] < pos.x and pos.x < c[1] and c[2] < pos.z and pos.z < c[3]:
@@ -1478,6 +1472,8 @@ func update_zone() -> void:
 		z = ["Parque industrial", "Tus fábricas"]
 	elif p.x < -106:
 		z = ["Entrada de la ciudad", "El camino a los cerros y locales de la competencia"]
+	elif Mall.world_rect().grow(1.0).has_point(Vector2(p.x, p.z)):
+		z = ["Centro Comercial", "Vitrinas para puestos y locales" if game != null and game.mall else "Terreno en obra: cómpralo para tener más vitrinas"]
 	elif p.x < -66:
 		z = ["Distrito Financiero", "Rascacielos y tu oficina central"]
 	elif p.x > 110:
@@ -1523,6 +1519,7 @@ func interactables() -> Array:
 		elif cost > 0:
 			text += Lang.f(" (%s)", Fmt.money(cost))
 		items.append([builder.activity_spots[key], text, do_activity.bind(key)])
+	items += mall.interactables(g)
 	for slot in comps:
 		var c: Dictionary = comps[slot]
 		var name: String = Lang.noun(D.PRODUCTS[c.key].name)
@@ -1655,6 +1652,8 @@ func camera_indoors() -> bool:
 	for s in stores.values():
 		if s.spots.get("ceiling") != null:
 			roofs.append(s.spots.ceiling)
+	if mall.spots.get("ceiling") != null:
+		roofs.append(mall.spots.ceiling)
 	for c in roofs:
 		if c[0] < p.x and p.x < c[1] and c[2] < p.z and p.z < c[3] and p.y < c[4]:
 			return true

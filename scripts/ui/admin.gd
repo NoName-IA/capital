@@ -16,7 +16,7 @@ const SLOTS := 3
 # Días de juego por segundo real; los nombres dicen cuántas veces más rápido que x1 va cada una (x1: un día dura
 # casi 7 segundos; x2: 3,3 segundos; x4: 1,7 segundos). Un buen jugador llega al Imperio en unos 700 días.
 const SPEEDS := [[0.15, "x1"], [0.3, "x2"], [0.6, "x4"]]
-const TABS := [["resumen", "Resumen"], ["negocios", "Negocios"], ["mercado", "Mercado"], ["finanzas", "Finanzas"],
+const TABS := [["resumen", "Resumen"], ["negocios", "Negocios"], ["expansion", "Expansión"], ["mercado", "Mercado"], ["finanzas", "Finanzas"],
 		["crecimiento", "Crecimiento"], ["rivales", "Rivales"], ["personal", "Personal"], ["reportes", "Reportes"],
 		["noticias", "Noticias"], ["conceptos", "Conceptos"]]
 const TAB_STEP := 41.0
@@ -1111,7 +1111,12 @@ func draw_negocios(g: Game) -> void:
 		var size: Dictionary = D.SIZES[s]
 		var cost := g.location_cost(s)
 		var tip := Lang.f("Inversión (CAPEX): %s, se deprecia en 5 años. Alquiler: %s/mes. Tráfico de clientes ×%s y hasta %d empleados. Cada sucursal nueva del mismo producto canibaliza un poco a las demás.", [Fmt.money(cost), Fmt.money(size.rent * g.price_index), Fmt.num(size.traffic), size.max_emp])
-		if ui.button(Rect2(rx + 20 + s * (bw + 12), y, bw, 34), Lang.f("Abrir %s (%s)", [size.name, Fmt.short(cost)]), g.cash >= cost, "normal", 15, tip):
+		var place := g.free_place(s)
+		if place.is_empty():
+			tip = g.no_place_reason(s)
+		elif place[0] == "mall":
+			tip = Lang.f("Va a la vitrina %d del centro comercial (la avenida está llena). ", place[1] + 1) + tip
+		if ui.button(Rect2(rx + 20 + s * (bw + 12), y, bw, 34), Lang.f("Abrir %s (%s)", [size.name, Fmt.short(cost)]), g.cash >= cost and not place.is_empty(), "normal", 15, tip):
 			ask(Lang.f("¿Abrir un %s de %s?", [Lang.noun(size.name), Lang.noun(d.name)]), tip, Lang.f("Sí, abrir (%s)", Fmt.short(cost)),
 					g.open_location.bind(key, s))
 	y += 44
@@ -1169,8 +1174,8 @@ func draw_negocios(g: Game) -> void:
 		var cy := ry + (rows - 4) / 2
 		var size: Dictionary = D.SIZES[loc.size]
 		var where := ""
-		if Game.plot_of(loc) >= 0:
-			where = Lang.f(" · T%d", (Game.plot_of(loc) + 1))
+		if Game.place_label(loc) != "":
+			where = " · " + Game.place_label(loc)
 		ui.text(Lang.f("%s #%d%s", [size.name, i + 1, where]), Vector2(x0, cy - 8), 14, "text", true, "midleft", 135)
 		var st := Game.stars_of(loc)
 		for k in 5:
@@ -1203,7 +1208,7 @@ func draw_negocios(g: Game) -> void:
 			decor_loc = loc.id
 			modal = "decorar"
 		var up = g.upgrade_cost(loc)
-		var up_tip := Lang.f("Ampliar a %s por %s: más tráfico y más empleados posibles.", [D.SIZES[loc.size + 1].name, Fmt.money(up)]) if up != null else "Ya es una megatienda."
+		var up_tip := Lang.f("Ampliar a %s por %s: más tráfico y más empleados posibles.", [D.SIZES[loc.size + 1].name, Fmt.money(up)]) if up != null else ("Ya es una megatienda." if loc.size >= 2 else "En una vitrina del centro comercial no cabe una megatienda.")
 		if ui.button(Rect2(x0 + 633, cy - 14, 68, 28), "Ampliar", up != null and g.cash >= up, "normal", 13, up_tip):
 			ask(Lang.f("¿Ampliar a %s?", Lang.noun(D.SIZES[loc.size + 1].name)), up_tip, Lang.f("Sí, ampliar (%s)", Fmt.short(up)), g.upgrade_location.bind(loc))
 		var sell_tip := Lang.f("Recibes %s: la mitad de su valor en libros. La otra mitad es un costo hundido y se registra como pérdida. También pagas indemnizaciones.", Fmt.money(g.sell_value(loc)))
@@ -1510,6 +1515,126 @@ func draw_finanzas(g: Game) -> void:
 
 
 # ---------- Crecimiento ----------
+# ---------- Expansión: centro comercial y franquicias ----------
+func draw_expansion(g: Game) -> void:
+	var lw := 520.0
+	ui.panel(Rect2(CX, CY, lw, CH), "Lugares en la ciudad",
+			"Cada sucursal necesita un lugar: un terreno de la avenida o una vitrina del centro comercial. Las megatiendas solo caben en la avenida.")
+	var x := CX + 20
+	var w := lw - 40
+	var y := CY + 46
+	var on_avenue := g.locations.filter(func(l): return Game.plot_of(l) >= 0).size()
+	var free_plots := g.free_plots().size()
+	y = ui.row(x, y, w, "Terrenos de la avenida libres", Lang.f("%d de %d", [free_plots, D.PLOT_COUNT]), "green" if free_plots else "orange",
+			"Los rivales también compran terrenos vacíos. Los locales de la competencia que compras quedan en su edificio.")
+	y = ui.row(x, y, w, "Tus sucursales en la avenida", str(on_avenue))
+	y += 6
+	ui.text("Centro comercial", Vector2(x, y), 17, "accent", true)
+	y += 28
+	if not g.mall:
+		ui.wrap_text(Mall.mall_pitch(g), Rect2(x, y, w, 100), 14, "muted")
+		y += 104
+		ui.wrap_text("Está frente a tu oficina central: cuando lo compras se construye y puedes entrar a ver tus tiendas.", Rect2(x, y, w, 40), 14, "text")
+		y += 46
+		var cost := g.mall_cost()
+		marks["comprar_cc"] = Rect2(x, y, w, 40)
+		if ui.button(Rect2(x, y, w, 40), Lang.f("Construir el centro comercial (%s)", Fmt.money(cost)), g.cash >= cost, "primary", 16, Mall.mall_pitch(g)):
+			ask(Lang.f("¿Comprar el centro comercial por %s?", Fmt.money(cost)), Mall.mall_pitch(g), Lang.f("Sí, construir (%s)", Fmt.short(cost)), g.buy_mall)
+	else:
+		var by_slot := {}
+		for loc in g.locations:
+			if Game.mall_of(loc) >= 0:
+				by_slot[Game.mall_of(loc)] = loc
+		var n := int(D.MALL.slots)
+		y = ui.row(x, y, w, "Vitrinas ocupadas", Lang.f("%d de %d", [by_slot.size(), n]), "accent")
+		var saved := 0.0
+		for loc in by_slot.values():
+			saved += D.SIZES[loc.size].rent * g.price_index * (1.0 - D.MALL.rent_mult)
+		y = ui.row(x, y, w, "Mantenimiento y seguridad", Lang.f("%s/mes", Fmt.money(g.mall_upkeep_monthly())), "red")
+		y = ui.row(x, y, w, "Ahorro de alquiler de tus vitrinas", Lang.f("%s/mes", Fmt.money(saved)), "green",
+				"Las tiendas del centro comercial pagan la mitad del alquiler porque el edificio es tuyo.")
+		y += 6
+		var cols := 4
+		var tw := (w - (cols - 1) * 8) / cols
+		var th := 54.0
+		for i in n:
+			var r := Rect2(x + (i % cols) * (tw + 8), y + (i / cols) * (th + 8), tw, th)
+			var loc = by_slot.get(i)
+			if loc == null:
+				ui.rect(r, "panel2", 8)
+				dashed_rect(r, "border")
+				ui.text(Lang.f("Vitrina %d", i + 1), r.position + Vector2(10, 8), 13, "muted", true)
+				ui.text("Libre", r.position + Vector2(10, 30), 13, "green")
+				ui.tooltip(r, "Ve al centro comercial y apreta E frente a la vitrina, o abre un puesto o local en Negocios: va al primer lugar libre.")
+			else:
+				var pc: Color = Blueprints.PRODUCT_COLORS[loc.product]
+				ui.rect(r, Color(pc, 0.35), 8)
+				ui.rect(r, pc, 8, 1)
+				ui.text(Lang.f("Vitrina %d", i + 1), r.position + Vector2(10, 8), 13, "text", true)
+				ui.text(Lang.f("%s · %s", [D.SIZES[loc.size].name, D.PRODUCTS[loc.product].name]), r.position + Vector2(10, 30), 12, "text", false, "topleft", tw - 16)
+				ui.tooltip(r, Lang.f("%s de %s · vendió %s ayer · demanda %s", [D.SIZES[loc.size].name, Lang.noun(D.PRODUCTS[loc.product].name), Fmt.num(loc.sold), Fmt.num(loc.demand)]))
+
+	# Franquicias
+	var rx := CX + lw + 12
+	var rw := CW - lw - 12
+	ui.panel(Rect2(rx, CY, rw, CH), "Franquicias en otras ciudades",
+			Lang.f("Tú pones la marca, el manual y la capacitación (desde %s); el franquiciado pone el local, el personal y el inventario. Te paga %d%% de lo que vende, todos los días. No ocupa lugar en la ciudad, pero unos franquiciados atienden mejor que otros y uno malo te puede bajar la reputación.", [Fmt.money(g.franchise_cost("cafe")), roundi(D.FRANCHISE.royalty * 100)]))
+	x = rx + 20
+	w = rw - 40
+	y = CY + 46
+	var total := 0.0
+	var last := 0.0
+	for f in g.franchises:
+		total += g.franchise_royalty_monthly(f)
+		if f.last_royalty != null:
+			last += float(f.last_royalty)
+	y = ui.row(x, y, w, "Franquicias", str(g.franchises.size()), "accent")
+	y = ui.row(x, y, w, "Regalías del mes pasado", Fmt.money(last), "green" if last > 0 else "muted")
+	y = ui.row(x, y, w, "Regalías esperadas al mes", Fmt.money(total), "green" if total > 0 else "muted",
+			"Con tu precio, reputación y conocimiento de marca de hoy. Si subes la reputación o el marketing, venden más.")
+	y += 4
+	for key in D.PRODUCT_ORDER:
+		var fcost := g.franchise_cost(key)
+		var p: Dictionary = g.products[key]
+		var d: Dictionary = D.PRODUCTS[key]
+		var mine := g.franchises_of(key)
+		var block := g.franchise_block(key)
+		ui.rect(Rect2(x - 6, y - 2, w + 12, 40), "panel2", 6)
+		ui.text(d.name, Vector2(x, y + 9), 15, "text" if p.unlocked else "muted", true)
+		ui.text(Lang.f("%d/%d", [mine.size(), int(D.FRANCHISE.max)]), Vector2(x + 170, y + 9), 14, "muted")
+		var tip := block if block else Lang.f("Vender una franquicia de %s: pagas %s y el franquiciado abre en otra ciudad. Cada una deja unos %s al mes de regalías con tus números de hoy.", [Lang.noun(d.name), Fmt.money(fcost), Fmt.money(g.franchise_royalty_monthly({"product": key, "quality": 0.93}))])
+		if ui.button(Rect2(x + w - 230, y + 2, 230, 32), Lang.f("Vender franquicia (%s)", Fmt.short(fcost)), block == "" and g.cash >= fcost, "normal", 14, tip):
+			ask(Lang.f("¿Vender una franquicia de %s?", Lang.noun(d.name)), tip, Lang.f("Sí, vender (%s)", Fmt.short(fcost)), g.open_franchise.bind(key))
+		y += 46
+	y += 4
+	ui.text("Tus franquicias", Vector2(x, y), 15, "muted", true)
+	y += 24
+	var area := Rect2(rx + 10, y, rw - 20, CY + CH - y - 10)
+	var rows := 34.0
+	var sc_y := scroll_area("franquicias", area, g.franchises.size() * rows)
+	ui.set_clip(area)
+	for i in g.franchises.size():
+		var f: Dictionary = g.franchises[i]
+		var ry := area.position.y + i * rows - sc_y
+		if ry + rows < area.position.y or ry > area.end.y:
+			continue
+		var cy := ry + rows / 2 - 2
+		ui.circle(Vector2(x + 6, cy), 5, Blueprints.PRODUCT_COLORS[f.product])
+		ui.text(f.city, Vector2(x + 18, cy), 14, "text", true, "midleft", 150)
+		ui.text(D.PRODUCTS[f.product].name, Vector2(x + 160, cy), 13, "muted", false, "midleft", 95)
+		var q: float = f.quality
+		var qn := "Excelente" if q >= 1.05 else ("Buena" if q >= 0.9 else ("Regular" if q >= 0.8 else "Mala"))
+		ui.text(qn, Vector2(x + 262, cy), 13, "green" if q >= 0.9 else ("orange" if q >= 0.8 else "red"), false, "midleft")
+		ui.tooltip(Rect2(x + 262, ry, 75, rows), "Cómo atiende el franquiciado: los que atienden mal venden menos y a veces te bajan la reputación.")
+		ui.text(Lang.f("%s/mes", Fmt.short(g.franchise_royalty_monthly(f))), Vector2(x + w - 102, cy), 14, "green", true, "midright")
+		if ui.button(Rect2(x + w - 90, cy - 13, 90, 26), "Terminar", true, "danger", 12, "Terminas el contrato: deja de pagarte regalías y no recuperas lo que pagaste."):
+			ask(Lang.f("¿Terminar la franquicia de %s?", f.city), "Deja de pagarte regalías. Lo que pagaste por el contrato no se recupera.", "Sí, terminar", g.close_franchise.bind(f), true)
+	ui.set_clip(null)
+	if g.franchises.is_empty():
+		ui.wrap_text(Lang.f("Todavía no tienes franquicias. Necesitas %d sucursales propias del negocio y reputación de %d o más.", [int(D.FRANCHISE.min_locs), roundi(D.FRANCHISE.min_rep)]),
+				Rect2(area.position.x + 10, area.position.y + 6, area.size.x - 20, 60), 14, "muted")
+
+
 func draw_crecimiento(g: Game) -> void:
 	var lw := 560.0
 	ui.panel(Rect2(CX, CY, lw, 300), "Sistemas de gestión (oficina central)",

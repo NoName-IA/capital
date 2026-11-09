@@ -95,7 +95,7 @@ func draw() -> void:
 				# Un clic fuera de la tablet la guarda
 				if ui.clicked and app.modal == null and not Rect2(-30, -30, W + 60, H + 60).has_point(ui.mouse):
 					hide()
-		"lote":
+		"lote", "vitrina":
 			ui.rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.35))
 			draw_lot()
 		"compra":
@@ -160,14 +160,22 @@ const COL_PANEL := Color8(22, 27, 34)
 
 
 # ---------- compra de un terreno ----------
+## Terreno de la avenida en venta, o vitrina vacía del centro comercial (modo "vitrina": solo puestos y locales).
 func draw_lot() -> void:
 	var g: Game = app.game
-	var beach: bool = lot in D.BEACH_PLOTS
+	var in_mall: bool = mode == "vitrina"
+	var beach: bool = lot in D.BEACH_PLOTS and not in_mall
 	ui.panel(Rect2(40, 30, W - 80, H - 60))
-	ui.text(Lang.f("Terreno %d en venta%s", [lot + 1, " · en la playa" if beach else ""]), Vector2(70, 60), 32, "accent", true)
+	if in_mall:
+		ui.text(Lang.f("Vitrina %d del centro comercial", lot + 1), Vector2(70, 60), 32, "accent", true)
+	else:
+		ui.text(Lang.f("Terreno %d en venta%s", [lot + 1, " · en la playa" if beach else ""]), Vector2(70, 60), 32, "accent", true)
 	var y0 := 110.0
 	if beach:
 		ui.text(Lang.f("Frente al mar: +%d%% de clientes por los turistas.", roundi((D.BEACH_BONUS - 1) * 100)), Vector2(72, 98), 16, "green", true)
+		y0 = 128
+	elif in_mall:
+		ui.text(Lang.f("+%d%% de clientes, techado (la lluvia no espanta) y mitad de alquiler. Solo puestos y locales.", roundi((D.MALL.traffic - 1) * 100)), Vector2(72, 98), 16, "green", true)
 		y0 = 128
 	ui.wrap_text("Elige qué negocio construir aquí. La construcción es una inversión (CAPEX) que se deprecia en 5 años; el alquiler es un costo fijo que pagas cada mes vendas o no. Más grande = más clientes y más empleados, pero también más costo fijo.",
 			Rect2(70, y0, W - 140, 80), 16, "muted")
@@ -180,17 +188,19 @@ func draw_lot() -> void:
 		if not p.unlocked:
 			ui.text(Lang.f("Bloqueado: desbloquéalo en la tablet (Negocios) por %s", Fmt.money(g.unlock_cost(key))), Vector2(290, y + 12), 16, "muted")
 		else:
-			for s in D.SIZES.size():
+			for s in (2 if in_mall else D.SIZES.size()):
 				var size: Dictionary = D.SIZES[s]
 				var cost := g.location_cost(s)
-				var tip := Lang.f("%s: inversión %s, alquiler %s/mes, hasta %d empleados, tráfico ×%d.", [size.name, Fmt.money(cost), Fmt.money(size.rent * g.price_index), size.max_emp, int(size.traffic)])
+				var rent: float = size.rent * g.price_index * (D.MALL.rent_mult if in_mall else 1.0)
+				var tip := Lang.f("%s: inversión %s, alquiler %s/mes, hasta %d empleados, tráfico ×%d.", [size.name, Fmt.money(cost), Fmt.money(rent), size.max_emp, int(size.traffic)])
 				if ui.button(Rect2(290 + s * 300, y, 285, 44), Lang.f("%s · %s", [size.name, Fmt.money(cost)]), g.cash >= cost, "normal", 15, tip):
 					var plot := lot
 					var k: String = key
 					var sz: int = s
-					city.confirm(Lang.f("¿Construir un %s de %s en el terreno %d?", [Lang.noun(size.name), Lang.noun(d.name), plot + 1]), tip,
-							Lang.f("Sí, construir (%s)", Fmt.short(cost)), func():
-								var res: Array = g.open_location(k, sz, plot)
+					var title := (Lang.f("¿Abrir un %s de %s en la vitrina %d?", [Lang.noun(size.name), Lang.noun(d.name), plot + 1]) if in_mall
+							else Lang.f("¿Construir un %s de %s en el terreno %d?", [Lang.noun(size.name), Lang.noun(d.name), plot + 1]))
+					city.confirm(title, tip, Lang.f("Sí, construir (%s)", Fmt.short(cost)), func():
+								var res: Array = g.open_location(k, sz, null, plot) if in_mall else g.open_location(k, sz, plot)
 								if res[0]:
 									city.sfx.play("record", 0.7)
 								city.toast(res[1], "good" if res[0] else "bad"))
