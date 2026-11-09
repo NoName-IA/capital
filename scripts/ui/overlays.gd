@@ -566,7 +566,7 @@ func row_lang(area: Rect2, y: float) -> float:
 	var n: int = Lang.CODES.size()
 	if lang_pick < 0:
 		lang_pick = Lang.index()
-	var hot := row_bg(area, y, "lang", "El idioma de todo el juego. Elige uno con las flechas y toca «Aplicar cambios». Language · 语言 · Язык · Idioma · Sprache")
+	var hot := row_bg(area, y, "lang", "El idioma de todo el juego. Elige uno con las flechas y toca «Aplicar cambios». Language · Idioma")
 	row_label(area, y, "Idioma")
 	var cy := y + (ROW_H - 4) / 2
 	var bw := 170.0

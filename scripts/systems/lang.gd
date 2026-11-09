@@ -8,20 +8,15 @@ extends RefCounted
 ## En las traducciones los valores van en el mismo orden que en español, salvo que se numeren: %2$s es el segundo
 ## valor. %_ usa un valor sin escribir nada (para los plurales hechos con "s" en español, que en otros idiomas no van).
 
-const CODES := ["es", "en", "zh", "ru", "pt", "de"]
-const NAMES := ["Español", "English", "简体中文", "Русский", "Português (Brasil)", "Deutsch"]
+const CODES := ["es", "en"]
+const NAMES := ["Español", "English"]
 ## El nombre de cada idioma (en el orden de CODES) escrito en el idioma que se está usando
 const NAMES_IN := {
-	"es": ["Español", "Inglés", "Chino simplificado", "Ruso", "Portugués (Brasil)", "Alemán"],
-	"en": ["Spanish", "English", "Simplified Chinese", "Russian", "Portuguese (Brazil)", "German"],
-	"zh": ["西班牙语", "英语", "简体中文", "俄语", "葡萄牙语（巴西）", "德语"],
-	"ru": ["Испанский", "Английский", "Китайский (упр.)", "Русский", "Португальский (Бразилия)", "Немецкий"],
-	"pt": ["Espanhol", "Inglês", "Chinês simplificado", "Russo", "Português (Brasil)", "Alemão"],
-	"de": ["Spanisch", "Englisch", "Chinesisch (vereinf.)", "Russisch", "Portugiesisch (Brasilien)", "Deutsch"],
+	"es": ["Español", "Inglés"],
+	"en": ["Spanish", "English"],
 }
 ## Cómo se escriben los números: [separador de miles, separador decimal]
-const SEPARATORS := {"es": [".", ","], "en": [",", "."], "zh": [",", "."], "ru": [" ", ","], "pt": [".", ","],
-		"de": [".", ","]}
+const SEPARATORS := {"es": [".", ","], "en": [",", "."]}
 
 static var code := "es"
 static var _dict := {}       # frase en español -> traducción
@@ -29,9 +24,9 @@ static var _upper := {}      # FRASE EN MAYÚSCULAS -> traducción en mayúscula
 static var _spec := RegEx.create_from_string("%(?:(\\d+)\\$)?([-+0 #]*\\d*(?:\\.\\d+)?)([sdifxXc_%])")
 
 
-## Cambia el idioma. Un código desconocido vuelve al español.
+## Cambia el idioma. Un código desconocido (por ejemplo uno de los idiomas que se quitaron) pasa a inglés.
 static func use(new_code: String) -> void:
-	code = new_code if new_code in CODES else "es"
+	code = new_code if new_code in CODES else "en"
 	_dict = {}
 	_upper = {}
 	if code != "es":
@@ -70,20 +65,15 @@ static func name_in(i: int) -> String:
 	return NAMES_IN.get(code, NAMES_IN.es)[i]
 
 
-## Mes abreviado ("feb", "Feb", "二月"...) a partir del nombre en español.
+## Mes abreviado ("feb" o "Feb") a partir del nombre en español.
 static func month_short(name: String) -> String:
-	var m := t(name)
-	if code == "zh":
-		return m
-	m = m.substr(0, 3)
-	return m if code in ["en", "de"] else m.to_lower()
+	var m := t(name).substr(0, 3)
+	return m if code == "en" else m.to_lower()
 
 
-## Un nombre del juego traducido para ir en medio de una frase: en minúscula, salvo en alemán (los sustantivos van
-## con mayúscula) y en chino (no tiene).
+## Un nombre del juego traducido para ir en medio de una frase (en minúscula).
 static func noun(name: String) -> String:
-	var n := t(name)
-	return n if code in ["de", "zh"] else n.to_lower()
+	return t(name).to_lower()
 
 
 ## La frase traducida (o la misma, si no hay traducción).

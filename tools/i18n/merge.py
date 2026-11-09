@@ -2,7 +2,7 @@
 import json, glob, re, sys, os
 sys.stdout.reconfigure(encoding="utf-8")
 SP = os.path.dirname(os.path.abspath(__file__))
-CODES = ["en", "zh", "ru", "pt", "de"]
+CODES = ["en"]   # el español es el idioma del código; solo se traduce al inglés
 BS = chr(92)
 SPEC = re.compile(r"%(?:(\d+)\$)?[-+0#]*\d*(?:\.\d+)?([sdifxXc_%])")
 BRACES = re.compile(r"\{[a-z]*\}")
