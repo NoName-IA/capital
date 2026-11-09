@@ -159,7 +159,6 @@ partidas.
 
 ## Licencia
 
-Copyright © 2026 Brandon Alvis (NoName-IA). **Todos los derechos reservados.**
+Copyright © 2026 Brandon Alvis (NoName-IA) y su equipo de colaboradores. **Todos los derechos reservados.**
 
-El código está publicado solo para que se pueda ver. No se permite copiarlo, modificarlo, distribuirlo ni usarlo en
-otros proyectos sin permiso escrito del autor. Ver [`LICENSE`](LICENSE).
+No se permite copiarlo, modificarlo, distribuirlo ni usarlo sin permiso escrito de los autores. Ver [`LICENSE`](LICENSE).
