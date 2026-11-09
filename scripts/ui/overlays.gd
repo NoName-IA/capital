@@ -46,6 +46,9 @@ const TUTORIAL_VALOR := [
 var tutorial_return := ""      # la ventana que estaba abierta antes de la tarjeta (para volver a ella)
 var tutorial_pages: Array = TUTORIAL   # la bienvenida o las claves para ganar
 var shop_tab := "cabeza"
+var trying = null           # prenda que te estás probando en el armario (sin comprar): {key, value, name, price}
+var buy_key := "cafe"
+var question = null          # confirmación en la ciudad (modo "confirmar"): {title, detail, yes, action}        # negocio del local de la competencia que estás por comprar (modo "compra")
 var saved_at := -9999
 
 
@@ -92,9 +95,28 @@ func draw() -> void:
 				# Un clic fuera de la tablet la guarda
 				if ui.clicked and app.modal == null and not Rect2(-30, -30, W + 60, H + 60).has_point(ui.mouse):
 					hide()
-		"lote":
+		"lote", "vitrina":
 			ui.rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.35))
 			draw_lot()
+		"compra":
+			ui.rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.45))
+			draw_buy_competitor()
+		"mapa":
+			draw_map()
+		"confirmar":
+			ui.rect(Rect2(-4000, -4000, W + 8000, H + 8000), Color(0, 0, 0, 0.45))
+			if question == null:
+				hide()
+			else:
+				match Admin.confirm_box(ui, question.title, question.detail, question.yes, app.game.cash):
+					1:
+						var action: Callable = question.action
+						question = null
+						hide()
+						action.call()
+					2:
+						question = null
+						hide()
 		"pausa":
 			draw_pause()
 		"personaje":
@@ -138,14 +160,22 @@ const COL_PANEL := Color8(22, 27, 34)
 
 
 # ---------- compra de un terreno ----------
+## Terreno de la avenida en venta, o vitrina vacía del centro comercial (modo "vitrina": solo puestos y locales).
 func draw_lot() -> void:
 	var g: Game = app.game
-	var beach: bool = lot in D.BEACH_PLOTS
+	var in_mall: bool = mode == "vitrina"
+	var beach: bool = lot in D.BEACH_PLOTS and not in_mall
 	ui.panel(Rect2(40, 30, W - 80, H - 60))
-	ui.text(Lang.f("Terreno %d en venta%s", [lot + 1, " · en la playa" if beach else ""]), Vector2(70, 60), 32, "accent", true)
+	if in_mall:
+		ui.text(Lang.f("Vitrina %d del centro comercial", lot + 1), Vector2(70, 60), 32, "accent", true)
+	else:
+		ui.text(Lang.f("Terreno %d en venta%s", [lot + 1, " · en la playa" if beach else ""]), Vector2(70, 60), 32, "accent", true)
 	var y0 := 110.0
 	if beach:
 		ui.text(Lang.f("Frente al mar: +%d%% de clientes por los turistas.", roundi((D.BEACH_BONUS - 1) * 100)), Vector2(72, 98), 16, "green", true)
+		y0 = 128
+	elif in_mall:
+		ui.text(Lang.f("+%d%% de clientes, techado (la lluvia no espanta) y mitad de alquiler. Solo puestos y locales.", roundi((D.MALL.traffic - 1) * 100)), Vector2(72, 98), 16, "green", true)
 		y0 = 128
 	ui.wrap_text("Elige qué negocio construir aquí. La construcción es una inversión (CAPEX) que se deprecia en 5 años; el alquiler es un costo fijo que pagas cada mes vendas o no. Más grande = más clientes y más empleados, pero también más costo fijo.",
 			Rect2(70, y0, W - 140, 80), 16, "muted")
@@ -158,20 +188,176 @@ func draw_lot() -> void:
 		if not p.unlocked:
 			ui.text(Lang.f("Bloqueado: desbloquéalo en la tablet (Negocios) por %s", Fmt.money(g.unlock_cost(key))), Vector2(290, y + 12), 16, "muted")
 		else:
-			for s in D.SIZES.size():
+			for s in (2 if in_mall else D.SIZES.size()):
 				var size: Dictionary = D.SIZES[s]
 				var cost := g.location_cost(s)
-				var tip := Lang.f("%s: inversión %s, alquiler %s/mes, hasta %d empleados, tráfico ×%d.", [size.name, Fmt.money(cost), Fmt.money(size.rent * g.price_index), size.max_emp, int(size.traffic)])
+				var rent: float = size.rent * g.price_index * (D.MALL.rent_mult if in_mall else 1.0)
+				var tip := Lang.f("%s: inversión %s, alquiler %s/mes, hasta %d empleados, tráfico ×%d.", [size.name, Fmt.money(cost), Fmt.money(rent), size.max_emp, int(size.traffic)])
 				if ui.button(Rect2(290 + s * 300, y, 285, 44), Lang.f("%s · %s", [size.name, Fmt.money(cost)]), g.cash >= cost, "normal", 15, tip):
-					var res := g.open_location(key, s, lot)
-					if res[0]:
-						hide()
-						city.sfx.play("record", 0.7)
-					city.toast(res[1], "good" if res[0] else "bad")
+					var plot := lot
+					var k: String = key
+					var sz: int = s
+					var title := (Lang.f("¿Abrir un %s de %s en la vitrina %d?", [Lang.noun(size.name), Lang.noun(d.name), plot + 1]) if in_mall
+							else Lang.f("¿Construir un %s de %s en el terreno %d?", [Lang.noun(size.name), Lang.noun(d.name), plot + 1]))
+					city.confirm(title, tip, Lang.f("Sí, construir (%s)", Fmt.short(cost)), func():
+								var res: Array = g.open_location(k, sz, null, plot) if in_mall else g.open_location(k, sz, plot)
+								if res[0]:
+									city.sfx.play("record", 0.7)
+								city.toast(res[1], "good" if res[0] else "bad"))
 					return
 		y += 74
 	if ui.button(Rect2(W / 2 - 140, H - 100, 280, 44), "Cancelar (Esc)"):
 		hide()
+
+
+# ---------- comprar el local de la competencia que tienes enfrente ----------
+func draw_buy_competitor() -> void:
+	var g: Game = app.game
+	var key := buy_key
+	var r := D.rival_for(key)
+	var owner = g.plot_owner.get(str(lot))
+	if owner != null:
+		r = D.rival_by_key(owner)
+	var p: Dictionary = g.products[key]
+	var cost := g.acquire_cost(key)
+	var name: String = Lang.noun(D.PRODUCTS[key].name)
+	var box := Rect2(W / 2 - 330, H / 2 - 190, 660, 380)
+	ui.rect(box.grow(8), Color(0, 0, 0, 0.35), 24)
+	ui.rect(box, Color8(18, 22, 30), 20)
+	ui.rect(box, Color(r.color, 0.6), 20, 1.5)
+	var ic := box.position + Vector2(70, 72)
+	ui.circle(ic, 36, r.color)
+	ui.text(Admin.initials(r), ic + Vector2(0, 1), 26, Color8(16, 20, 30), true, "center")
+	ui.text("COMPRAR LOCAL DE LA COMPETENCIA", Vector2(box.position.x + 124, box.position.y + 40), 13, Notifications.light(r.color, 0.3), true)
+	ui.text(Lang.f("%s de %s", [r.company, name]), Vector2(box.position.x + 124, box.position.y + 60), 28, "text", true, "topleft", box.size.x - 150)
+	var text := Lang.f("Pagas %s y este mismo edificio pasa a ser tuyo: un local con 3 empleados que ya tiene clientes. %s pierde un local (te quedas con un competidor menos en %s). Lo que pagas por encima del valor del edificio es plusvalía.", [Fmt.money(cost), r.short, name])
+	if not p.unlocked:
+		text = Lang.f("Todavía no tienes el negocio de %s. Desbloquéalo primero en la tablet (Negocios) para poder comprar este local.", name)
+	ui.wrap_text(text, Rect2(box.position.x + 40, box.position.y + 130, box.size.x - 80, 120), 17, Color8(215, 222, 232))
+	ui.text(Lang.f("Caja disponible: %s", Fmt.money(g.cash)), Vector2(box.get_center().x, box.end.y - 104), 16, Admin.sc(g.cash), true, "center")
+	var can: bool = p.unlocked and g.cash >= cost and p.competitors > 0
+	if ui.button(Rect2(box.position.x + 40, box.end.y - 76, 280, 46), Lang.f("Sí, comprar (%s)", Fmt.short(cost)), can, "primary", 17):
+		var res := g.acquire(key, lot)
+		if res[0]:
+			hide()
+			city.sync(g)
+			city.sfx.play("record", 0.7)
+		city.toast(res[1], "good" if res[0] else "bad")
+		return
+	if ui.button(Rect2(box.end.x - 320, box.end.y - 76, 280, 46), "No (Esc)", true, "normal", 17):
+		hide()
+
+
+# ---------- mapa grande de la ciudad (tecla M) ----------
+var map_hover := ""
+
+
+func draw_map() -> void:
+	var g: Game = app.game
+	var far := 4000.0
+	ui.rect(Rect2(-far, -far, W + far * 2, H + far * 2), Color(0.02, 0.03, 0.045, 0.93))
+	ui.text("MAPA DE LA CIUDAD", Vector2(28, 22), 26, "accent", true)
+	ui.text(Lang.f("Pasa el mouse sobre un edificio para ver sus datos · Clic para ir ahí · %s o Esc para cerrar", Keys.label("map")),
+			Vector2(28, 56), 14, "muted")
+	var view := Rect2(20, 86, W - 40, (W - 40) * CityMap.WORLD.size.y / CityMap.WORLD.size.x)
+	var scale := view.size.x / CityMap.WORLD.size.x
+	var center := CityMap.WORLD.get_center()
+	ui.set_clip(view)
+	CityMap.draw_ground(ui, view, center, scale)
+	var its := CityMap.items(city)
+	# El que está bajo el mouse: el más chico que lo contiene (los lugares grandes quedan por debajo)
+	var hot = null
+	var best := INF
+	for it in its:
+		var r := CityMap.rect_to_screen(view, center, scale, it.rect).grow(3)
+		if r.has_point(ui.mouse) and view.has_point(ui.mouse) and r.get_area() < best:
+			best = r.get_area()
+			hot = it
+	map_hover = hot.id if hot != null else ""
+	var order := ["place", "lot", "factory", "rival", "mine"]
+	for kind in order:
+		for it in its:
+			if it.kind != kind or (hot != null and it.id == hot.id):
+				continue
+			var k := ui.tween("map" + it.id, 0.0, 0.3)
+			CityMap.draw_item(ui, it, CityMap.rect_to_screen(view, center, scale, it.rect), k, scale)
+	var me := CityMap.to_screen(view, center, scale, city.player.position.x, city.player.position.z)
+	CityMap.draw_player(ui, me, city.yaw, 10.0)
+	if hot != null:   # el elegido va encima de todo y se agranda
+		var k := ui.tween("map" + hot.id, 1.0, 0.3)
+		CityMap.draw_item(ui, hot, CityMap.rect_to_screen(view, center, scale, hot.rect), k, scale)
+	ui.set_clip(null)
+	ui.rect(view, Color(1, 1, 1, 0.15), 0, 1.5)
+	# Ficha del edificio bajo el mouse
+	if hot != null:
+		var tw: float = maxf(ui.text_size(hot.name, 17, true).x, ui.text_size(hot.sub, 13).x) + 36
+		tw = minf(tw, 520.0)
+		var tp := ui.mouse + Vector2(18, 18)
+		if tp.x + tw > W - 10:
+			tp.x = ui.mouse.x - tw - 18
+		var card := Rect2(tp, Vector2(tw, 84))
+		ui.rect(card, Color(0.04, 0.05, 0.07, 0.96), 12)
+		ui.rect(card, Color(hot.color, 0.8), 12, 1.5)
+		ui.text(hot.name, card.position + Vector2(16, 12), 17, "text", true, "topleft", tw - 32)
+		ui.text(hot.sub, card.position + Vector2(16, 38), 13, "muted", false, "topleft", tw - 32)
+		ui.text("Clic para ir aquí", card.position + Vector2(16, 60), 13, "accent", true)
+		if ui.clicked:
+			city.teleport(hot.target, hot.yaw, hot.name)
+			hide()
+			return
+	# Abajo: resumen de clientes y leyenda
+	var y := view.end.y + 14
+	var mine := its.filter(func(it): return it.kind == "mine")
+	var rivals := its.filter(func(it): return it.kind == "rival")
+	var my_total := 0.0
+	for it in mine:
+		my_total += it.clients
+	var rival_total := 0.0
+	for it in rivals:
+		rival_total += it.clients
+	var lost := 0.0
+	for it in mine:
+		lost += it.lost
+	ui.panel(Rect2(20, y, 560, H - y - 16), "Clientes que compran hoy")
+	var ly := y + 46
+	ly = ui.row(36, ly, 528, "En tus locales de la avenida", Lang.f("%s al día", Fmt.num(my_total)), "accent")
+	ly = ui.row(36, ly, 528, "Se fueron sin comprar (falta personal o stock)", Fmt.num(lost), "orange" if lost > 1 else "text")
+	ly = ui.row(36, ly, 528, "En la competencia (aprox.)", Lang.f("%s al día", Fmt.num(rival_total)), "red")
+	var share := my_total / (my_total + rival_total) if my_total + rival_total > 0 else 0.0
+	ly += 6
+	ui.text(Lang.f("Tu parte de los clientes de la avenida: %s", Fmt.pct(share, 0)), Vector2(36, ly), 14, "text", true)
+	ui.bar(Rect2(36, ly + 24, 528, 10), share, "accent", "red")
+	# Los locales que más venden
+	var top := mine.duplicate()
+	top.sort_custom(func(a, b): return a.clients > b.clients)
+	var rp := ui.panel(Rect2(592, y, 380, H - y - 16), "Tus locales con más clientes")
+	var ty := rp.position.y + 44
+	var mx := 1.0
+	for it in top:
+		mx = maxf(mx, it.clients)
+	for it in top.slice(0, 4):
+		var row := Rect2(rp.position.x + 12, ty - 2, rp.size.x - 24, 24)
+		if ui.hover(row):
+			ui.rect(row, Color(1, 1, 1, 0.06), 6)
+			map_hover = it.id
+			if ui.clicked:
+				city.teleport(it.target, it.yaw, it.name)
+				hide()
+				return
+		ui.text(it.name.trim_prefix("Tu "), Vector2(rp.position.x + 18, ty), 13, "text", false, "topleft", 200)
+		ui.bar(Rect2(rp.position.x + 226, ty + 5, 90, 8), it.clients / mx, "accent")
+		ui.text(Fmt.num(it.clients), Vector2(rp.end.x - 16, ty), 13, "accent", true, "topright")
+		ty += 26
+	if top.is_empty():
+		ui.text("Todavía no tienes locales en la avenida.", Vector2(rp.position.x + 18, ty), 14, "muted")
+	var lg := ui.panel(Rect2(984, y, W - 1004, H - y - 16), "Leyenda")
+	var gy := lg.position.y + 44
+	for e in [[CityMap.GOLD, "Tus locales"], [CityMap.RIVAL, "Competencia"], [CityMap.LOT, "Terreno en venta"], [CityMap.FACTORY, "Tus fábricas"], [CityMap.PLACE, "Lugares"]]:
+		ui.rect(Rect2(lg.position.x + 16, gy + 2, 14, 14), e[0], 3)
+		ui.text(e[1], Vector2(lg.position.x + 40, gy), 13, "text")
+		gy += 22
+	if ui.clicked and not view.has_point(ui.mouse) and ui.mouse.y < view.position.y - 40:
+		pass
 
 
 # ---------- menú de pausa ----------
@@ -804,6 +990,7 @@ func draw_custom() -> void:
 			y = cards(x, y, "Haz clic para ponerte o quitarte cada accesorio", "", Wardrobe.TOGGLES, 4, 150)
 	var by := box.end.y - 64
 	if ui.button(Rect2(x, by, 250, 44), "Al azar (con lo que tienes)", true, "normal", 15):
+		trying = null
 		for key in Wardrobe.LOOK_COLORS:
 			var opts: Array = Wardrobe.LOOK_COLORS[key].filter(func(o): return Wardrobe.owns(g, key, o))
 			look[key] = opts.pick_random()
@@ -815,6 +1002,8 @@ func draw_custom() -> void:
 		city.apply_look()
 	if ui.button(Rect2(x + 270, by, 266, 44), "Listo (Esc)", true, "primary", 17):
 		city.close_custom()
+	if trying != null:
+		draw_try_bar(x, by - 118, 536)
 	draw_view_controls()
 
 
@@ -837,18 +1026,44 @@ func over_custom_ui() -> bool:
 	return ui.mouse.x < 640 or (ui.mouse.x > W - 490 and ui.mouse.y > H - 115)
 
 
-func pick(key: String, value) -> void:
+## Elegir una prenda: si ya es tuya te la pones; si no, te la pruebas gratis y abajo se pregunta si la compras.
+func pick(key: String, value, label := "") -> void:
 	var g: Game = app.game
 	if not Wardrobe.owns(g, key, value):
-		var res := g.buy_item(Wardrobe.item_id(key, value), Wardrobe.item_price(key, value))
-		if not res[0]:
-			city.toast(res[1], "bad")
-			city.sfx.play("angry", 0.5)
-			return
-		city.sfx.play("coin", 0.7)
-		city.toast(Lang.f("Compra hecha: %s.", Fmt.money(g.item_price(Wardrobe.item_price(key, value)))), "good")
+		trying = {"key": key, "value": value, "name": label if label else Lang.t("este color"),
+				"price": g.item_price(Wardrobe.item_price(key, value))}
+		var preview: Dictionary = Wardrobe.full_look(g.look)
+		preview[key] = value
+		city.player.restyle(preview)
+		return
+	trying = null
 	g.look[key] = value
 	city.apply_look()
+
+
+## Lo que te estás probando: ¿lo compras o te lo sacas?
+func draw_try_bar(x: float, y: float, w: float) -> void:
+	var g: Game = app.game
+	var r := Rect2(x, y, w, 104)
+	ui.rect(r, Color8(36, 30, 14), 12)
+	ui.rect(r, ImUI.COL.accent, 12, 2)
+	ui.text(Lang.f("Te estás probando: %s", trying.name), r.position + Vector2(16, 12), 16, "text", true, "topleft", w - 32)
+	ui.text(Lang.f("Cuesta %s. ¿Te gusta cómo se ve?", Fmt.money(trying.price)), r.position + Vector2(16, 36), 14, "muted")
+	var bw := (w - 44) / 2
+	if ui.button(Rect2(x + 16, y + 58, bw, 36), Lang.f("Sí, comprar (%s)", Fmt.short(trying.price)), g.cash >= trying.price, "primary", 14):
+		var t: Dictionary = trying
+		trying = null
+		var res := g.buy_item(Wardrobe.item_id(t.key, t.value), Wardrobe.item_price(t.key, t.value))
+		if res[0]:
+			g.look[t.key] = t.value
+			city.sfx.play("coin", 0.7)
+			city.toast(Lang.f("Compraste %s por %s.", [t.name, Fmt.money(t.price)]), "good")
+		else:
+			city.toast(res[1], "bad")
+		city.apply_look()
+	if ui.button(Rect2(x + 28 + bw, y + 58, bw, 36), "No, quitármelo", true, "normal", 14):
+		trying = null
+		city.apply_look()
 
 
 func swatches(x: float, y: float, label: String, key: String) -> float:
@@ -866,8 +1081,10 @@ func swatches(x: float, y: float, label: String, key: String) -> float:
 		if not Wardrobe.owns(g, key, rgb):
 			var price := g.item_price(Wardrobe.item_price(key, rgb))
 			ui.text(Fmt.short(price), center + Vector2(0, 20), 11, "muted" if g.cash >= price else "red", false, "midtop")
+		if trying != null and trying.key == key and Wardrobe.ints(trying.value) == rgb:
+			ui.ring(center, 21, "blue", 3)
 		if hot and ui.clicked:
-			pick(key, rgb)
+			pick(key, rgb, Lang.f("%s de otro color", Lang.noun(label.split(" (")[0])))
 	return y + 76
 
 
@@ -884,6 +1101,7 @@ func cards(x: float, y: float, label: String, key: String, options: Array, cols:
 		var val = true if key == "" else value
 		var r := Rect2(x + (i % cols) * (w + gap), y + 26 + (i / cols) * (h + gap), w, h)
 		var worn: bool = g.look.get(field) == true if key == "" else g.look.get(field) == value
+		var on_trial: bool = trying != null and trying.key == field and trying.value == val
 		var owned := Wardrobe.owns(g, field, val)
 		var hot := ui.hover(r)
 		ui.rect(r, Color8(44, 52, 68) if hot else ImUI.COL.panel2, 12)
@@ -904,7 +1122,12 @@ func cards(x: float, y: float, label: String, key: String, options: Array, cols:
 		else:
 			ui.rect(ir, Color8(28, 33, 43), 8)
 			ui.text("…", ir.get_center(), 22, "muted", false, "center")
-		if worn:
+		if on_trial:
+			ui.rect(r, "blue", 12, 3)
+			var tag := Rect2(r.position.x + 8, r.position.y + 10, 78, 22)
+			ui.rect(tag, "blue", 11)
+			ui.text("Probando", tag.get_center(), 12, Color8(16, 20, 30), true, "center")
+		elif worn:
 			ui.rect(r, "accent", 12, 3)
 			var tag := Rect2(r.position.x + 8, r.position.y + 10, 62, 22)
 			ui.rect(tag, "accent", 11)
@@ -922,7 +1145,7 @@ func cards(x: float, y: float, label: String, key: String, options: Array, cols:
 				g.look[field] = false
 				city.apply_look()
 			else:
-				pick(field, val)
+				pick(field, val, name)
 	var rows := (options.size() + cols - 1) / cols
 	return y + 26 + rows * (h + gap) + 8
 
@@ -1078,11 +1301,12 @@ func draw_strategy() -> void:
 		var cost := g.strategy_cost(st[0])
 		ui.text(Lang.f("Costo: %s", Fmt.money(cost)), Vector2(r.position.x + 18, r.end.y - 96), 16, "accent", true)
 		if ui.button(Rect2(r.position.x + 18, r.end.y - 62, r.size.x - 36, 44), "Elegir", not wait and g.cash >= cost, "primary", 16):
-			var res := g.run_strategy(st[0])
-			city.sfx.play("good" if res[0] else "angry")  # la noticia de la reunión llega como aviso de la oficina
-			if not res[0]:
-				city.toast(res[1], "bad")
-			hide()
+			var key: String = st[0]
+			city.confirm(Lang.f("¿%s?", st[1]), st[3], Lang.f("Sí (%s)", Fmt.short(cost)), func():
+				var res := g.run_strategy(key)
+				city.sfx.play("good" if res[0] else "angry")  # la noticia de la reunión llega como aviso de la oficina
+				if not res[0]:
+					city.toast(res[1], "bad"))
 			return
 	if ui.button(Rect2(box.get_center().x - 130, box.end.y - 70, 260, 44), "Cerrar (E)", true, "normal", 16):
 		hide()

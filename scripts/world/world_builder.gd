@@ -254,6 +254,8 @@ func _skyline() -> void:
 			var pz: float = side * rng.randf_range(48, 60)
 			var sx := rng.randf_range(9, 13)
 			var sz := rng.randf_range(8, 12)
+			if side == -1 and x >= -102 and x <= -40:
+				continue   # ahí está el parque industrial (tus fábricas): ver build_factory
 			sky.box(Vector3(px, h / 2, pz), Vector3(sx, h, sz), tones.pick_random())
 			# Fachadas de vidrio en los cuatro lados (dejan ver los pisos)
 			for f in 4:
@@ -800,3 +802,72 @@ func palm(pos: Vector3) -> void:
 		var center := top + Vector3(0, 0.45, 0) + Basis(Vector3.UP, a) * Vector3(0, -0.35, 1.3)
 		props.box(Vector3.ZERO, Vector3(0.5, 0.06, 2.8), Color8(60, 140, 60) if k % 2 else Color8(80, 160, 70),
 				Transform3D(basis, center))
+
+
+# ---------- parque industrial: tus fábricas ----------
+# Al sur del distrito financiero, una al lado de la otra mirando hacia la avenida (hacia +z).
+const FACTORY_X := {"cafe": -96.0, "pan": -84.0, "burger": -72.0, "ropa": -60.0, "tech": -48.0}
+const FACTORY_Z := [-58.0, -44.0]
+
+
+## Terreno de la fábrica de un negocio (x, z en metros), para el mapa.
+func factory_rect(key: String) -> Rect2:
+	var x: float = FACTORY_X[key]
+	return Rect2(x - 5.0, FACTORY_Z[0], 10.0, FACTORY_Z[1] - FACTORY_Z[0])
+
+
+## Nave con techo en diente de sierra, portón, chimenea y el cartel con el negocio. Con `solar`, filas de paneles
+## solares sobre el techo y un inversor con su luz verde. Devuelve {root, rects}.
+func build_factory(key: String, solar: bool) -> Dictionary:
+	var x: float = FACTORY_X[key]
+	var pc: Color = Blueprints.PRODUCT_COLORS[key]
+	var root := Node3D.new()
+	city.add_child(root)
+	var b := Boxes.new()
+	var glow := Boxes.new()
+	var zc := -52.0                 # centro de la nave (de -57 a -47)
+	var front := -47.0
+	b.box(Vector3(x, 0.04, -51.0), Vector3(10.8, 0.08, 14.6), Color8(150, 150, 146))   # losa de hormigón
+	b.box(Vector3(x, 2.5, zc), Vector3(9.0, 5.0, 10.0), Color8(208, 212, 218))       # muros
+	b.box(Vector3(x, 0.4, zc), Vector3(9.06, 0.8, 10.06), Color8(120, 124, 132))     # zócalo
+	b.box(Vector3(x, 4.55, front + 0.03), Vector3(9.04, 0.5, 0.06), pc)              # franja con el color de la marca
+	# Techo en diente de sierra: tres faldones inclinados con su ventana mirando a la calle
+	for i in 3:
+		var zz := -55.4 + i * 3.33
+		b.box_rot(Vector3(x, 5.55, zz), Vector3(9.2, 0.14, 3.55), Color8(92, 96, 106), Vector3(-18, 0, 0))
+		b.box(Vector3(x, 5.55, zz + 1.62), Vector3(8.9, 1.05, 0.08), Color8(150, 200, 230))
+	# Portón de carga con sus franjas, puerta chica y foco
+	b.box(Vector3(x - 1.4, 1.65, front + 0.04), Vector3(3.6, 3.3, 0.06), Color8(96, 100, 110))
+	for k in 7:
+		b.box(Vector3(x - 1.4, 0.3 + k * 0.45, front + 0.08), Vector3(3.5, 0.04, 0.02), Color8(70, 74, 82))
+	b.box(Vector3(x + 2.6, 1.1, front + 0.04), Vector3(1.0, 2.2, 0.06), Color8(60, 62, 70))
+	glow.box(Vector3(x + 2.6, 2.5, front + 0.2), Vector3(0.4, 0.12, 0.25), Color8(255, 230, 170))
+	# Chimenea con franjas rojas y blancas
+	for k in 6:
+		b.box(Vector3(x + 3.0, 0.75 + k * 1.5, -55.6), Vector3(0.9, 1.5, 0.9), Color8(200, 60, 50) if k % 2 == 0 else Color8(240, 240, 240))
+	# Pallets con cajas al lado del portón
+	for k in 2:
+		b.box(Vector3(x - 4.0 + k * 0.0, 0.12, front + 1.5 + k * 1.3), Vector3(1.1, 0.14, 1.1), Color8(170, 130, 80))
+		b.box(Vector3(x - 4.0, 0.55, front + 1.5 + k * 1.3), Vector3(0.9, 0.7, 0.9), Color8(176, 132, 82))
+	if solar:   # paneles solares en filas sobre los faldones, y el inversor
+		for i in 3:
+			var zz := -55.4 + i * 3.33
+			for j in 4:
+				var px := x - 3.3 + j * 2.2
+				b.box_rot(Vector3(px, 5.82, zz - 0.15), Vector3(2.0, 0.08, 2.6), Color8(200, 205, 212), Vector3(-18, 0, 0))
+				b.box_rot(Vector3(px, 5.88, zz - 0.15), Vector3(1.9, 0.04, 2.5), Color8(30, 50, 110), Vector3(-18, 0, 0))
+				for k in 3:   # líneas de las celdas
+					b.box_rot(Vector3(px - 0.6 + k * 0.6, 5.91, zz - 0.15), Vector3(0.02, 0.02, 2.45), Color8(120, 140, 190), Vector3(-18, 0, 0))
+		b.box(Vector3(x + 3.9, 1.0, front + 0.25), Vector3(0.7, 0.9, 0.3), Color8(230, 232, 236))
+		glow.box(Vector3(x + 3.9, 1.3, front + 0.41), Vector3(0.12, 0.12, 0.02), Color8(80, 230, 120))
+	b.node(root, Mats.standard)
+	glow.node(root, Mats.emissive, false)
+	var name: String = D.PRODUCTS[key].name
+	var l := Building.label(root, Lang.f("FÁBRICA · %s", name.to_upper()), Vector3(x, 4.55, front + 0.08), 11, Color.WHITE, true, false)
+	l.rotation.y = 0.0
+	if solar:
+		var s := Building.label(root, "ENERGÍA SOLAR", Vector3(x + 2.6, 3.0, front + 0.08), 5, Color8(120, 230, 140), true, false)
+		s.rotation.y = 0.0
+	Mats.add_light(root, Vector3(x + 2.6, 2.4, front + 1.0), 9.0)
+	var rects := [[x - 4.5, x + 4.5, zc - 5.0, zc + 5.0, 5.0], [x + 2.55, x + 3.45, -56.05, -55.15, 9.0]]
+	return {"root": root, "rects": rects, "sig": [true, solar]}

@@ -11,7 +11,9 @@ func _ready() -> void:
 			"test_save_and_load_continue", "test_wardrobe", "test_modes", "test_fund_hq_and_sweep",
 			"test_strategies", "test_rivals_buy_empty_plots", "test_selling_to_a_rival", "test_beach_plots",
 			"test_formats", "test_no_stock_without_stores", "test_loan_interest_accrues",
-			"test_weather_moves_demand", "test_stars", "test_city_activities"]:
+			"test_weather_moves_demand", "test_stars", "test_city_activities", "test_decor", "test_solar",
+			"test_labor", "test_every_micro_is_booked", "test_rivals_alive", "test_buy_that_building", "test_old_saves",
+			"test_mall_and_franchises", "test_homeless_become_franchises"]:
 		var before := failures
 		call(t)
 		print(("OK    " if failures == before else "FALLA ") + t)
@@ -78,6 +80,9 @@ func test_equity_change_equals_net_income() -> void:
 		busy_player(g, day)
 		g.step_day()
 	check(not g.game_over, "no debería quebrar")
+	if g.game_over:   # para ver qué pasó
+		for n in g.news.slice(-40):
+			print("    día %d [%s] %s" % [n.day, n.kind, n.text])
 	near(g.balance().patrimonio - start, net_income(g), 1.0, "patrimonio vs utilidad")
 
 
@@ -344,3 +349,243 @@ func test_city_activities() -> void:
 	check(g.beach_boost_days == 6, "el torneo se acaba solo")
 	var b := Game.from_json(g.to_json())
 	check(b.activity_wait("voley") == g.activity_wait("voley") and b.beach_boost_days == 6, "se guarda")
+
+
+## Cuadra la contabilidad: el cambio de patrimonio es igual a la utilidad del libro (en un mismo mes).
+func booked(g: Game, action: Callable, msg: String) -> void:
+	var eq: float = g.balance().patrimonio
+	var ni: float = Game.statement(g.ledger).utilidad_neta
+	action.call()
+	near(g.balance().patrimonio - eq, Game.statement(g.ledger).utilidad_neta - ni, 0.01, msg)
+
+
+func test_decor() -> void:
+	var g := Game.new(5)
+	g.cash += 50000
+	var loc: Dictionary = g.locations[0]
+	var p: Dictionary = g.products.cafe
+	var dem := g.demand_at(p, loc, p.price)
+	var cap := g.capacity(loc)
+	booked(g, func(): check(g.buy_decor(loc, "letrero")[0], "letrero"), "letrero cuadra")
+	check(not g.buy_decor(loc, "letrero")[0], "no se compra dos veces")
+	near(g.demand_at(p, loc, p.price) / dem, 1.06, 0.001, "+6% demanda")
+	g.buy_decor(loc, "autopago")
+	near(g.capacity(loc) / cap, 1.15, 0.001, "+15% capacidad")
+	check(loc.asset_ids.size() == 3, "los artículos son activos del local")
+	near(g.decor_cost(loc, "plantas") / g.decor_cost(g.make_location(0, "cafe", 2), "plantas"), 1.0 / 8.0, 0.001, "más caro en megatienda")
+	# Aire acondicionado: la tormenta espanta la mitad
+	g.weather = 5
+	var before := g.weather_factor("cafe", loc)
+	g.buy_decor(loc, "aire")
+	near(g.weather_factor("cafe", loc), lerpf(before, 1.0, 0.5), 0.001, "aire")
+	var b := Game.from_json(g.to_json())
+	check(b.locations[0].upgrades == ["letrero", "autopago", "aire"], "se guardan")
+
+
+func test_solar() -> void:
+	var g := Game.new(6)
+	g.cash += 200000
+	check(not g.build_solar("cafe")[0], "sin fábrica no hay paneles")
+	g.build_factory("cafe")
+	var p: Dictionary = g.products.cafe
+	var cost := g.unit_cost(p)
+	var upkeep := g.factory_upkeep_monthly(p)
+	booked(g, func(): check(g.build_solar("cafe")[0], "paneles"), "paneles cuadran")
+	near(g.unit_cost(p) / cost, 0.95, 0.001, "−5% costo")
+	near(g.factory_upkeep_monthly(p) / upkeep, 0.4, 0.001, "mantenimiento 40%")
+
+
+func test_labor() -> void:
+	var g := Game.new(8)
+	var w := g.wage_daily()
+	var loc: Dictionary = g.locations[0]
+	var cap := g.capacity(loc)
+	g.set_labor(3)
+	near(g.wage_daily() / w, 0.8, 0.001, "explotación paga menos")
+	check(g.capacity(loc) > cap * 1.2, "y rinden más al principio")
+	g.cash += 100000
+	for i in 120:
+		g.step_day()
+		if g.pending_choice != null:
+			g.resolve_choice(0)
+	check(g.morale < 20, "el ánimo se desploma (%f)" % g.morale)
+	check(g.capacity(loc) / maxf(1, loc.employees) < D.PRODUCTS.cafe.productivity * 1.3, "con ánimo bajo rinden menos de lo prometido")
+	g.set_labor(0)
+	for i in 120:
+		g.step_day()
+		if g.pending_choice != null:
+			g.resolve_choice(0)
+	check(g.morale > 70, "con trato digno se recupera (%f)" % g.morale)
+
+
+func test_every_micro_is_booked() -> void:
+	var base := Game.new(12)
+	base.cash += 100000
+	base.unlock("pan")
+	base.open_location("pan", 1)
+	base.open_location("cafe", 1)
+	for i in 40:
+		base.step_day()
+		base.pending_choice = null
+		base.micro = null
+	var ids: Array = Game.MICROS.duplicate()
+	for id in ids:
+		for seed in 4:
+			var g := Game.from_json(base.to_json())
+			g.rng.seed = seed
+			g.micro = g.build_micro(id)
+			for opt in g.micro.options.size():
+				var h := Game.from_json(g.to_json())
+				booked(h, func(): h.resolve_micro(opt), "%s opción %d" % [id, opt])
+				check(h.micro == null, id)
+	# Las de los rivales
+	var r := D.rival_by_key("bimbo")
+	for maker in ["_micro_rival_war", "_micro_poach", "_micro_lawsuit"]:
+		for opt in 2:
+			var h := Game.from_json(base.to_json())
+			h.micro = h.call(maker, r, "pan") if maker != "_micro_lawsuit" else h.call(maker, r)
+			booked(h, func(): h.resolve_micro(opt), "%s opción %d" % [maker, opt])
+	# Si no respondes, pasa sola la opción por defecto
+	var g := Game.from_json(base.to_json())
+	g.micro = g.build_micro("tarde")
+	for i in Game.MICRO_DAYS + 1:
+		g.step_day()
+	check(g.micro == null or g.micro.id != "tarde", "vence sola")
+
+
+func test_rivals_alive() -> void:
+	var g := Game.new(14)
+	g.cash += 5000000
+	for k in ["pan", "burger", "ropa", "tech"]:
+		g.unlock(k)
+		g.open_location(k, 1)
+	var moves := 0
+	for i in 720:
+		var n := g.news.size()
+		g.step_day()
+		if g.pending_choice != null:
+			g.resolve_choice(1)
+		if g.micro != null:
+			g.resolve_micro(1)
+		for item in g.news.slice(n):
+			if item.kind == "rival":
+				moves += 1
+	check(moves >= 8, "los rivales hablan y atacan (%d)" % moves)
+	check(g.ranking().size() >= 7, "ranking con los rivales activos")
+	check(g.rival_active(D.rival_by_key("musk")), "los tiburones aparecen")
+	# Alianza: una vez aceptada no te atacan
+	var ok := false
+	for s in 10:
+		var h := Game.from_json(g.to_json())
+		h.rng.seed = s
+		h.rival_state("bimbo").hostility = 0.0
+		var res: Array = h.propose_alliance("bimbo")
+		if res[0]:
+			ok = true
+			check(h.allied("bimbo"), "aliados")
+			break
+	check(ok, "alguna alianza sale")
+	var h := Game.from_json(g.to_json())
+	var before := float(h.rival_state("mcdonalds").hostility)
+	booked(h, func(): h.provoke("mcdonalds"), "provocar cuadra")
+	check(float(h.rival_state("mcdonalds").hostility) > before, "provocar enoja")
+
+
+func test_buy_that_building() -> void:
+	var g := Game.new(15)
+	g.cash += 500000
+	g._rival_takes("cafe", 2)
+	g._rival_takes("cafe", 5)
+	var res := g.acquire("cafe", 5)
+	check(res[0], "compra")
+	check(Game.plot_of(g.locations[-1]) == 5, "es el edificio que elegiste (terreno 6)")
+	check(g.rival_plots.has("2") and not g.rival_plots.has("5"), "el otro sigue siendo del rival")
+	g.acquire("cafe", D.PLOT_COUNT + 1)
+	check(Game.plot_of(g.locations[-1]) == D.PLOT_COUNT + 1, "local fijo de los extremos")
+
+
+func test_old_saves() -> void:
+	var g := Game.new(16)
+	for i in 10:
+		g.step_day()
+	var state = JSON.parse_string(g.to_json())
+	for k in ["labor", "morale", "micro", "next_micro_day", "rivals", "plot_owner", "passed"]:
+		state.erase(k)
+	for p in state.products.values():
+		for k in ["solar", "war_days", "cap_boost", "cap_boost_days"]:
+			p.erase(k)
+	for l in state.locations:
+		l.erase("upgrades")
+	state.pending_choice = {"id": "cartel", "title": "x", "text": "x", "options": [], "data": {"product": "cafe", "fine": 10.0, "rival": "victor"}}
+	var b := Game.from_json(JSON.stringify(state))
+	check(b.locations[0].upgrades == [], "locales sin artículos")
+	check(b.rivals.has("trump"), "rivales nuevos")
+	check(D.rival_by_key("victor").key == "starbucks", "rivales de antes")
+	b.pending_choice = null
+	for i in 60:
+		b.step_day()
+	check(not b.game_over, "sigue")
+
+
+## Cada sucursal necesita un lugar: con la avenida llena no se abre nada hasta comprar el centro comercial; ahí solo
+## caben puestos y locales. Las franquicias pagan regalías y la contabilidad cuadra. Todo se guarda y se carga.
+func test_mall_and_franchises() -> void:
+	var g := Game.new(21)
+	g.cash += 5000000
+	g.unlock("pan")
+	var start: float = g.balance().patrimonio
+	while g.free_plots():
+		check(g.open_location("pan" if g.locations.size() % 2 else "cafe", 1)[0], "abrir en la avenida")
+	check(not g.open_location("cafe", 0)[0], "sin lugar no se abre")
+	check(not g.acquire("cafe")[0], "sin lugar no se compra un rival sin edificio")
+	check(g.buy_mall()[0], "comprar el centro comercial")
+	check(not g.open_location("cafe", 2)[0], "la megatienda no cabe en una vitrina")
+	check(g.open_location("cafe", 1)[0], "local en una vitrina")
+	var loc: Dictionary = g.locations[-1]
+	check(Game.mall_of(loc) == 0 and Game.plot_of(loc) == -1, "va a la vitrina 1")
+	check(g.upgrade_cost(loc) == null, "no se amplía a megatienda en la vitrina")
+	check(not g.open_location("pan", 0, null, 0)[0], "la vitrina ocupada no se repite")
+	check(g.open_location("pan", 0, null, 5)[0], "vitrina elegida")
+	check(Game.mall_of(g.locations[-1]) == 5, "queda en la vitrina 6")
+	check(g.open_franchise("cafe")[0], "franquicia de café")
+	check(g.open_franchise("pan")[0], "franquicia de pan")
+	var rent_mall := g.rent_daily(loc)
+	var rent_ave := g.rent_daily(g.locations[1])
+	near(rent_mall, rent_ave * D.MALL.rent_mult, 0.01, "mitad de alquiler en la vitrina")
+	for day in 120:
+		g.step_day()
+		g.pending_choice = null
+	for f in g.franchises:
+		check(f.last_royalty != null and f.last_royalty > 0, "la franquicia pagó regalías")
+	near(g.balance().patrimonio - start, net_income(g), 1.0, "patrimonio vs utilidad con centro comercial y franquicias")
+	var h := Game.from_json(g.to_json())
+	check(h.mall, "el centro comercial se guarda")
+	check(h.franchises.size() == g.franchises.size(), "las franquicias se guardan")
+	check(Game.mall_of(h.find_location(loc.id)) == 0, "la vitrina se guarda")
+
+
+## Partidas de antes: las sucursales sin terreno se acomodan; las que no caben pasan a ser franquicias y te
+## devuelven su valor en libros (el patrimonio no cambia).
+func test_homeless_become_franchises() -> void:
+	var g := Game.new(22)
+	g.cash += 5000000
+	while g.free_plots():
+		g.open_location("cafe", 2)
+	var state = JSON.parse_string(g.to_json())
+	for loc in state.locations:
+		loc.erase("mall")
+	for i in 7:   # como en las partidas viejas: las que pasaban de 14 quedaban sin terreno (plot −1)
+		var extra: Dictionary = state.locations[3].duplicate(true)
+		extra.id = 900 + i
+		extra.plot = -1
+		state.locations.append(extra)
+	var dup: Dictionary = state.locations[0].duplicate(true)   # y una repetida en el mismo terreno
+	dup.id = 999
+	state.locations.append(dup)
+	var h := Game.from_json(JSON.stringify(state))
+	check(h.locations.size() == 14, "quedan 14 en la avenida (%d)" % h.locations.size())
+	check(h.franchises.size() == 8, "las que no cabían son franquicias (%d)" % h.franchises.size())
+	var used := {}
+	for loc in h.locations:
+		check(Game.plot_of(loc) >= 0 and not used.has(Game.plot_of(loc)), "cada una en su terreno")
+		used[Game.plot_of(loc)] = true

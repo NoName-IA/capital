@@ -13,6 +13,16 @@ const HQ := [-80, 1]
 # orden (ver competitor_plan).
 const COMP_PLOTS := [[77, 1], [77, -1], [99, 1], [99, -1], [-121, 1], [-121, -1], [-143, 1]]
 const SIDEWALK := 7.5
+
+
+## Posición de un terreno: los de la avenida (0 a 13) y después los locales de la competencia de los extremos
+## (14 en adelante), que pasan a ser tuyos si compras ese edificio.
+static func plot_pos(i: int) -> Array:
+	return PLOTS[i] if i < PLOTS.size() else COMP_PLOTS[i - PLOTS.size()]
+
+
+static func plot_count() -> int:
+	return PLOTS.size() + COMP_PLOTS.size()
 const ROAD_WEST_LIMIT := -150.0   # hasta dónde se puede caminar por la calle hacia los cerros
 const BOUNDS := [-100.0, 200.0, -58.0, 58.0]  # incluye el barrio, el parque, la playa y la orilla del mar
 const WADE_DEPTH := 0.75   # hasta dónde se puede entrar al mar (metros bajo el agua)
@@ -49,6 +59,8 @@ var settings := {}
 var game = null
 var stores := {}     # índice de terreno -> Store
 var lots := {}       # índice de terreno -> {root, manage}
+var mall: Mall       # el centro comercial frente a la oficina (o su terreno en obra)
+var factories := {}  # negocio -> {root, rects, sig}: tus fábricas en el parque industrial
 var comps := {}      # "c3" (local fijo de los extremos) o "p5" (terreno que compró el rival) -> competidor
 var customers := []
 var pops := []
@@ -122,6 +134,7 @@ func _ready() -> void:
 	builder = WorldBuilder.new(self)
 	builder.build()
 	static_rects = builder.rects
+	mall = Mall.new(self)
 	hq = builder.hq
 	hq_spots = hq.spots
 	sky = SkyLight.new(self)
@@ -343,7 +356,12 @@ func ask_assistant() -> void:
 	hud.notes.push("oficina", "Sofía · tu asistente", text, {"initials": "SO", "sound": "ring"})
 
 
-func do_activity(key: String) -> void:
+func do_activity(key: String, confirmed := false) -> void:
+	var cost: float = game.activity_cost(key)
+	if cost > 0 and not confirmed and game.activity_wait(key) == 0:
+		var act: Array = game._activity(key)
+		confirm(Lang.f("¿%s?", act[1]), act[3], Lang.f("Sí (%s)", Fmt.short(cost)), do_activity.bind(key, true))
+		return
 	var r: Array = game.do_activity(key, SkyLight.hour_of(day_fraction()))
 	var a: Array = game._activity(key)
 	var opts := {"sound": "coin"} if r[0] else {"sound": "bad", "col": Color8(225, 85, 75)}
@@ -356,10 +374,46 @@ func manage_market(key: String) -> void:
 	overlays.show("admin")
 
 
+## Ventana para comprar el local de la competencia que tienes enfrente (el edificio pasa a ser tuyo).
+func buy_competitor(key: String, plot: int) -> void:
+	overlays.buy_key = key
+	overlays.show("compra", plot)
+
+
 func manage(store: Store) -> void:
 	app.tab = "negocios"
 	app.sel = store.loc.product
 	overlays.show("admin")
+
+
+## Responde la microdecisión que está en pantalla (no pausa el juego).
+func answer_micro(i: int) -> void:
+	if game == null or game.micro == null or i >= game.micro.options.size():
+		return
+	var res: Array = game.resolve_micro(i)
+	hud.notes.hint(res[1], "good" if res[0] else "bad")
+	sfx.play("good" if res[0] else "bad", 0.5)
+
+
+## Viaje rápido desde el mapa: quedas parado en `pos` mirando hacia `yaw_deg` (grados, 0 = hacia +z).
+func teleport(pos: Vector3, yaw_deg: float, label := "") -> void:
+	if game == null:
+		return
+	stop_serving()
+	knock = null
+	vy = 0.0
+	player.rotation.x = 0
+	pos.y = floor_at(pos.x, pos.z, pos.y + 1.0)
+	player.position = pos
+	yaw = yaw_deg
+	player.rotation.y = deg_to_rad(yaw_deg)
+	pitch = 14.0
+	first_person = false
+	zoom_target = max(zoom_target, 5.0)
+	zoom = zoom_target
+	sfx.play("record", 0.45, 1.5)
+	if label:
+		toast(Lang.f("Llegaste: %s.", label), "info")
 
 
 ## Te lleva al vestíbulo de la oficina central, frente a la computadora.
@@ -402,12 +456,21 @@ func apply_look() -> void:
 func use_wardrobe() -> void:
 	var g: Game = game
 	if not g.wardrobe:
-		var res := g.unlock_wardrobe()
-		toast(res[1], "good" if res[0] else "bad")
-		sfx.play("record" if res[0] else "angry", 0.6)
-		if not res[0]:
-			return
+		confirm("¿Comprar el armario de la oficina?", Lang.f("Cuesta %s (gasto de representación). Después cada prenda se paga aparte, y te la puedes probar antes de comprarla.", Fmt.money(g.wardrobe_cost())),
+				Lang.f("Sí, comprar (%s)", Fmt.short(g.wardrobe_cost())), func():
+					var res := g.unlock_wardrobe()
+					toast(res[1], "good" if res[0] else "bad")
+					sfx.play("record" if res[0] else "angry", 0.6)
+					if res[0]:
+						open_custom())
+		return
 	open_custom()
+
+
+## Pregunta Sí/No en la ciudad antes de gastar (ver Overlays, modo "confirmar").
+func confirm(title: String, detail: String, yes: String, action: Callable) -> void:
+	overlays.question = {"title": title, "detail": detail, "yes": yes, "action": action}
+	overlays.show("confirmar")
 
 
 func open_custom() -> void:
@@ -488,6 +551,9 @@ func zoom_custom(step: float) -> void:
 func close_custom() -> void:
 	if overlays.mode != "personaje":
 		return
+	if overlays.trying != null:   # lo que te estabas probando sin comprar se devuelve
+		overlays.trying = null
+		apply_look()
 	overlays.hide()
 	app.paused = custom_prev[0]
 	first_person = custom_prev[1]
@@ -704,6 +770,13 @@ func react(n: Dictionary) -> void:
 			for st in stores.values():
 				if int(st.loc.id) == int(v[0]):
 					st.star_burst(up)
+		"passed":
+			var r := D.rival_by_key(v)
+			notes.push_hero("RANKING DE LA CIUDAD", Lang.f("¡Superaste a %s!", r.company), "Mira el ranking en la tablet (Rivales)", gold, "fanfare", 80, null, "crown")
+		"staff_quit":
+			notes.push("oficina", "Renunció un empleado", n.text, {"col": red, "sound": "bad", "icon": "person"})
+		"danger_soft":
+			notes.push("alerta", "Inspección del trabajo", n.text, {"sound": "bad"})
 		"quiet":
 			pass
 		"gameover":
@@ -788,6 +861,8 @@ func set_sky_lock(t: float) -> void:
 
 # ---------- sincronización con la simulación ----------
 func reset_world(g) -> void:
+	mall.destroy()
+	mall.built = false
 	for s in stores.values():
 		s.destroy()
 	for l in lots.values():
@@ -804,6 +879,9 @@ func reset_world(g) -> void:
 	for c in comps.values():
 		Actors.free_competitor(c)
 	comps = {}
+	for f in factories.values():
+		f.root.queue_free()
+	factories = {}
 	game = g
 	player.visible = g != null
 	if g != null:
@@ -824,27 +902,12 @@ func reset_world(g) -> void:
 
 
 func sync(g: Game) -> void:
-	var used := {}
-	for loc in g.locations:
-		var plot = loc.get("plot")
-		if plot != null and int(plot) >= 0 and not used.has(int(plot)):
-			used[int(plot)] = true
-		else:
-			loc.plot = null
-	for loc in g.locations:
-		if loc.plot == null:
-			var free := []
-			for i in PLOTS.size():
-				if not used.has(i) and not g.rival_plots.has(str(i)):
-					free.append(i)
-			loc.plot = free[0] if free else -1
-			if free:
-				used[free[0]] = true
+	# Cada sucursal tiene su lugar (lo elige Game al abrirla; ver Game._place_homeless para las partidas viejas)
 	var by_plot := {}
 	for loc in g.locations:
-		if int(loc.plot) >= 0:
-			by_plot[int(loc.plot)] = loc
-	for i in PLOTS.size():
+		if Game.plot_of(loc) >= 0:
+			by_plot[Game.plot_of(loc)] = loc
+	for i in plot_count():
 		var loc = by_plot.get(i)
 		var store = stores.get(i)
 		if store != null and (loc == null or store.sig != [loc.id, loc.size, loc.product]):
@@ -859,15 +922,18 @@ func sync(g: Game) -> void:
 		if rival and lots.has(i):
 			lots[i].root.queue_free()
 			lots.erase(i)
-		if loc == null and not rival and not lots.has(i):
+		if loc == null and not rival and not lots.has(i) and i < PLOTS.size():
 			lots[i] = Actors.lot(self, PLOTS[i], i, Fmt.short(g.location_cost(0)))
 	for i in stores:
 		var s: Store = stores[i]
 		s.loc = by_plot[i]
 		s.sync_staff()
 		s.sync_stars()
+		s.sync_decor()
 	sync_competitors(g)
+	sync_factories(g)
 	sync_office(g)
+	mall.sync(g)
 
 
 ## Qué competidores mostrar en los locales fijos de los extremos. Solo de los negocios donde ya compites: al empezar
@@ -898,15 +964,26 @@ func sync_competitors(g: Game) -> void:
 			comps.erase(slot)
 	for i in g.rival_plots:
 		if not comps.has("p" + i):
-			comps["p" + i] = Actors.competitor(self, g.rival_plots[i], PLOTS[int(i)])
+			comps["p" + i] = Actors.competitor(self, g.rival_plots[i], plot_pos(int(i)), g.plot_owner.get(i))
 	var need := {}
 	for k in competitor_plan(g):
 		need[k] = need.get(k, 0) + 1
+	# Los locales de los extremos que ya son tuyos (los compraste) o que un rival volvió a comprar no se llenan
+	var taken := {}
+	for loc in g.locations:
+		if Game.plot_of(loc) >= PLOTS.size():
+			taken[Game.plot_of(loc) - PLOTS.size()] = true
+	for i in g.rival_plots:
+		if int(i) >= PLOTS.size():
+			taken[int(i) - PLOTS.size()] = true
 	for slot in comps.keys():
 		if slot.begins_with("p"):
 			continue
 		var c: Dictionary = comps[slot]
-		if need.get(c.key, 0) > 0:
+		if taken.has(int(slot.substr(1))):
+			Actors.free_competitor(c)
+			comps.erase(slot)
+		elif need.get(c.key, 0) > 0:
 			need[c.key] -= 1
 		else:
 			Actors.free_competitor(c)
@@ -914,9 +991,23 @@ func sync_competitors(g: Game) -> void:
 	for k in need:
 		for n in need[k]:
 			for i in COMP_PLOTS.size():
-				if not comps.has(Lang.f("c%d", i)):
+				if not comps.has(Lang.f("c%d", i)) and not taken.has(i):
 					comps[Lang.f("c%d", i)] = Actors.competitor(self, k, COMP_PLOTS[i])
 					break
+
+
+## Las fábricas que tienes se ven en el parque industrial (con paneles solares si los pusiste).
+func sync_factories(g) -> void:
+	for k in D.PRODUCT_ORDER:
+		var p: Dictionary = g.products[k] if g != null else {}
+		var want = [true, bool(p.get("solar", false))] if g != null and p.get("factory", false) else null
+		var have = factories.get(k)
+		if have != null and (want == null or have.sig != want):
+			have.root.queue_free()
+			factories.erase(k)
+			have = null
+		if want != null and have == null:
+			factories[k] = builder.build_factory(k, want[1])
 
 
 func drop_store(i: int) -> void:
@@ -959,6 +1050,9 @@ func all_rects() -> Array:
 		out.append(s.rects)
 	for c in comps.values():
 		out.append(c.rects)
+	for f in factories.values():
+		out.append(f.rects)
+	out.append(mall.collide)
 	if cars_frozen:  # detenidos en pausa no atropellan, pero tampoco se pueden atravesar: son como una pared
 		var car_rects := []
 		for car in cars:
@@ -1083,6 +1177,8 @@ func update_lights() -> void:
 	for c in comps.values():
 		if c.spots.get("ceiling") != null:
 			rooms.append(c.spots.ceiling)
+	if mall.spots.get("ceiling") != null:
+		rooms.append(mall.spots.ceiling)
 	lights.update(camera.global_position, rooms)
 
 
@@ -1093,6 +1189,7 @@ func ceiling_over(pos: Vector3) -> Array:
 		spot_sets.append(s.spots)
 	for c in comps.values():
 		spot_sets.append(c.spots)
+	spot_sets.append(mall.spots)
 	for sp in spot_sets:
 		var c = sp.get("ceiling")
 		if c != null and c[0] < pos.x and pos.x < c[1] and c[2] < pos.z and pos.z < c[3]:
@@ -1371,8 +1468,12 @@ func _custom_camera(dt: float) -> void:
 func update_zone() -> void:
 	var p := player.position
 	var z := ["Avenida Comercial", "Tus locales y la competencia"]
-	if p.x < -106:
+	if p.z < -38 and p.x < -40 and p.x > -104:
+		z = ["Parque industrial", "Tus fábricas"]
+	elif p.x < -106:
 		z = ["Entrada de la ciudad", "El camino a los cerros y locales de la competencia"]
+	elif Mall.world_rect().grow(1.0).has_point(Vector2(p.x, p.z)):
+		z = ["Centro Comercial", "Vitrinas para puestos y locales" if game != null and game.mall else "Terreno en obra: cómpralo para tener más vitrinas"]
 	elif p.x < -66:
 		z = ["Distrito Financiero", "Rascacielos y tu oficina central"]
 	elif p.x > 110:
@@ -1418,9 +1519,13 @@ func interactables() -> Array:
 		elif cost > 0:
 			text += Lang.f(" (%s)", Fmt.money(cost))
 		items.append([builder.activity_spots[key], text, do_activity.bind(key)])
-	for c in comps.values():
+	items += mall.interactables(g)
+	for slot in comps:
+		var c: Dictionary = comps[slot]
 		var name: String = Lang.noun(D.PRODUCTS[c.key].name)
-		items.append([c.spots.manage, Lang.f("Competencia: %s (%s). Ver cómo comprarla", [c.rival.company, name]), manage_market.bind(c.key)])
+		var plot := int(slot.substr(1)) + (PLOTS.size() if slot.begins_with("c") else 0)
+		items.append([c.spots.manage, Lang.f("Comprar este local de %s (%s · %s)", [c.rival.company, name, Fmt.money(g.acquire_cost(c.key))]),
+				buy_competitor.bind(c.key, plot)])
 	return items
 
 
@@ -1547,6 +1652,8 @@ func camera_indoors() -> bool:
 	for s in stores.values():
 		if s.spots.get("ceiling") != null:
 			roofs.append(s.spots.ceiling)
+	if mall.spots.get("ceiling") != null:
+		roofs.append(mall.spots.ceiling)
 	for c in roofs:
 		if c[0] < p.x and p.x < c[1] and c[2] < p.z and p.z < c[3] and p.y < c[4]:
 			return true
@@ -1662,6 +1769,10 @@ func _key(e: InputEventKey) -> void:
 		elif key == KEY_ESCAPE:
 			close_pause()
 		return
+	if overlays.mode == "mapa":
+		if key == KEY_ESCAPE or Keys.is_event(e, "map"):
+			overlays.hide()
+		return
 	if overlays.open():
 		if (key == KEY_ESCAPE or Keys.is_event(e, "phone") or Keys.is_event(e, "interact")) and app.view == "game" and app.modal == null:
 			overlays.hide()
@@ -1690,6 +1801,10 @@ func _key(e: InputEventKey) -> void:
 			vy = 8.0
 	elif Keys.is_event(e, "office"):
 		go_to_office()
+	elif Keys.is_event(e, "map"):
+		overlays.show("mapa")
+	elif Keys.is_event(e, "micro1") or Keys.is_event(e, "micro2") or Keys.is_event(e, "micro3"):
+		answer_micro(0 if Keys.is_event(e, "micro1") else (1 if Keys.is_event(e, "micro2") else 2))
 	elif Keys.is_event(e, "help"):
 		hud.help_timer = 0.0 if hud.help_timer > 0 else 30.0
 
@@ -1723,6 +1838,10 @@ func _mouse_button(e: InputEventMouseButton) -> void:
 	elif e.button_index == MOUSE_BUTTON_LEFT and not mouse_captured():
 		if hud.ui.hover(hud.hq_button_rect()):
 			go_to_office()
+		elif hud.micro_at() >= 0:
+			answer_micro(hud.micro_at())
+		elif hud.ui.hover(hud.mini_rect):
+			overlays.show("mapa")
 		elif hud.ui.hover(hud.phone_rect):
 			if app.unread:
 				app.tab = "noticias"

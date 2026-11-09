@@ -23,13 +23,16 @@ var items := []                   # cada producto de la repisa: {mm, i, xf, pos 
 var fill := 1.0                   # qué tan llenas están las repisas (productos que quedan / total)
 var restocker: Person = null      # el empleado que va a la bodega y repone
 var jobs := {}                    # empleado -> tarea que está haciendo (ver _idle_job)
+var decor: Node3D = null          # lo que compraste para el local (ver sync_decor)
+var decor_sig := []
+var decor_rects := []
 var seated := {}                  # silla de los clientes (índice en spots.chairs) -> el Customer sentado ahí
 
 
 func _init(owner_city, index: int, location: Dictionary) -> void:
 	city = owner_city
 	plot_index = index
-	plot = owner_city.PLOTS[index]
+	plot = City.plot_pos(index)
 	loc = location
 	sig = [loc.id, loc.size, loc.product]
 	var name: String = D.PRODUCTS[loc.product].name
@@ -76,6 +79,104 @@ func sync_stars() -> void:
 		rep.add_child(rep_stars)
 	rep_sub.text = Lang.f("%s de 5 · reseñas", Fmt.num(stars, 1))
 	rep_sub.modulate = Color(1, 1, 1, 0.9)
+
+
+## Lo que compraste para el local se ve por fuera (y algo por dentro): maceteros, neón alrededor del letrero,
+## parlantes, terraza con quitasoles, el aire acondicionado en el techo, el cartel del wifi, pantallas y cajas de
+## autopago. Se rehace solo cuando cambia la lista.
+func sync_decor() -> void:
+	var ups: Array = loc.get("upgrades", [])
+	if ups == decor_sig:
+		return
+	decor_sig = ups.duplicate()
+	if decor != null:
+		decor.queue_free()
+	for r in decor_rects:
+		rects.erase(r)
+	decor_rects = []
+	decor = Node3D.new()
+	bld.root.add_child(decor)
+	var kind: int = loc.size
+	var w: float = [4.8, 14.0, Blueprints.MEGA_W][kind]
+	var h: float = [2.8, 4.5, 7.0][kind]
+	var door: float = [3.0, 3.0, 5.0][kind]
+	var pcol: Color = Blueprints.PRODUCT_COLORS[loc.product]
+	var b := Boxes.new()
+	var glow := Boxes.new()
+	if "plantas" in ups:   # maceteros a los lados de la puerta
+		for sx in [-1, 1]:
+			var x: float = sx * (door / 2 + 0.9) if kind > 0 else sx * 2.9
+			var z := 1.25 if kind > 0 else 2.0
+			b.box(Vector3(x, 0.35, z), Vector3(0.9, 0.7, 0.6), Color8(120, 90, 70))
+			b.box(Vector3(x, 0.95, z), Vector3(0.8, 0.6, 0.5), Color8(60, 140, 70))
+			b.box(Vector3(x + 0.15, 1.35, z), Vector3(0.45, 0.4, 0.35), Color8(80, 165, 85))
+			for fx in [-0.25, 0.2]:   # flores
+				b.box(Vector3(x + fx, 1.3, z - 0.22), Vector3(0.12, 0.12, 0.08), [Color8(240, 90, 120), Color8(250, 210, 70)][int(fx > 0)])
+			_decor_rect(x, z, 0.9, 0.6, 1.2)
+	if "letrero" in ups:   # neón alrededor del letrero
+		var sw: float = [3.6, 8.0, 12.0][kind]
+		var sh: float = [0.8, 1.2, 1.8][kind]
+		var sy: float = 3.5 if kind == 0 else h + 0.3 + sh / 2
+		var sz: float = 2.38 if kind == 0 else 1.78
+		var neon := pcol.lightened(0.5)
+		for k in [[0, sh / 2 + 0.08, sw + 0.3, 0.09], [0, -sh / 2 - 0.08, sw + 0.3, 0.09]]:
+			glow.box(Vector3(k[0], sy + k[1], sz), Vector3(k[2], k[3], 0.06), neon)
+		for sx in [-1, 1]:
+			glow.box(Vector3(sx * (sw / 2 + 0.11), sy, sz), Vector3(0.09, sh + 0.25, 0.06), neon)
+	if "musica" in ups and kind > 0:   # parlantes sobre la puerta
+		for sx in [-1, 1]:
+			var x: float = sx * (door / 2 + 0.35)
+			var y: float = (3.2 if kind == 1 else 3.6) + 0.45
+			b.box(Vector3(x, y, 1.75), Vector3(0.45, 0.6, 0.35), Color8(30, 30, 34))
+			b.box(Vector3(x, y - 0.1, 1.57), Vector3(0.28, 0.28, 0.02), Color8(90, 90, 96))
+	if "wifi" in ups:   # cartel WIFI GRATIS en la vitrina
+		var x: float = (door / 2 + 1.6) if kind > 0 else 1.6
+		var y := 2.65 if kind > 0 else 3.05
+		var z := 1.76 if kind > 0 else 2.35
+		b.box(Vector3(x, y, z + 0.01), Vector3(1.5, 0.42, 0.03), Color8(40, 110, 200))
+		var l := Building.label(decor, "WIFI GRATIS", Vector3(x, y, z - 0.02), 6, Color.WHITE)
+		l.position = Vector3(x, y, z - 0.02)
+	if "terraza" in ups:   # mesas con quitasol en la vereda
+		var xs: Array = [-(w / 2 - 1.6), w / 2 - 1.6] if kind > 0 else [-3.6]
+		for x in xs:
+			var z := 0.4
+			b.box(Vector3(x, 0.72, z), Vector3(1.0, 0.06, 1.0), Color8(245, 245, 240))
+			b.box(Vector3(x, 0.36, z), Vector3(0.08, 0.72, 0.08), Color8(60, 60, 66))
+			for sx in [-0.75, 0.75]:
+				b.box(Vector3(x + sx, 0.45, z), Vector3(0.42, 0.06, 0.42), pcol.darkened(0.2))
+				b.box(Vector3(x + sx * 1.2, 0.7, z), Vector3(0.06, 0.5, 0.42), pcol.darkened(0.2))
+			b.box(Vector3(x, 1.5, z), Vector3(0.06, 1.6, 0.06), Color8(60, 60, 66))
+			b.box(Vector3(x, 2.3, z), Vector3(2.2, 0.08, 2.2), pcol)
+			b.box(Vector3(x, 2.38, z), Vector3(1.4, 0.08, 1.4), Color8(250, 250, 245))
+			_decor_rect(x, z, 2.0, 1.0, 0.8)
+	if "aire" in ups and kind > 0:   # equipo en el techo y la unidad en la fachada
+		b.box(Vector3(w / 2 - 2.0, h + 0.75, 6.0), Vector3(1.6, 0.9, 1.2), Color8(215, 218, 222))
+		b.box(Vector3(w / 2 - 2.0, h + 0.75, 5.39), Vector3(1.2, 0.6, 0.02), Color8(120, 125, 130))
+		b.box(Vector3(-(w / 2 - 1.2), 2.9, 1.78), Vector3(0.9, 0.6, 0.35), Color8(225, 228, 232))
+	if "pantallas" in ups and kind > 0:   # pantallas con el menú detrás de la vitrina
+		for sx in [-1, 1]:
+			var x: float = sx * (door / 2 + 1.6)
+			b.box(Vector3(x, 2.15, 2.25), Vector3(1.3, 0.8, 0.06), Color8(20, 20, 24))
+			glow.box(Vector3(x, 2.15, 2.21), Vector3(1.18, 0.68, 0.02), Color8(250, 200, 80) if sx < 0 else pcol.lightened(0.3))
+	if "autopago" in ups and kind > 0:   # cajas de autopago adentro, al lado de la puerta
+		for sx in [-1, 1]:
+			var x: float = sx * (door / 2 + 0.75)
+			b.box(Vector3(x, 0.7, 2.35), Vector3(0.08, 1.4, 0.08), Color8(60, 60, 66))
+			b.box(Vector3(x, 1.45, 2.35), Vector3(0.6, 0.45, 0.12), Color8(230, 232, 236))
+			glow.box(Vector3(x, 1.47, 2.28), Vector3(0.48, 0.33, 0.02), Color8(90, 200, 120))
+	if not b.is_empty():
+		b.node(decor, Mats.standard)
+	if not glow.is_empty():
+		glow.node(decor, Mats.emissive, false)
+
+
+## Choque de una cosa de la fachada (coordenadas del local) para que no se camine a través.
+func _decor_rect(x: float, z: float, sx: float, sz: float, top: float) -> void:
+	var a := Blueprints.to_world(plot, x - sx / 2, z - sz / 2)
+	var e := Blueprints.to_world(plot, x + sx / 2, z + sz / 2)
+	var r := [min(a.x, e.x), max(a.x, e.x), min(a.z, e.z), max(a.z, e.z), top]
+	rects.append(r)
+	decor_rects.append(r)
 
 
 ## Las estrellas saltan y sueltan un "+★" o "−★" cuando el local cruza una estrella entera.
@@ -228,6 +329,8 @@ func _build_nav() -> void:
 	nav.update()
 	var margin := 0.28
 	for b in bld.blueprint_boxes:
+		if b.size() > 4:   # decoración de pared, mostrador o techo
+			continue
 		var c: Vector3 = b[0]
 		var s: Vector3 = b[1]
 		var bottom := c.y - s.y / 2
@@ -638,16 +741,16 @@ static func stock_shelves(root: Node3D, kind: int, product: String, layout := {}
 
 ## Cajas registradoras donde pagan los clientes (una por mostrador; en la megatienda, una por caja con su letrero).
 static func add_registers(root: Node3D, kind: int, layout := {}) -> void:
-	var spots := []   # [posición, giro]
+	var spots := []   # [posición, giro]: el teclado y la pantalla miran al cajero (giro PI = hacia el fondo)
 	if layout.has("registers"):
 		spots = layout.registers
 	elif kind == 0:
 		spots = [Blueprints.STALL_REGISTER]
 	elif kind == 1:
-		spots = [[Vector3(0.0, 1.15, 9.25), 0.0]]
+		spots = [[Vector3(0.0, 1.15, 9.25), PI]]
 	else:
 		for rx in [-6, -2, 2, 6]:
-			spots.append([Vector3(rx, 1.15, 15.25), 0.0])   # el cajero detrás, los clientes llegan desde la puerta
+			spots.append([Vector3(rx, 1.15, 15.25), PI])   # el cajero detrás, los clientes llegan desde la puerta
 	var n := 1
 	for s in spots:
 		var mi := MeshInstance3D.new()
@@ -659,7 +762,7 @@ static func add_registers(root: Node3D, kind: int, layout := {}) -> void:
 		root.add_child(mi)
 		if kind == 2:
 			var sign := Building.label(root, Lang.f("CAJA %d", n), s[0] + Vector3(0, 1.75, 0), 9, Color8(255, 220, 120), true, false)
-			sign.rotation.y = s[1]
+			sign.rotation.y = s[1] + PI   # el letrero mira a los clientes (al revés que la caja)
 			var pole := MeshInstance3D.new()
 			var pm := BoxMesh.new()
 			pm.size = Vector3(0.06, 1.3, 0.06)

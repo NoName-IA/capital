@@ -69,6 +69,18 @@ var weather_days := 3         # días que faltan para que cambie
 var activity_day := {}         # actividad de la ciudad -> día en que se puede volver a hacer (ver do_activity)
 var beach_boost_days := 0      # días que le quedan al torneo de vóley (más demanda en la playa)
 var weather_noticed := -99    # último día en que el clima salió como aviso (no se guarda)
+# Personal: cómo tratas a tus empleados (índice de D.LABOR) y su ánimo (0 a 100)
+var labor := 1
+var morale := D.START_MORALE
+# Microdecisiones: preguntas chicas que NO pausan el juego; si no respondes a tiempo pasa la opción "default"
+var micro = null
+var next_micro_day := 6
+# Rivales: hostilidad, alianzas y a quiénes ya superaste en el ranking (ver _rival_ai)
+var rivals := {}          # clave del rival -> {"hostility", "ally_until", "war_until", "last_move"}
+var plot_owner := {}      # "índice de terreno" -> clave del rival que lo compró (los de rival_plots)
+var passed := []          # rivales que ya superaste en valor
+var mall := false         # ¿compraste el centro comercial? (ver D.MALL)
+var franchises := []      # franquicias en otras ciudades: {id, product, city, day, quality, month_royalty, last_royalty}
 
 # Lo que se guarda en el archivo de partida (todo lo anterior menos el generador aleatorio)
 const SAVED := ["day", "cash", "bonds", "products", "locations", "loans", "assets", "next_id", "phase",
@@ -77,7 +89,8 @@ const SAVED := ["day", "cash", "bonds", "products", "locations", "loans", "asset
 		"pending_choice", "next_choice_day", "profit_streak", "best_day", "last_record_day", "taunted",
 		"wardrobe", "owned_items", "look", "hq_level", "fund", "play_seconds", "win_seconds", "mode",
 		"strategy_ready_day", "market_today", "rank_log", "rival_plots", "company",
-		"weather", "weather_next", "weather_days", "activity_day", "beach_boost_days"]
+		"weather", "weather_next", "weather_days", "activity_day", "beach_boost_days",
+		"labor", "morale", "micro", "next_micro_day", "rivals", "plot_owner", "passed", "mall", "franchises"]
 
 
 static func new_ledger() -> Dictionary:
@@ -108,7 +121,8 @@ static func statement(led: Dictionary) -> Dictionary:
 static func make_location(id: int, product: String, size: int, employees := 1) -> Dictionary:
 	return {"id": id, "product": product, "size": size, "employees": employees, "asset_ids": [], "invested": 0.0,
 			"demand": 0.0, "ema_demand": 0.0, "capacity": 0.0, "sold": 0.0, "month_contrib": 0.0,
-			"last_contrib": null, "month_revenue": 0.0, "plot": null, "owner": false, "stars": 3.0}
+			"last_contrib": null, "month_revenue": 0.0, "plot": null, "mall": null, "owner": false, "stars": 3.0,
+			"upgrades": []}
 
 
 static func make_product(key: String) -> Dictionary:
@@ -118,12 +132,64 @@ static func make_product(key: String) -> Dictionary:
 			"competitors": d.competitors, "factory": false, "factory_value": 0.0, "manager": false,
 			"ema_sales": 0.0, "cost_shock": 1.0, "cost_shock_days": 0, "demand_shock": 1.0, "demand_shock_days": 0,
 			"month_purchases": 0.0, "last_month_purchases": 0.0, "last_demand": 0.0, "last_sold": 0.0,
-			"last_capacity": 0.0}
+			"last_capacity": 0.0, "solar": false, "war_days": 0, "cap_boost": 1.0, "cap_boost_days": 0}
 
 
 ## Terreno de la avenida donde está la sucursal; -1 si no tiene.
 static func plot_of(loc: Dictionary) -> int:
 	return -1 if loc.get("plot") == null else int(loc.plot)
+
+
+## Vitrina del centro comercial donde está la sucursal; -1 si no está en el centro comercial.
+static func mall_of(loc: Dictionary) -> int:
+	return -1 if loc.get("mall") == null else int(loc.mall)
+
+
+## Dónde está una sucursal, para mostrarlo: "T3" (terreno de la avenida), "CC 5" (vitrina del centro comercial).
+static func place_label(loc: Dictionary) -> String:
+	if mall_of(loc) >= 0:
+		return Lang.f("CC %d", mall_of(loc) + 1)
+	if plot_of(loc) >= 0:
+		return Lang.f("T%d", plot_of(loc) + 1)
+	return ""
+
+
+## Vitrinas libres del centro comercial (vacías si no lo tienes).
+func free_mall_slots() -> Array:
+	if not mall:
+		return []
+	var used := {}
+	for loc in locations:
+		used[mall_of(loc)] = true
+	var out := []
+	for i in int(D.MALL.slots):
+		if not used.has(i):
+			out.append(i)
+	return out
+
+
+## ¿Dónde cabe una sucursal nueva de este tamaño? ["plot", i], ["mall", i] o [] si no hay lugar. Primero la avenida
+## (las megatiendas solo caben ahí) y después el centro comercial.
+func free_place(size: int) -> Array:
+	var plots := free_plots()
+	if plots:
+		return ["plot", plots[0]]
+	if size < 2:
+		var slots := free_mall_slots()
+		if slots:
+			return ["mall", slots[0]]
+	return []
+
+
+## Por qué no se puede abrir una sucursal de este tamaño (vacío si sí se puede).
+func no_place_reason(size: int) -> String:
+	if free_place(size):
+		return ""
+	if size >= 2:
+		return "No quedan terrenos en la avenida: las megatiendas no caben en el centro comercial."
+	if not mall:
+		return "No quedan terrenos en la avenida. Compra el centro comercial (pestaña Expansión) o vende franquicias."
+	return "No quedan terrenos ni vitrinas libres. Vende franquicias en otras ciudades (pestaña Expansión)."
 
 
 func _init(seed = null, game_mode := "normal") -> void:
@@ -135,11 +201,13 @@ func _init(seed = null, game_mode := "normal") -> void:
 		products[k] = make_product(k)
 	phase_months_left = rng.randi_range(D.PHASES.expansion.months[0], D.PHASES.expansion.months[1])
 	ledger = new_ledger()
+	_init_rivals()
 	mode = game_mode
 	cash = float(D.MODES[mode].start_cash)
 	var cafe: Dictionary = products.cafe
 	cafe.unlocked = true
 	var loc := _add_location("cafe", 0, 1, D.SIZES[0].capex, "Puesto de café")
+	loc.plot = 0
 	cafe.ema_sales = min(demand_at(cafe, loc, cafe.price), capacity(loc))
 	add_news(Lang.f("Abriste tu primer puesto de café con %s en caja. ¡A vender!", Fmt.money(cash)), "good")
 	if mode == "inversionista":
@@ -205,7 +273,20 @@ func locs(key: String) -> Array:
 
 
 func wage_daily() -> float:
-	return D.BASE_WAGE * price_index * min_wage_mult / 30.0
+	return D.BASE_WAGE * price_index * min_wage_mult / 30.0 * D.LABOR[labor].wage
+
+
+## Cuánto rinde cada empleado por el trato y el ánimo: con ánimo 60 rinde lo normal; muy bajo atiende peor.
+func staff_factor() -> float:
+	return D.LABOR[labor].prod * clampf(0.85 + 0.15 * morale / 60.0, 0.85, 1.06)
+
+
+## Suma de un efecto (demand, stars, capacity, weather) de los artículos que compraste para un local.
+static func upgrade_bonus(loc: Dictionary, effect: String) -> float:
+	var total := 0.0
+	for k in loc.get("upgrades", []):
+		total += float(D.upgrade_by_key(k).get(effect, 0.0))
+	return total
 
 
 func ref_price(p: Dictionary) -> float:
@@ -226,13 +307,23 @@ func unit_cost(p: Dictionary) -> float:
 	c *= 1.0 - volume_discount(p)
 	if p.factory:
 		c *= 1.0 - D.FACTORY_SAVING
+		if p.get("solar", false):
+			c *= 1.0 - SOLAR_SAVING
 	return c
+
+
+## Alquiler diario de una sucursal (en el centro comercial pagas menos: el edificio es tuyo).
+func rent_daily(loc: Dictionary) -> float:
+	var rent: float = D.SIZES[loc.size].rent * price_index / 30.0
+	return rent * D.MALL.rent_mult if mall_of(loc) >= 0 else rent
 
 
 func capacity(loc: Dictionary) -> float:
 	# `owner` lo activa la ciudad 3D cuando el jugador atiende el mostrador en persona.
 	var staff: int = int(loc.employees) + (1 if loc.get("owner", false) else 0)
-	return staff * D.PRODUCTS[loc.product].productivity
+	var p: Dictionary = products[loc.product]
+	return (staff * D.PRODUCTS[loc.product].productivity * staff_factor() * (1.0 + upgrade_bonus(loc, "capacity"))
+			* float(p.get("cap_boost", 1.0)))
 
 
 func season(key: String) -> float:
@@ -254,25 +345,32 @@ func demand_at(p: Dictionary, loc: Dictionary, price: float, n_locs := -1) -> fl
 	var n := n_locs if n_locs >= 0 else locs(p.key).size()
 	var cannibal := 1.0 / (1.0 + 0.08 * maxi(0, n - 1))
 	var base: float = d.demand * D.SIZES[loc.size].traffic
+	if mall_of(loc) >= 0:
+		base *= D.MALL.traffic  # la gente pasea por el centro comercial
 	if plot_of(loc) in D.BEACH_PLOTS:
 		base *= D.BEACH_BONUS  # turistas de la playa
 		if beach_boost_days > 0:
 			base *= 1.25   # torneo de vóley que patrocinaste
 	var stars_f: float = 1.0 + D.STAR_DEMAND * (float(loc.get("stars", 3.0)) - 3.0)
+	var extra := 1.0 + upgrade_bonus(loc, "demand")
+	var war := 0.88 if int(p.get("war_days", 0)) > 0 else 1.0   # un rival te está atacando en este mercado
 	return (base * price_f * econ_f * season(p.key) * rep_f * mkt_f * comp_f * cannibal * p.demand_shock
-			* weather_factor(p.key, loc) * stars_f)
+			* weather_factor(p.key, loc) * stars_f * extra * war)
 
 
 ## Cuánto mueve el clima de hoy la demanda de una sucursal.
 func weather_factor(key: String, loc: Dictionary) -> float:
 	var fx: Dictionary = D.WEATHER[weather].effects
 	var f: float = fx.get(key, 1.0)
-	if loc.size < 2:  # las megatiendas están techadas: la lluvia no espanta a sus clientes
+	if loc.size < 2 and mall_of(loc) < 0:  # las megatiendas y el centro comercial están techados: la lluvia no espanta
 		f *= fx.get("all", 1.0)
-	if loc.size == 0:
+	if loc.size == 0 and mall_of(loc) < 0:
 		f *= fx.get("stall", 1.0)
 	if plot_of(loc) in D.BEACH_PLOTS:
 		f *= fx.get("beach", 1.0)
+	var shield := upgrade_bonus(loc, "weather")   # aire acondicionado: el mal clima espanta menos
+	if f < 1.0 and shield > 0:
+		f = lerpf(f, 1.0, minf(1.0, shield))
 	return f
 
 
@@ -426,24 +524,42 @@ func location_cost(size: int) -> float:
 	return D.SIZES[size].capex * price_index
 
 
-func open_location(key: String, size: int, plot = null) -> Array:
+## Abre una sucursal. `plot`: el terreno de la avenida que elegiste; `mall_slot`: la vitrina del centro comercial. Sin
+## ninguno de los dos va al primer lugar libre (ver free_place).
+func open_location(key: String, size: int, plot = null, mall_slot = null) -> Array:
 	var p: Dictionary = products[key]
 	var cost := location_cost(size)
 	if not p.unlocked:
 		return [false, "Primero desbloquea ese negocio."]
+	var place := []
+	if plot != null:
+		if not int(plot) in free_plots():
+			return [false, "Ese terreno ya no está libre."]
+		place = ["plot", int(plot)]
+	elif mall_slot != null:
+		if size >= 2:
+			return [false, "Las megatiendas no caben en el centro comercial."]
+		if not int(mall_slot) in free_mall_slots():
+			return [false, "Esa vitrina ya no está libre."]
+		place = ["mall", int(mall_slot)]
+	else:
+		place = free_place(size)
+		if place.is_empty():
+			return [false, no_place_reason(size)]
 	if cash < cost:
 		return [false, Lang.f("Necesitas %s en caja.", Fmt.money(cost))]
 	cash -= cost
 	var name := Lang.f("%s de %s", [D.SIZES[size].name, Lang.noun(D.PRODUCTS[key].name)])
 	var loc := _add_location(key, size, 1, cost, name)
-	if plot != null:
-		loc.plot = int(plot)
+	loc[place[0]] = place[1]
 	p.ema_sales += min(demand_at(p, loc, p.price), capacity(loc))
+	if place[0] == "mall":
+		return [true, Lang.f("Abriste un %s en la vitrina %d del centro comercial.", [name, place[1] + 1])]
 	return [true, Lang.f("Abriste un %s.", name)]
 
 
 func upgrade_cost(loc: Dictionary):
-	if loc.size >= D.SIZES.size() - 1:
+	if loc.size >= D.SIZES.size() - 1 or (loc.size >= 1 and mall_of(loc) >= 0):   # en la vitrina no cabe una megatienda
 		return null
 	return (D.SIZES[loc.size + 1].capex - D.SIZES[loc.size].capex) * price_index
 
@@ -552,22 +668,42 @@ func acquire_cost(key: String) -> float:
 	return (35000.0 + 0.25 * d.unlock_cost) * price_index * max(0.5, scarcity)
 
 
-func acquire(key: String) -> Array:
+## Compra un competidor. `plot` es el edificio que compras (el que tienes enfrente en la ciudad): un terreno de la
+## avenida que el rival compró (0 a 13) o uno de sus locales fijos de los extremos (D.PLOT_COUNT en adelante).
+## Sin `plot` se compra el primero que tenga en la avenida, o uno sin edificio en la avenida.
+func acquire(key: String, plot := -1) -> Array:
 	var p: Dictionary = products[key]
 	var cost := acquire_cost(key)
 	if p.competitors <= 0:
 		return [false, "No quedan competidores."]
 	if cash < cost:
 		return [false, Lang.f("Necesitas %s en caja.", Fmt.money(cost))]
+	# Qué edificio te quedas: el que elegiste, el que el rival tiene en la avenida o, si no tiene, se muda a un
+	# terreno o vitrina libre (si no hay ninguno, no se puede comprar)
+	var target := []
+	if plot >= 0 and rival_plots.get(str(plot)) == key:   # justo el edificio que elegiste
+		target = ["rival", str(plot)]
+	elif plot >= D.PLOT_COUNT:   # uno de sus locales fijos de los extremos de la calle
+		target = ["plot", plot]
+	else:
+		for i in rival_plots.keys():  # si el rival tiene un local en la avenida, compras ese
+			if rival_plots[i] == key:
+				target = ["rival", i]
+				break
+	if target.is_empty():
+		target = free_place(1)
+		if target.is_empty():
+			return [false, "No tienes dónde poner el local que compras: libera un terreno, compra el centro comercial o ve a comprar uno de sus locales de los extremos de la calle."]
 	cash -= cost
 	var local_value: float = min(cost, location_cost(1))
 	var loc := _add_location(key, 1, 3, local_value, Lang.f("Local adquirido de %s", Lang.noun(D.PRODUCTS[key].name)))
 	loc.invested = cost
-	for i in rival_plots.keys():  # si el rival tiene un local en la avenida, compras ese
-		if rival_plots[i] == key:
-			rival_plots.erase(i)
-			loc.plot = int(i)
-			break
+	if target[0] == "rival":
+		rival_plots.erase(target[1])
+		plot_owner.erase(target[1])
+		loc.plot = int(target[1])
+	else:
+		loc[target[0]] = target[1]
 	if cost > local_value:
 		var g := _add_asset(Lang.f("Plusvalía (goodwill): %s", D.PRODUCTS[key].name), cost - local_value)
 		loc.asset_ids.append(g.id)
@@ -575,7 +711,157 @@ func acquire(key: String) -> Array:
 	p.ema_sales += min(demand_at(p, loc, p.price), capacity(loc))
 	add_news(Lang.f("Adquiriste un competidor de %s: ahora es tu local.", Lang.noun(D.PRODUCTS[key].name)), "good")
 	rival_say(D.rival_for(key), "acquire")
+	hostility(D.rival_for(key).key, 15)
 	return [true, "Adquisición completada."]
+
+
+# ---------- centro comercial y franquicias ----------
+func mall_cost() -> float:
+	return D.MALL.cost * price_index
+
+
+func buy_mall() -> Array:
+	if mall:
+		return [false, "Ya tienes el centro comercial."]
+	var cost := mall_cost()
+	if cash < cost:
+		return [false, Lang.f("Necesitas %s en caja.", Fmt.money(cost))]
+	cash -= cost
+	_add_asset("Centro comercial", cost)
+	mall = true
+	add_news(Lang.f("Inauguraste tu centro comercial frente a la oficina: %d vitrinas para puestos y locales.", int(D.MALL.slots)), "good", "record")
+	return [true, "¡Centro comercial inaugurado!"]
+
+
+func mall_upkeep_monthly() -> float:
+	return D.MALL.upkeep * price_index if mall else 0.0
+
+
+func franchise_cost(key: String) -> float:
+	return (D.FRANCHISE.setup + D.FRANCHISE.setup_share * D.PRODUCTS[key].unlock_cost) * price_index
+
+
+func franchises_of(key: String) -> Array:
+	return franchises.filter(func(f): return f.product == key)
+
+
+## Por qué no se puede vender otra franquicia de este negocio (vacío si sí se puede).
+func franchise_block(key: String) -> String:
+	var p: Dictionary = products[key]
+	if not p.unlocked:
+		return "Primero desbloquea ese negocio."
+	if locs(key).size() < int(D.FRANCHISE.min_locs):
+		return Lang.f("Necesitas al menos %d sucursales propias de este negocio: nadie compra una marca que no conoce.", int(D.FRANCHISE.min_locs))
+	if p.reputation < D.FRANCHISE.min_rep:
+		return Lang.f("Tu reputación en este negocio es muy baja (%d de %d).", [roundi(p.reputation), roundi(D.FRANCHISE.min_rep)])
+	if franchises_of(key).size() >= int(D.FRANCHISE.max):
+		return Lang.f("Ya tienes %d franquicias de este negocio: más y no podrías controlarlas.", int(D.FRANCHISE.max))
+	return ""
+
+
+## Ventas diarias esperadas de una franquicia: un local en otra ciudad con tu marca, tu precio y tu reputación (sin
+## tus otras sucursales que le quiten clientes), según qué tan bien la maneja el franquiciado.
+func franchise_sales(f: Dictionary) -> float:
+	var p: Dictionary = products[f.product]
+	var fake := {"size": 1, "stars": 3.0, "upgrades": [], "plot": null, "mall": null}
+	return demand_at(p, fake, p.price, 1) * float(f.quality)
+
+
+## Regalías que deja una franquicia al mes, con las ventas de hoy (para mostrar).
+func franchise_royalty_monthly(f: Dictionary) -> float:
+	return franchise_sales(f) * products[f.product].price * D.FRANCHISE.royalty * 30.0
+
+
+func _new_franchise(key: String) -> Dictionary:
+	var taken := franchises.map(func(f): return f.city)
+	var free: Array = D.FRANCHISE_CITIES.filter(func(c): return not c in taken)
+	var city: String = pick(free) if free else Lang.f("Ciudad %d", franchises.size() + 1)
+	var f := {"id": _id(), "product": key, "city": city, "day": day, "quality": rng.randf_range(0.7, 1.15),
+			"month_royalty": 0.0, "last_royalty": null}
+	franchises.append(f)
+	return f
+
+
+## Vende una franquicia: pagas el manual, la capacitación y los abogados; el franquiciado pone el local y te paga
+## regalías todos los días. Unos franquiciados atienden mejor que otros.
+func open_franchise(key: String) -> Array:
+	var block := franchise_block(key)
+	if block:
+		return [false, block]
+	var cost := franchise_cost(key)
+	if cash < cost:
+		return [false, Lang.f("Necesitas %s en caja.", Fmt.money(cost))]
+	cash -= cost
+	_add_asset(Lang.f("Contrato de franquicia: %s", D.PRODUCTS[key].name), cost)
+	var f := _new_franchise(key)
+	var name: String = Lang.noun(D.PRODUCTS[key].name)
+	add_news(Lang.f("Tu marca llega a %s: abrió una franquicia de %s.", [f.city, name]), "good")
+	return [true, Lang.f("Franquicia de %s en %s.", [name, f.city])]
+
+
+## Terminar el contrato de una franquicia (deja de pagar regalías; no recuperas lo invertido).
+func close_franchise(f: Dictionary) -> Array:
+	franchises.erase(f)
+	return [true, Lang.f("Terminaste el contrato de la franquicia de %s.", f.city)]
+
+
+## Todos los días: las franquicias venden y te pagan regalías.
+func _franchise_day() -> void:
+	for f in franchises:
+		var p: Dictionary = products[f.product]
+		var royalty: float = franchise_sales(f) * max(0.7, rng.randfn(1.0, 0.07)) * p.price * D.FRANCHISE.royalty
+		cash += royalty
+		ledger.ingresos += royalty
+		_pl(f.product).ingresos += royalty
+		_pl(f.product).contribucion += royalty
+		f.month_royalty += royalty
+
+
+## Una vez al mes: cierre de regalías y, si un franquiciado atiende mal, a veces los clientes culpan a tu marca.
+func _franchise_month() -> void:
+	for f in franchises:
+		f.last_royalty = f.month_royalty
+		f.month_royalty = 0.0
+		if f.quality < 0.85 and rng.randf() < 0.06:
+			_rep(f.product, -3)
+			add_news(Lang.f("Quejas en %s: el franquiciado de %s atiende mal y tu marca lo paga (−3 de reputación).", [f.city, Lang.noun(D.PRODUCTS[f.product].name)]), "bad")
+
+
+## Partidas de antes del centro comercial: las sucursales que no tenían lugar en la ciudad (en una partida tenías 31
+## y solo 14 terrenos) se acomodan en un terreno libre o en una vitrina; las que no caben pasan a ser franquicias y
+## te pagan su valor en libros completo (no pierdes nada).
+func _place_homeless() -> void:
+	var used := {}
+	for loc in locations:   # dos en el mismo lugar: la segunda busca otro
+		var key = ["plot", plot_of(loc)] if plot_of(loc) >= 0 else (["mall", mall_of(loc)] if mall_of(loc) >= 0 else null)
+		if key != null and used.has(key):
+			loc.plot = null
+			loc.mall = null
+		elif key != null:
+			used[key] = true
+	var homeless := locations.filter(func(l): return plot_of(l) < 0 and mall_of(l) < 0)
+	if homeless.is_empty():
+		return
+	homeless.sort_custom(func(a, b): return a.size > b.size)   # las megatiendas primero: solo caben en la avenida
+	var converted := 0
+	var refund := 0.0
+	for loc in homeless:
+		loc.plot = null
+		var place := free_place(loc.size)
+		if place:
+			loc[place[0]] = place[1]
+			continue
+		var book := asset_book(loc.asset_ids)
+		cash += book
+		refund += book
+		_drop_assets(loc.asset_ids)
+		locations.erase(loc)
+		var p: Dictionary = products[loc.product]
+		p.ema_sales = max(0.0, p.ema_sales - min(loc.ema_demand, capacity(loc)))
+		_new_franchise(loc.product)
+		converted += 1
+	if converted:
+		add_news(Lang.f("Ahora cada sucursal necesita un lugar en la ciudad. Tus %d sucursales sin terreno pasaron a ser franquicias en otras ciudades y recibiste %s, su valor en libros.", [converted, Fmt.money(refund)]), "info")
 
 
 func wardrobe_cost() -> float:
@@ -691,12 +977,12 @@ func fixed_costs_daily(key: String) -> float:
 	var p: Dictionary = products[key]
 	var cost := 0.0
 	for l in locs(key):
-		cost += l.employees * wage_daily() + D.SIZES[l.size].rent * price_index / 30.0
+		cost += l.employees * wage_daily() + rent_daily(l)
 	cost += p.marketing / 30.0
 	if p.manager:
 		cost += D.MANAGER_WAGE * price_index * min_wage_mult / 30.0
 	if p.factory:
-		cost += p.factory_value * D.FACTORY_UPKEEP / 30.0
+		cost += factory_upkeep_monthly(p) / 30.0
 	return cost
 
 
@@ -957,9 +1243,15 @@ func step_day() -> void:
 	beach_boost_days = max(0, beach_boost_days - 1)
 	_events()
 	_maybe_dilemma()
+	_maybe_micro()
+	_staff_day()
+	_rival_ai()
 	for key in D.PRODUCT_ORDER:
 		if products[key].unlocked:
 			_run_product(products[key])
+	_franchise_day()
+	if mall:
+		_spend(mall_upkeep_monthly() / 30.0, "alquiler")
 
 	if locations.size() > 5:
 		_spend(corporate_cost_monthly() / 30.0, "corporativo")
@@ -1079,7 +1371,7 @@ func _run_product(p: Dictionary) -> void:
 		var revenue: float = loc.sold * p.price
 		var cogs: float = loc.sold * p.avg_cost
 		var wages: float = loc.employees * wage
-		var rent: float = D.SIZES[loc.size].rent * price_index / 30.0
+		var rent: float = rent_daily(loc)
 		cash += revenue - wages - rent
 		ledger.ingresos += revenue
 		ledger.costo_ventas += cogs
@@ -1104,7 +1396,7 @@ func _run_product(p: Dictionary) -> void:
 	if p.manager:
 		_spend(D.MANAGER_WAGE * price_index * min_wage_mult / 30.0, "gerentes", p.key)
 	if p.factory:
-		_spend(p.factory_value * D.FACTORY_UPKEEP / 30.0, "fabricas", p.key)
+		_spend(factory_upkeep_monthly(p) / 30.0, "fabricas", p.key)
 
 	if ls:
 		p.ema_sales = 0.8 * p.ema_sales + 0.2 * potential
@@ -1149,6 +1441,10 @@ func _run_product(p: Dictionary) -> void:
 		p.demand_shock_days -= 1
 		if p.demand_shock_days == 0:
 			p.demand_shock = 1.0
+	if int(p.get("cap_boost_days", 0)) > 0:
+		p.cap_boost_days = int(p.cap_boost_days) - 1
+		if p.cap_boost_days == 0:
+			p.cap_boost = 1.0
 
 
 ## Las estrellas de un local se mueven despacio hacia lo que merece: si atiende a todos (y si atiendes tú), la
@@ -1162,7 +1458,11 @@ func _update_stars(p: Dictionary, loc: Dictionary) -> void:
 	score += 0.15 * clampf(1.6 - ratio, 0.0, 1.0)
 	if loc.get("owner", false):
 		score += 0.1   # el dueño atendiendo en persona
-	var target := 1.0 + 4.0 * clampf(score, 0.0, 1.0)
+	if morale < 30:
+		score -= 0.12 * (30.0 - morale) / 30.0   # empleados maltratados atienden de mala gana
+	elif morale > 75:
+		score += 0.05
+	var target := clampf(1.0 + 4.0 * clampf(score, 0.0, 1.0) + upgrade_bonus(loc, "stars"), 1.0, 5.0)
 	var before := stars_of(loc)
 	var now := before + (target - before) * 0.04
 	loc.stars = now
@@ -1283,6 +1583,9 @@ func _end_month() -> void:
 		p.month_purchases = 0.0
 		_competition(p, L.productos.get(p.key))
 	_rival_land()
+	_staff_month()
+	_franchise_month()
+	_rival_ranks()
 
 	phase_months_left -= 1
 	if phase_months_left <= 0:
@@ -1372,6 +1675,7 @@ func _rival_land() -> void:
 		while mine.size() > products[key].competitors:
 			var i: String = mine.pop_back()
 			rival_plots.erase(i)
+			plot_owner.erase(i)
 			add_news(Lang.f("%s cerró su local del terreno %d: vuelve a estar en venta.", [D.rival_for(key).company, int(i) + 1]), "good")
 	var free := free_plots()
 	if day < 75 or free.size() <= 3 or rival_plots.size() >= D.RIVAL_PLOT_MAX or rng.randf() > D.RIVAL_LAND_CHANCE:
@@ -1401,7 +1705,7 @@ func _scale() -> float:
 
 
 const DILEMMAS := ["soborno", "influencer", "aumento", "lote", "demanda", "cartel", "oferta", "compra_rival",
-		"huelga", "franquicia", "ciberataque", "patrocinio", "proveedor"]
+		"huelga", "franquicia", "ciberataque", "patrocinio", "proveedor", "fabrica"]
 
 
 func _maybe_dilemma() -> void:
@@ -1412,6 +1716,10 @@ func _maybe_dilemma() -> void:
 			"proveedor"]
 	if day >= 90:
 		builders.append("franquicia")  # tu marca ya es conocida
+	if day >= 120 and _factory_offer_keys().size() > 0:
+		builders.append("fabrica")
+	if morale < 30:
+		builders += ["huelga", "huelga"]   # un equipo maltratado se organiza
 	if products.values().any(func(p): return p.unlocked and p.competitors > 0):
 		builders.append("cartel")
 	if locations.size() > 1:
@@ -1600,10 +1908,12 @@ func _r_cartel(opt: int, d: Dictionary) -> Array:
 		p.demand_shock_days = 60
 		return ["Pacto sellado. Los precios suben en toda la ciudad y tus ventas también... por ahora.", "warn"]
 	if opt == 1:
+		hostility(r.key, 10)
 		if rng.randf() < 0.5:
 			p.competitors += 1
 			return [Lang.f("%s: «Te vas a arrepentir.» Abrió otro local en tu mercado.", r.name), "bad"]
 		return [Lang.f("%s se fue de la cena sin pagar. Por ahora no pasó nada más.", r.name), "info"]
+	hostility(r.key, 25)
 	if rng.randf() < 0.5:
 		p.competitors = max(0, p.competitors - 1)
 		return [Lang.f("¡La autoridad multó a %s y le cerró un local! Un competidor menos.", r.company), "good"]
@@ -1704,6 +2014,7 @@ func _r_huelga(opt: int, d: Dictionary) -> Array:
 	if opt == 0:
 		_spend(d.raise, "salarios", d.product)
 		_rep(d.product, 4)
+		morale = min(100.0, morale + 10)
 		return ["Firmaron el acuerdo. Tus empleados vuelven a trabajar con ganas (+4 reputación).", "good"]
 	if rng.randf() < 0.5:
 		return ["El sindicato se echó para atrás. Por ahora no hay huelga.", "info"]
@@ -1732,10 +2043,15 @@ func _r_franquicia(opt: int, d: Dictionary) -> Array:
 	ledger.ingresos += d.fee
 	_pl(d.product).ingresos += d.fee
 	_pl(d.product).contribucion += d.fee
-	if rng.randf() < 0.35:
+	var bad := rng.randf() < 0.35
+	if franchises_of(d.product).size() < int(D.FRANCHISE.max):   # queda en tu lista de franquicias y paga regalías
+		var f := _new_franchise(d.product)
+		if bad:
+			f.quality = rng.randf_range(0.6, 0.75)
+	if bad:
 		_rep(d.product, -12)
 		return [Lang.f("Cobraste %s, pero el franquiciado atiende pésimo y los clientes lo confunden contigo (−12 reputación).", Fmt.money(d.fee)), "bad"]
-	return [Lang.f("¡Franquicia vendida por %s! Tu marca llega a otra ciudad.", Fmt.money(d.fee)), "good"]
+	return [Lang.f("¡Franquicia vendida por %s! Tu marca llega a otra ciudad y te paga regalías.", Fmt.money(d.fee)), "good"]
 
 
 func _d_ciberataque() -> Dictionary:
@@ -1827,6 +2143,665 @@ func _r_proveedor(opt: int, d: Dictionary) -> Array:
 	return [Lang.f("Contrato firmado: tu mercadería de %s cuesta 15%% menos por 60 días.", Lang.noun(D.PRODUCTS[d.product].name)), "good"]
 
 
+# ---------- personalizar los locales ----------
+func decor_cost(loc: Dictionary, key: String) -> float:
+	return D.upgrade_by_key(key).cost * D.UPGRADE_SIZE[loc.size] * price_index
+
+
+func buy_decor(loc: Dictionary, key: String) -> Array:
+	if key in loc.get("upgrades", []):
+		return [false, "Ese local ya lo tiene."]
+	var u := D.upgrade_by_key(key)
+	var cost := decor_cost(loc, key)
+	if cash < cost:
+		return [false, Lang.f("Necesitas %s en caja.", Fmt.money(cost))]
+	cash -= cost
+	var a := _add_asset(Lang.f("%s (sucursal #%d)", [u.name, int(loc.id)]), cost)
+	loc.asset_ids.append(a.id)
+	loc.invested += cost
+	if not loc.has("upgrades"):
+		loc["upgrades"] = []
+	loc.upgrades.append(key)
+	return [true, Lang.f("Instalaste %s.", Lang.noun(u.name))]
+
+
+# ---------- paneles solares de la fábrica ----------
+const SOLAR_COST := 0.3      # sobre el costo de la fábrica
+const SOLAR_UPKEEP := 0.4    # el mantenimiento de la fábrica queda en 40% (la luz es gratis)
+const SOLAR_SAVING := 0.05   # y el costo unitario baja otro 5%
+
+
+func solar_cost(key: String) -> float:
+	return factory_cost(key) * SOLAR_COST
+
+
+func build_solar(key: String) -> Array:
+	var p: Dictionary = products[key]
+	if not p.factory:
+		return [false, "Primero necesitas la fábrica."]
+	if p.get("solar", false):
+		return [false, "La fábrica ya tiene paneles solares."]
+	var cost := solar_cost(key)
+	if cash < cost:
+		return [false, Lang.f("Necesitas %s en caja.", Fmt.money(cost))]
+	cash -= cost
+	_add_asset(Lang.f("Paneles solares: fábrica de %s", Lang.noun(D.PRODUCTS[key].name)), cost)
+	p.solar = true
+	_rep(key, 4)
+	add_news(Lang.f("Tu fábrica de %s ahora funciona con paneles solares: menos gastos y +4 de reputación por ser verde.", Lang.noun(D.PRODUCTS[key].name)), "good")
+	return [true, "Paneles solares instalados."]
+
+
+func factory_upkeep_monthly(p: Dictionary) -> float:
+	return p.factory_value * D.FACTORY_UPKEEP * (SOLAR_UPKEEP if p.get("solar", false) else 1.0)
+
+
+# ---------- trato al personal ----------
+func set_labor(i: int) -> Array:
+	i = clampi(i, 0, D.LABOR.size() - 1)
+	if i == labor:
+		return [true, ""]
+	var worse := i > labor
+	labor = i
+	var l: Dictionary = D.LABOR[i]
+	add_news(Lang.f("Nueva política con tus empleados: %s.", Lang.noun(l.name)), "warn" if worse else "info")
+	return [true, Lang.f("Política de personal: %s.", l.name)]
+
+
+func staff_count() -> int:
+	var n := 0
+	for l in locations:
+		n += int(l.employees)
+	return n
+
+
+## Una vez al día: el ánimo va hacia lo que merece tu trato; con ánimo bajo la gente renuncia.
+func _staff_day() -> void:
+	var target: float = D.LABOR[labor].morale
+	morale = clampf(morale + (target - morale) * 0.03, 0.0, 100.0)
+	if locations.is_empty() or morale >= 35:
+		return
+	var chance := (35.0 - morale) / 35.0 * 0.05
+	if rng.randf() < chance:
+		var with := locations.filter(func(l): return l.employees > 1 or (l.employees == 1 and not products[l.product].manager))
+		if with:
+			var loc: Dictionary = pick(with)
+			loc.employees -= 1
+			var lines := ["«No aguanto más, me voy.»", "«Aquí nadie me respeta. Renuncio.»", "«Con este sueldo prefiero vender en la calle.»",
+					"«Me voy con la competencia: allá por lo menos me pagan las horas extra.»"]
+			add_news(Lang.f("Renunció un empleado de tu %s de %s: %s", [Lang.noun(D.SIZES[loc.size].name), Lang.noun(D.PRODUCTS[loc.product].name), Lang.t(pick(lines))]),
+					"bad", "staff_quit", loc.id)
+
+
+## Una vez al mes: lo que pasa por cómo tratas a la gente (inspecciones, videos virales, premios).
+func _staff_month() -> void:
+	if locations.is_empty():
+		return
+	var active := _active_products()
+	var k := _scale()
+	var key: String = D.LABOR[labor].key
+	if key in ["exigente", "explotador"] and rng.randf() < (0.3 if key == "explotador" else 0.1):
+		var fine := (0.35 if key == "explotador" else 0.15) * k
+		_spend(fine, "multas")
+		for p in active:
+			_rep(p.key, -6 if key == "explotador" else -3)
+		add_news(Lang.f("Inspección del trabajo: encontraron horas extra sin pagar%s. Multa de %s.", [" y sueldos bajo el mínimo" if key == "explotador" else "", Fmt.money(fine)]), "bad", "danger_soft")
+	elif key == "explotador" and rng.randf() < 0.2:
+		for p in active:
+			_rep(p.key, -12)
+			p.awareness = min(1.0, p.awareness + 0.04)
+		add_news("¡Video viral! Un empleado grabó a un supervisor gritándole a una cajera. Todos hablan de tu marca... y no bien (−12 reputación).", "bad")
+	elif morale > 75 and rng.randf() < 0.12:
+		for p in active:
+			_rep(p.key, 5)
+			p.awareness = min(1.0, p.awareness + 0.03)
+		add_news("Premio «Mejor lugar para trabajar» de la ciudad: tu marca gana prestigio (+5 reputación).", "good")
+
+
+# ---------- rivales con vida propia ----------
+func _init_rivals() -> void:
+	for r in D.RIVALS:
+		if not rivals.has(r.key):
+			rivals[r.key] = {"hostility": 25.0, "ally_until": 0, "war_until": 0, "last_move": 0}
+
+
+## El rival está en juego: sus mercados están desbloqueados (los tiburones aparecen desde su día "from").
+func rival_active(r: Dictionary) -> bool:
+	if day < int(r.get("from", 0)):
+		return false
+	var markets: Array = r.products if r.products else r.get("needs", D.PRODUCT_ORDER)
+	for k in markets:
+		if products[k].unlocked:
+			return true
+	return false
+
+
+## Mercados donde ese rival te ataca (los tuyos que están abiertos).
+func rival_markets(r: Dictionary) -> Array:
+	var markets: Array = r.products if r.products else r.get("needs", D.PRODUCT_ORDER)
+	return markets.filter(func(k): return products[k].unlocked and not locs(k).is_empty())
+
+
+func rival_state(key: String) -> Dictionary:
+	_init_rivals()
+	return rivals[key]
+
+
+func hostility(key: String, delta: float) -> void:
+	var st := rival_state(key)
+	st.hostility = clampf(float(st.hostility) + delta, 0.0, 100.0)
+
+
+func allied(key: String) -> bool:
+	return int(rival_state(key).ally_until) > day
+
+
+## Lo que vale el negocio del rival en la ciudad: crece con los años, la economía y los locales que tiene.
+func rival_value(r: Dictionary) -> float:
+	var n := 0
+	for k in (r.products if r.products else []):
+		n += int(products[k].competitors)
+	for i in plot_owner:
+		if plot_owner[i] == r.key:
+			n += 2
+	var years := day / 360.0
+	return float(r.value) * price_index * econ_index * (1.0 + 0.12 * years) * (0.8 + 0.05 * n)
+
+
+## Ranking de la ciudad: tú y los rivales que ya están en juego, del que vale más al que vale menos.
+## Cada fila: [clave ("" = tú), nombre, empresa, valor, color].
+func ranking() -> Array:
+	var rows := [["", company, company, valuation(), ImUI.COL.accent]]
+	for r in D.RIVALS:
+		if rival_active(r):
+			rows.append([r.key, r.name, r.company, rival_value(r), r.color])
+	rows.sort_custom(func(a, b): return a[3] > b[3])
+	return rows
+
+
+func _rival_ranks() -> void:
+	var v := valuation()
+	for r in D.RIVALS:
+		if rival_active(r) and not (r.key in passed) and v > rival_value(r):
+			passed.append(r.key)
+			add_news(Lang.f("¡Superaste a %s en el ranking de la ciudad!", r.company), "good", "passed", r.key)
+			rival_say(r, "passed")
+
+
+## Una vez al día: los rivales hacen sus jugadas según su estilo y cuánto te odian (las alianzas los calman).
+func _rival_ai() -> void:
+	for k in D.PRODUCT_ORDER:
+		var p: Dictionary = products[k]
+		if int(p.get("war_days", 0)) > 0:
+			p.war_days = int(p.war_days) - 1
+	if locations.is_empty() or day < 60:
+		return
+	for r in D.RIVALS:
+		var st := rival_state(r.key)
+		st.hostility = float(st.hostility) + (25.0 - float(st.hostility)) * 0.004   # el enojo se pasa con el tiempo
+		if not rival_active(r) or allied(r.key) or day - int(st.last_move) < 25:
+			continue
+		var markets := rival_markets(r)
+		if markets.is_empty():
+			continue
+		if rng.randf() > (0.02 + 0.05 * float(st.hostility) / 100.0):
+			continue
+		st.last_move = day
+		_rival_move(r, pick(markets))
+		return   # una jugada por día como máximo
+
+
+func _rival_move(r: Dictionary, key: String) -> void:
+	var p: Dictionary = products[key]
+	var name: String = Lang.noun(D.PRODUCTS[key].name)
+	match r.style:
+		"expansion":
+			var last = history[-1].productos.get(key) if history else null
+			if last != null and last.contribucion > 0 and p.competitors < D.PRODUCTS[key].competitors + 3:
+				p.competitors += 1
+				add_news(Lang.f("%s abrió otro local de %s en la ciudad.", [r.company, name]), "bad")
+			else:   # si tu negocio no deja plata no vale la pena abrir: te pelea con promociones
+				p.war_days = 10
+				add_news(Lang.f("%s lanzó promociones de %s: tu demanda baja 12%% por 10 días.", [r.company, name]), "bad")
+			rival_say(r, "war", {"p": name})
+		"precios", "copia", "premium", "online":
+			p.war_days = 20
+			var what := {"precios": "bajó sus precios de %s", "copia": "copió tus productos de %s y los vende más baratos",
+					"premium": "lanzó un modelo nuevo y le quita clientes a tu %s", "online": "vende %s por internet con envío gratis"}
+			add_news(Lang.f("%s %s: tu demanda baja 12%% por 20 días.", [r.company, Lang.f(what[r.style], name)]), "bad")
+			rival_say(r, "war", {"p": name})
+			if micro == null:
+				micro = _micro_rival_war(r, key)
+		"publicidad":
+			p.awareness = max(0.0, p.awareness - 0.08)
+			p.war_days = 10
+			add_news(Lang.f("Campaña gigante de %s: la gente se olvida un poco de tu marca de %s.", [r.company, name]), "bad")
+			rival_say(r, "war", {"p": name})
+		"terrenos":
+			var free := free_plots()
+			if rng.randf() < 0.5 and free.size() > 3 and rival_plots.size() < D.RIVAL_PLOT_MAX:
+				var plot: int = pick(free)
+				_rival_takes(key, plot)
+				plot_owner[str(plot)] = r.key
+				add_news(Lang.f("%s compró el terreno %d y abrió un local de %s.", [r.company, plot + 1, name]), "bad")
+				rival_say(r, "entry", {"p": name})
+			elif micro == null:
+				micro = _micro_lawsuit(r)
+		"caos":
+			if rng.randf() < 0.5:
+				var up := rng.randf() < 0.5
+				p.demand_shock = 1.3 if up else 0.75
+				p.demand_shock_days = 5
+				add_news(Lang.f("%s tuiteó sobre tu %s: %s", [r.name, name, "¡las ventas se disparan 30% por 5 días!" if up else "tus ventas caen 25% por 5 días."]), "good" if up else "bad")
+				rival_say(r, "war", {"p": name})
+			elif micro == null:
+				micro = _micro_poach(r, key)
+
+
+## Acciones del jugador con un rival (catálogo de rivales).
+func alliance_cost(key: String) -> float:
+	return max(3000.0 * price_index, 0.15 * _scale()) * (1.0 + float(rival_state(key).hostility) / 100.0)
+
+
+func alliance_chance(key: String) -> float:
+	return clampf(0.85 - float(rival_state(key).hostility) / 110.0, 0.05, 0.85)
+
+
+## Cena de negocios: si acepta, no te ataca por 90 días y termina su guerra contigo. Si no, se ríe en tu cara.
+func propose_alliance(key: String) -> Array:
+	var r := D.rival_by_key(key)
+	if allied(key):
+		return [false, Lang.f("Ya tienes una alianza con %s.", r.company)]
+	var cost := alliance_cost(key)
+	if cash < cost:
+		return [false, Lang.f("Necesitas %s en caja.", Fmt.money(cost))]
+	_spend(cost, "corporativo")
+	if rng.randf() < alliance_chance(key):
+		var st := rival_state(key)
+		st.ally_until = day + 90
+		hostility(key, -30)
+		for k in (r.products if r.products else D.PRODUCT_ORDER):
+			products[k].war_days = 0
+		add_news(Lang.f("Alianza con %s: no se atacan durante 90 días.", r.company), "good")
+		return [true, Lang.f("%s aceptó la alianza por 90 días.", r.company)]
+	hostility(key, 8)
+	add_news(Lang.f("%s rechazó tu propuesta de alianza (y la cena la pagaste tú).", r.company), "bad")
+	return [false, Lang.f("%s dijo que no. Perdiste %s en la cena.", [r.company, Fmt.money(cost)])]
+
+
+func provoke_cost() -> float:
+	return max(2000.0 * price_index, 0.08 * _scale())
+
+
+## Publicidad comparativa contra un rival: +20% de demanda por 15 días en sus mercados, pero se enoja mucho.
+func provoke(key: String) -> Array:
+	var r := D.rival_by_key(key)
+	var markets := rival_markets(r)
+	if markets.is_empty():
+		return [false, "No compites con ese rival todavía."]
+	var cost := provoke_cost()
+	if cash < cost:
+		return [false, Lang.f("Necesitas %s en caja.", Fmt.money(cost))]
+	_spend(cost, "marketing")
+	for k in markets:
+		var p: Dictionary = products[k]
+		p.demand_shock = max(p.demand_shock, 1.2)
+		p.demand_shock_days = max(p.demand_shock_days, 15)
+	hostility(key, 25)
+	rival_state(key).ally_until = 0
+	add_news(Lang.f("Campaña comparativa contra %s: «Lo mismo, pero mejor». +20%% de demanda por 15 días.", r.company), "good")
+	rival_say(r, "taunt")
+	return [true, Lang.f("Lanzaste la campaña contra %s.", r.company)]
+
+
+# ---------- microdecisiones: preguntas chicas que no pausan el juego ----------
+const MICRO_DAYS := 4   # días para responder; después pasa sola la opción por defecto
+const MICROS := ["descuento", "tarde", "donar", "resena", "proveedor_nuevo", "vecino", "cumple", "paraguas", "fila"]
+
+
+func _maybe_micro() -> void:
+	if micro != null:
+		if day >= int(micro.expires):
+			var d: int = int(micro.get("default", micro.options.size() - 1))
+			var res := resolve_micro(d, true)
+			add_news(Lang.f("No respondiste a tiempo: %s", res[1]), "info", "quiet")
+		return
+	if pending_choice != null or day < next_micro_day or locations.is_empty():
+		return
+	next_micro_day = day + rng.randi_range(5, 10)
+	var options := MICROS.duplicate()
+	if not (weather in [3, 5]):
+		options.erase("paraguas")
+	var perishable := _active_products().filter(func(p): return D.PRODUCTS[p.key].spoil >= 0.04 and p.stock > 5)
+	if perishable.is_empty():
+		options.erase("donar")
+	micro = build_micro(pick(options))
+
+
+func build_micro(id: String) -> Dictionary:
+	var m: Dictionary = call("_m_" + id)
+	m["id"] = id
+	m["expires"] = day + MICRO_DAYS
+	if not m.has("default"):
+		m["default"] = m.options.size() - 1
+	return m
+
+
+func resolve_micro(option: int, timed_out := false) -> Array:
+	var m = micro
+	if m == null:
+		return [false, ""]
+	micro = null
+	option = clampi(option, 0, m.options.size() - 1)
+	var res: Array = call("_mr_" + m.id, option, m.data)
+	if not timed_out:
+		add_news(res[0], res[1], "quiet")
+	return [res[1] in ["good", "info"], res[0]]
+
+
+func _loc_name(loc: Dictionary) -> String:
+	return Lang.f("%s de %s", [Lang.noun(D.SIZES[loc.size].name), Lang.noun(D.PRODUCTS[loc.product].name)])
+
+
+func _m_descuento() -> Dictionary:
+	var loc: Dictionary = pick(locations)
+	var cost := 0.004 * _scale()
+	return {"title": "Un cliente fiel pide descuento",
+			"text": Lang.f("Don Raúl compra en tu %s todos los días. Hoy te pide un descuento «por fidelidad».", _loc_name(loc)),
+			"options": [_opt(Lang.f("Darle 10%% (−%s)", Fmt.money(cost)), "Se va feliz y lo cuenta en el barrio (+1 reputación)."),
+					_opt("No, el precio es el precio", "No pasa nada. Quizás compre un poco menos.")],
+			"data": {"product": loc.product, "cost": cost}}
+
+
+func _mr_descuento(opt: int, d: Dictionary) -> Array:
+	if opt == 0:
+		_spend(d.cost, "marketing", d.product)
+		_rep(d.product, 1)
+		return ["Don Raúl se fue feliz con su descuento (+1 reputación).", "good"]
+	return ["Don Raúl pagó el precio completo, con cara de pocos amigos.", "info"]
+
+
+func _m_tarde() -> Dictionary:
+	var loc: Dictionary = pick(locations)
+	return {"title": "Un empleado llegó tarde",
+			"text": Lang.f("Matías, de tu %s, llegó una hora tarde: el bus se quedó en pana. Te mira esperando el reto.", _loc_name(loc)),
+			"options": [_opt("Dejarlo pasar", "Le das las gracias por avisar (+2 de ánimo del equipo)."),
+					_opt("Gritarle delante de todos", "Que aprendan todos. El equipo lo nota (−6 de ánimo)."),
+					_opt("Descontarle el día completo", "Ahorras un día de sueldo, aunque trabajó 7 horas (−4 de ánimo).")],
+			"data": {"product": loc.product}, "default": 0}
+
+
+func _mr_tarde(opt: int, d: Dictionary) -> Array:
+	if opt == 0:
+		morale = min(100.0, morale + 2)
+		return ["Matías te agradece y se queda una hora más por su cuenta (+2 ánimo).", "good"]
+	if opt == 1:
+		morale = max(0.0, morale - 6)
+		return ["Le gritaste a Matías frente a todos. Nadie dice nada, pero el ambiente se enfría (−6 ánimo).", "warn"]
+	var saved := wage_daily()
+	cash += saved
+	ledger.salarios -= saved
+	morale = max(0.0, morale - 4)
+	return [Lang.f("Le descontaste el día a Matías (ahorras %s). Él ya está buscando otro trabajo (−4 ánimo).", Fmt.money(saved)), "warn"]
+
+
+func _m_donar() -> Dictionary:
+	var ps := _active_products().filter(func(p): return D.PRODUCTS[p.key].spoil >= 0.04 and p.stock > 5)
+	var p: Dictionary = pick(ps) if ps else pick(_active_products())
+	var name: String = Lang.noun(D.PRODUCTS[p.key].name)
+	return {"title": "Sobró mercadería",
+			"text": Lang.f("Al cierre sobró %s que mañana ya no se puede vender. El comedor del barrio pregunta si se lo puedes donar.", name),
+			"options": [_opt("Donarlo al comedor", "Pierdes 10% del inventario, pero el barrio te quiere más (+3 reputación)."),
+					_opt("Botarlo", "Va a la basura igual. Nadie se entera.")],
+			"data": {"product": p.key}}
+
+
+func _mr_donar(opt: int, d: Dictionary) -> Array:
+	if opt == 1:
+		return ["La mercadería que sobró terminó en la basura.", "info"]
+	var p: Dictionary = products[d.product]
+	var lost: float = p.stock * 0.1
+	p.stock -= lost
+	ledger.mermas += lost * p.avg_cost
+	_pl(d.product).contribucion -= lost * p.avg_cost
+	_rep(d.product, 3)
+	return ["El comedor del barrio te agradeció en redes sociales (+3 reputación).", "good"]
+
+
+func _m_resena() -> Dictionary:
+	var loc: Dictionary = pick(locations)
+	return {"title": "Una reseña de 1 estrella",
+			"text": Lang.f("«Pésimo. Me atendieron con cara de sueño.» Alguien calificó tu %s con 1 estrella en internet.", _loc_name(loc)),
+			"options": [_opt("Responder con amabilidad", "Pides disculpas y lo invitas a volver (+0,15 estrellas al local)."),
+					_opt("Responder furioso", "50%: tu respuesta se hace viral y queda mal (−4 reputación). 50%: a la gente le da risa (+conocimiento de marca)."),
+					_opt("Ignorarla", "La reseña queda ahí (−0,1 estrellas al local).")],
+			"data": {"loc_id": loc.id, "product": loc.product}}
+
+
+func _mr_resena(opt: int, d: Dictionary) -> Array:
+	var loc = find_location(d.loc_id)
+	if opt == 0:
+		if loc != null:
+			loc.stars = min(5.0, stars_of(loc) + 0.15)
+		return ["Respondiste con amabilidad. El cliente cambió su reseña a 4 estrellas.", "good"]
+	if opt == 1:
+		if rng.randf() < 0.5:
+			_rep(d.product, -4)
+			return ["Tu respuesta furiosa salió en todas las redes. Quedaste como un gruñón (−4 reputación).", "bad"]
+		var p: Dictionary = products[d.product]
+		p.awareness = min(1.0, p.awareness + 0.05)
+		return ["¡Tu respuesta furiosa se hizo meme! Más gente conoce tu marca.", "good"]
+	if loc != null:
+		loc.stars = max(1.0, stars_of(loc) - 0.1)
+	return ["La reseña de 1 estrella sigue ahí, a la vista de todos.", "warn"]
+
+
+func _m_proveedor_nuevo() -> Dictionary:
+	var p: Dictionary = pick(_active_products())
+	var cost := 0.01 * _scale()
+	var name: String = Lang.noun(D.PRODUCTS[p.key].name)
+	return {"title": "Una receta nueva",
+			"text": Lang.f("Tu proveedor trajo una versión nueva de %s para probar. La prueba en tus locales cuesta %s.", [name, Fmt.money(cost)]),
+			"options": [_opt(Lang.f("Probarla (%s)", Fmt.money(cost)), "60%: a los clientes les encanta (+10% de demanda por 10 días). 40%: no cambia nada."),
+					_opt("No, gracias", "Sigues con lo de siempre.")],
+			"data": {"product": p.key, "cost": cost}}
+
+
+func _mr_proveedor_nuevo(opt: int, d: Dictionary) -> Array:
+	if opt == 1:
+		return ["Seguiste con la receta de siempre.", "info"]
+	_spend(d.cost, "marketing", d.product)
+	if rng.randf() < 0.6:
+		var p: Dictionary = products[d.product]
+		p.demand_shock = max(p.demand_shock, 1.1)
+		p.demand_shock_days = max(p.demand_shock_days, 10)
+		return ["¡La receta nueva fue un éxito! +10% de demanda por 10 días.", "good"]
+	return ["La receta nueva pasó sin pena ni gloria.", "warn"]
+
+
+func _m_vecino() -> Dictionary:
+	var loc: Dictionary = pick(locations)
+	var cost := 0.006 * _scale()
+	return {"title": "Un vecino reclama",
+			"text": Lang.f("La señora del frente dice que tu %s hace mucho ruido en la mañana y que va a llamar a la municipalidad.", _loc_name(loc)),
+			"options": [_opt(Lang.f("Regalarle una canasta (%s)", Fmt.money(cost)), "Se le pasa el enojo."),
+					_opt("Ignorarla", "30%: llega un inspector municipal con una multa.")],
+			"data": {"product": loc.product, "cost": cost, "fine": 0.04 * _scale()}}
+
+
+func _mr_vecino(opt: int, d: Dictionary) -> Array:
+	if opt == 0:
+		_spend(d.cost, "marketing", d.product)
+		return ["La vecina aceptó la canasta y ahora te saluda.", "good"]
+	if rng.randf() < 0.3:
+		_spend(d.fine, "multas", d.product)
+		return [Lang.f("La vecina cumplió: llegó un inspector con una multa de %s.", Fmt.money(d.fine)), "bad"]
+	return ["La vecina siguió reclamando, pero no pasó nada.", "info"]
+
+
+func _m_cumple() -> Dictionary:
+	var cost := 0.003 * _scale()
+	return {"title": "Cumpleaños en el equipo",
+			"text": "Hoy cumple años Rosa, la cajera más antigua. El resto del equipo pregunta si la empresa pone la torta.",
+			"options": [_opt(Lang.f("Comprar la torta (%s)", Fmt.money(cost)), "El equipo celebra (+5 de ánimo)."),
+					_opt("Que la paguen ellos", "Se nota (−2 de ánimo).")],
+			"data": {"cost": cost}}
+
+
+func _mr_cumple(opt: int, d: Dictionary) -> Array:
+	if opt == 0:
+		_spend(d.cost, "salarios")
+		morale = min(100.0, morale + 5)
+		return ["¡Cantaron el cumpleaños y Rosa se emocionó! (+5 ánimo)", "good"]
+	morale = max(0.0, morale - 2)
+	return ["El equipo juntó plata para la torta. Nadie te invitó (−2 ánimo).", "warn"]
+
+
+func _m_paraguas() -> Dictionary:
+	var cost := 0.015 * _scale()
+	return {"title": "Llueve a cántaros",
+			"text": "La gente corre bajo la lluvia frente a tus locales. ¿Regalas paraguas con tu logo?",
+			"options": [_opt(Lang.f("Regalar paraguas (%s)", Fmt.money(cost)), "Tu logo pasea por toda la ciudad (+5% de conocimiento de marca)."),
+					_opt("No", "Cada uno se moja como puede.")],
+			"data": {"cost": cost}}
+
+
+func _mr_paraguas(opt: int, d: Dictionary) -> Array:
+	if opt == 1:
+		return ["No regalaste paraguas.", "info"]
+	_spend(d.cost, "marketing")
+	for p in _active_products():
+		p.awareness = min(1.0, p.awareness + 0.05)
+	return ["Tu logo se ve en paraguas por toda la ciudad.", "good"]
+
+
+func _m_fila() -> Dictionary:
+	var loc: Dictionary = locations[0]
+	for l in locations:
+		if l.demand - l.capacity > loc.demand - loc.capacity:
+			loc = l
+	var cost := 0.02 * _scale()
+	return {"title": "Fila larguísima",
+			"text": Lang.f("Tu %s está lleno y la gente se aburre de esperar. Faltan manos.", _loc_name(loc)),
+			"options": [_opt(Lang.f("Horas extra pagadas (%s)", Fmt.money(cost)), "Tus locales de ese negocio atienden 20% más por 5 días."),
+					_opt("Obligarlos a quedarse sin pagarles", "Atienden 20% más por 5 días, gratis... y el equipo lo recuerda (−8 de ánimo)."),
+					_opt("Que esperen", "Algunos clientes se van.")],
+			"data": {"product": loc.product, "cost": cost}}
+
+
+func _mr_fila(opt: int, d: Dictionary) -> Array:
+	if opt == 2:
+		return ["La fila siguió larga y algunos clientes se fueron.", "info"]
+	var p: Dictionary = products[d.product]
+	p.cap_boost = 1.2
+	p.cap_boost_days = 5
+	if opt == 0:
+		_spend(d.cost, "salarios", d.product)
+		return ["Pagaste horas extra: la fila avanza más rápido por 5 días.", "good"]
+	morale = max(0.0, morale - 8)
+	return ["Los obligaste a quedarse sin pagarles. La fila avanza, pero el equipo está furioso (−8 ánimo).", "warn"]
+
+
+## Microdecisiones que lanzan los rivales (ver _rival_move).
+func _micro_rival_war(r: Dictionary, key: String) -> Dictionary:
+	var name: String = Lang.noun(D.PRODUCTS[key].name)
+	return {"id": "guerra", "expires": day + MICRO_DAYS, "default": 1, "rival": r.key,
+			"title": Lang.f("%s te declaró la guerra", r.company),
+			"text": Lang.f("%s le quita clientes a tu %s. ¿Respondes?", [r.short, name]),
+			"options": [_opt("Bajar tu precio 8%", "La guerra termina en 5 días, pero ganas menos por unidad."),
+					_opt("Aguantar", "Tu demanda sigue 12% más baja los 20 días.")],
+			"data": {"product": key, "rival": r.key}}
+
+
+func _mr_guerra(opt: int, d: Dictionary) -> Array:
+	var p: Dictionary = products[d.product]
+	if opt == 0:
+		p.price *= 0.92
+		p.war_days = min(int(p.war_days), 5)
+		hostility(d.rival, 5)
+		return [Lang.f("Bajaste el precio de %s 8%%: %s se rinde pronto.", [Lang.noun(D.PRODUCTS[d.product].name), D.rival_by_key(d.rival).short]), "good"]
+	return ["Aguantaste el ataque sin bajar precios.", "info"]
+
+
+func _micro_poach(r: Dictionary, key: String) -> Dictionary:
+	var cost := 0.03 * _scale()
+	return {"id": "robo", "expires": day + MICRO_DAYS, "default": 1, "rival": r.key,
+			"title": Lang.f("%s quiere llevarse a tu mejor empleado", r.short),
+			"text": Lang.f("%s le ofreció el doble de sueldo a tu encargado de %s.", [r.name, Lang.noun(D.PRODUCTS[key].name)]),
+			"options": [_opt(Lang.f("Contraoferta (%s)", Fmt.money(cost)), "Se queda y el equipo ve que lo valoras (+3 de ánimo)."),
+					_opt("Dejarlo ir", "Pierdes un empleado en ese negocio.")],
+			"data": {"product": key, "cost": cost, "rival": r.key}}
+
+
+func _mr_robo(opt: int, d: Dictionary) -> Array:
+	if opt == 0:
+		_spend(d.cost, "salarios", d.product)
+		morale = min(100.0, morale + 3)
+		return ["Tu encargado se quedó contigo (+3 ánimo).", "good"]
+	var ls := locs(d.product).filter(func(l): return l.employees > 0)
+	if ls:
+		var loc: Dictionary = pick(ls)
+		loc.employees -= 1
+	return [Lang.f("Tu encargado se fue con %s.", D.rival_by_key(d.rival).company), "bad"]
+
+
+func _micro_lawsuit(r: Dictionary) -> Dictionary:
+	var k := _scale()
+	return {"id": "demanda_rival", "expires": day + MICRO_DAYS, "default": 1, "rival": r.key,
+			"title": Lang.f("%s te amenaza con una demanda", r.short),
+			"text": Lang.f("«Tu letrero se parece al mío. Es un robo. Te voy a demandar», dice %s.", r.name),
+			"options": [_opt(Lang.f("Pagarle para que se calle (%s)", Fmt.money(0.06 * k)), "Se olvida del tema."),
+					_opt("Que demande", Lang.f("60%%: el juez te da la razón. 40%%: pierdes y pagas %s.", Fmt.money(0.2 * k)))],
+			"data": {"pay": 0.06 * k, "lose": 0.2 * k, "rival": r.key}}
+
+
+func _mr_demanda_rival(opt: int, d: Dictionary) -> Array:
+	var r := D.rival_by_key(d.rival)
+	if opt == 0:
+		_spend(d.pay, "multas")
+		hostility(d.rival, -5)
+		return [Lang.f("Le pagaste a %s y retiró la demanda.", r.short), "info"]
+	if rng.randf() < 0.6:
+		hostility(d.rival, 5)
+		return [Lang.f("¡Ganaste! El juez dijo que la demanda de %s no tenía sentido.", r.short), "good"]
+	_spend(d.lose, "multas")
+	return [Lang.f("Perdiste el juicio contra %s: pagas %s.", [r.short, Fmt.money(d.lose)]), "bad"]
+
+
+# ---------- dilema: una fábrica en venta ----------
+## Negocios sin fábrica cuya fábrica usada (55% del precio) puedes pagar con lo que tienes en caja.
+func _factory_offer_keys() -> Array:
+	return _active_products().filter(func(p): return not p.factory and cash >= factory_cost(p.key) * 0.75).map(func(p): return p.key)
+
+
+func _d_fabrica() -> Dictionary:
+	var keys := _factory_offer_keys()
+	if keys.is_empty():
+		keys = _active_products().filter(func(p): return not p.factory).map(func(p): return p.key)
+	var key: String = pick(keys) if keys else "cafe"
+	var price := factory_cost(key) * 0.55
+	var name: String = Lang.noun(D.PRODUCTS[key].name)
+	return {"id": "fabrica", "title": Lang.f("Se vende una fábrica de %s", name),
+			"text": Lang.f("Una empresa que cierra vende su fábrica de %s por %s, casi la mitad de lo que cuesta construir una (%s). Con fábrica propia tu costo unitario baja 30%%. Dicen que las máquinas están bien... dicen.", [name, Fmt.money(price), Fmt.money(factory_cost(key))]),
+			"options": [_opt(Lang.f("Sí, comprarla (%s)", Fmt.money(price)), Lang.f("Fábrica propia desde hoy. 25%%: hay que reparar las máquinas (%s más).", Fmt.money(factory_cost(key) * 0.15))),
+					_opt("No", "Puedes construir una nueva cuando quieras en Negocios.")],
+			"data": {"product": key, "price": price, "repair": factory_cost(key) * 0.15}}
+
+
+func _r_fabrica(opt: int, d: Dictionary) -> Array:
+	var p: Dictionary = products[d.product]
+	if opt == 1 or p.factory:
+		return ["No compraste la fábrica.", "info"]
+	cash -= d.price
+	_add_asset(Lang.f("Fábrica de %s (usada)", Lang.noun(D.PRODUCTS[d.product].name)), d.price)
+	p.factory = true
+	p.factory_value = d.price
+	if rng.randf() < 0.25:
+		_spend(d.repair, "fabricas", d.product)
+		return [Lang.f("Compraste la fábrica, pero las máquinas venían malas: reparación de %s.", Fmt.money(d.repair)), "warn"]
+	return ["¡Fábrica comprada a mitad de precio! Tu costo unitario baja 30%.", "good"]
+
+
 ## Devuelve [ok, mensaje].
 func resolve_choice(option: int) -> Array:
 	var c = pending_choice
@@ -1866,23 +2841,39 @@ static func from_json(text: String) -> Game:
 
 const INT_KEYS := ["day", "next_id", "phase_months_left", "overdraft_days", "rank", "next_choice_day",
 		"profit_streak", "last_record_day", "hq_level", "strategy_ready_day", "weather", "weather_next", "weather_days",
-		"beach_boost_days"]
+		"beach_boost_days", "labor", "next_micro_day"]
 
 
 ## JSON guarda todos los números como decimales: los que son índices o contadores vuelven a ser enteros.
 func _fix_types() -> void:
 	for p in products.values():
-		for k in ["quality", "stock_days", "competitors", "cost_shock_days", "demand_shock_days"]:
+		for k in ["solar", "war_days", "cap_boost", "cap_boost_days"]:   # partidas de antes de estos campos
+			if not p.has(k):
+				p[k] = make_product(p.key)[k]
+		for k in ["quality", "stock_days", "competitors", "cost_shock_days", "demand_shock_days", "war_days", "cap_boost_days"]:
 			p[k] = int(p[k])
 	for loc in locations:
+		if not loc.has("upgrades"):
+			loc["upgrades"] = []
 		for k in ["id", "size", "employees"]:
 			loc[k] = int(loc[k])
 		loc["stars"] = float(loc.get("stars", 3.0))
 		if loc.get("plot") != null:
 			loc.plot = int(loc.plot)
+		loc["mall"] = null if loc.get("mall") == null else int(loc.mall)
 		loc.asset_ids = loc.asset_ids.map(func(i): return int(i))
 	for l in loans:
 		l.id = int(l.id)
 		l.months_left = int(l.months_left)
 	for a in assets:
 		a.id = int(a.id)
+	if micro != null:
+		micro.expires = int(micro.expires)
+	for f in franchises:
+		f.id = int(f.id)
+		f.day = int(f.day)
+	_place_homeless()
+	_init_rivals()
+	for k in rivals:
+		for f in ["ally_until", "war_until", "last_move"]:
+			rivals[k][f] = int(rivals[k][f])

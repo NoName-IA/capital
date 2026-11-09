@@ -18,6 +18,8 @@ const ALARM_INTRO := 8.0   # segundos de alarma fuerte al pasar el límite
 const FINAL_DAYS := 5      # en los últimos días antes de la quiebra la tensión vuelve a subir
 var prompt := ""
 var phone_rect := Rect2()   # botón de la tablet (clic para abrirla)
+var mini_rect := Rect2()    # minimapa (clic para abrir el mapa grande)
+var micro_rects := []       # botones de la microdecisión en pantalla
 var speed_rect := Rect2()   # indicador de velocidad (arriba a la derecha)
 const PANEL_W := 420.0   # tarjeta de la empresa, arriba a la izquierda (el alto depende de cuántos chips haya)
 const SHORT := {"cafe": "Café", "pan": "Pan", "burger": "Burger", "ropa": "Ropa", "tech": "Tech"}
@@ -117,6 +119,12 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 		_draw_danger(g)
 		_draw_panel(g)
 		_draw_panel_buttons(g)
+		if not city.overlays.open():
+			mini_rect = CityMap.draw_mini(ui, city, Vector2(15, ui.H - CityMap.MINI_SIZE.y - 15))
+			_draw_micro(g)
+		else:
+			mini_rect = Rect2()
+			micro_rects = []
 		_draw_center()
 		city.tutorial.draw(ui)
 		notes.draw(ui)
@@ -342,10 +350,10 @@ func _draw_center() -> void:
 		var lines := [Lang.f("%s%s%s%s: caminar · %s: correr · %s: saltar · Mouse: mirar · Rueda/%s: cámara · %s: música", [
 				kl.call("forward"), kl.call("left"), kl.call("back"), kl.call("right"), kl.call("run"), kl.call("jump"),
 				kl.call("camera"), kl.call("music")]),
-				Lang.f("%s: interactuar · %s: tablet · %s: pausa · %s/%s/%s: velocidad · %s: pantalla completa · Esc: menú · Alt: mouse libre", [
-				kl.call("interact"), kl.call("phone"), kl.call("pause_quick"), kl.call("speed1"), kl.call("speed2"),
+				Lang.f("%s: interactuar · %s: tablet · %s: mapa · %s: pausa · %s/%s/%s: velocidad · %s: pantalla completa · Esc: menú · Alt: mouse libre", [
+				kl.call("interact"), kl.call("phone"), kl.call("map"), kl.call("pause_quick"), kl.call("speed1"), kl.call("speed2"),
 				kl.call("speed3"), kl.call("fullscreen")])]
-		ui.rect(Rect2(cx - 440, 500, 880, 58), Color(0.05, 0.067, 0.09, 0.6), 12)
+		ui.rect(Rect2(cx - 490, 500, 980, 58), Color(0.05, 0.067, 0.09, 0.6), 12)
 		for i in 2:
 			ui.text(lines[i], Vector2(cx, 516 + i * 24), 15, Color.WHITE, false, "center")
 		ui.canvas_alpha(1.0)
@@ -392,3 +400,48 @@ func danger_text() -> Array:
 func danger_pulse() -> float:
 	var beat := fmod(danger_phase, 1.0)
 	return min(1.0, exp(-beat * 8) + (0.7 * exp(-(beat - 0.26) * 8) if beat > 0.26 else 0.0)) * danger_level
+
+
+## Microdecisión: una tarjeta chica arriba del minimapa. Se responde con las teclas (Z, X, C) o con clic (Alt suelta
+## el mouse). No pausa el juego: si no respondes, a los pocos días pasa sola la opción por defecto.
+func _draw_micro(g) -> void:
+	micro_rects = []
+	var m = g.micro
+	if m == null:
+		return
+	var w := 370.0
+	var n: int = m.options.size()
+	var h := 66.0 + n * 34
+	var x := ui.W - 15 - w
+	var y := ui.H - 15 - h
+	var col := Color8(240, 140, 50)
+	var r := Rect2(x, y, w, h)
+	ui.rect(r, Color(0.05, 0.067, 0.09, 0.92), 14)
+	ui.rect(r, Color(col, 0.7), 14, 1.5)
+	Notifications.app_icon(ui, Rect2(x + 12, y + 12, 20, 20), col, "question")
+	var left: int = maxi(0, int(m.expires) - g.day)
+	ui.text(Lang.f("DECISIÓN RÁPIDA · %d día%s", [left, "" if left == 1 else "s"]), Vector2(x + 40, y + 15), 11, Notifications.light(col, 0.25), true)
+	ui.text(m.title, Vector2(x + 14, y + 38), 15, "text", true, "topleft", w - 28)
+	ui.tooltip(Rect2(x, y, w, 56), m.text)
+	var free: bool = not city.mouse_captured()
+	for i in n:
+		var o: Dictionary = m.options[i]
+		var br := Rect2(x + 10, y + 62 + i * 34, w - 20, 30)
+		micro_rects.append(br)
+		var hot := free and ui.hover(br)
+		ui.rect(br, Color(1, 1, 1, 0.14 if hot else 0.06), 8)
+		var key := Keys.label("micro%d" % (i + 1))
+		var kr := Rect2(br.position.x + 6, br.position.y + 5, 24, 20)
+		ui.rect(kr, col, 5)
+		ui.text(key, kr.get_center(), 12, Color8(16, 20, 30), true, "center")
+		ui.text(o.label, Vector2(br.position.x + 38, br.get_center().y), 13, "text", false, "midleft", br.size.x - 46)
+		if hot:
+			ui.tooltip(br, o.detail)
+
+
+## La opción de la microdecisión bajo el mouse (-1 si ninguna).
+func micro_at() -> int:
+	for i in micro_rects.size():
+		if ui.hover(micro_rects[i]):
+			return i
+	return -1

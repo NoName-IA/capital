@@ -40,8 +40,8 @@ static func rep_color(value: float) -> Color:
 
 
 ## Local de la competencia: borde rojo que se ve de día y de noche, letrero COMPETENCIA y empleados del rival.
-static func competitor(parent: Node3D, key: String, plot: Array) -> Dictionary:
-	var r := D.rival_for(key)
+static func competitor(parent: Node3D, key: String, plot: Array, owner = null) -> Dictionary:
+	var r := D.rival_for(key) if owner == null else D.rival_by_key(owner)
 	var bld := Building.new(parent, plot, 1, Blueprints.PRODUCT_COLORS[key], "COMPETENCIA",
 			Lang.f("%s · %s", [r.company, D.PRODUCTS[key].name]), 17, absi(int(plot[0] * 13 + plot[1] * 7)) + 500, key)
 	var w := 14.0

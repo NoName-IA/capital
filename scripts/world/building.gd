@@ -66,9 +66,14 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 	var lamps := Boxes.new()
 	for b in boxes:
 		var key = b[2]
-		var col: Color = key if key is Color else (product_color if key == "product" else Blueprints.PALETTE[key])
 		var target := parts
-		if key is Color:
+		var col: Color
+		if key is Array:   # ["glow", color]: brilla igual de día y de noche (pantallas, neones, el horno)
+			col = key[1]
+			target = lamps
+		else:
+			col = key if key is Color else (product_color if key == "product" else Blueprints.PALETTE[key])
+		if key is Color or key is Array:
 			pass
 		elif key == "glass":
 			target = glass
