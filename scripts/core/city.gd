@@ -163,6 +163,7 @@ func _ready() -> void:
 
 func setup_ui(admin: Admin, ui: ImUI, hud_parent: RID) -> void:
 	app = admin
+	app.go_to_loc = go_to_location
 	overlays = Overlays.new(self, ui, admin)
 	hud = Hud.new(self, hud_parent)
 	apply_settings()
@@ -414,6 +415,30 @@ func teleport(pos: Vector3, yaw_deg: float, label := "") -> void:
 	sfx.play("record", 0.45, 1.5)
 	if label:
 		toast(Lang.f("Llegaste: %s.", label), "info")
+
+
+## Viaja a una sucursal desde la tablet (clic en su nombre en Negocios o en su vitrina en Expansión): quedas frente
+## a la puerta, o en el pasillo del centro comercial frente a su vitrina, mirándola.
+func go_to_location(loc: Dictionary) -> void:
+	if game == null or app.modal != null:
+		return
+	var label := Lang.f("%s de %s", [D.SIZES[loc.size].name, Lang.noun(D.PRODUCTS[loc.product].name)])
+	var pos: Vector3
+	var yaw_deg: float
+	if Game.mall_of(loc) >= 0 and Game.mall_of(loc) < mall.slots.size():
+		var s: Dictionary = mall.slots[Game.mall_of(loc)]
+		var r: Array = s.rect
+		var center := Blueprints.to_world(Mall.PLOT, (r[0] + r[1]) / 2, (r[2] + r[3]) / 2)
+		pos = s.front
+		yaw_deg = rad_to_deg(atan2(center.x - pos.x, center.z - pos.z))
+	elif Game.plot_of(loc) >= 0:
+		var t := CityMap.plot_target(plot_pos(Game.plot_of(loc)))
+		pos = t[0]
+		yaw_deg = t[1]
+	else:
+		return
+	overlays.hide()
+	teleport(pos, yaw_deg, label)
 
 
 ## Te lleva al vestíbulo de la oficina central, frente a la computadora.

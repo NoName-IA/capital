@@ -1,44 +1,1703 @@
 {
-"Mmm, se ve rico el %s...": [
-"Mmm, the %s looks tasty..."
-],
-"%s/mes": [
-"%s/month"
-],
-"%d mes": [
-"%d month"
-],
-"tazas": [
-"cups"
-],
-"panes": [
-"loaves"
-],
-"combos": [
-"combos"
-],
-"prendas": [
-"items"
-],
-"equipos": [
-"devices"
-],
-"¡Qué rico!": [
-"So good!"
-],
-"Justo lo que necesitaba.": [
-"Just what I needed."
-],
-"Mmm...": [
-"Mmm..."
-],
-"Aquí se está bien.": [
-"It's nice in here."
-],
-"Aplicar cambios": [
-"Apply changes"
-],
-"El idioma de todo el juego. Elige uno con las flechas y toca «Aplicar cambios». Language · 语言 · Язык · Idioma · Sprache": [
-"The language of the whole game. Pick one with the arrows and press «Apply changes». Idioma · 语言 · Язык · Idioma · Sprache"
-]
+ "Mmm, se ve rico el %s...": [
+  "Mmm, the %s looks tasty..."
+ ],
+ "%s/mes": [
+  "%s/month"
+ ],
+ "%d mes": [
+  "%d month"
+ ],
+ "tazas": [
+  "cups"
+ ],
+ "panes": [
+  "loaves"
+ ],
+ "combos": [
+  "combos"
+ ],
+ "prendas": [
+  "items"
+ ],
+ "equipos": [
+  "devices"
+ ],
+ "¡Qué rico!": [
+  "So good!"
+ ],
+ "Justo lo que necesitaba.": [
+  "Just what I needed."
+ ],
+ "Mmm...": [
+  "Mmm..."
+ ],
+ "Aquí se está bien.": [
+  "It's nice in here."
+ ],
+ "Aplicar cambios": [
+  "Apply changes"
+ ],
+ "El idioma de todo el juego. Elige uno con las flechas y toca «Aplicar cambios». Language · 语言 · Язык · Idioma · Sprache": [
+  "The language of the whole game. Pick one with the arrows and press «Apply changes». Idioma · 语言 · Язык · Idioma · Sprache"
+ ],
+ "BOLSA DE VALORES\\nHoy %s%s%%\\nTu fondo: %s": [
+  "STOCK MARKET\\nToday %s%s%%\\nYour fund: %s"
+ ],
+ "¿%s?": [
+  "%s?"
+ ],
+ "Sí (%s)": [
+  "Yes (%s)"
+ ],
+ "Llegaste: %s.": [
+  "You arrived: %s."
+ ],
+ "¿Comprar el armario de la oficina?": [
+  "Buy the office wardrobe?"
+ ],
+ "Cuesta %s (gasto de representación). Después cada prenda se paga aparte, y te la puedes probar antes de comprarla.": [
+  "It costs %s (entertainment expense). After that each item is paid separately, and you can try it on before buying it."
+ ],
+ "Sí, comprar (%s)": [
+  "Yes, buy (%s)"
+ ],
+ "Doña ": [
+  "Mrs. "
+ ],
+ "RANKING DE LA CIUDAD": [
+  "CITY RANKING"
+ ],
+ "¡Superaste a %s!": [
+  "You overtook %s!"
+ ],
+ "Mira el ranking en la tablet (Rivales)": [
+  "Check the ranking on the tablet (Rivals)"
+ ],
+ "Renunció un empleado": [
+  "An employee quit"
+ ],
+ "Inspección del trabajo": [
+  "Labor inspection"
+ ],
+ "Parque industrial": [
+  "Industrial park"
+ ],
+ "Tus fábricas": [
+  "Your factories"
+ ],
+ "Centro Comercial": [
+  "Shopping Mall"
+ ],
+ "Vitrinas para puestos y locales": [
+  "Shop units for stands and stores"
+ ],
+ "Terreno en obra: cómpralo para tener más vitrinas": [
+  "Construction site: buy it to get more shop units"
+ ],
+ "Comprar este local de %s (%s · %s)": [
+  "Buy this %s store (%s · %s)"
+ ],
+ "El hombre que convirtió el café en una experiencia de 6 dólares. Abre locales en cada esquina hasta que no quede esquina.": [
+  "The man who turned coffee into a 6-dollar experience. He opens stores on every corner until there are no corners left."
+ ],
+ "Gracias por demostrar que el {p} deja plata en esta calle. Abro un Starbucks justo enfrente.": [
+  "Thanks for proving that {p} makes money on this street. I'm opening a Starbucks right across from you."
+ ],
+ "Tu {p} está bien... para un puesto. El mío trae tu nombre mal escrito en el vaso.": [
+  "Your {p} is fine... for a stand. Mine comes with your name misspelled on the cup."
+ ],
+ "Una esquina sin Starbucks es una esquina triste. Ya la arreglé.": [
+  "A corner without a Starbucks is a sad corner. I fixed it."
+ ],
+ "Cerré un local de {p}. No te emociones: abro tres en otra ciudad.": [
+  "I closed a {p} store. Don't get excited: I'm opening three in another city."
+ ],
+ "Con esos precios de {p} vas a quebrar antes que yo... pero por ahora, tú ganas.": [
+  "With those {p} prices you'll go broke before me... but for now, you win."
+ ],
+ "Escuché que tu banco está nervioso. ¿Quieres un frappuccino para los nervios?": [
+  "I heard your bank is nervous. Want a frappuccino for the nerves?"
+ ],
+ "Números rojos, ¿eh? Rojo como nuestros vasos de Navidad.": [
+  "In the red, huh? Red like our Christmas cups."
+ ],
+ "¿{r}? Disfrútalo. Nosotros tenemos 38 mil locales.": [
+  "{r}? Enjoy it. We have 38 thousand stores."
+ ],
+ "Así que ahora eres {r}. Te invito un café... en mi local.": [
+  "So now you're {r}. Coffee's on me... at my store."
+ ],
+ "¿Compraste uno de mis locales? Le vas a tener que cambiar el logo, ¿eh?": [
+  "You bought one of my stores? You'll have to change the logo, huh?"
+ ],
+ "Esta semana el {p} en Starbucks va con descuento. Solo en tu calle. Casualidad.": [
+  "This week {p} at Starbucks is on sale. Only on your street. Coincidence."
+ ],
+ "Abrimos un local nuevo al lado del tuyo. Somos así.": [
+  "We opened a new store next to yours. That's just how we are."
+ ],
+ "¿Me pasaste en la ciudad? Bien. Igual tengo más sucursales que tú en el resto del planeta.": [
+  "You passed me in the city? Fine. I still have more branches than you on the rest of the planet."
+ ],
+ "El imperio del pan de molde. Su arma es el precio: vende tan barato que nadie le puede ganar... por un rato.": [
+  "The sliced-bread empire. Its weapon is price: it sells so cheap nobody can beat it... for a while."
+ ],
+ "Tu {p} es lindo y artesanal. El mío dura tres semanas y cuesta la mitad. Abrí al lado.": [
+  "Your {p} is cute and artisanal. Mine lasts three weeks and costs half. I opened next door."
+ ],
+ "El osito llegó a tu barrio con {p} más barato.": [
+  "The little bear came to your neighborhood with cheaper {p}."
+ ],
+ "Cerré un local de {p}. El osito está triste, pero volverá.": [
+  "I closed a {p} store. The little bear is sad, but he'll be back."
+ ],
+ "Tus precios de {p} nos ganaron esta vez. Respeto.": [
+  "Your {p} prices beat us this time. Respect."
+ ],
+ "¿Sin plata? Te vendo pan barato para que ahorres.": [
+  "Out of money? I'll sell you cheap bread so you can save."
+ ],
+ "¡{r}! Qué orgullo. Te mando un pastelito para celebrar.": [
+  "{r}! So proud. I'm sending you a little cake to celebrate."
+ ],
+ "{r}... nosotros vendemos pan en 30 países, pero felicidades.": [
+  "{r}... we sell bread in 30 countries, but congratulations."
+ ],
+ "¿Me compraste un local? Cuídalo, ahí estaba nuestro mejor horno.": [
+  "You bought one of my stores? Take care of it, our best oven was there."
+ ],
+ "Bajamos el {p} 20%. ¿Y tú qué vas a hacer?": [
+  "We cut {p} prices by 20%. What are you going to do?"
+ ],
+ "Guerra de precios en {p}: el que aguante más, gana. Nosotros aguantamos mucho.": [
+  "Price war in {p}: whoever lasts longer wins. We can last a long time."
+ ],
+ "Nos pasaste. Bueno, el pan no se hizo en un día.": [
+  "You passed us. Well, bread wasn't baked in a day."
+ ],
+ "El payaso más rico del mundo. No gana por sabor: gana porque su publicidad está en todas partes y tu marca desaparece.": [
+  "The richest clown in the world. He doesn't win on taste: he wins because his ads are everywhere and your brand disappears."
+ ],
+ "¡Hola, amiguito! Abrí un McDonald's frente a tu local de {p}. ¡Me encanta!": [
+  "Hi, buddy! I opened a McDonald's across from your {p} store. I'm lovin' it!"
+ ],
+ "Tu {p} se ve rico. Lástima que nadie lo vea: mi letrero es más grande.": [
+  "Your {p} looks tasty. Too bad nobody sees it: my sign is bigger."
+ ],
+ "¡Cajita feliz para todos! Bueno, para tus clientes, que ahora vienen a mi local.": [
+  "Happy Meals for everyone! Well, for your customers, who now come to my store."
+ ],
+ "Cerré un local de {p}. Ba da ba ba baaa... no me encanta.": [
+  "I closed a {p} store. Ba da ba ba baaa... not lovin' it."
+ ],
+ "Ok, tus precios de {p} están locos. Me retiro... por ahora.": [
+  "OK, your {p} prices are crazy. I'm backing off... for now."
+ ],
+ "Vi tus números rojos. ¿Quieres trabajar conmigo? Buscamos cajeros.": [
+  "I saw you're in the red. Want to work for me? We're hiring cashiers."
+ ],
+ "Tranquilo, la quiebra es solo una cajita triste.": [
+  "Relax, bankruptcy is just a sad meal."
+ ],
+ "¿{r}? ¡Felicidades, amiguito! Igual vendo más hamburguesas por segundo que tú en un año.": [
+  "{r}? Congrats, buddy! I still sell more burgers per second than you do in a year."
+ ],
+ "{r}. Te voy a dedicar un juguete de la cajita feliz.": [
+  "{r}. I'll name a Happy Meal toy after you."
+ ],
+ "¡NO! ¡Ese local tenía la mejor piscina de pelotas!": [
+  "NO! That store had the best ball pit!"
+ ],
+ "Nueva campaña en la tele, en la radio y en tu celular. Nadie se va a acordar de tu {p}.": [
+  "New campaign on TV, radio and your phone. Nobody will remember your {p}."
+ ],
+ "Puse un letrero gigante al lado de tu local. ¿Lo viste? Todos lo vieron.": [
+  "I put up a giant sign next to your store. Did you see it? Everyone did."
+ ],
+ "¿Me pasaste? En esta ciudad, tal vez. En el mundo, sigo siendo el rey.": [
+  "You passed me? In this city, maybe. In the world, I'm still the king."
+ ],
+ "El hombre que viste al mundo en dos semanas. Si algo tuyo se vende bien, a los 15 días está en su vitrina más barato.": [
+  "The man who dresses the world in two weeks. If something of yours sells well, 15 days later it's in his window, cheaper."
+ ],
+ "Tu {p} me gustó tanto que la copié. Ya está en mi tienda nueva, al lado.": [
+  "I liked your {p} so much I copied it. It's already in my new store, next door."
+ ],
+ "La moda es rápida. Yo soy más rápido. Nueva tienda de {p} en tu calle.": [
+  "Fashion is fast. I'm faster. New {p} store on your street."
+ ],
+ "Bajaste tanto tus precios que ya no te puedo copiar. Bien jugado.": [
+  "You cut your prices so much I can't copy you anymore. Well played."
+ ],
+ "Números rojos: el único rojo que no está de moda.": [
+  "In the red: the only red that's not in fashion."
+ ],
+ "Si necesitas vender algo, te compro los maniquíes. Baratos, claro.": [
+  "If you need to sell something, I'll buy your mannequins. Cheap, of course."
+ ],
+ "{r}. Elegante. Casi tanto como yo.": [
+  "{r}. Elegant. Almost as much as me."
+ ],
+ "{r}. Te voy a copiar eso también.": [
+  "{r}. I'm going to copy that too."
+ ],
+ "Copiamos tu colección de {p}. Misma ropa, 30% más barata, en mi vitrina.": [
+  "We copied your {p} collection. Same clothes, 30% cheaper, in my window."
+ ],
+ "Tu diseño de {p} se vende bien. Ahora también en Zara.": [
+  "Your {p} design sells well. Now also at Zara."
+ ],
+ "Me pasaste. Interesante. Voy a copiar tu modelo de negocio.": [
+  "You passed me. Interesting. I'm going to copy your business model."
+ ],
+ "Vende lo mismo que el año pasado con otra cámara y la gente hace fila. Cada lanzamiento te quita clientes.": [
+  "Sells the same thing as last year with another camera and people line up. Every launch takes customers from you."
+ ],
+ "Abrimos una Apple Store en tu calle. La fila ya llega hasta tu local de {p}.": [
+  "We opened an Apple Store on your street. The line already reaches your {p} store."
+ ],
+ "Tu {p} es bueno. El nuestro es igual, pero en blanco y el doble de caro. Ya abrimos.": [
+  "Your {p} is good. Ours is the same, but in white and twice the price. We've opened."
+ ],
+ "Cerramos una tienda de {p}. Lo llamamos «simplificar».": [
+  "We closed a {p} store. We call it «simplifying»."
+ ],
+ "Tus precios en {p} no estaban en nuestro plan. Actualizando.": [
+  "Your {p} prices weren't in our plan. Updating."
+ ],
+ "Tu flujo de caja es negativo. Te recomendamos AppleCare para tu empresa.": [
+  "Your cash flow is negative. We recommend AppleCare for your company."
+ ],
+ "Detectamos pánico en tus decisiones. Respira. Luego cómprate un iPhone.": [
+  "We detected panic in your decisions. Breathe. Then buy an iPhone."
+ ],
+ "{r}: lo anunciaremos en nuestro próximo evento. O no.": [
+  "{r}: we'll announce it at our next event. Or not."
+ ],
+ "Felicitaciones por {r}. Este mensaje fue enviado desde mi iPhone.": [
+  "Congratulations on {r}. Sent from my iPhone."
+ ],
+ "¿Compraste una de nuestras tiendas? Los cables siguen siendo nuestros.": [
+  "You bought one of our stores? The cables are still ours."
+ ],
+ "Lanzamos un modelo nuevo. Es igual al anterior. Todos tus clientes de {p} están en la fila.": [
+  "We launched a new model. It's the same as the last one. All your {p} customers are in line."
+ ],
+ "Evento de lanzamiento esta semana. Tu {p} acaba de pasar de moda.": [
+  "Launch event this week. Your {p} just went out of style."
+ ],
+ "Nos superaste en esta ciudad. Lo vamos a llamar «una oportunidad».": [
+  "You beat us in this city. We'll call it «an opportunity»."
+ ],
+ "Tiburón inmobiliario. Compra los mejores terrenos de la avenida, te ofrece comprar tus locales y amenaza con demandarte.": [
+  "Real estate shark. He buys the best plots on the avenue, offers to buy your stores and threatens to sue you."
+ ],
+ "Compré un terreno en tu calle. El mejor terreno. Tremendo. Nadie compra terrenos como yo.": [
+  "I bought a plot on your street. The best plot. Tremendous. Nobody buys plots like me."
+ ],
+ "Abrí un local de {p}. Va a ser el mejor {p} de la historia, créeme.": [
+  "I opened a {p} store. It's going to be the best {p} in history, believe me."
+ ],
+ "Cerré un local. Fue una decisión brillante, la gente lo dice.": [
+  "I closed a store. It was a brilliant decision, people are saying it."
+ ],
+ "Me ganaste esta vez. Muy injusto. Muy, muy injusto.": [
+  "You beat me this time. Very unfair. Very, very unfair."
+ ],
+ "Tus números son un desastre. Un desastre total. Yo te compro todo, barato.": [
+  "Your numbers are a disaster. A total disaster. I'll buy everything from you, cheap."
+ ],
+ "Estás en quiebra. Yo quebré varias veces y mírame.": [
+  "You're bankrupt. I went bankrupt several times and look at me."
+ ],
+ "¿{r}? Muy bien. Pero yo soy más rico. Mucho más.": [
+  "{r}? Very nice. But I'm richer. Much richer."
+ ],
+ "{r}. Nada mal. Yo lo habría hecho más rápido.": [
+  "{r}. Not bad. I would have done it faster."
+ ],
+ "¿Me compraste un local? Te voy a demandar. Mis abogados son los mejores.": [
+  "You bought one of my stores? I'm going to sue you. My lawyers are the best."
+ ],
+ "Compré el terreno de al lado. Voy a poner mi nombre en letras doradas, gigantes.": [
+  "I bought the plot next door. I'm putting my name on it in giant gold letters."
+ ],
+ "Te voy a demandar. Todavía no sé por qué, pero te voy a demandar.": [
+  "I'm going to sue you. I don't know why yet, but I'm going to sue you."
+ ],
+ "¿Me pasaste? Fake news. Totalmente falso.": [
+  "You passed me? Fake news. Totally false."
+ ],
+ "Impredecible. Un tuit suyo puede hacer explotar tus ventas o hundirlas. Además trata de llevarse a tus empleados.": [
+  "Unpredictable. One tweet from him can make your sales explode or sink them. He also tries to poach your employees."
+ ],
+ "Acabo de comprar un local de {p} en tu ciudad. No sé por qué. Me pareció gracioso.": [
+  "I just bought a {p} store in your city. Not sure why. Seemed funny."
+ ],
+ "{p} en Marte en 2030. Por ahora, en tu calle.": [
+  "{p} on Mars by 2030. For now, on your street."
+ ],
+ "Cerré mi local de {p}. Lo voy a reabrir como red social.": [
+  "I closed my {p} store. I'll reopen it as a social network."
+ ],
+ "Ok, me ganaste en {p}. Voy a comprar otra empresa para olvidarlo.": [
+  "OK, you beat me in {p}. I'll buy another company to forget about it."
+ ],
+ "Tu empresa está en rojo. Yo también, pero yo tengo cohetes.": [
+  "Your company is in the red. So am I, but I have rockets."
+ ],
+ "Encuesta: ¿debería comprar tu empresa por 1 dólar? Sí 69%, No 31%.": [
+  "Poll: should I buy your company for 1 dollar? Yes 69%, No 31%."
+ ],
+ "{r}. No está mal para un humano.": [
+  "{r}. Not bad for a human."
+ ],
+ "{r}. Te sigo en X. Bueno, te sigue un bot mío.": [
+  "{r}. I follow you on X. Well, one of my bots does."
+ ],
+ "Compraste uno de mis locales. Respuesta: jaja.": [
+  "You bought one of my stores. Reply: lol."
+ ],
+ "Acabo de tuitear sobre tu {p}. Mira lo que pasa.": [
+  "I just tweeted about your {p}. Watch what happens."
+ ],
+ "Le ofrecí a tu mejor empleado trabajar 80 horas a la semana conmigo. Dijo que lo iba a pensar.": [
+  "I offered your best employee an 80-hour work week with me. He said he'd think about it."
+ ],
+ "Me pasaste. Interesante. Voy a comprar el juego.": [
+  "You passed me. Interesting. I'm going to buy the game."
+ ],
+ "No necesita locales: vende todo por internet y lo entrega mañana. Le quita clientes a la ropa y a la electrónica.": [
+  "He doesn't need stores: he sells everything online and delivers it tomorrow. He takes customers from clothing and electronics."
+ ],
+ "¿Para qué ir a tu tienda de {p} si se lo llevo mañana a su casa?": [
+  "Why go to your {p} store if I deliver it to their door tomorrow?"
+ ],
+ "Ahora vendemos {p} con envío gratis. Tu local es muy bonito, eso sí.": [
+  "We now sell {p} with free shipping. Your store is very pretty, though."
+ ],
+ "Bajamos la venta de {p} en tu ciudad. Es solo un número en una planilla.": [
+  "We scaled down {p} sales in your city. It's just a number on a spreadsheet."
+ ],
+ "Tus precios de {p} nos ganaron. Ajustando el algoritmo.": [
+  "Your {p} prices beat us. Adjusting the algorithm."
+ ],
+ "¿Tu empresa en rojo? Podemos llevarte la quiebra a domicilio.": [
+  "Your company in the red? We can deliver bankruptcy to your door."
+ ],
+ "Mis bodegas tienen más inventario que toda tu ciudad.": [
+  "My warehouses have more inventory than your whole city."
+ ],
+ "{r}. Agregado al carrito.": [
+  "{r}. Added to cart."
+ ],
+ "Felicitaciones por {r}. ¿Le gustaría calificar su experiencia?": [
+  "Congratulations on {r}. Would you like to rate your experience?"
+ ],
+ "Compraste algo mío. ¿Quieres devolverlo? Tienes 30 días.": [
+  "You bought something of mine. Want to return it? You have 30 days."
+ ],
+ "Cyber Day: {p} con 40% de descuento y envío en un día.": [
+  "Cyber Day: {p} 40% off with one-day shipping."
+ ],
+ "Prime Day en {p}. Tus clientes ni se levantan del sillón.": [
+  "Prime Day in {p}. Your customers won't even get off the couch."
+ ],
+ "Me superaste en la ciudad. Mis cohetes siguen siendo más grandes que los de Elon.": [
+  "You beat me in the city. My rockets are still bigger than Elon's."
+ ],
+ "Expansión agresiva": [
+  "Aggressive expansion"
+ ],
+ "Abre locales nuevos en tu mercado y compra terrenos de la avenida.": [
+  "Opens new stores in your market and buys plots on the avenue."
+ ],
+ "Guerra de precios": [
+  "Price war"
+ ],
+ "Baja sus precios por semanas: tu demanda cae si no respondes.": [
+  "Cuts prices for weeks: your demand drops if you don't respond."
+ ],
+ "Publicidad masiva": [
+  "Mass advertising"
+ ],
+ "Sus campañas tapan la tuya: baja lo que la gente conoce de tu marca.": [
+  "Its campaigns drown out yours: people know less about your brand."
+ ],
+ "Copia todo": [
+  "Copies everything"
+ ],
+ "Copia lo que mejor vendes y lo ofrece más barato.": [
+  "Copies your best sellers and sells them cheaper."
+ ],
+ "Lanzamientos": [
+  "Launches"
+ ],
+ "Cada lanzamiento hace filas en su tienda y te quita clientes por unas semanas.": [
+  "Every launch creates lines at its store and takes your customers for a few weeks."
+ ],
+ "Tiburón inmobiliario": [
+  "Real estate shark"
+ ],
+ "Compra terrenos, te ofrece comprar tus locales y te amenaza con demandas.": [
+  "Buys plots, offers to buy your stores and threatens you with lawsuits."
+ ],
+ "Impredecible": [
+  "Unpredictable"
+ ],
+ "Sus tuits suben o hunden tus ventas, y trata de llevarse a tus empleados.": [
+  "His tweets boost or sink your sales, and he tries to poach your employees."
+ ],
+ "Tienda en línea": [
+  "Online store"
+ ],
+ "Vende por internet: le quita demanda a la ropa y a la electrónica.": [
+  "Sells online: takes demand from clothing and electronics."
+ ],
+ "Plantas y decoración": [
+  "Plants and decor"
+ ],
+ "Maceteros en la entrada. El local se ve más cuidado: merece +0,3 estrellas.": [
+  "Planters at the entrance. The store looks well kept: it deserves +0.3 stars."
+ ],
+ "Letrero luminoso": [
+  "Neon sign"
+ ],
+ "Neón alrededor del letrero: más gente ve tu local, sobre todo de noche (+6% de demanda).": [
+  "Neon around the sign: more people see your store, especially at night (+6% demand)."
+ ],
+ "Música ambiente": [
+  "Background music"
+ ],
+ "Parlantes en la entrada. Los clientes se quedan más contentos (+0,15 estrellas y +2% de demanda).": [
+  "Speakers at the entrance. Customers are happier (+0.15 stars and +2% demand)."
+ ],
+ "Wifi gratis": [
+  "Free wifi"
+ ],
+ "Internet gratis para los clientes: +4% de demanda y +0,1 estrellas.": [
+  "Free internet for customers: +4% demand and +0.1 stars."
+ ],
+ "Terraza con mesas": [
+  "Terrace with tables"
+ ],
+ "Mesas con quitasol en la vereda: el local llama la atención (+8% de demanda y +0,1 estrellas).": [
+  "Tables with umbrellas on the sidewalk: the store gets noticed (+8% demand and +0.1 stars)."
+ ],
+ "Aire acondicionado": [
+  "Air conditioning"
+ ],
+ "Con calor, lluvia o tormenta pierdes la mitad de los clientes que perderías sin él (+0,15 estrellas).": [
+  "In heat, rain or storms you lose half the customers you'd lose without it (+0.15 stars)."
+ ],
+ "Menú digital": [
+  "Digital menu"
+ ],
+ "Pantallas con los precios: los clientes deciden más rápido y cada empleado atiende 10% más.": [
+  "Screens with prices: customers decide faster and each employee serves 10% more."
+ ],
+ "Cajas de autopago": [
+  "Self-checkout"
+ ],
+ "Los clientes se cobran solos: cada empleado atiende 15% más.": [
+  "Customers check themselves out: each employee serves 15% more."
+ ],
+ "Trato digno": [
+  "Fair treatment"
+ ],
+ "Sueldo 15% sobre el mínimo, horarios justos y buen ambiente. El equipo rinde más, atiende mejor y casi nunca renuncia.": [
+  "Pay 15% above minimum wage, fair hours and a good atmosphere. The team works better, serves better and almost never quits."
+ ],
+ "Lo que dice la ley": [
+  "What the law says"
+ ],
+ "Sueldo mínimo y las horas del contrato. Ni bien ni mal.": [
+  "Minimum wage and contract hours. Neither good nor bad."
+ ],
+ "Horas extra sin pago": [
+  "Unpaid overtime"
+ ],
+ "Se quedan después de hora sin cobrar. Rinden más, pero el ánimo baja, algunos renuncian y puede llegar una inspección del trabajo.": [
+  "They stay late without pay. They produce more, but morale drops, some quit and a labor inspection may show up."
+ ],
+ "Explotación": [
+  "Exploitation"
+ ],
+ "Turnos dobles, sin descansos, gritos y sueldos bajo el mínimo. Ahorras en sueldos y rinden más... hasta que renuncian, hacen huelga, te denuncian o sale en las noticias.": [
+  "Double shifts, no breaks, yelling and pay below minimum wage. You save on wages and they produce more... until they quit, strike, report you or it hits the news."
+ ],
+ "CC %d": [
+  "Mall %d"
+ ],
+ "T%d": [
+  "P%d"
+ ],
+ "No quedan terrenos en la avenida: las megatiendas no caben en el centro comercial.": [
+  "No plots left on the avenue: megastores don't fit in the mall."
+ ],
+ "No quedan terrenos en la avenida. Compra el centro comercial (pestaña Expansión) o vende franquicias.": [
+  "No plots left on the avenue. Buy the mall (Expansion tab) or sell franchises."
+ ],
+ "No quedan terrenos ni vitrinas libres. Vende franquicias en otras ciudades (pestaña Expansión).": [
+  "No free plots or shop units left. Sell franchises in other cities (Expansion tab)."
+ ],
+ "Ese terreno ya no está libre.": [
+  "That plot is no longer free."
+ ],
+ "Las megatiendas no caben en el centro comercial.": [
+  "Megastores don't fit in the mall."
+ ],
+ "Esa vitrina ya no está libre.": [
+  "That shop unit is no longer free."
+ ],
+ "Abriste un %s en la vitrina %d del centro comercial.": [
+  "You opened a %s in shop unit %d of the mall."
+ ],
+ "No tienes dónde poner el local que compras: libera un terreno, compra el centro comercial o ve a comprar uno de sus locales de los extremos de la calle.": [
+  "You have nowhere to put the store you're buying: free up a plot, buy the mall or go buy one of their stores at either end of the street."
+ ],
+ "Ya tienes el centro comercial.": [
+  "You already own the mall."
+ ],
+ "Centro comercial": [
+  "Shopping mall"
+ ],
+ "Inauguraste tu centro comercial frente a la oficina: %d vitrinas para puestos y locales.": [
+  "You opened your shopping mall across from the office: %d shop units for stands and stores."
+ ],
+ "¡Centro comercial inaugurado!": [
+  "Shopping mall opened!"
+ ],
+ "Necesitas al menos %d sucursales propias de este negocio: nadie compra una marca que no conoce.": [
+  "You need at least %d of your own branches in this business: nobody buys a brand they don't know."
+ ],
+ "Tu reputación en este negocio es muy baja (%d de %d).": [
+  "Your reputation in this business is too low (%d of %d)."
+ ],
+ "Ya tienes %d franquicias de este negocio: más y no podrías controlarlas.": [
+  "You already have %d franchises in this business: any more and you couldn't control them."
+ ],
+ "Ciudad %d": [
+  "City %d"
+ ],
+ "Contrato de franquicia: %s": [
+  "Franchise contract: %s"
+ ],
+ "Tu marca llega a %s: abrió una franquicia de %s.": [
+  "Your brand reaches %s: a %s franchise opened."
+ ],
+ "Franquicia de %s en %s.": [
+  "%s franchise in %s."
+ ],
+ "Terminaste el contrato de la franquicia de %s.": [
+  "You ended the franchise contract in %s."
+ ],
+ "Quejas en %s: el franquiciado de %s atiende mal y tu marca lo paga (−3 de reputación).": [
+  "Complaints in %s: the %s franchisee gives bad service and your brand pays for it (−3 reputation)."
+ ],
+ "Ahora cada sucursal necesita un lugar en la ciudad. Tus %d sucursales sin terreno pasaron a ser franquicias en otras ciudades y recibiste %s, su valor en libros.": [
+  "Every branch now needs a place in the city. Your %d branches without a plot became franchises in other cities and you received %s, their book value."
+ ],
+ "¡Franquicia vendida por %s! Tu marca llega a otra ciudad y te paga regalías.": [
+  "Franchise sold for %s! Your brand reaches another city and pays you royalties."
+ ],
+ "Ese local ya lo tiene.": [
+  "That store already has it."
+ ],
+ "%s (sucursal #%d)": [
+  "%s (branch #%d)"
+ ],
+ "Primero necesitas la fábrica.": [
+  "You need the factory first."
+ ],
+ "La fábrica ya tiene paneles solares.": [
+  "The factory already has solar panels."
+ ],
+ "Paneles solares: fábrica de %s": [
+  "Solar panels: %s factory"
+ ],
+ "Tu fábrica de %s ahora funciona con paneles solares: menos gastos y +4 de reputación por ser verde.": [
+  "Your %s factory now runs on solar panels: lower costs and +4 reputation for going green."
+ ],
+ "Paneles solares instalados.": [
+  "Solar panels installed."
+ ],
+ "Nueva política con tus empleados: %s.": [
+  "New employee policy: %s."
+ ],
+ "Política de personal: %s.": [
+  "Staff policy: %s."
+ ],
+ "«No aguanto más, me voy.»": [
+  "«I can't take it anymore, I'm leaving.»"
+ ],
+ "«Aquí nadie me respeta. Renuncio.»": [
+  "«Nobody respects me here. I quit.»"
+ ],
+ "«Con este sueldo prefiero vender en la calle.»": [
+  "«With this pay I'd rather sell on the street.»"
+ ],
+ "«Me voy con la competencia: allá por lo menos me pagan las horas extra.»": [
+  "«I'm going to the competition: at least they pay overtime there.»"
+ ],
+ "Renunció un empleado de tu %s de %s: %s": [
+  "An employee at your %s of %s quit: %s"
+ ],
+ "Inspección del trabajo: encontraron horas extra sin pagar%s. Multa de %s.": [
+  "Labor inspection: they found unpaid overtime%s. Fine of %s."
+ ],
+ " y sueldos bajo el mínimo": [
+  " and pay below minimum wage"
+ ],
+ "¡Video viral! Un empleado grabó a un supervisor gritándole a una cajera. Todos hablan de tu marca... y no bien (−12 reputación).": [
+  "Viral video! An employee filmed a supervisor yelling at a cashier. Everyone's talking about your brand... and not in a good way (−12 reputation)."
+ ],
+ "Premio «Mejor lugar para trabajar» de la ciudad: tu marca gana prestigio (+5 reputación).": [
+  "City «Best place to work» award: your brand gains prestige (+5 reputation)."
+ ],
+ "¡Superaste a %s en el ranking de la ciudad!": [
+  "You overtook %s in the city ranking!"
+ ],
+ "%s abrió otro local de %s en la ciudad.": [
+  "%s opened another %s store in the city."
+ ],
+ "%s lanzó promociones de %s: tu demanda baja 12%% por 10 días.": [
+  "%s launched %s promotions: your demand drops 12%% for 10 days."
+ ],
+ "bajó sus precios de %s": [
+  "cut its %s prices"
+ ],
+ "copió tus productos de %s y los vende más baratos": [
+  "copied your %s products and sells them cheaper"
+ ],
+ "lanzó un modelo nuevo y le quita clientes a tu %s": [
+  "launched a new model and is taking customers from your %s"
+ ],
+ "vende %s por internet con envío gratis": [
+  "sells %s online with free shipping"
+ ],
+ "%s %s: tu demanda baja 12%% por 20 días.": [
+  "%s %s: your demand drops 12%% for 20 days."
+ ],
+ "Campaña gigante de %s: la gente se olvida un poco de tu marca de %s.": [
+  "Huge %s campaign: people forget your %s brand a little."
+ ],
+ "%s compró el terreno %d y abrió un local de %s.": [
+  "%s bought plot %d and opened a %s store."
+ ],
+ "%s tuiteó sobre tu %s: %s": [
+  "%s tweeted about your %s: %s"
+ ],
+ "¡las ventas se disparan 30% por 5 días!": [
+  "sales soar 30% for 5 days!"
+ ],
+ "tus ventas caen 25% por 5 días.": [
+  "your sales drop 25% for 5 days."
+ ],
+ "Ya tienes una alianza con %s.": [
+  "You already have an alliance with %s."
+ ],
+ "Alianza con %s: no se atacan durante 90 días.": [
+  "Alliance with %s: no attacks for 90 days."
+ ],
+ "%s aceptó la alianza por 90 días.": [
+  "%s accepted the alliance for 90 days."
+ ],
+ "%s rechazó tu propuesta de alianza (y la cena la pagaste tú).": [
+  "%s rejected your alliance proposal (and you paid for dinner)."
+ ],
+ "%s dijo que no. Perdiste %s en la cena.": [
+  "%s said no. You lost %s on dinner."
+ ],
+ "No compites con ese rival todavía.": [
+  "You don't compete with that rival yet."
+ ],
+ "Campaña comparativa contra %s: «Lo mismo, pero mejor». +20%% de demanda por 15 días.": [
+  "Comparative campaign against %s: «The same, but better». +20%% demand for 15 days."
+ ],
+ "Lanzaste la campaña contra %s.": [
+  "You launched the campaign against %s."
+ ],
+ "No respondiste a tiempo: %s": [
+  "You didn't answer in time: %s"
+ ],
+ "Un cliente fiel pide descuento": [
+  "A loyal customer asks for a discount"
+ ],
+ "Don Raúl compra en tu %s todos los días. Hoy te pide un descuento «por fidelidad».": [
+  "Mr. Raúl buys at your %s every day. Today he asks for a «loyalty» discount."
+ ],
+ "Darle 10%% (−%s)": [
+  "Give him 10%% (−%s)"
+ ],
+ "Se va feliz y lo cuenta en el barrio (+1 reputación).": [
+  "He leaves happy and tells the neighborhood (+1 reputation)."
+ ],
+ "No, el precio es el precio": [
+  "No, the price is the price"
+ ],
+ "No pasa nada. Quizás compre un poco menos.": [
+  "Nothing happens. Maybe he buys a little less."
+ ],
+ "Don Raúl se fue feliz con su descuento (+1 reputación).": [
+  "Mr. Raúl left happy with his discount (+1 reputation)."
+ ],
+ "Don Raúl pagó el precio completo, con cara de pocos amigos.": [
+  "Mr. Raúl paid full price, with a sour face."
+ ],
+ "Un empleado llegó tarde": [
+  "An employee was late"
+ ],
+ "Matías, de tu %s, llegó una hora tarde: el bus se quedó en pana. Te mira esperando el reto.": [
+  "Matías, from your %s, arrived an hour late: the bus broke down. He looks at you waiting to be scolded."
+ ],
+ "Dejarlo pasar": [
+  "Let it go"
+ ],
+ "Le das las gracias por avisar (+2 de ánimo del equipo).": [
+  "You thank him for letting you know (+2 team morale)."
+ ],
+ "Gritarle delante de todos": [
+  "Yell at him in front of everyone"
+ ],
+ "Que aprendan todos. El equipo lo nota (−6 de ánimo).": [
+  "Let everyone learn. The team notices (−6 morale)."
+ ],
+ "Descontarle el día completo": [
+  "Dock the whole day's pay"
+ ],
+ "Ahorras un día de sueldo, aunque trabajó 7 horas (−4 de ánimo).": [
+  "You save a day's pay, even though he worked 7 hours (−4 morale)."
+ ],
+ "Matías te agradece y se queda una hora más por su cuenta (+2 ánimo).": [
+  "Matías thanks you and stays an extra hour on his own (+2 morale)."
+ ],
+ "Le gritaste a Matías frente a todos. Nadie dice nada, pero el ambiente se enfría (−6 ánimo).": [
+  "You yelled at Matías in front of everyone. Nobody says anything, but the mood cools (−6 morale)."
+ ],
+ "Le descontaste el día a Matías (ahorras %s). Él ya está buscando otro trabajo (−4 ánimo).": [
+  "You docked Matías the day (you save %s). He's already looking for another job (−4 morale)."
+ ],
+ "Sobró mercadería": [
+  "Leftover stock"
+ ],
+ "Al cierre sobró %s que mañana ya no se puede vender. El comedor del barrio pregunta si se lo puedes donar.": [
+  "At closing there was leftover %s that can't be sold tomorrow. The neighborhood soup kitchen asks if you can donate it."
+ ],
+ "Donarlo al comedor": [
+  "Donate it to the soup kitchen"
+ ],
+ "Pierdes 10% del inventario, pero el barrio te quiere más (+3 reputación).": [
+  "You lose 10% of the inventory, but the neighborhood likes you more (+3 reputation)."
+ ],
+ "Botarlo": [
+  "Throw it away"
+ ],
+ "Va a la basura igual. Nadie se entera.": [
+  "It goes in the trash anyway. Nobody finds out."
+ ],
+ "La mercadería que sobró terminó en la basura.": [
+  "The leftover stock ended up in the trash."
+ ],
+ "El comedor del barrio te agradeció en redes sociales (+3 reputación).": [
+  "The soup kitchen thanked you on social media (+3 reputation)."
+ ],
+ "Una reseña de 1 estrella": [
+  "A 1-star review"
+ ],
+ "«Pésimo. Me atendieron con cara de sueño.» Alguien calificó tu %s con 1 estrella en internet.": [
+  "«Terrible. They served me half asleep.» Someone gave your %s 1 star online."
+ ],
+ "Responder con amabilidad": [
+  "Reply kindly"
+ ],
+ "Pides disculpas y lo invitas a volver (+0,15 estrellas al local).": [
+  "You apologize and invite them back (+0.15 stars for the store)."
+ ],
+ "Responder furioso": [
+  "Reply angrily"
+ ],
+ "50%: tu respuesta se hace viral y queda mal (−4 reputación). 50%: a la gente le da risa (+conocimiento de marca).": [
+  "50%: your reply goes viral and looks bad (−4 reputation). 50%: people find it funny (+brand awareness)."
+ ],
+ "Ignorarla": [
+  "Ignore it"
+ ],
+ "La reseña queda ahí (−0,1 estrellas al local).": [
+  "The review stays there (−0.1 stars for the store)."
+ ],
+ "Respondiste con amabilidad. El cliente cambió su reseña a 4 estrellas.": [
+  "You replied kindly. The customer changed their review to 4 stars."
+ ],
+ "Tu respuesta furiosa salió en todas las redes. Quedaste como un gruñón (−4 reputación).": [
+  "Your angry reply was all over social media. You came off as a grump (−4 reputation)."
+ ],
+ "¡Tu respuesta furiosa se hizo meme! Más gente conoce tu marca.": [
+  "Your angry reply became a meme! More people know your brand."
+ ],
+ "La reseña de 1 estrella sigue ahí, a la vista de todos.": [
+  "The 1-star review is still there for everyone to see."
+ ],
+ "Una receta nueva": [
+  "A new recipe"
+ ],
+ "Tu proveedor trajo una versión nueva de %s para probar. La prueba en tus locales cuesta %s.": [
+  "Your supplier brought a new version of %s to try. Testing it in your stores costs %s."
+ ],
+ "Probarla (%s)": [
+  "Try it (%s)"
+ ],
+ "60%: a los clientes les encanta (+10% de demanda por 10 días). 40%: no cambia nada.": [
+  "60%: customers love it (+10% demand for 10 days). 40%: nothing changes."
+ ],
+ "Sigues con lo de siempre.": [
+  "You stick with the usual."
+ ],
+ "Seguiste con la receta de siempre.": [
+  "You stuck with the usual recipe."
+ ],
+ "¡La receta nueva fue un éxito! +10% de demanda por 10 días.": [
+  "The new recipe was a hit! +10% demand for 10 days."
+ ],
+ "La receta nueva pasó sin pena ni gloria.": [
+  "The new recipe came and went without notice."
+ ],
+ "Un vecino reclama": [
+  "A neighbor complains"
+ ],
+ "La señora del frente dice que tu %s hace mucho ruido en la mañana y que va a llamar a la municipalidad.": [
+  "The lady across the street says your %s is too noisy in the morning and she's going to call city hall."
+ ],
+ "Regalarle una canasta (%s)": [
+  "Give her a gift basket (%s)"
+ ],
+ "Se le pasa el enojo.": [
+  "Her anger fades."
+ ],
+ "30%: llega un inspector municipal con una multa.": [
+  "30%: a city inspector shows up with a fine."
+ ],
+ "La vecina aceptó la canasta y ahora te saluda.": [
+  "The neighbor accepted the basket and now says hi to you."
+ ],
+ "La vecina cumplió: llegó un inspector con una multa de %s.": [
+  "The neighbor followed through: an inspector came with a %s fine."
+ ],
+ "La vecina siguió reclamando, pero no pasó nada.": [
+  "The neighbor kept complaining, but nothing happened."
+ ],
+ "Cumpleaños en el equipo": [
+  "Birthday on the team"
+ ],
+ "Hoy cumple años Rosa, la cajera más antigua. El resto del equipo pregunta si la empresa pone la torta.": [
+  "Today is the birthday of Rosa, your longest-serving cashier. The rest of the team asks if the company will buy the cake."
+ ],
+ "Comprar la torta (%s)": [
+  "Buy the cake (%s)"
+ ],
+ "El equipo celebra (+5 de ánimo).": [
+  "The team celebrates (+5 morale)."
+ ],
+ "Que la paguen ellos": [
+  "Let them pay for it"
+ ],
+ "Se nota (−2 de ánimo).": [
+  "They notice (−2 morale)."
+ ],
+ "¡Cantaron el cumpleaños y Rosa se emocionó! (+5 ánimo)": [
+  "They sang happy birthday and Rosa got emotional! (+5 morale)"
+ ],
+ "El equipo juntó plata para la torta. Nadie te invitó (−2 ánimo).": [
+  "The team chipped in for the cake. Nobody invited you (−2 morale)."
+ ],
+ "Llueve a cántaros": [
+  "It's pouring"
+ ],
+ "La gente corre bajo la lluvia frente a tus locales. ¿Regalas paraguas con tu logo?": [
+  "People are running in the rain in front of your stores. Give away umbrellas with your logo?"
+ ],
+ "Regalar paraguas (%s)": [
+  "Give away umbrellas (%s)"
+ ],
+ "Tu logo pasea por toda la ciudad (+5% de conocimiento de marca).": [
+  "Your logo walks around the whole city (+5% brand awareness)."
+ ],
+ "Cada uno se moja como puede.": [
+  "Everyone gets wet as best they can."
+ ],
+ "No regalaste paraguas.": [
+  "You didn't give away umbrellas."
+ ],
+ "Tu logo se ve en paraguas por toda la ciudad.": [
+  "Your logo is on umbrellas all over the city."
+ ],
+ "Fila larguísima": [
+  "A very long line"
+ ],
+ "Tu %s está lleno y la gente se aburre de esperar. Faltan manos.": [
+  "Your %s is packed and people are tired of waiting. You're short-handed."
+ ],
+ "Horas extra pagadas (%s)": [
+  "Paid overtime (%s)"
+ ],
+ "Tus locales de ese negocio atienden 20% más por 5 días.": [
+  "Your stores in that business serve 20% more for 5 days."
+ ],
+ "Obligarlos a quedarse sin pagarles": [
+  "Make them stay without pay"
+ ],
+ "Atienden 20% más por 5 días, gratis... y el equipo lo recuerda (−8 de ánimo).": [
+  "They serve 20% more for 5 days, for free... and the team remembers (−8 morale)."
+ ],
+ "Que esperen": [
+  "Let them wait"
+ ],
+ "Algunos clientes se van.": [
+  "Some customers leave."
+ ],
+ "La fila siguió larga y algunos clientes se fueron.": [
+  "The line stayed long and some customers left."
+ ],
+ "Pagaste horas extra: la fila avanza más rápido por 5 días.": [
+  "You paid overtime: the line moves faster for 5 days."
+ ],
+ "Los obligaste a quedarse sin pagarles. La fila avanza, pero el equipo está furioso (−8 ánimo).": [
+  "You made them stay without pay. The line moves, but the team is furious (−8 morale)."
+ ],
+ "%s te declaró la guerra": [
+  "%s declared war on you"
+ ],
+ "%s le quita clientes a tu %s. ¿Respondes?": [
+  "%s is taking customers from your %s. Do you respond?"
+ ],
+ "Bajar tu precio 8%": [
+  "Cut your price 8%"
+ ],
+ "La guerra termina en 5 días, pero ganas menos por unidad.": [
+  "The war ends in 5 days, but you earn less per unit."
+ ],
+ "Aguantar": [
+  "Hold out"
+ ],
+ "Tu demanda sigue 12% más baja los 20 días.": [
+  "Your demand stays 12% lower for the 20 days."
+ ],
+ "Bajaste el precio de %s 8%%: %s se rinde pronto.": [
+  "You cut the %s price 8%%: %s gives up soon."
+ ],
+ "Aguantaste el ataque sin bajar precios.": [
+  "You held out against the attack without cutting prices."
+ ],
+ "%s quiere llevarse a tu mejor empleado": [
+  "%s wants to poach your best employee"
+ ],
+ "%s le ofreció el doble de sueldo a tu encargado de %s.": [
+  "%s offered double pay to your %s supervisor."
+ ],
+ "Contraoferta (%s)": [
+  "Counteroffer (%s)"
+ ],
+ "Se queda y el equipo ve que lo valoras (+3 de ánimo).": [
+  "He stays and the team sees you value him (+3 morale)."
+ ],
+ "Dejarlo ir": [
+  "Let him go"
+ ],
+ "Pierdes un empleado en ese negocio.": [
+  "You lose an employee in that business."
+ ],
+ "Tu encargado se quedó contigo (+3 ánimo).": [
+  "Your supervisor stayed with you (+3 morale)."
+ ],
+ "Tu encargado se fue con %s.": [
+  "Your supervisor left for %s."
+ ],
+ "%s te amenaza con una demanda": [
+  "%s threatens you with a lawsuit"
+ ],
+ "«Tu letrero se parece al mío. Es un robo. Te voy a demandar», dice %s.": [
+  "«Your sign looks like mine. It's theft. I'm going to sue you», says %s."
+ ],
+ "Pagarle para que se calle (%s)": [
+  "Pay him to keep quiet (%s)"
+ ],
+ "Se olvida del tema.": [
+  "He drops the matter."
+ ],
+ "Que demande": [
+  "Let him sue"
+ ],
+ "60%%: el juez te da la razón. 40%%: pierdes y pagas %s.": [
+  "60%%: the judge rules in your favor. 40%%: you lose and pay %s."
+ ],
+ "Le pagaste a %s y retiró la demanda.": [
+  "You paid %s and he dropped the lawsuit."
+ ],
+ "¡Ganaste! El juez dijo que la demanda de %s no tenía sentido.": [
+  "You won! The judge said %s's lawsuit made no sense."
+ ],
+ "Perdiste el juicio contra %s: pagas %s.": [
+  "You lost the lawsuit against %s: you pay %s."
+ ],
+ "Se vende una fábrica de %s": [
+  "A %s factory is for sale"
+ ],
+ "Una empresa que cierra vende su fábrica de %s por %s, casi la mitad de lo que cuesta construir una (%s). Con fábrica propia tu costo unitario baja 30%%. Dicen que las máquinas están bien... dicen.": [
+  "A closing company is selling its %s factory for %s, almost half of what it costs to build one (%s). With your own factory your unit cost drops 30%%. They say the machines are fine... they say."
+ ],
+ "Sí, comprarla (%s)": [
+  "Yes, buy it (%s)"
+ ],
+ "Fábrica propia desde hoy. 25%%: hay que reparar las máquinas (%s más).": [
+  "Your own factory from today. 25%%: the machines need repairs (%s more)."
+ ],
+ "Puedes construir una nueva cuando quieras en Negocios.": [
+  "You can build a new one whenever you want in Businesses."
+ ],
+ "No compraste la fábrica.": [
+  "You didn't buy the factory."
+ ],
+ "Fábrica de %s (usada)": [
+  "%s factory (used)"
+ ],
+ "Compraste la fábrica, pero las máquinas venían malas: reparación de %s.": [
+  "You bought the factory, but the machines were broken: %s in repairs."
+ ],
+ "¡Fábrica comprada a mitad de precio! Tu costo unitario baja 30%.": [
+  "Factory bought at half price! Your unit cost drops 30%."
+ ],
+ "Abrir el mapa": [
+  "Open the map"
+ ],
+ "Microdecisión: opción 1": [
+  "Quick decision: option 1"
+ ],
+ "Microdecisión: opción 2": [
+  "Quick decision: option 2"
+ ],
+ "Microdecisión: opción 3": [
+  "Quick decision: option 3"
+ ],
+ "Rivales": [
+  "Rivals"
+ ],
+ "Personal": [
+  "Staff"
+ ],
+ "Grupo Horizonte": [
+  "Horizon Group"
+ ],
+ "Inversiones Faro": [
+  "Lighthouse Investments"
+ ],
+ "Café & Cía.": [
+  "Coffee & Co."
+ ],
+ "Capital Andina": [
+  "Andean Capital"
+ ],
+ "Empresas del Sur": [
+  "Southern Enterprises"
+ ],
+ "Comercial Las Lomas": [
+  "Las Lomas Trading"
+ ],
+ "Holding Aurora": [
+  "Aurora Holdings"
+ ],
+ "Grupo Puerto": [
+  "Harbor Group"
+ ],
+ "Alfa Retail": [
+  "Alpha Retail"
+ ],
+ "Corporación Brisa": [
+  "Breeze Corporation"
+ ],
+ "Imperio Dorado": [
+  "Golden Empire"
+ ],
+ "Mercantil del Pacífico": [
+  "Pacific Mercantile"
+ ],
+ "Va a la vitrina %d del centro comercial (la avenida está llena). ": [
+  "It goes to shop unit %d of the mall (the avenue is full). "
+ ],
+ "¿Abrir un %s de %s?": [
+  "Open a %s of %s?"
+ ],
+ "Sí, abrir (%s)": [
+  "Yes, open (%s)"
+ ],
+ "Fábrica solar activa": [
+  "Solar factory active"
+ ],
+ "Paneles solares en el techo de la fábrica: el mantenimiento baja a %d%% (la luz es gratis), el costo unitario baja otro %d%% y ganas +4 de reputación por ser verde. Ahorro estimado: %s/mes.": [
+  "Solar panels on the factory roof: upkeep drops to %d%% (power is free), the unit cost drops another %d%% and you gain +4 reputation for going green. Estimated savings: %s/month."
+ ],
+ "Paneles solares (%s)": [
+  "Solar panels (%s)"
+ ],
+ "¿Poner paneles solares en la fábrica de %s?": [
+  "Put solar panels on the %s factory?"
+ ],
+ "Sí, instalar (%s)": [
+  "Yes, install (%s)"
+ ],
+ "¿Construir una fábrica de %s?": [
+  "Build a %s factory?"
+ ],
+ "Sí, construir (%s)": [
+  "Yes, build (%s)"
+ ],
+ "¿Despedir al gerente?": [
+  "Fire the manager?"
+ ],
+ "¿Contratar un gerente?": [
+  "Hire a manager?"
+ ],
+ "Sí, despedirlo": [
+  "Yes, fire him"
+ ],
+ "Sí, contratar": [
+  "Yes, hire"
+ ],
+ "¿Comprar un local de %s?": [
+  "Buy a %s store?"
+ ],
+ "Decorar %d/%d": [
+  "Decorate %d/%d"
+ ],
+ "Decorar": [
+  "Decorate"
+ ],
+ "Compra artículos para este local: plantas, letrero luminoso, música, wifi, terraza, aire acondicionado...": [
+  "Buy items for this store: plants, neon sign, music, wifi, terrace, air conditioning..."
+ ],
+ "En una vitrina del centro comercial no cabe una megatienda.": [
+  "A megastore doesn't fit in a mall shop unit."
+ ],
+ "¿Ampliar a %s?": [
+  "Expand to %s?"
+ ],
+ "Sí, ampliar (%s)": [
+  "Yes, expand (%s)"
+ ],
+ "¿Vender tu %s?": [
+  "Sell your %s?"
+ ],
+ "Sí, vender (%s)": [
+  "Yes, sell (%s)"
+ ],
+ "¿Desbloquear %s?": [
+  "Unlock %s?"
+ ],
+ "Sí, desbloquear (%s)": [
+  "Yes, unlock (%s)"
+ ],
+ "¿Pedir %s prestados?": [
+  "Borrow %s?"
+ ],
+ "%d cuotas de %s al %s anual. Intereses totales: %s.": [
+  "%d payments of %s at %s per year. Total interest: %s."
+ ],
+ "Sí, pedir el préstamo": [
+  "Yes, take the loan"
+ ],
+ "¿Pagar el préstamo completo?": [
+  "Pay off the whole loan?"
+ ],
+ "Pagas hoy %s.": [
+  "You pay %s today."
+ ],
+ "Sí, pagarlo": [
+  "Yes, pay it off"
+ ],
+ "¿Invertir %s en bonos?": [
+  "Invest %s in bonds?"
+ ],
+ "Rinden %s al año, sin riesgo. Los puedes retirar cuando quieras.": [
+  "They yield %s per year, risk-free. You can withdraw them anytime."
+ ],
+ "Sí, invertir": [
+  "Yes, invest"
+ ],
+ "Lugares en la ciudad": [
+  "Places in the city"
+ ],
+ "Cada sucursal necesita un lugar: un terreno de la avenida o una vitrina del centro comercial. Las megatiendas solo caben en la avenida.": [
+  "Every branch needs a place: a plot on the avenue or a shop unit in the mall. Megastores only fit on the avenue."
+ ],
+ "Terrenos de la avenida libres": [
+  "Free plots on the avenue"
+ ],
+ "%d de %d": [
+  "%d of %d"
+ ],
+ "Los rivales también compran terrenos vacíos. Los locales de la competencia que compras quedan en su edificio.": [
+  "Rivals also buy empty plots. Competitor stores you buy stay in their building."
+ ],
+ "Tus sucursales en la avenida": [
+  "Your branches on the avenue"
+ ],
+ "Está frente a tu oficina central: cuando lo compras se construye y puedes entrar a ver tus tiendas.": [
+  "It's across from your headquarters: when you buy it, it gets built and you can walk in to see your stores."
+ ],
+ "Construir el centro comercial (%s)": [
+  "Build the shopping mall (%s)"
+ ],
+ "¿Comprar el centro comercial por %s?": [
+  "Buy the shopping mall for %s?"
+ ],
+ "Vitrinas ocupadas": [
+  "Occupied shop units"
+ ],
+ "Mantenimiento y seguridad": [
+  "Maintenance and security"
+ ],
+ "Ahorro de alquiler de tus vitrinas": [
+  "Rent saved on your shop units"
+ ],
+ "Las tiendas del centro comercial pagan la mitad del alquiler porque el edificio es tuyo.": [
+  "Mall stores pay half rent because you own the building."
+ ],
+ "Vitrina %d": [
+  "Unit %d"
+ ],
+ "Ve al centro comercial y apreta E frente a la vitrina, o abre un puesto o local en Negocios: va al primer lugar libre.": [
+  "Go to the mall and press E in front of the unit, or open a stand or store in Businesses: it goes to the first free place."
+ ],
+ "%s de %s · vendió %s ayer · demanda %s": [
+  "%s of %s · sold %s yesterday · demand %s"
+ ],
+ "Franquicias en otras ciudades": [
+  "Franchises in other cities"
+ ],
+ "Tú pones la marca, el manual y la capacitación (desde %s); el franquiciado pone el local, el personal y el inventario. Te paga %d%% de lo que vende, todos los días. No ocupa lugar en la ciudad, pero unos franquiciados atienden mejor que otros y uno malo te puede bajar la reputación.": [
+  "You provide the brand, the manual and the training (from %s); the franchisee provides the store, the staff and the inventory. They pay you %d%% of what they sell, every day. It takes no space in the city, but some franchisees serve better than others and a bad one can lower your reputation."
+ ],
+ "Franquicias": [
+  "Franchises"
+ ],
+ "Regalías del mes pasado": [
+  "Royalties last month"
+ ],
+ "Regalías esperadas al mes": [
+  "Expected royalties per month"
+ ],
+ "Con tu precio, reputación y conocimiento de marca de hoy. Si subes la reputación o el marketing, venden más.": [
+  "With today's price, reputation and brand awareness. If you raise reputation or marketing, they sell more."
+ ],
+ "Vender una franquicia de %s: pagas %s y el franquiciado abre en otra ciudad. Cada una deja unos %s al mes de regalías con tus números de hoy.": [
+  "Sell a %s franchise: you pay %s and the franchisee opens in another city. Each one brings about %s a month in royalties with today's numbers."
+ ],
+ "Vender franquicia (%s)": [
+  "Sell franchise (%s)"
+ ],
+ "¿Vender una franquicia de %s?": [
+  "Sell a %s franchise?"
+ ],
+ "Tus franquicias": [
+  "Your franchises"
+ ],
+ "Excelente": [
+  "Excellent"
+ ],
+ "Buena": [
+  "Good"
+ ],
+ "Regular": [
+  "Fair"
+ ],
+ "Mala": [
+  "Poor"
+ ],
+ "Cómo atiende el franquiciado: los que atienden mal venden menos y a veces te bajan la reputación.": [
+  "How well the franchisee serves: bad ones sell less and sometimes lower your reputation."
+ ],
+ "Terminar": [
+  "End"
+ ],
+ "Terminas el contrato: deja de pagarte regalías y no recuperas lo que pagaste.": [
+  "You end the contract: it stops paying you royalties and you don't get back what you paid."
+ ],
+ "¿Terminar la franquicia de %s?": [
+  "End the franchise in %s?"
+ ],
+ "Deja de pagarte regalías. Lo que pagaste por el contrato no se recupera.": [
+  "It stops paying you royalties. What you paid for the contract is not refunded."
+ ],
+ "Sí, terminar": [
+  "Yes, end it"
+ ],
+ "Todavía no tienes franquicias. Necesitas %d sucursales propias del negocio y reputación de %d o más.": [
+  "You don't have franchises yet. You need %d of your own branches in the business and a reputation of %d or more."
+ ],
+ "¿Instalar %s?": [
+  "Install %s?"
+ ],
+ "Baja los gastos corporativos de tener muchas sucursales.": [
+  "Lowers the corporate overhead of having many branches."
+ ],
+ "¿Invertir %s en el fondo?": [
+  "Invest %s in the fund?"
+ ],
+ "Sube y baja todos los días, y cae fuerte en recesión.": [
+  "It goes up and down every day, and falls hard in a recession."
+ ],
+ "No, cancelar": [
+  "No, cancel"
+ ],
+ "DECORAR Y EQUIPAR": [
+  "DECORATE AND EQUIP"
+ ],
+ "Caja: %s · %s estrellas": [
+  "Cash: %s · %s stars"
+ ],
+ "Cada artículo se compra una vez para este local (es inversión: se deprecia en 5 años y se vende con el local). En una megatienda cuesta más que en un puesto. Lo que compres se ve en la ciudad.": [
+  "Each item is bought once for this store (it's an investment: it depreciates over 5 years and is sold with the store). It costs more in a megastore than in a stand. What you buy shows up in the city."
+ ],
+ "Instalado": [
+  "Installed"
+ ],
+ "¿Comprar %s?": [
+  "Buy %s?"
+ ],
+ "%s Para tu %s.": [
+  "%s For your %s."
+ ],
+ "Cerrar": [
+  "Close"
+ ],
+ "Aparece el día %d": [
+  "Appears on day %d"
+ ],
+ "Aún no compites con él": [
+  "You don't compete with him yet"
+ ],
+ "Hostilidad": [
+  "Hostility"
+ ],
+ "Aliados (%d d)": [
+  "Allies (%d d)"
+ ],
+ "Vale %s": [
+  "Worth %s"
+ ],
+ "todos los mercados": [
+  "all markets"
+ ],
+ "Estilo: %s": [
+  "Style: %s"
+ ],
+ "Todavía no está en tu ciudad.": [
+  "Not in your city yet."
+ ],
+ "Hostilidad contigo": [
+  "Hostility toward you"
+ ],
+ "Sube si le compras locales, lo denuncias o lo provocas. Mientras más alta, más seguido te ataca.": [
+  "It rises if you buy their stores, report them or provoke them. The higher it is, the more often they attack you."
+ ],
+ "Aliados por %d días": [
+  "Allies for %d days"
+ ],
+ "Cena de negocios: pagas %s. %d%% de que acepte (menos si te odia). Si acepta, no te ataca por 90 días.": [
+  "Business dinner: you pay %s. %d%% chance they accept (less if they hate you). If they accept, they won't attack you for 90 days."
+ ],
+ "Proponer alianza (%s)": [
+  "Propose an alliance (%s)"
+ ],
+ "¿Proponerle una alianza a %s?": [
+  "Propose an alliance to %s?"
+ ],
+ "Sí, invitarlo a cenar": [
+  "Yes, invite them to dinner"
+ ],
+ "Publicidad comparativa: pagas %s y tu demanda en sus mercados sube 20%% por 15 días. Lo enoja mucho (+25 de hostilidad) y rompe la alianza.": [
+  "Comparative advertising: you pay %s and your demand in their markets rises 20%% for 15 days. It makes them very angry (+25 hostility) and breaks the alliance."
+ ],
+ "Provocarlo (%s)": [
+  "Provoke them (%s)"
+ ],
+ "¿Lanzar una campaña contra %s?": [
+  "Launch a campaign against %s?"
+ ],
+ "Sí, provocarlo": [
+  "Yes, provoke them"
+ ],
+ "Ranking de la ciudad": [
+  "City ranking"
+ ],
+ "Lo que vale cada empresa en esta ciudad. Supera a los rivales uno por uno.": [
+  "What each company is worth in this city. Overtake your rivals one by one."
+ ],
+ "Cómo tratas a tus empleados": [
+  "How you treat your employees"
+ ],
+ "Vale para toda la empresa. Lo que ahorras maltratando a la gente se paga con renuncias, huelgas, multas y mala fama.": [
+  "Applies to the whole company. What you save by mistreating people is paid back in resignations, strikes, fines and a bad reputation."
+ ],
+ "Sueldo ×%s": [
+  "Pay ×%s"
+ ],
+ "Rinden ×%s": [
+  "Output ×%s"
+ ],
+ "ACTUAL": [
+  "CURRENT"
+ ],
+ "¿Cambiar a «%s»?": [
+  "Switch to «%s»?"
+ ],
+ "Sí, cambiar": [
+  "Yes, switch"
+ ],
+ "Ánimo del equipo": [
+  "Team morale"
+ ],
+ "de 100": [
+  "of 100"
+ ],
+ "Felices": [
+  "Happy"
+ ],
+ "Tranquilos": [
+  "Calm"
+ ],
+ "Molestos": [
+  "Upset"
+ ],
+ "Furiosos": [
+  "Furious"
+ ],
+ "Sueldo diario por empleado": [
+  "Daily pay per employee"
+ ],
+ "Rendimiento real": [
+  "Actual output"
+ ],
+ "Lo que rinde cada empleado: el trato que elegiste por el ánimo. Con ánimo bajo rinden menos de lo prometido.": [
+  "What each employee produces: the treatment you chose times morale. With low morale they produce less than promised."
+ ],
+ "Con este ánimo la gente renuncia: cada día alguien se puede ir.": [
+  "With this morale people quit: someone could leave any day."
+ ],
+ "Atienden de mala gana: las estrellas de tus locales bajan.": [
+  "They serve grudgingly: your stores' stars go down."
+ ],
+ "El sindicato se organiza: las huelgas son mucho más probables.": [
+  "The union is organizing: strikes are much more likely."
+ ],
+ "Cada mes puede llegar una inspección del trabajo con una multa.": [
+  "Every month a labor inspection with a fine may show up."
+ ],
+ "Si un video del maltrato se hace viral, tu reputación se hunde.": [
+  "If a video of the mistreatment goes viral, your reputation sinks."
+ ],
+ "Atienden con ganas: las estrellas suben y puedes ganar el premio «Mejor lugar para trabajar».": [
+  "They serve gladly: stars go up and you can win the «Best place to work» award."
+ ],
+ "Todo tranquilo con tu equipo.": [
+  "All calm with your team."
+ ],
+ "Tu %s de %s": [
+  "Your %s of %s"
+ ],
+ "%s clientes al día · %s estrellas · demanda %s": [
+  "%s customers a day · %s stars · demand %s"
+ ],
+ "Competencia · unos %s clientes al día · cómpralo por %s": [
+  "Competitor · about %s customers a day · buy it for %s"
+ ],
+ " · playa": [
+  " · beach"
+ ],
+ "Desde %s. Ve y apreta E para construir.": [
+  "From %s. Go there and press E to build."
+ ],
+ "Tu centro comercial": [
+  "Your shopping mall"
+ ],
+ "%d de %d vitrinas ocupadas. Entra y apreta E frente a una vitrina libre.": [
+  "%d of %d shop units occupied. Go in and press E in front of a free unit."
+ ],
+ "Terreno del centro comercial": [
+  "Shopping mall site"
+ ],
+ "%d vitrinas para puestos y locales · cómpralo por %s": [
+  "%d shop units for stands and stores · buy it for %s"
+ ],
+ "Tu oficina central": [
+  "Your headquarters"
+ ],
+ "Computadora, pizarra de estrategia, bolsa, trofeos y armario.": [
+  "Computer, strategy whiteboard, stock market, trophies and wardrobe."
+ ],
+ "Tu fábrica de %s": [
+  "Your %s factory"
+ ],
+ "Con paneles solares en el techo.": [
+  "With solar panels on the roof."
+ ],
+ "Sin paneles solares (los puedes poner en Negocios).": [
+  "No solar panels (you can add them in Businesses)."
+ ],
+ "La fuente, la laguna, los juegos y el stand de muestras.": [
+  "The fountain, the pond, the playground and the samples stand."
+ ],
+ "Terrenos frente al mar y la cancha de vóley.": [
+  "Seafront plots and the volleyball court."
+ ],
+ "Muelle": [
+  "Pier"
+ ],
+ "Pesca en la punta del muelle.": [
+  "Fishing at the end of the pier."
+ ],
+ "Donde viven tus clientes. Tablón de vecinos para encuestas.": [
+  "Where your customers live. Neighbors' board for surveys."
+ ],
+ "Mapa [%s]": [
+  "Map [%s]"
+ ],
+ "%s: interactuar · %s: tablet · %s: mapa · %s: pausa · %s/%s/%s: velocidad · %s: pantalla completa · Esc: menú · Alt: mouse libre": [
+  "%s: interact · %s: tablet · %s: map · %s: pause · %s/%s/%s: speed · %s: fullscreen · Esc: menu · Alt: free mouse"
+ ],
+ "DECISIÓN RÁPIDA · %d día%s": [
+  "QUICK DECISION · %d day%s"
+ ],
+ "Vitrina %d del centro comercial": [
+  "Mall shop unit %d"
+ ],
+ "+%d%% de clientes, techado (la lluvia no espanta) y mitad de alquiler. Solo puestos y locales.": [
+  "+%d%% customers, covered (rain doesn't scare them off) and half rent. Stands and stores only."
+ ],
+ "¿Abrir un %s de %s en la vitrina %d?": [
+  "Open a %s of %s in unit %d?"
+ ],
+ "¿Construir un %s de %s en el terreno %d?": [
+  "Build a %s of %s on plot %d?"
+ ],
+ "COMPRAR LOCAL DE LA COMPETENCIA": [
+  "BUY COMPETITOR STORE"
+ ],
+ "Pagas %s y este mismo edificio pasa a ser tuyo: un local con 3 empleados que ya tiene clientes. %s pierde un local (te quedas con un competidor menos en %s). Lo que pagas por encima del valor del edificio es plusvalía.": [
+  "You pay %s and this very building becomes yours: a store with 3 employees that already has customers. %s loses a store (one less competitor for you in %s). What you pay above the building's value is goodwill."
+ ],
+ "Todavía no tienes el negocio de %s. Desbloquéalo primero en la tablet (Negocios) para poder comprar este local.": [
+  "You don't have the %s business yet. Unlock it first on the tablet (Businesses) to buy this store."
+ ],
+ "No (Esc)": [
+  "No (Esc)"
+ ],
+ "MAPA DE LA CIUDAD": [
+  "CITY MAP"
+ ],
+ "Pasa el mouse sobre un edificio para ver sus datos · Clic para ir ahí · %s o Esc para cerrar": [
+  "Hover over a building to see its details · Click to go there · %s or Esc to close"
+ ],
+ "Clic para ir aquí": [
+  "Click to go here"
+ ],
+ "Clientes que compran hoy": [
+  "Customers buying today"
+ ],
+ "En tus locales de la avenida": [
+  "At your stores on the avenue"
+ ],
+ "%s al día": [
+  "%s a day"
+ ],
+ "Se fueron sin comprar (falta personal o stock)": [
+  "Left without buying (not enough staff or stock)"
+ ],
+ "En la competencia (aprox.)": [
+  "At competitors (approx.)"
+ ],
+ "Tu parte de los clientes de la avenida: %s": [
+  "Your share of the avenue's customers: %s"
+ ],
+ "Tus locales con más clientes": [
+  "Your stores with the most customers"
+ ],
+ "Tu ": [
+  "Your "
+ ],
+ "Todavía no tienes locales en la avenida.": [
+  "You don't have stores on the avenue yet."
+ ],
+ "Tus locales": [
+  "Your stores"
+ ],
+ "Competencia": [
+  "Competition"
+ ],
+ "Terreno en venta": [
+  "Plot for sale"
+ ],
+ "Lugares": [
+  "Places"
+ ],
+ "El idioma de todo el juego. Elige uno con las flechas y toca «Aplicar cambios». Language · Idioma": [
+  "The language of the whole game. Pick one with the arrows and press «Apply changes». Language · Idioma"
+ ],
+ "este color": [
+  "this color"
+ ],
+ "Te estás probando: %s": [
+  "You're trying on: %s"
+ ],
+ "Cuesta %s. ¿Te gusta cómo se ve?": [
+  "It costs %s. Do you like how it looks?"
+ ],
+ "No, quitármelo": [
+  "No, take it off"
+ ],
+ "%s de otro color": [
+  "%s in another color"
+ ],
+ "Probando": [
+  "Trying on"
+ ],
+ "CENTRO COMERCIAL": [
+  "SHOPPING MALL"
+ ],
+ "%d vitrinas · cómpralo por %s": [
+  "%d shop units · buy it for %s"
+ ],
+ "Presiona E aquí": [
+  "Press E here"
+ ],
+ "SE ARRIENDA": [
+  "FOR RENT"
+ ],
+ "VITRINA %d": [
+  "UNIT %d"
+ ],
+ "%d vitrinas para puestos y locales cuando ya no quedan terrenos en la avenida. Las tiendas de adentro tienen +%d%% de clientes, están techadas y pagan la mitad del alquiler. Mantenimiento y seguridad: %s/mes. Es una inversión (CAPEX) que se deprecia en 5 años.": [
+  "%d shop units for stands and stores when there are no plots left on the avenue. Stores inside get +%d%% customers, are covered and pay half rent. Maintenance and security: %s/month. It's an investment (CAPEX) that depreciates over 5 years."
+ ],
+ "Comprar el centro comercial (%s)": [
+  "Buy the shopping mall (%s)"
+ ],
+ "Abrir una tienda en la vitrina %d": [
+  "Open a store in unit %d"
+ ],
+ "Administrar %s de %s (vitrina %d)": [
+  "Manage %s of %s (unit %d)"
+ ],
+ "WIFI GRATIS": [
+  "FREE WIFI"
+ ],
+ "FÁBRICA · %s": [
+  "FACTORY · %s"
+ ],
+ "ENERGÍA SOLAR": [
+  "SOLAR POWER"
+ ],
+ "Disponible": [
+  "Available"
+ ]
 }

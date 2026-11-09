@@ -60,6 +60,7 @@ var unread := 0               # avisos que llegaron y todavía no viste en Notic
 var confirm = null            # pregunta de confirmación: {title, detail, yes, action, danger}
 var decor_loc := -1           # sucursal que se está decorando (ventana "decorar")
 var rival_sel := "starbucks"  # rival elegido en la pestaña Rivales
+var go_to_loc = null          # Callable(loc) que pone la ciudad: viajar a una sucursal desde la tablet
 
 
 static var save_dir := "user://saves"
@@ -793,7 +794,7 @@ func draw_side() -> void:
 	for i in TABS.size():
 		var label: String = TABS[i][1]
 		if TABS[i][0] == "noticias" and unread and tab != "noticias":
-			label += Lang.f(" (%d)", mini(unread, 99))
+			label = Lang.t(label) + " (%d)" % mini(unread, 99)   # ya traducido: el número no se traduce
 		marks["tab_" + TABS[i][0]] = Rect2(12, TOP + 12 + i * TAB_STEP, SIDE - 24, 35)
 		if ui.button(Rect2(12, TOP + 12 + i * TAB_STEP, SIDE - 24, 35), label, true, "normal", 16, null, tab == TABS[i][0]):
 			tab = TABS[i][0]
@@ -1176,7 +1177,14 @@ func draw_negocios(g: Game) -> void:
 		var where := ""
 		if Game.place_label(loc) != "":
 			where = " · " + Game.place_label(loc)
-		ui.text(Lang.f("%s #%d%s", [size.name, i + 1, where]), Vector2(x0, cy - 8), 14, "text", true, "midleft", 135)
+		# El nombre es un enlace: con un clic viajas a esa sucursal
+		var name_r := Rect2(x0 - 4, ry, 139, rows - 4)
+		var link_hot := go_to_loc != null and ui.hover(name_r)
+		var nr := ui.text(Lang.f("%s #%d%s", [size.name, i + 1, where]), Vector2(x0, cy - 8), 14, "accent" if link_hot else "text", true, "midleft", 135)
+		if link_hot:
+			ui.rect(Rect2(nr.position.x, nr.end.y, nr.size.x, 1), "accent")
+			if ui.clicked:
+				go_to_loc.call(loc)
 		var st := Game.stars_of(loc)
 		for k in 5:
 			Icons.draw(ui, "star", Vector2(x0 + 6 + k * 13, cy + 9), 12, Color8(240, 190, 60) if k < floori(st + 0.25) else Color8(70, 75, 85))
@@ -1564,7 +1572,7 @@ func draw_expansion(g: Game) -> void:
 				ui.rect(r, "panel2", 8)
 				dashed_rect(r, "border")
 				ui.text(Lang.f("Vitrina %d", i + 1), r.position + Vector2(10, 8), 13, "muted", true)
-				ui.text("Libre", r.position + Vector2(10, 30), 13, "green")
+				ui.text("Disponible", r.position + Vector2(10, 30), 13, "green")
 				ui.tooltip(r, "Ve al centro comercial y apreta E frente a la vitrina, o abre un puesto o local en Negocios: va al primer lugar libre.")
 			else:
 				var pc: Color = Blueprints.PRODUCT_COLORS[loc.product]
@@ -1573,6 +1581,10 @@ func draw_expansion(g: Game) -> void:
 				ui.text(Lang.f("Vitrina %d", i + 1), r.position + Vector2(10, 8), 13, "text", true)
 				ui.text(Lang.f("%s · %s", [D.SIZES[loc.size].name, D.PRODUCTS[loc.product].name]), r.position + Vector2(10, 30), 12, "text", false, "topleft", tw - 16)
 				ui.tooltip(r, Lang.f("%s de %s · vendió %s ayer · demanda %s", [D.SIZES[loc.size].name, Lang.noun(D.PRODUCTS[loc.product].name), Fmt.num(loc.sold), Fmt.num(loc.demand)]))
+				if go_to_loc != null and ui.hover(r):
+					ui.rect(r, "accent", 8, 2)
+					if ui.clicked:
+						go_to_loc.call(loc)
 
 	# Franquicias
 	var rx := CX + lw + 12

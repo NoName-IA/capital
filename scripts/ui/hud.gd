@@ -287,7 +287,7 @@ func _draw_panel_buttons(g) -> void:
 		ui.text(n, c, 12, Color.WHITE, true, "center")
 	# Velocidad arriba a la derecha
 	var app = city.app
-	var speed: String = "PAUSA" if app.paused else Lang.f("Velocidad %s", Admin.SPEEDS[app.speed][1])
+	var speed: String = Lang.t("PAUSA") if app.paused else Lang.f("Velocidad %s", Admin.SPEEDS[app.speed][1])   # se arma pegando textos: cada parte se traduce aquí
 	if city.settings.get("g_show_fps", false):
 		speed = Lang.f("%d FPS  ·  ", Engine.get_frames_per_second()) + speed
 	speed += Lang.f("  ·  %d min de juego", int(g.play_seconds / 60))
