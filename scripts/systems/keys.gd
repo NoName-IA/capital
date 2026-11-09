@@ -15,11 +15,15 @@ const ACTIONS := [
 	["interact", "Interactuar", KEY_E, "ACCIONES"],
 	["phone", "Abrir la tablet", KEY_TAB, "ACCIONES"],
 	["office", "Ir a la oficina", KEY_O, "ACCIONES"],
+	["map", "Abrir el mapa", KEY_M, "ACCIONES"],
+	["micro1", "Microdecisión: opción 1", KEY_Z, "ACCIONES"],
+	["micro2", "Microdecisión: opción 2", KEY_X, "ACCIONES"],
+	["micro3", "Microdecisión: opción 3", KEY_C, "ACCIONES"],
 	["pause_quick", "Pausa rápida (sin menú)", KEY_P, "JUEGO"],
 	["speed1", "Velocidad x1", KEY_1, "JUEGO"],
 	["speed2", "Velocidad x2", KEY_2, "JUEGO"],
 	["speed3", "Velocidad x4", KEY_3, "JUEGO"],
-	["music", "Música sí / no", KEY_M, "JUEGO"],
+	["music", "Música sí / no", KEY_N, "JUEGO"],
 	["help", "Ayuda en pantalla", KEY_H, "JUEGO"],
 	["fullscreen", "Pantalla completa", KEY_F11, "JUEGO"],
 ]
@@ -42,6 +46,9 @@ static func load_from(saved) -> void:
 		for k in saved:
 			if map.has(k):
 				map[k] = int(saved[k])
+		# Antes la M era la música: ahora abre el mapa y la música pasa a la N (si nadie la cambió a mano)
+		if not saved.has("map") and int(saved.get("music", KEY_N)) == KEY_M:
+			map["music"] = KEY_N
 
 
 static func code(action: String) -> int:

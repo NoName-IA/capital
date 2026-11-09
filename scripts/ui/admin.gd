@@ -17,7 +17,9 @@ const SLOTS := 3
 # casi 7 segundos; x2: 3,3 segundos; x4: 1,7 segundos). Un buen jugador llega al Imperio en unos 700 días.
 const SPEEDS := [[0.15, "x1"], [0.3, "x2"], [0.6, "x4"]]
 const TABS := [["resumen", "Resumen"], ["negocios", "Negocios"], ["mercado", "Mercado"], ["finanzas", "Finanzas"],
-		["crecimiento", "Crecimiento"], ["reportes", "Reportes"], ["noticias", "Noticias"], ["conceptos", "Conceptos"]]
+		["crecimiento", "Crecimiento"], ["rivales", "Rivales"], ["personal", "Personal"], ["reportes", "Reportes"],
+		["noticias", "Noticias"], ["conceptos", "Conceptos"]]
+const TAB_STEP := 41.0
 
 var ui: ImUI
 var game: Game = null
@@ -55,6 +57,9 @@ var just_created := false
 var marks := {}               # dónde quedó dibujado cada botón importante este cuadro (el tutorial apunta ahí)    # se acaba de crear una partida (la ciudad lanza el tutorial)
 var quit_requested := false
 var unread := 0               # avisos que llegaron y todavía no viste en Noticias
+var confirm = null            # pregunta de confirmación: {title, detail, yes, action, danger}
+var decor_loc := -1           # sucursal que se está decorando (ventana "decorar")
+var rival_sel := "starbucks"  # rival elegido en la pestaña Rivales
 
 
 static var save_dir := "user://saves"
@@ -789,12 +794,12 @@ func draw_side() -> void:
 		var label: String = TABS[i][1]
 		if TABS[i][0] == "noticias" and unread and tab != "noticias":
 			label += Lang.f(" (%d)", mini(unread, 99))
-		marks["tab_" + TABS[i][0]] = Rect2(12, TOP + 16 + i * 46, SIDE - 24, 38)
-		if ui.button(Rect2(12, TOP + 16 + i * 46, SIDE - 24, 38), label, true, "normal", 16, null, tab == TABS[i][0]):
+		marks["tab_" + TABS[i][0]] = Rect2(12, TOP + 12 + i * TAB_STEP, SIDE - 24, 35)
+		if ui.button(Rect2(12, TOP + 12 + i * TAB_STEP, SIDE - 24, 35), label, true, "normal", 16, null, tab == TABS[i][0]):
 			tab = TABS[i][0]
 			confirm_sell = null
 	var info := g.rank_info()
-	var y := H - 210
+	var y := H - 200
 	ui.text("Rango", Vector2(16, y), 13, "muted")
 	ui.text(info[1], Vector2(16, y + 18), 17, "accent", true, "topleft", SIDE - 24)
 	if info[2] != null:
@@ -814,6 +819,9 @@ func draw_side() -> void:
 func draw_ticker() -> void:
 	var g := game
 	var r := Rect2(CX, H - 38, CW, 30)
+	if g.micro != null and modal == null:
+		draw_micro_bar(r)
+		return
 	ui.rect(r, "panel", 8)
 	var text := ""
 	var kind := "info"
@@ -834,6 +842,12 @@ func draw_modal() -> void:
 	ui.rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.67))
 	if modal == "dilema":
 		draw_dilemma()
+		return
+	if modal == "confirmar":
+		draw_confirm()
+		return
+	if modal == "decorar":
+		draw_decor()
 		return
 	var box := Rect2(W / 2 - 280, H / 2 - 140, 560, 280)
 	ui.panel(box)
@@ -1098,26 +1112,33 @@ func draw_negocios(g: Game) -> void:
 		var cost := g.location_cost(s)
 		var tip := Lang.f("Inversión (CAPEX): %s, se deprecia en 5 años. Alquiler: %s/mes. Tráfico de clientes ×%s y hasta %d empleados. Cada sucursal nueva del mismo producto canibaliza un poco a las demás.", [Fmt.money(cost), Fmt.money(size.rent * g.price_index), Fmt.num(size.traffic), size.max_emp])
 		if ui.button(Rect2(rx + 20 + s * (bw + 12), y, bw, 34), Lang.f("Abrir %s (%s)", [size.name, Fmt.short(cost)]), g.cash >= cost, "normal", 15, tip):
-			act(g.open_location(key, s))
+			ask(Lang.f("¿Abrir un %s de %s?", [Lang.noun(size.name), Lang.noun(d.name)]), tip, Lang.f("Sí, abrir (%s)", Fmt.short(cost)),
+					g.open_location.bind(key, s))
 	y += 44
 	var units_month: float = p.ema_sales * 30
 	var no_factory_cost: float = g.unit_cost(p) / (1 - D.FACTORY_SAVING) if p.factory else g.unit_cost(p)
 	var saving: float = units_month * no_factory_cost * D.FACTORY_SAVING
 	var upkeep := g.factory_cost(key) * D.FACTORY_UPKEEP
 	var f_tip := Lang.f("Integración vertical: fabricar tú mismo baja el costo unitario 30%%. Costo fijo de mantenimiento: %s/mes. Con tus ventas actuales ahorrarías ~%s/mes. Solo conviene si el ahorro supera el mantenimiento y la depreciación (%s/mes).", [Fmt.money(upkeep), Fmt.money(saving), Fmt.money(g.factory_cost(key) / 60)])
-	if p.factory:
-		ui.button(Rect2(rx + 20, y, bw, 34), "Fábrica propia activa", false, "normal", 15, f_tip)
+	if p.factory and p.get("solar", false):
+		ui.button(Rect2(rx + 20, y, bw, 34), "Fábrica solar activa", false, "normal", 15, f_tip)
+	elif p.factory:
+		var sc_cost := g.solar_cost(key)
+		var s_tip := Lang.f("Paneles solares en el techo de la fábrica: el mantenimiento baja a %d%% (la luz es gratis), el costo unitario baja otro %d%% y ganas +4 de reputación por ser verde. Ahorro estimado: %s/mes.", [roundi(Game.SOLAR_UPKEEP * 100), roundi(Game.SOLAR_SAVING * 100), Fmt.money(g.factory_upkeep_monthly(p) * (1 - Game.SOLAR_UPKEEP) + units_month * g.unit_cost(p) * Game.SOLAR_SAVING)])
+		if ui.button(Rect2(rx + 20, y, bw, 34), Lang.f("Paneles solares (%s)", Fmt.short(sc_cost)), g.cash >= sc_cost, "normal", 15, s_tip):
+			ask(Lang.f("¿Poner paneles solares en la fábrica de %s?", Lang.noun(d.name)), s_tip, Lang.f("Sí, instalar (%s)", Fmt.short(sc_cost)), g.build_solar.bind(key))
 	elif ui.button(Rect2(rx + 20, y, bw, 34), Lang.f("Construir fábrica (%s)", Fmt.short(g.factory_cost(key))), g.cash >= g.factory_cost(key), "normal", 15, f_tip):
-		act(g.build_factory(key))
+		ask(Lang.f("¿Construir una fábrica de %s?", Lang.noun(d.name)), f_tip, Lang.f("Sí, construir (%s)", Fmt.short(g.factory_cost(key))), g.build_factory.bind(key))
 	var wage: float = D.MANAGER_WAGE * g.price_index * g.min_wage_mult
 	var m_tip := Lang.f("Delegación: un gerente cuesta %s/mes y ajusta solo el personal de cada sucursal y los días de inventario de esta línea.", Fmt.money(wage))
 	if ui.button(Rect2(rx + 32 + bw, y, bw, 34), "Despedir gerente" if p.manager else Lang.f("Contratar gerente (%s/mes)", Fmt.short(wage)),
 			true, "normal", 15, m_tip, p.manager):
-		act(g.toggle_manager(key))
+		ask("¿Despedir al gerente?" if p.manager else "¿Contratar un gerente?", m_tip, "Sí, despedirlo" if p.manager else "Sí, contratar",
+				g.toggle_manager.bind(key))
 	var acq := g.acquire_cost(key)
 	var a_tip := Lang.f("Fusiones y adquisiciones: compras un competidor (%d en el mercado). Recibes su local con 3 empleados y hay un rival menos. Lo que pagas por encima del valor del local es plusvalía (goodwill). Cada competidor que queda es más caro.", p.competitors)
 	if ui.button(Rect2(rx + 44 + 2 * bw, y, bw, 34), Lang.f("Adquirir competidor (%s)", Fmt.short(acq)), p.competitors > 0 and g.cash >= acq, "normal", 15, a_tip):
-		act(g.acquire(key))
+		ask(Lang.f("¿Comprar un local de %s?", D.rival_for(key).company), a_tip, Lang.f("Sí, comprar (%s)", Fmt.short(acq)), g.acquire.bind(key))
 
 	y += 50
 	var ls := g.locs(key)
@@ -1126,12 +1147,12 @@ func draw_negocios(g: Game) -> void:
 			Vector2(rx + 20, y), 14, "muted")
 	y += 28
 	var x0 := rx + 20
-	var heads := [["Sucursal", x0, "topleft"], ["Empleados", x0 + 201, "midtop"], ["Demanda", x0 + 315, "topright"],
-			["Capacidad", x0 + 385, "topright"], ["Vendido", x0 + 455, "topright"], ["Contrib.", x0 + 545, "topright"],
-			["ROI anual", x0 + 605, "topright"]]
+	var heads := [["Sucursal", x0, "topleft"], ["Empleados", x0 + 201, "midtop"], ["Demanda", x0 + 300, "topright"],
+			["Capacidad", x0 + 362, "topright"], ["Vendido", x0 + 420, "topright"], ["Contrib.", x0 + 476, "topright"],
+			["ROI", x0 + 544, "topright"]]
 	for h in heads:
 		ui.text(h[0], Vector2(h[1], y), 13, "muted", true, h[2])
-	ui.tooltip(Rect2(x0 + 465, y, 140, 18), "Contribución = ingresos − mercancía − salarios − alquiler de la sucursal (último mes cerrado). ROI anual = contribución × 12 ÷ inversión total en la sucursal.")
+	ui.tooltip(Rect2(x0 + 430, y, 115, 18), "Contribución = ingresos − mercancía − salarios − alquiler de la sucursal (último mes cerrado). ROI anual = contribución × 12 ÷ inversión total en la sucursal.")
 	y += 24
 	var area := Rect2(rx + 10, y, rw - 20, CY + CH - y - 10)
 	var rows := 40.0
@@ -1166,28 +1187,28 @@ func draw_negocios(g: Game) -> void:
 				Lang.f("Contratar: %s de reclutamiento y %s/mes de salario.", [Fmt.money(D.HIRING_COST * g.price_index), Fmt.money(g.wage_daily() * 30)])):
 			act(g.hire(loc))
 		var lost: bool = loc.demand > loc.capacity * 1.02
-		ui.text(Fmt.num(loc.demand), Vector2(x0 + 315, cy), 15, "orange" if lost else "text", false, "midright")
-		ui.text(Fmt.num(loc.capacity), Vector2(x0 + 385, cy), 15, "text", false, "midright")
-		ui.text(Fmt.num(loc.sold), Vector2(x0 + 455, cy), 15, "text", false, "midright")
+		ui.text(Fmt.num(loc.demand), Vector2(x0 + 300, cy), 15, "orange" if lost else "text", false, "midright")
+		ui.text(Fmt.num(loc.capacity), Vector2(x0 + 362, cy), 15, "text", false, "midright")
+		ui.text(Fmt.num(loc.sold), Vector2(x0 + 420, cy), 15, "text", false, "midright")
 		if loc.last_contrib != null:
-			ui.text(Fmt.short(loc.last_contrib), Vector2(x0 + 545, cy), 15, sc(loc.last_contrib), false, "midright")
+			ui.text(Fmt.short(loc.last_contrib), Vector2(x0 + 476, cy), 15, sc(loc.last_contrib), false, "midright")
 			var roi: float = loc.last_contrib * 12 / loc.invested if loc.invested else 0.0
-			ui.text(Fmt.pct(roi, 0), Vector2(x0 + 605, cy), 15, sc(roi), true, "midright")
+			ui.text(Fmt.pct(roi, 0), Vector2(x0 + 544, cy), 15, sc(roi), true, "midright")
 		else:
-			ui.text(Fmt.short(loc.month_contrib), Vector2(x0 + 545, cy), 15, "muted", false, "midright")
-			ui.text("—", Vector2(x0 + 605, cy), 15, "muted", false, "midright")
+			ui.text(Fmt.short(loc.month_contrib), Vector2(x0 + 476, cy), 15, "muted", false, "midright")
+			ui.text("—", Vector2(x0 + 544, cy), 15, "muted", false, "midright")
+		var n_dec: int = loc.get("upgrades", []).size()
+		if ui.button(Rect2(x0 + 552, cy - 14, 76, 28), Lang.f("Decorar %d/%d", [n_dec, D.UPGRADES.size()]) if n_dec else "Decorar", true, "normal", 13,
+				"Compra artículos para este local: plantas, letrero luminoso, música, wifi, terraza, aire acondicionado..."):
+			decor_loc = loc.id
+			modal = "decorar"
 		var up = g.upgrade_cost(loc)
 		var up_tip := Lang.f("Ampliar a %s por %s: más tráfico y más empleados posibles.", [D.SIZES[loc.size + 1].name, Fmt.money(up)]) if up != null else "Ya es una megatienda."
-		if ui.button(Rect2(x0 + 618, cy - 14, 72, 28), "Ampliar", up != null and g.cash >= up, "normal", 13, up_tip):
-			act(g.upgrade_location(loc))
-		var confirming: bool = confirm_sell == loc.id
+		if ui.button(Rect2(x0 + 633, cy - 14, 68, 28), "Ampliar", up != null and g.cash >= up, "normal", 13, up_tip):
+			ask(Lang.f("¿Ampliar a %s?", Lang.noun(D.SIZES[loc.size + 1].name)), up_tip, Lang.f("Sí, ampliar (%s)", Fmt.short(up)), g.upgrade_location.bind(loc))
 		var sell_tip := Lang.f("Recibes %s: la mitad de su valor en libros. La otra mitad es un costo hundido y se registra como pérdida. También pagas indemnizaciones.", Fmt.money(g.sell_value(loc)))
-		if ui.button(Rect2(x0 + 696, cy - 14, rw - 40 - 696, 28), "¿Seguro?" if confirming else "Vender", true, "danger", 13, sell_tip):
-			if confirming:
-				confirm_sell = null
-				act(g.sell_location(loc))
-				break
-			confirm_sell = loc.id
+		if ui.button(Rect2(x0 + 706, cy - 14, rw - 40 - 706, 28), "Vender", true, "danger", 13, sell_tip):
+			ask(Lang.f("¿Vender tu %s?", Lang.noun(size.name)), sell_tip, Lang.f("Sí, vender (%s)", Fmt.short(g.sell_value(loc))), g.sell_location.bind(loc), true)
 	ui.set_clip(null)
 	if ls.is_empty():
 		ui.text("Todavía no tienes sucursales de esta línea. Abre una arriba.", area.get_center(), 16, "muted", false, "center")
@@ -1215,7 +1236,8 @@ func draw_locked(g: Game, key: String, rx: float, rw: float) -> void:
 	y += 16
 	if ui.button(Rect2(x, y, 320, 44), Lang.f("Desbloquear por %s", Fmt.money(cost)), g.cash >= cost, "primary", 15,
 			"Licencias, recetas y desarrollo. Se registra como activo intangible y se amortiza en 5 años."):
-		act(g.unlock(key))
+		ask(Lang.f("¿Desbloquear %s?", d.name), "Licencias, recetas y desarrollo. Se registra como activo intangible y se amortiza en 5 años.",
+				Lang.f("Sí, desbloquear (%s)", Fmt.short(cost)), g.unlock.bind(key))
 	if g.cash < cost:
 		ui.text(Lang.f("Te faltan %s. Ahorra o pide un préstamo en Finanzas.", Fmt.money(cost - g.cash)), Vector2(x, y + 56), 14, "muted")
 
@@ -1420,7 +1442,8 @@ func draw_finanzas(g: Game) -> void:
 	y = ui.row(x, y, w, "Cuota mensual (sistema francés)", Fmt.money(pay), "text", "Cuotas iguales. Al principio pagas más interés; al final, más capital.")
 	y = ui.row(x, y, w, "Intereses totales", Fmt.money(pay * loan_months - loan_amount), "red")
 	if ui.button(Rect2(x, y + 4, w, 38), "Solicitar préstamo", limit >= loan_amount, "primary"):
-		act(g.take_loan(loan_amount, loan_months))
+		ask(Lang.f("¿Pedir %s prestados?", Fmt.money(loan_amount)), Lang.f("%d cuotas de %s al %s anual. Intereses totales: %s.", [loan_months, Fmt.money(pay), Fmt.pct(rate), Fmt.money(pay * loan_months - loan_amount)]),
+				"Sí, pedir el préstamo", g.take_loan.bind(loan_amount, loan_months))
 	y += 58
 	ui.text("Préstamos activos", Vector2(x, y), 15, "muted", true)
 	y += 26
@@ -1434,7 +1457,7 @@ func draw_finanzas(g: Game) -> void:
 		var payoff := g.prepay_amount(loan)
 		if ui.button(Rect2(x + w - 90, y, 90, 26), "Prepagar", g.cash >= payoff, "normal", 13,
 				Lang.f("Pagas hoy %s (el saldo más el interés de los días que van del mes) y te ahorras los intereses futuros.", Fmt.money(payoff))):
-			act(g.prepay_loan(loan))
+			ask("¿Pagar el préstamo completo?", Lang.f("Pagas hoy %s.", Fmt.money(payoff)), "Sí, pagarlo", g.prepay_loan.bind(loan))
 		y += 32
 
 	var rx := CX + lw + 12
@@ -1460,7 +1483,8 @@ func draw_finanzas(g: Game) -> void:
 	y += 40
 	bw = (w - 10) / 3
 	if ui.button(Rect2(x, y, bw, 34), "Invertir", g.cash > 0, "primary"):
-		act(g.buy_bonds(bond_amount))
+		ask(Lang.f("¿Invertir %s en bonos?", Fmt.money(min(bond_amount, g.cash))), Lang.f("Rinden %s al año, sin riesgo. Los puedes retirar cuando quieras.", Fmt.pct(g.policy_rate)),
+				"Sí, invertir", g.buy_bonds.bind(bond_amount))
 	if ui.button(Rect2(x + bw + 5, y, bw, 34), "Retirar", g.bonds > 0):
 		act(g.sell_bonds(bond_amount))
 	if ui.button(Rect2(x + 2 * (bw + 5), y, bw, 34), "Retirar todo", g.bonds > 0):
@@ -1513,7 +1537,7 @@ func draw_crecimiento(g: Game) -> void:
 		var months = cost / saving if saving > 0 else null
 		y = ui.row(x, y, w, "Se paga sola en", Lang.f("%d meses", roundi(months)) if months != null and months < 999 else "aún no conviene")
 		if ui.button(Rect2(x, y + 6, w, 40), Lang.f("Instalar por %s", Fmt.money(cost)), g.cash >= cost, "primary"):
-			act(g.upgrade_hq())
+			ask(Lang.f("¿Instalar %s?", nxt[0]), "Baja los gastos corporativos de tener muchas sucursales.", Lang.f("Sí, instalar (%s)", Fmt.short(cost)), g.upgrade_hq)
 
 	var y0 := CY + 312
 	ui.panel(Rect2(CX, y0, lw, CH - 312), "Fondo de inversión (bolsa)",
@@ -1537,7 +1561,7 @@ func draw_crecimiento(g: Game) -> void:
 	y += 38
 	bw = (w - 10) / 3
 	if ui.button(Rect2(x, y, bw, 34), "Invertir", g.cash > 0, "primary"):
-		act(g.invest_fund(fund_amount))
+		ask(Lang.f("¿Invertir %s en el fondo?", Fmt.money(min(fund_amount, g.cash))), "Sube y baja todos los días, y cae fuerte en recesión.", "Sí, invertir", g.invest_fund.bind(fund_amount))
 	if ui.button(Rect2(x + bw + 5, y, bw, 34), "Retirar", g.fund > 0):
 		act(g.withdraw_fund(fund_amount))
 	if ui.button(Rect2(x + 2 * (bw + 5), y, bw, 34), "Retirar todo", g.fund > 0):
@@ -1729,3 +1753,275 @@ func draw_conceptos(g: Game) -> void:
 				ui.wrap_text(c[1], Rect2(x + 12, y + 32, colw - 24, h), 14, "text")
 		y += h
 	ui.set_clip(null)
+
+
+# ---------- confirmación antes de gastar ----------
+## Pide confirmar antes de hacer algo importante. `action` devuelve [ok, mensaje] (como las acciones de Game).
+func ask(title: String, detail: String, yes: String, action: Callable, danger := false, back = null) -> void:
+	confirm = {"title": title, "detail": detail, "yes": yes, "action": action, "danger": danger, "back": back}
+	modal = "confirmar"
+
+
+func draw_confirm() -> void:
+	if confirm == null:
+		modal = null
+		return
+	match confirm_box(ui, confirm.title, confirm.detail, confirm.yes, game.cash, confirm.danger):
+		1:
+			var action: Callable = confirm.action
+			modal = confirm.back   # algunas preguntas vuelven a su ventana (decorar)
+			confirm = null
+			act(action.call())
+		2:
+			modal = confirm.back
+			confirm = null
+
+
+## Caja de confirmación (también la usa la ciudad). Devuelve 0 = nada, 1 = sí, 2 = no.
+static func confirm_box(u: ImUI, title: String, detail: String, yes: String, cash: float, danger := false) -> int:
+	var bw := 620.0
+	var th := u.wrap_height(detail, bw - 80, 16)
+	var bh := 190.0 + th
+	var box := Rect2(W / 2 - bw / 2, H / 2 - bh / 2, bw, bh)
+	var accent: Color = ImUI.COL.red if danger else ImUI.COL.accent
+	u.rect(box.grow(8), Color(0, 0, 0, 0.35), 24)
+	u.rect(box, Color8(18, 22, 30), 18)
+	u.rect(box, Color(accent, 0.6), 18, 1.5)
+	u.circle(box.position + Vector2(52, 52), 24, accent)
+	Icons.draw(u, "question", box.position + Vector2(52, 52), 30, Color8(16, 20, 30))
+	u.text(title, box.position + Vector2(92, 36), 24, "text", true, "topleft", bw - 120)
+	u.wrap_text(detail, Rect2(box.position.x + 40, box.position.y + 92, bw - 80, th), 16, Color8(205, 212, 224))
+	u.text(Lang.f("Caja: %s", Fmt.money(cash)), Vector2(box.get_center().x, box.end.y - 84), 14, sc(cash), true, "center")
+	var res := 0
+	if u.button(Rect2(box.position.x + 40, box.end.y - 62, 260, 42), yes, true, "danger" if danger else "primary", 16):
+		res = 1
+	if u.button(Rect2(box.end.x - 300, box.end.y - 62, 260, 42), "No, cancelar", true, "normal", 16):
+		res = 2
+	return res
+
+
+# ---------- decorar una sucursal ----------
+func draw_decor() -> void:
+	var g := game
+	var loc = g.find_location(decor_loc)
+	if loc == null:
+		modal = null
+		return
+	var bw := 960.0
+	var bh := 660.0
+	var box := Rect2(W / 2 - bw / 2, H / 2 - bh / 2, bw, bh)
+	ui.rect(box.grow(8), Color(0, 0, 0, 0.35), 24)
+	ui.rect(box, Color8(18, 22, 30), 18)
+	ui.rect(box, Color(ImUI.COL.accent, 0.5), 18, 1.5)
+	var name := Lang.f("%s de %s", [D.SIZES[loc.size].name, Lang.noun(D.PRODUCTS[loc.product].name)])
+	ui.text("DECORAR Y EQUIPAR", box.position + Vector2(36, 26), 13, "accent", true)
+	ui.text(name, box.position + Vector2(36, 44), 26, "text", true)
+	ui.text(Lang.f("Caja: %s · %s estrellas", [Fmt.money(g.cash), Fmt.num(Game.stars_of(loc), 1)]), Vector2(box.end.x - 36, box.position.y + 50), 15, sc(g.cash), true, "topright")
+	ui.wrap_text("Cada artículo se compra una vez para este local (es inversión: se deprecia en 5 años y se vende con el local). En una megatienda cuesta más que en un puesto. Lo que compres se ve en la ciudad.",
+			Rect2(box.position.x + 36, box.position.y + 84, bw - 72, 40), 14, "muted")
+	var cols := 2
+	var cw := (bw - 72 - 16) / cols
+	var ch := 104.0
+	for i in D.UPGRADES.size():
+		var u: Dictionary = D.UPGRADES[i]
+		var r := Rect2(box.position.x + 36 + (i % cols) * (cw + 16), box.position.y + 134 + (i / cols) * (ch + 10), cw, ch)
+		var owned: bool = u.key in loc.get("upgrades", [])
+		ui.rect(r, Color8(28, 34, 44) if not owned else Color8(26, 52, 40), 12)
+		ui.rect(r, Color(ImUI.COL.green if owned else ImUI.COL.border, 0.7), 12, 1)
+		ui.circle(r.position + Vector2(30, 30), 18, ImUI.COL.green if owned else Color8(60, 70, 88))
+		Icons.draw(ui, u.icon, r.position + Vector2(30, 30), 22, Color.WHITE)
+		ui.text(u.name, r.position + Vector2(58, 14), 16, "text", true, "topleft", cw - 186)
+		ui.wrap_text(u.desc, Rect2(r.position.x + 58, r.position.y + 38, cw - 186, 62), 13, "muted", false, 2.0)
+		var cost := g.decor_cost(loc, u.key)
+		if owned:
+			ui.text("Instalado", Vector2(r.end.x - 16, r.get_center().y), 15, "green", true, "midright")
+		elif ui.button(Rect2(r.end.x - 124, r.get_center().y - 18, 110, 36), Fmt.short(cost), g.cash >= cost, "primary", 15):
+			var id: int = loc.id
+			var key: String = u.key
+			var buy := func():
+				var l = game.find_location(id)
+				return game.buy_decor(l, key) if l != null else [false, ""]
+			ask(Lang.f("¿Comprar %s?", Lang.noun(u.name)), Lang.f("%s Para tu %s.", [u.desc, Lang.noun(name)]), Lang.f("Sí, comprar (%s)", Fmt.short(cost)),
+					buy, false, "decorar")
+			return
+	if ui.button(Rect2(box.get_center().x - 120, box.end.y - 60, 240, 40), "Cerrar", true, "normal", 16):
+		modal = null
+
+
+# ---------- microdecisiones (en la barra de abajo) ----------
+func draw_micro_bar(r: Rect2) -> void:
+	var m: Dictionary = game.micro
+	var col: Color = ImUI.COL.orange
+	ui.rect(r, Color(col, 0.18), 8)
+	ui.rect(r, Color(col, 0.7), 8, 1)
+	Icons.draw(ui, "question", Vector2(r.position.x + 16, r.get_center().y), 18, col)
+	var left := maxi(0, int(m.expires) - game.day)
+	var tw := ui.text(Lang.f("%s (%d d)", [m.title, left]), Vector2(r.position.x + 30, r.get_center().y), 14, "text", true, "midleft", 330)
+	ui.tooltip(Rect2(r.position.x, r.position.y, tw.end.x - r.position.x, r.size.y), m.text)
+	var x := tw.end.x + 12
+	var n: int = m.options.size()
+	var avail: float = r.end.x - x - 6
+	var bw := (avail - 6 * (n - 1)) / n
+	for i in n:
+		var o: Dictionary = m.options[i]
+		if ui.button(Rect2(x + i * (bw + 6), r.position.y + 3, bw, r.size.y - 6), o.label, true, "normal", 12, o.detail):
+			var res := game.resolve_micro(i)
+			say(res[1], "good" if res[0] else "bad")
+			return
+
+
+# ---------- Rivales: catálogo de personajes y ranking ----------
+func draw_rivales(g: Game) -> void:
+	var cols := 4
+	var cw := (CW - 12 * (cols - 1)) / cols
+	var ch := 128.0
+	for i in D.RIVALS.size():
+		var r: Dictionary = D.RIVALS[i]
+		var rect := Rect2(CX + (i % cols) * (cw + 12), CY + (i / cols) * (ch + 10), cw, ch)
+		var active := g.rival_active(r)
+		var st := g.rival_state(r.key)
+		var hot := ui.hover(rect)
+		ui.rect(rect, Color8(26, 32, 42) if rival_sel != r.key else Color(r.color, 0.18), 12)
+		ui.rect(rect, Color(r.color, 0.9 if rival_sel == r.key else (0.5 if hot else 0.25)), 12, 2 if rival_sel == r.key else 1)
+		if hot and ui.clicked:
+			rival_sel = r.key
+		var c := rect.position + Vector2(38, 40)
+		ui.circle(c, 26, r.color if active else Color(r.color, 0.35))
+		ui.text(initials(r), c + Vector2(0, 1), 19, Color8(16, 20, 30), true, "center")
+		ui.text(r.company, rect.position + Vector2(74, 18), 16, "text" if active else "muted", true, "topleft", cw - 84)
+		ui.text(r.name, rect.position + Vector2(74, 40), 13, "muted", false, "topleft", cw - 84)
+		ui.text(D.RIVAL_STYLES[r.style][0], rect.position + Vector2(74, 58), 12, Notifications.light(r.color, 0.3), true, "topleft", cw - 84)
+		if not active:
+			var why := Lang.f("Aparece el día %d", int(r.from)) if g.day < int(r.get("from", 0)) else "Aún no compites con él"
+			ui.text(why, rect.position + Vector2(16, ch - 30), 13, "muted")
+			continue
+		var h: float = st.hostility
+		ui.text("Hostilidad", rect.position + Vector2(16, ch - 40), 12, "muted")
+		ui.bar(Rect2(rect.position.x + 90, rect.position.y + ch - 36, cw - 106, 7), h / 100.0, "red" if h > 60 else ("orange" if h > 35 else "green"))
+		var tag := Lang.f("Aliados (%d d)", int(st.ally_until) - g.day) if g.allied(r.key) else Lang.f("Vale %s", Fmt.short(g.rival_value(r)))
+		ui.text(tag, rect.position + Vector2(16, ch - 22), 13, "green" if g.allied(r.key) else "text", g.allied(r.key))
+
+	var y0 := CY + 2 * (ch + 10) + 2
+	var lw := 600.0
+	var r := D.rival_by_key(rival_sel)
+	var p := ui.panel(Rect2(CX, y0, lw, CY + CH - y0))
+	var st := g.rival_state(r.key)
+	ui.circle(p.position + Vector2(48, 48), 30, r.color)
+	ui.text(initials(r), p.position + Vector2(48, 49), 22, Color8(16, 20, 30), true, "center")
+	ui.text(r.name, p.position + Vector2(92, 18), 22, "text", true)
+	var markets: Array = r.products if r.products else r.get("needs", [])
+	var mk := ", ".join(markets.map(func(k): return D.PRODUCTS[k].name)) if markets else Lang.t("todos los mercados")
+	ui.text(Lang.f("%s · %s", [r.company, mk]), p.position + Vector2(92, 48), 14, "muted", false, "topleft", lw - 110)
+	var y := p.position.y + 92
+	y += ui.wrap_text(r.bio, Rect2(p.position.x + 20, y, lw - 40, 60), 15, "text") + 8
+	var style: Array = D.RIVAL_STYLES[r.style]
+	ui.text(Lang.f("Estilo: %s", style[0]), Vector2(p.position.x + 20, y), 14, Notifications.light(r.color, 0.3), true)
+	y += 20
+	y += ui.wrap_text(style[1], Rect2(p.position.x + 20, y, lw - 40, 40), 13, "muted") + 10
+	if not g.rival_active(r):
+		ui.text("Todavía no está en tu ciudad.", Vector2(p.position.x + 20, y + 10), 15, "muted")
+		return
+	y = ui.row(p.position.x + 20, y, lw - 40, "Hostilidad contigo", Lang.f("%d / 100", roundi(st.hostility)), "red" if st.hostility > 60 else "text",
+			"Sube si le compras locales, lo denuncias o lo provocas. Mientras más alta, más seguido te ataca.")
+	var bw := (lw - 52) / 2
+	var by := p.end.y - 54
+	if g.allied(r.key):
+		ui.button(Rect2(p.position.x + 20, by, bw, 40), Lang.f("Aliados por %d días", int(st.ally_until) - g.day), false, "normal", 14)
+	else:
+		var ac := g.alliance_cost(r.key)
+		var a_tip := Lang.f("Cena de negocios: pagas %s. %d%% de que acepte (menos si te odia). Si acepta, no te ataca por 90 días.", [Fmt.money(ac), roundi(g.alliance_chance(r.key) * 100)])
+		if ui.button(Rect2(p.position.x + 20, by, bw, 40), Lang.f("Proponer alianza (%s)", Fmt.short(ac)), g.cash >= ac, "primary", 14, a_tip):
+			ask(Lang.f("¿Proponerle una alianza a %s?", r.short), a_tip, "Sí, invitarlo a cenar", g.propose_alliance.bind(r.key))
+	var pc := g.provoke_cost()
+	var p_tip := Lang.f("Publicidad comparativa: pagas %s y tu demanda en sus mercados sube 20%% por 15 días. Lo enoja mucho (+25 de hostilidad) y rompe la alianza.", Fmt.money(pc))
+	if ui.button(Rect2(p.position.x + 32 + bw, by, bw, 40), Lang.f("Provocarlo (%s)", Fmt.short(pc)), g.cash >= pc and not g.rival_markets(r).is_empty(), "danger", 14, p_tip):
+		ask(Lang.f("¿Lanzar una campaña contra %s?", r.short), p_tip, "Sí, provocarlo", g.provoke.bind(r.key), true)
+
+	# Ranking de la ciudad
+	var rx := CX + lw + 12
+	var rw := CW - lw - 12
+	var rp := ui.panel(Rect2(rx, y0, rw, CY + CH - y0), "Ranking de la ciudad", "Lo que vale cada empresa en esta ciudad. Supera a los rivales uno por uno.")
+	var ry := rp.position.y + 46
+	var rows := g.ranking()
+	for i in rows.size():
+		var row: Array = rows[i]
+		if ry > rp.end.y - 26:
+			break
+		var me: bool = row[0] == ""
+		if me:
+			ui.rect(Rect2(rx + 10, ry - 4, rw - 20, 28), Color(ImUI.COL.accent, 0.14), 6)
+		ui.text(Lang.f("%d.", i + 1), Vector2(rx + 20, ry), 15, "muted", true)
+		ui.circle(Vector2(rx + 56, ry + 10), 7, row[4])
+		ui.text(row[2], Vector2(rx + 72, ry), 15, "accent" if me else "text", me, "topleft", rw - 200)
+		ui.text(Fmt.short(row[3]), Vector2(rx + rw - 20, ry), 15, "accent" if me else "text", me, "topright")
+		ry += 30
+
+
+# ---------- Personal: cómo tratas a tus empleados ----------
+func draw_personal(g: Game) -> void:
+	var lw := 600.0
+	var p := ui.panel(Rect2(CX, CY, lw, CH), "Cómo tratas a tus empleados",
+			"Vale para toda la empresa. Lo que ahorras maltratando a la gente se paga con renuncias, huelgas, multas y mala fama.")
+	var y := p.position.y + 48
+	for i in D.LABOR.size():
+		var l: Dictionary = D.LABOR[i]
+		var dh := ui.wrap_height(l.desc, lw - 220, 13)
+		var r := Rect2(p.position.x + 16, y, lw - 32, 54 + dh)
+		var on: bool = g.labor == i
+		var col: Color = [ImUI.COL.green, ImUI.COL.blue, ImUI.COL.orange, ImUI.COL.red][i]
+		ui.rect(r, Color(col, 0.16) if on else Color8(28, 34, 44), 12)
+		ui.rect(r, Color(col, 0.9 if on else 0.3), 12, 2 if on else 1)
+		ui.text(l.name, r.position + Vector2(18, 12), 17, "text", true)
+		ui.wrap_text(l.desc, Rect2(r.position.x + 18, r.position.y + 38, lw - 220, dh), 13, "muted")
+		ui.text(Lang.f("Sueldo ×%s", Fmt.num(l.wage, 2)), Vector2(r.end.x - 130, r.position.y + 14), 13, "text")
+		ui.text(Lang.f("Rinden ×%s", Fmt.num(l.prod, 2)), Vector2(r.end.x - 130, r.position.y + 32), 13, "text")
+		if on:
+			ui.text("ACTUAL", Vector2(r.end.x - 130, r.position.y + 52), 13, col, true)
+		elif ui.button(Rect2(r.end.x - 130, r.position.y + 50, 112, 28), "Elegir", true, "danger" if i >= 2 else "normal", 13):
+			var detail: String = l.desc
+			ask(Lang.f("¿Cambiar a «%s»?", l.name), detail, "Sí, cambiar", g.set_labor.bind(i), i >= 2)
+		y += r.size.y + 10
+
+	var rx := CX + lw + 12
+	var rw := CW - lw - 12
+	var q := ui.panel(Rect2(rx, CY, rw, CH), "Ánimo del equipo")
+	var m := g.morale
+	var col: Color = ImUI.COL.green if m >= 60 else (ImUI.COL.orange if m >= 30 else ImUI.COL.red)
+	var c := Vector2(rx + rw / 2, CY + 150)
+	ui.ring(c, 70, Color8(40, 46, 58), 12)
+	var steps := 48
+	var pts := PackedVector2Array()
+	for k in steps + 1:
+		var a := -PI / 2 + TAU * (m / 100.0) * k / steps
+		pts.append(c + Vector2(cos(a), sin(a)) * 70)
+	if m > 0.5:
+		ui.polyline(pts, col, 12)
+	ui.text(str(roundi(m)), c + Vector2(0, -6), 40, col, true, "center")
+	ui.text("de 100", c + Vector2(0, 26), 13, "muted", false, "center")
+	var mood := "Felices" if m >= 75 else ("Tranquilos" if m >= 55 else ("Molestos" if m >= 30 else "Furiosos"))
+	ui.text(mood, Vector2(c.x, c.y + 92), 20, col, true, "center")
+	var x := rx + 20
+	var w := rw - 40
+	y = CY + 280
+	y = ui.row(x, y, w, "Empleados", str(g.staff_count()))
+	y = ui.row(x, y, w, "Sueldo diario por empleado", Fmt.money(g.wage_daily(), 2))
+	y = ui.row(x, y, w, "Rendimiento real", Lang.f("×%s", Fmt.num(g.staff_factor(), 2)), "text",
+			"Lo que rinde cada empleado: el trato que elegiste por el ánimo. Con ánimo bajo rinden menos de lo prometido.")
+	y += 10
+	var risks := []
+	if m < 35:
+		risks.append(["bad", "Con este ánimo la gente renuncia: cada día alguien se puede ir."])
+	if m < 30:
+		risks.append(["bad", "Atienden de mala gana: las estrellas de tus locales bajan."])
+		risks.append(["bad", "El sindicato se organiza: las huelgas son mucho más probables."])
+	if D.LABOR[g.labor].key in ["exigente", "explotador"]:
+		risks.append(["warn", "Cada mes puede llegar una inspección del trabajo con una multa."])
+	if D.LABOR[g.labor].key == "explotador":
+		risks.append(["bad", "Si un video del maltrato se hace viral, tu reputación se hunde."])
+	if m > 75:
+		risks.append(["good", "Atienden con ganas: las estrellas suben y puedes ganar el premio «Mejor lugar para trabajar»."])
+	if risks.is_empty():
+		risks.append(["info", "Todo tranquilo con tu equipo."])
+	for rk in risks:
+		ui.circle(Vector2(x + 6, y + 9), 4, ImUI.KIND_COLOR[rk[0]])
+		y += ui.wrap_text(rk[1], Rect2(x + 18, y, w - 18, 50), 14, "text") + 6

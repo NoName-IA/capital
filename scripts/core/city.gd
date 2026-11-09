@@ -353,7 +353,12 @@ func ask_assistant() -> void:
 	hud.notes.push("oficina", "Sofía · tu asistente", text, {"initials": "SO", "sound": "ring"})
 
 
-func do_activity(key: String) -> void:
+func do_activity(key: String, confirmed := false) -> void:
+	var cost: float = game.activity_cost(key)
+	if cost > 0 and not confirmed and game.activity_wait(key) == 0:
+		var act: Array = game._activity(key)
+		confirm(Lang.f("¿%s?", act[1]), act[3], Lang.f("Sí (%s)", Fmt.short(cost)), do_activity.bind(key, true))
+		return
 	var r: Array = game.do_activity(key, SkyLight.hour_of(day_fraction()))
 	var a: Array = game._activity(key)
 	var opts := {"sound": "coin"} if r[0] else {"sound": "bad", "col": Color8(225, 85, 75)}
@@ -376,6 +381,36 @@ func manage(store: Store) -> void:
 	app.tab = "negocios"
 	app.sel = store.loc.product
 	overlays.show("admin")
+
+
+## Responde la microdecisión que está en pantalla (no pausa el juego).
+func answer_micro(i: int) -> void:
+	if game == null or game.micro == null or i >= game.micro.options.size():
+		return
+	var res: Array = game.resolve_micro(i)
+	hud.notes.hint(res[1], "good" if res[0] else "bad")
+	sfx.play("good" if res[0] else "bad", 0.5)
+
+
+## Viaje rápido desde el mapa: quedas parado en `pos` mirando hacia `yaw_deg` (grados, 0 = hacia +z).
+func teleport(pos: Vector3, yaw_deg: float, label := "") -> void:
+	if game == null:
+		return
+	stop_serving()
+	knock = null
+	vy = 0.0
+	player.rotation.x = 0
+	pos.y = floor_at(pos.x, pos.z, pos.y + 1.0)
+	player.position = pos
+	yaw = yaw_deg
+	player.rotation.y = deg_to_rad(yaw_deg)
+	pitch = 14.0
+	first_person = false
+	zoom_target = max(zoom_target, 5.0)
+	zoom = zoom_target
+	sfx.play("record", 0.45, 1.5)
+	if label:
+		toast(Lang.f("Llegaste: %s.", label), "info")
 
 
 ## Te lleva al vestíbulo de la oficina central, frente a la computadora.
@@ -418,12 +453,21 @@ func apply_look() -> void:
 func use_wardrobe() -> void:
 	var g: Game = game
 	if not g.wardrobe:
-		var res := g.unlock_wardrobe()
-		toast(res[1], "good" if res[0] else "bad")
-		sfx.play("record" if res[0] else "angry", 0.6)
-		if not res[0]:
-			return
+		confirm("¿Comprar el armario de la oficina?", Lang.f("Cuesta %s (gasto de representación). Después cada prenda se paga aparte, y te la puedes probar antes de comprarla.", Fmt.money(g.wardrobe_cost())),
+				Lang.f("Sí, comprar (%s)", Fmt.short(g.wardrobe_cost())), func():
+					var res := g.unlock_wardrobe()
+					toast(res[1], "good" if res[0] else "bad")
+					sfx.play("record" if res[0] else "angry", 0.6)
+					if res[0]:
+						open_custom())
+		return
 	open_custom()
+
+
+## Pregunta Sí/No en la ciudad antes de gastar (ver Overlays, modo "confirmar").
+func confirm(title: String, detail: String, yes: String, action: Callable) -> void:
+	overlays.question = {"title": title, "detail": detail, "yes": yes, "action": action}
+	overlays.show("confirmar")
 
 
 func open_custom() -> void:
@@ -504,6 +548,9 @@ func zoom_custom(step: float) -> void:
 func close_custom() -> void:
 	if overlays.mode != "personaje":
 		return
+	if overlays.trying != null:   # lo que te estabas probando sin comprar se devuelve
+		overlays.trying = null
+		apply_look()
 	overlays.hide()
 	app.paused = custom_prev[0]
 	first_person = custom_prev[1]
@@ -1692,6 +1739,10 @@ func _key(e: InputEventKey) -> void:
 		elif key == KEY_ESCAPE:
 			close_pause()
 		return
+	if overlays.mode == "mapa":
+		if key == KEY_ESCAPE or Keys.is_event(e, "map"):
+			overlays.hide()
+		return
 	if overlays.open():
 		if (key == KEY_ESCAPE or Keys.is_event(e, "phone") or Keys.is_event(e, "interact")) and app.view == "game" and app.modal == null:
 			overlays.hide()
@@ -1720,6 +1771,10 @@ func _key(e: InputEventKey) -> void:
 			vy = 8.0
 	elif Keys.is_event(e, "office"):
 		go_to_office()
+	elif Keys.is_event(e, "map"):
+		overlays.show("mapa")
+	elif Keys.is_event(e, "micro1") or Keys.is_event(e, "micro2") or Keys.is_event(e, "micro3"):
+		answer_micro(0 if Keys.is_event(e, "micro1") else (1 if Keys.is_event(e, "micro2") else 2))
 	elif Keys.is_event(e, "help"):
 		hud.help_timer = 0.0 if hud.help_timer > 0 else 30.0
 
@@ -1753,6 +1808,10 @@ func _mouse_button(e: InputEventMouseButton) -> void:
 	elif e.button_index == MOUSE_BUTTON_LEFT and not mouse_captured():
 		if hud.ui.hover(hud.hq_button_rect()):
 			go_to_office()
+		elif hud.micro_at() >= 0:
+			answer_micro(hud.micro_at())
+		elif hud.ui.hover(hud.mini_rect):
+			overlays.show("mapa")
 		elif hud.ui.hover(hud.phone_rect):
 			if app.unread:
 				app.tab = "noticias"
