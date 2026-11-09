@@ -2,9 +2,8 @@ class_name CityMap
 extends RefCounted
 ## El mapa de la ciudad visto desde arriba: el minimapa de abajo a la izquierda y el mapa grande que se abre con la
 ## tecla M. Cada edificio es un rectángulo con su tamaño real: tus locales en dorado, los de la competencia en rojo,
-## los terrenos en venta punteados y los lugares de la ciudad (oficina, parque, playa...) con su ícono. Alrededor de
-## cada local hay un círculo que crece con los clientes que compran ahí al día. En el mapa grande, al pasar el mouse
-## un edificio se agranda y muestra sus datos; con un clic te lleva hasta él.
+## los terrenos en venta punteados y los lugares de la ciudad (oficina, parque, playa...) con su ícono. En el mapa
+## grande, al pasar el mouse un edificio se agranda y muestra sus datos; con un clic te lleva hasta él.
 ##
 ## El norte del mapa es el lado de la calle con z positivo (donde está tu oficina): y en pantalla = −z.
 
@@ -155,15 +154,10 @@ static func draw_ground(ui: ImUI, view: Rect2, center: Vector2, scale: float) ->
 
 
 ## Un edificio del mapa. `k` (0 a 1) es cuánto se agranda (mouse encima).
-static func draw_item(ui: ImUI, it: Dictionary, r: Rect2, k: float, scale: float, show_clients: bool) -> void:
+static func draw_item(ui: ImUI, it: Dictionary, r: Rect2, k: float, scale: float) -> void:
 	if k > 0:
 		r = r.grow_individual(r.size.x * 0.22 * k, r.size.y * 0.22 * k, r.size.x * 0.22 * k, r.size.y * 0.22 * k)
 	var kind: String = it.kind
-	if show_clients and it.clients > 0 and kind in ["mine", "rival"]:
-		var rad: float = (6.0 + sqrt(it.clients) * 1.6) * scale / 3.2
-		var col: Color = GOLD if kind == "mine" else RIVAL
-		ui.circle(r.get_center(), rad, Color(col, 0.16))
-		ui.ring(r.get_center(), rad, Color(col, 0.45), 1.5)
 	match kind:
 		"mine":
 			ui.rect(r, GOLD.darkened(0.15), 3)
@@ -210,7 +204,7 @@ static func draw_mini(ui: ImUI, city, pos: Vector2) -> Rect2:
 	for it in items(city):
 		var r := rect_to_screen(view, me, MINI_SCALE, it.rect)
 		if r.intersects(view):
-			draw_item(ui, it, r, 0.0, MINI_SCALE, true)
+			draw_item(ui, it, r, 0.0, MINI_SCALE)
 	draw_player(ui, view.get_center(), city.yaw, 7.0)
 	ui.set_clip(null)
 	ui.rect(view.grow(3), Color(1, 1, 1, 0.14), 14, 1.5)

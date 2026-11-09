@@ -239,7 +239,6 @@ func draw_buy_competitor() -> void:
 
 
 # ---------- mapa grande de la ciudad (tecla M) ----------
-var map_clients := true      # mostrar los círculos de clientes
 var map_hover := ""
 
 
@@ -250,9 +249,6 @@ func draw_map() -> void:
 	ui.text("MAPA DE LA CIUDAD", Vector2(28, 22), 26, "accent", true)
 	ui.text(Lang.f("Pasa el mouse sobre un edificio para ver sus datos · Clic para ir ahí · %s o Esc para cerrar", Keys.label("map")),
 			Vector2(28, 56), 14, "muted")
-	if ui.button(Rect2(W - 200, 22, 172, 34), "Clientes: sí" if map_clients else "Clientes: no", true, "normal", 14,
-			"Los círculos alrededor de cada local crecen con los clientes que compran ahí al día.", map_clients):
-		map_clients = not map_clients
 	var view := Rect2(20, 86, W - 40, (W - 40) * CityMap.WORLD.size.y / CityMap.WORLD.size.x)
 	var scale := view.size.x / CityMap.WORLD.size.x
 	var center := CityMap.WORLD.get_center()
@@ -274,12 +270,12 @@ func draw_map() -> void:
 			if it.kind != kind or (hot != null and it.id == hot.id):
 				continue
 			var k := ui.tween("map" + it.id, 0.0, 0.3)
-			CityMap.draw_item(ui, it, CityMap.rect_to_screen(view, center, scale, it.rect), k, scale, map_clients)
+			CityMap.draw_item(ui, it, CityMap.rect_to_screen(view, center, scale, it.rect), k, scale)
 	var me := CityMap.to_screen(view, center, scale, city.player.position.x, city.player.position.z)
 	CityMap.draw_player(ui, me, city.yaw, 10.0)
 	if hot != null:   # el elegido va encima de todo y se agranda
 		var k := ui.tween("map" + hot.id, 1.0, 0.3)
-		CityMap.draw_item(ui, hot, CityMap.rect_to_screen(view, center, scale, hot.rect), k, scale, map_clients)
+		CityMap.draw_item(ui, hot, CityMap.rect_to_screen(view, center, scale, hot.rect), k, scale)
 	ui.set_clip(null)
 	ui.rect(view, Color(1, 1, 1, 0.15), 0, 1.5)
 	# Ficha del edificio bajo el mouse
