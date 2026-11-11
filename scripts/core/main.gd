@@ -85,7 +85,7 @@ func _process(dt: float) -> void:
 	var overlay_open: bool = city.overlays.open()
 	city.hud.draw(mouse, mouse_clicked and not overlay_open, size)
 	# Desenfoque: con un menú abierto la ciudad de fondo se desenfoca (en el armario no: hay que ver al personaje)
-	var goal := 1.0 if city.settings.blur and overlay_open and city.overlays.mode != "personaje" else 0.0
+	var goal := 1.0 if city.settings.blur and overlay_open and not city.overlays.mode in ["personaje", "decorar"] else 0.0
 	blur = move_toward(blur, goal, dt * 6)
 	blur_rect.material.set_shader_parameter("amount", blur * blur * (3 - 2 * blur) * 1.4 if warm_blur == 0 else 0.02)
 	blur_rect.visible = blur > 0.01 or warm_blur > 0

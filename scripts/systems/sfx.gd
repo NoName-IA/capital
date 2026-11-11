@@ -54,6 +54,17 @@ func next_song() -> void:
 	music.play()
 
 
+## Pone la canción i de SONGS ahora mismo (un clic en los créditos). Después sigue la lista como siempre.
+func play_song(i: int) -> void:
+	if i < 0 or i >= SONGS.size():
+		return
+	queue.erase(i)
+	song = i
+	music.stream = load("res://assets/sonidos/musica/%s.mp3" % SONGS[song][0])
+	fade = 0.0
+	music.play()
+
+
 func now_playing() -> Array:
 	return SONGS[song] if song >= 0 else []
 

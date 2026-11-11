@@ -58,8 +58,12 @@ var marks := {}               # dónde quedó dibujado cada botón importante es
 var quit_requested := false
 var unread := 0               # avisos que llegaron y todavía no viste en Noticias
 var confirm = null            # pregunta de confirmación: {title, detail, yes, action, danger}
+var exp_mall := 0             # centro comercial que se ve en la pestaña Expansión (0 avenida, 1 playa)
 var decor_loc := -1           # sucursal que se está decorando (ventana "decorar")
 var rival_sel := "starbucks"  # rival elegido en la pestaña Rivales
+var quiet := false            # durante el tutorial: la franja de abajo no muestra noticias (lo pone la ciudad)
+var open_office_decor = null  # Callable() que pone la ciudad: personalizar la oficina
+var open_decor = null         # Callable(id) que pone la ciudad: decorar una sucursal mirándola en 3D
 var go_to_loc = null          # Callable(loc) que pone la ciudad: viajar a una sucursal desde la tablet
 
 
@@ -141,8 +145,8 @@ func update(dt: float) -> void:
 		save(true)
 
 
-func new_game(mode := "normal") -> void:
-	game = Game.new(null, mode)
+func new_game(mode := "normal", first_stall := true) -> void:
+	game = Game.new(null, mode, first_stall)
 	view = "game"
 	tab = "resumen"
 	sel = "cafe"
@@ -629,14 +633,13 @@ func start_named_game() -> void:
 		say("Escribe un nombre de al menos 2 letras.", "bad")
 		return
 	naming = false
-	new_game(name_mode)
+	new_game(name_mode, false)
 	just_created = true
 	game.company = name
 	game.news.clear()
-	game.add_news(Lang.f("Fundaste %s con un puesto de café y %s en caja. ¡A vender!", [name, Fmt.money(game.cash)]), "good")
+	game.add_news(Lang.f("Fundaste %s con %s en caja. Compra tu primer puesto.", [name, Fmt.money(game.cash)]), "good")
 	if name_mode == "inversionista":
 		game.add_news("Modo inversionista: tienes capital para crecer rápido. No hay final: llega a Mil millonario.", "info")
-	game.add_news("Consejo: en Mercado puedes ver la curva de precio y el precio que maximiza tu utilidad.", "info")
 
 
 ## Teclas mientras escribes el nombre: letras, borrar, Enter para empezar y Esc para volver.
@@ -681,7 +684,7 @@ func draw_mode_picker() -> void:
 	ui.text("¿Cómo quieres jugar?", Vector2(W / 2, 62), 38, "text", true, "center")
 	ui.text(Lang.f("Se guardará en el espacio %d.", slot), Vector2(W / 2, 122), 16, "muted", false, "center")
 	var cards := [
-		["normal", "Empiezas desde abajo con un puesto de café. Sube rango por rango hasta construir tu imperio.",
+		["normal", "Empiezas con poca plata y compras tu primer puesto. Sube rango por rango hasta construir tu imperio.",
 		 [["Capital inicial", Fmt.short(D.MODES.normal.start_cash), "green"], ["Meta", Lang.f("Imperio · %s", Fmt.short(D.WIN_VALUE)), "accent"],
 		  ["Duración", "Unos 40 min", "text"], ["Rangos", str(D.MODES.normal.ranks), "text"]]],
 		["inversionista", "Tienes capital para crecer rápido. No hay final: usa la bolsa, la gestión y las adquisiciones para llegar a Mil millonario.",
@@ -764,13 +767,15 @@ func draw_top() -> void:
 		[190, "Fecha", g.date_str(), "text", null],
 		[415, "Caja", Fmt.money(g.cash), sc(g.cash), "Dinero disponible. Puede ser negativa (sobregiro), pero pagas un interés muy alto."],
 		[560, "Valor empresa", Fmt.money(g.valuation()), "accent",
-		 "Valoración: EBITDA anual × múltiplo + caja + bonos + inventario − deuda. Define tu rango."],
+		 "Valoración: EBITDA anual × múltiplo + caja + bonos + inventario − deuda. Define tu rango." if g.investing() else
+		 "Valoración: EBITDA anual × múltiplo + caja + inventario − deuda. Define tu rango."],
 		[715, "Economía", Lang.f("%s (%s)", [ph.name, Fmt.num(g.econ_index, 2)]), econ_color,
 		 "Índice de actividad económica (1,00 = normal). Afecta la demanda según la elasticidad ingreso de cada producto."],
 		[885, "Inflación", Fmt.pct(g.inflation), "text",
 		 "Inflación anual. Tus costos, salarios y alquileres suben; el precio de referencia del mercado también."],
 		[975, "Tasa BC", Fmt.pct(g.policy_rate), "text",
-		 "Tasa del banco central. Sube cuando hay inflación. Define el costo de los préstamos y el rendimiento de los bonos."],
+		 "Tasa del banco central. Sube cuando hay inflación. Define el costo de los préstamos y el rendimiento de los bonos." if g.investing() else
+		 "Tasa del banco central. Sube cuando hay inflación. Define el costo de los préstamos."],
 	]
 	for it in items:
 		ui.text(it[1], Vector2(it[0], 9), 12, "muted")
@@ -800,7 +805,7 @@ func draw_side() -> void:
 			tab = TABS[i][0]
 			confirm_sell = null
 	var info := g.rank_info()
-	var y := H - 200
+	var y := H - 96
 	ui.text("Rango", Vector2(16, y), 13, "muted")
 	ui.text(info[1], Vector2(16, y + 18), 17, "accent", true, "topleft", SIDE - 24)
 	if info[2] != null:
@@ -808,13 +813,7 @@ func draw_side() -> void:
 		ui.bar(Rect2(16, y + 48, SIDE - 32, 8), (info[3] - lo) / (info[2][0] - lo), "accent")
 		ui.text(Lang.f("Siguiente: %s", Fmt.short(info[2][0])), Vector2(16, y + 62), 12, "muted")
 		ui.tooltip(Rect2(16, y, SIDE - 32, 80), Lang.f("Llega a un valor de empresa de %s para ser %s.", [Fmt.money(info[2][0]), info[2][1]]))
-	if ui.button(Rect2(12, H - 118, SIDE - 24, 32), "Guardar", true, "normal", 14):
-		save()
-	if ui.button(Rect2(12, H - 80, SIDE - 24, 32), "Nuevo juego", true, "normal", 14):
-		modal = "new"
-	if ui.button(Rect2(12, H - 42, SIDE - 24, 32), "Menú principal", true, "normal", 14):
-		save(true)
-		view = "menu"
+	# (guardar, partida nueva y menú principal están en el menú de pausa, no en la tablet)
 
 
 func draw_ticker() -> void:
@@ -830,7 +829,7 @@ func draw_ticker() -> void:
 		text = toast[0]
 		kind = toast[1]
 		ui.text("»", Vector2(r.position.x + 12, r.get_center().y), 16, ImUI.KIND_COLOR[kind], true, "midleft")
-	elif g.news:
+	elif g.news and not quiet:
 		text = g.news[-1].text
 		kind = g.news[-1].kind
 	else:
@@ -908,6 +907,28 @@ const DILEMMA_STYLE := {
 }
 
 
+static var rival_textures := {}
+
+
+## Logo de la marca o foto del rival (assets/imagenes/rivales/<clave>.png), o null si no hay.
+static func rival_texture(key: String):
+	if not rival_textures.has(key):
+		var path := "res://assets/imagenes/rivales/%s.png" % key
+		rival_textures[key] = load(path) if ResourceLoader.exists(path) else null
+	return rival_textures[key]
+
+
+## El ícono redondo de un rival: su logo o su foto, con un borde de su color (si no hay imagen, sus iniciales).
+static func rival_badge(ui: ImUI, r: Dictionary, c: Vector2, radius: float, dim := false) -> void:
+	var tex = rival_texture(r.key)
+	if tex == null:
+		ui.circle(c, radius, r.color if not dim else Color(r.color, 0.35))
+		ui.text(initials(r), c + Vector2(0, 1), radius * 0.75, Color8(16, 20, 30), true, "center")
+		return
+	ui.circle(c, radius + 2.5, r.color if not dim else Color(r.color, 0.35))
+	ui.image(tex, Rect2(c - Vector2(radius, radius), Vector2(radius, radius) * 2), Color(1, 1, 1, 0.45 if dim else 1.0))
+
+
 ## Iniciales de un rival para su ícono (sin "Dr." ni "Doña").
 static func initials(r: Dictionary) -> String:
 	var out := ""
@@ -966,7 +987,7 @@ func draw_dilemma() -> void:
 		Icons.draw(ui, look[0], ic, 40, Color8(16, 20, 30))
 	var tx := ic.x + 56
 	var dp := g.date_parts()
-	ui.text(Lang.f("DECISIÓN URGENTE · DÍA %d DE %s", [dp[0], String(dp[1]).to_upper()]), Vector2(tx, box.position.y + 30), 13,
+	ui.text(Lang.f("DECISIÓN IMPORTANTE · PARA SIEMPRE · DÍA %d DE %s" if c.get("key", false) else "DECISIÓN URGENTE · DÍA %d DE %s", [dp[0], String(dp[1]).to_upper()]), Vector2(tx, box.position.y + 30), 13,
 			Notifications.light(accent, 0.3), true)
 	ui.text(c.title, Vector2(tx, box.position.y + 50), 30, "text", true, "topleft", box.end.x - tx - pad)
 	var cash_r := Rect2(box.end.x - pad - 200, box.position.y + 22, 200, 30)
@@ -1001,7 +1022,7 @@ func draw_resumen(g: Game) -> void:
 	var cur := Game.statement(g.ledger)
 	var net_margin: float = last.utilidad_neta / last.ingresos if last != null and last.ingresos else 0.0
 	var cards := [
-		["Caja", Fmt.money(g.cash), sc(g.cash), Lang.f("Bonos: %s", Fmt.money(g.bonds)), "Dinero disponible para invertir y pagar costos."],
+		["Caja", Fmt.money(g.cash), sc(g.cash), Lang.f("Bonos: %s", Fmt.money(g.bonds)) if g.investing() else "Para crecer y pagar", "Dinero disponible para crecer y pagar costos."],
 		["Ingresos del mes", Fmt.money(cur.ingresos), "text",
 		 Lang.f("Mes pasado: %s", Fmt.money(last.ingresos)) if last != null else "Tu primer mes",
 		 "Precio × unidades vendidas en lo que va del mes."],
@@ -1116,10 +1137,9 @@ func draw_negocios(g: Game) -> void:
 		if place.is_empty():
 			tip = g.no_place_reason(s)
 		elif place[0] == "mall":
-			tip = Lang.f("Va a la vitrina %d del centro comercial (la avenida está llena). ", place[1] + 1) + tip
+			tip = Lang.f("Va a la vitrina %d de %s (la avenida está llena). ", [place[1] % int(D.MALL.slots) + 1, Lang.noun(D.MALLS[Game.mall_index(place[1])].name)]) + tip
 		if ui.button(Rect2(rx + 20 + s * (bw + 12), y, bw, 34), Lang.f("Abrir %s (%s)", [size.name, Fmt.short(cost)]), g.cash >= cost and not place.is_empty(), "normal", 15, tip):
-			ask(Lang.f("¿Abrir un %s de %s?", [Lang.noun(size.name), Lang.noun(d.name)]), tip, Lang.f("Sí, abrir (%s)", Fmt.short(cost)),
-					g.open_location.bind(key, s))
+			act(g.open_location(key, s))   # se abre sin preguntar
 	y += 44
 	var units_month: float = p.ema_sales * 30
 	var no_factory_cost: float = g.unit_cost(p) / (1 - D.FACTORY_SAVING) if p.factory else g.unit_cost(p)
@@ -1211,10 +1231,13 @@ func draw_negocios(g: Game) -> void:
 			ui.text(Fmt.short(loc.month_contrib), Vector2(x0 + 476, cy), 15, "muted", false, "midright")
 			ui.text("—", Vector2(x0 + 544, cy), 15, "muted", false, "midright")
 		var n_dec: int = loc.get("upgrades", []).size()
-		if ui.button(Rect2(x0 + 552, cy - 14, 76, 28), Lang.f("Decorar %d/%d", [n_dec, D.UPGRADES.size()]) if n_dec else "Decorar", true, "normal", 13,
-				"Compra artículos para este local: plantas, letrero luminoso, música, wifi, terraza, aire acondicionado..."):
+		if ui.button(Rect2(x0 + 552, cy - 14, 76, 28), Lang.f("Decorar %d/%d", [n_dec, D.upgrades_for(int(loc.size)).size()]) if n_dec else "Decorar", true, "normal", 13,
+				"Compra artículos para este local: plantas, letrero luminoso, terraza, aire acondicionado..."):
 			decor_loc = loc.id
-			modal = "decorar"
+			if open_decor != null:
+				open_decor.call(loc.id)
+			else:
+				modal = "decorar"
 		var up = g.upgrade_cost(loc)
 		var up_tip := Lang.f("Ampliar a %s por %s: más tráfico y más empleados posibles.", [D.SIZES[loc.size + 1].name, Fmt.money(up)]) if up != null else ("Ya es una megatienda." if loc.size >= 2 else "En una vitrina del centro comercial no cabe una megatienda.")
 		if ui.button(Rect2(x0 + 633, cy - 14, 68, 28), "Ampliar", up != null and g.cash >= up, "normal", 13, up_tip):
@@ -1475,6 +1498,9 @@ func draw_finanzas(g: Game) -> void:
 
 	var rx := CX + lw + 12
 	var rw := CW - lw - 12
+	if not g.investing():
+		_draw_taxes(g, rx, CY, rw, CH)
+		return
 	ui.panel(Rect2(rx, CY, rw, 316), "Bonos del gobierno",
 			"Inversión sin riesgo que paga la tasa del banco central. Es el costo de oportunidad de tu dinero: cualquier inversión en el negocio debería rendir más que esto.")
 	x = rx + 20
@@ -1505,10 +1531,14 @@ func draw_finanzas(g: Game) -> void:
 	ui.wrap_text("Costo de oportunidad: si una sucursal te rinde menos que estos bonos, ese dinero estaría mejor aquí. Si rinde más, conviene invertirlo en el negocio.",
 			Rect2(x, y + 50, w, 80), 13, "muted")
 
-	var y0 := CY + 328
-	ui.panel(Rect2(rx, y0, rw, CH - 328), "Impuestos y riesgo")
-	x = rx + 20
-	y = y0 + 46
+	_draw_taxes(g, rx, CY + 328, rw, CH - 328)
+
+
+func _draw_taxes(g: Game, rx: float, y0: float, rw: float, ph: float) -> void:
+	ui.panel(Rect2(rx, y0, rw, ph), "Impuestos y riesgo")
+	var x := rx + 20
+	var w := rw - 40
+	var y := y0 + 46
 	var taxes := 0.0
 	for h in g.history.slice(max(0, g.history.size() - 12)):
 		taxes += h.impuestos
@@ -1533,53 +1563,66 @@ func draw_expansion(g: Game) -> void:
 	var y := CY + 46
 	var on_avenue := g.locations.filter(func(l): return Game.plot_of(l) >= 0).size()
 	var free_plots := g.free_plots().size()
-	y = ui.row(x, y, w, "Terrenos de la avenida libres", Lang.f("%d de %d", [free_plots, D.PLOT_COUNT]), "green" if free_plots else "orange",
+	y = ui.row(x, y, w, "Terrenos libres", Lang.f("%d de %d", [free_plots, D.LOT_PLOTS.size()]), "green" if free_plots else "orange",
 			"Los rivales también compran terrenos vacíos. Los locales de la competencia que compras quedan en su edificio.")
 	y = ui.row(x, y, w, "Tus sucursales en la avenida", str(on_avenue))
 	y += 6
-	ui.text("Centro comercial", Vector2(x, y), 17, "accent", true)
-	y += 28
-	if not g.mall:
-		ui.wrap_text(Mall.mall_pitch(g), Rect2(x, y, w, 100), 14, "muted")
-		y += 104
-		ui.wrap_text("Está frente a tu oficina central: cuando lo compras se construye y puedes entrar a ver tus tiendas.", Rect2(x, y, w, 40), 14, "text")
-		y += 46
-		var cost := g.mall_cost()
+	# Los dos centros comerciales: una pestañita para cada uno
+	var half := (w - 8) / 2
+	for mi in D.MALLS.size():
+		var lbl: String = "Frente a la oficina" if mi == 0 else "En la playa"
+		if ui.button(Rect2(x + mi * (half + 8), y, half, 30), lbl, true, "normal", 14, null, exp_mall == mi):
+			exp_mall = mi
+	y += 40
+	var md: Dictionary = D.MALLS[exp_mall]
+	if not g.has_mall(exp_mall):
+		ui.wrap_text(Mall.mall_pitch(g, exp_mall), Rect2(x, y, w, 60), 14, "muted")
+		y += 66
+		var cost := g.mall_cost(exp_mall)
 		marks["comprar_cc"] = Rect2(x, y, w, 40)
-		if ui.button(Rect2(x, y, w, 40), Lang.f("Construir el centro comercial (%s)", Fmt.money(cost)), g.cash >= cost, "primary", 16, Mall.mall_pitch(g)):
-			ask(Lang.f("¿Comprar el centro comercial por %s?", Fmt.money(cost)), Mall.mall_pitch(g), Lang.f("Sí, construir (%s)", Fmt.short(cost)), g.buy_mall)
+		if ui.button(Rect2(x, y, w, 40), Lang.f("Construir %s (%s)", [Lang.noun(md.name), Fmt.money(cost)]), g.cash >= cost, "primary", 16, Mall.mall_pitch(g, exp_mall)):
+			ask(Lang.f("¿Comprar %s por %s?", [Lang.noun(md.name), Fmt.money(cost)]), Mall.mall_pitch(g, exp_mall), Lang.f("Sí, construir (%s)", Fmt.short(cost)), g.buy_mall.bind(exp_mall))
 	else:
+		var n := int(D.MALL.slots)
+		var base := exp_mall * n
 		var by_slot := {}
 		for loc in g.locations:
-			if Game.mall_of(loc) >= 0:
-				by_slot[Game.mall_of(loc)] = loc
-		var n := int(D.MALL.slots)
-		y = ui.row(x, y, w, "Vitrinas ocupadas", Lang.f("%d de %d", [by_slot.size(), n]), "accent")
-		var saved := 0.0
-		for loc in by_slot.values():
-			saved += D.SIZES[loc.size].rent * g.price_index * (1.0 - D.MALL.rent_mult)
-		y = ui.row(x, y, w, "Mantenimiento y seguridad", Lang.f("%s/mes", Fmt.money(g.mall_upkeep_monthly())), "red")
-		y = ui.row(x, y, w, "Ahorro de alquiler de tus vitrinas", Lang.f("%s/mes", Fmt.money(saved)), "green",
-				"Las tiendas del centro comercial pagan la mitad del alquiler porque el edificio es tuyo.")
+			var m := Game.mall_of(loc)
+			if m >= base and m < base + n:
+				by_slot[m - base] = loc
+		var rivals := 0
+		for i in n:
+			if g.rival_mall.has(str(base + i)):
+				rivals += 1
+		y = ui.row(x, y, w, "Vitrinas tuyas / de rivales", Lang.f("%d / %d de %d", [by_slot.size(), rivals, n]), "accent")
+		y = ui.row(x, y, w, "Mantenimiento", Lang.f("%s/mes", Fmt.money(md.upkeep * g.price_index)), "red")
 		y += 6
 		var cols := 4
 		var tw := (w - (cols - 1) * 8) / cols
-		var th := 54.0
+		var th := 50.0
 		for i in n:
 			var r := Rect2(x + (i % cols) * (tw + 8), y + (i / cols) * (th + 8), tw, th)
 			var loc = by_slot.get(i)
-			if loc == null:
+			var rk = g.rival_mall.get(str(base + i))
+			if rk != null:
+				var rv := D.rival_for(rk)
+				ui.rect(r, Color(rv.color, 0.25), 8)
+				ui.rect(r, Color(rv.color, 0.8), 8, 1)
+				ui.text(Lang.f("Vitrina %d", i + 1), r.position + Vector2(10, 6), 13, "muted", true)
+				ui.text(rv.company, r.position + Vector2(10, 27), 12, "text", false, "topleft", tw - 16)
+				ui.tooltip(r, Lang.f("%s arrienda esta vitrina (%s). Te paga alquiler. Ve y apreta E para comprársela.", [rv.company, Lang.noun(D.PRODUCTS[rk].name)]))
+			elif loc == null:
 				ui.rect(r, "panel2", 8)
 				dashed_rect(r, "border")
-				ui.text(Lang.f("Vitrina %d", i + 1), r.position + Vector2(10, 8), 13, "muted", true)
-				ui.text("Disponible", r.position + Vector2(10, 30), 13, "green")
-				ui.tooltip(r, "Ve al centro comercial y apreta E frente a la vitrina, o abre un puesto o local en Negocios: va al primer lugar libre.")
+				ui.text(Lang.f("Vitrina %d", i + 1), r.position + Vector2(10, 6), 13, "muted", true)
+				ui.text("Disponible", r.position + Vector2(10, 27), 13, "green")
+				ui.tooltip(r, "Ve al centro comercial y apreta E frente a la vitrina.")
 			else:
 				var pc: Color = Blueprints.PRODUCT_COLORS[loc.product]
 				ui.rect(r, Color(pc, 0.35), 8)
 				ui.rect(r, pc, 8, 1)
-				ui.text(Lang.f("Vitrina %d", i + 1), r.position + Vector2(10, 8), 13, "text", true)
-				ui.text(Lang.f("%s · %s", [D.SIZES[loc.size].name, D.PRODUCTS[loc.product].name]), r.position + Vector2(10, 30), 12, "text", false, "topleft", tw - 16)
+				ui.text(Lang.f("Vitrina %d", i + 1), r.position + Vector2(10, 6), 13, "text", true)
+				ui.text(Lang.f("%s · %s", [D.SIZES[loc.size].name, D.PRODUCTS[loc.product].name]), r.position + Vector2(10, 27), 12, "text", false, "topleft", tw - 16)
 				ui.tooltip(r, Lang.f("%s de %s · vendió %s ayer · demanda %s", [D.SIZES[loc.size].name, Lang.noun(D.PRODUCTS[loc.product].name), Fmt.num(loc.sold), Fmt.num(loc.demand)]))
 				if go_to_loc != null and ui.hover(r):
 					ui.rect(r, "accent", 8, 2)
@@ -1677,10 +1720,46 @@ func draw_crecimiento(g: Game) -> void:
 			ask(Lang.f("¿Instalar %s?", nxt[0]), "Baja los gastos corporativos de tener muchas sucursales.", Lang.f("Sí, instalar (%s)", Fmt.short(cost)), g.upgrade_hq)
 
 	var y0 := CY + 312
+	if g.investing():
+		_draw_fund(g, y0, lw, w)
+	else:
+		_draw_office_looks(g, y0, lw)
+	_draw_titles(g, lw)
+
+
+## Aspecto de la oficina: los cuatro, cuál tienes, cuáles ya se pueden comprar y desde qué rango.
+func _draw_office_looks(g: Game, y0: float, lw: float) -> void:
+	ui.panel(Rect2(CX, y0, lw, CH - 312), "Aspecto de la oficina")
+	var x := CX + 20
+	var w := lw - 40
+	var y := y0 + 46
+	for i in D.OFFICE_LOOKS.size():
+		var look: Array = D.OFFICE_LOOKS[i]
+		var have: bool = i <= g.office_look
+		var open: bool = g.rank >= int(look[1])
+		ui.text(look[0], Vector2(x, y + 6), 15, "accent" if i == g.office_look else ("text" if open else "muted"), i == g.office_look)
+		var r := Rect2(x + w - 150, y, 150, 30)
+		if i == g.office_look:
+			ui.text("La tuya", r.get_center(), 14, "green", true, "center")
+		elif have:
+			ui.text("—", r.get_center(), 14, "muted", false, "center")
+		elif not open:
+			ui.text(Lang.f("Rango: %s", D.RANKS[int(look[1])][1]), Vector2(r.end.x, r.get_center().y), 13, "muted", false, "midright")
+		else:
+			var cost := g.office_look_cost(i)
+			if ui.button(r, Lang.f("Remodelar (%s)", Fmt.short(cost)), g.cash >= cost and i == g.office_look + 1, "primary", 13):
+				act(g.buy_office_look(i))
+		y += 38
+	if open_office_decor != null and ui.button(Rect2(x, y + 6, w, 36),
+			Lang.f("Personalizar la oficina (%d/%d)", [g.office_decor.size(), D.OFFICE_DECOR.size()]), true, "normal", 14):
+		open_office_decor.call()
+
+
+func _draw_fund(g: Game, y0: float, lw: float, w: float) -> void:
 	ui.panel(Rect2(CX, y0, lw, CH - 312), "Fondo de inversión (bolsa)",
 			"Riesgo y rentabilidad: en promedio rinde más que los bonos, pero sube y baja todos los días y cae fuerte en recesión.")
-	x = CX + 20
-	y = y0 + 46
+	var x := CX + 20
+	var y := y0 + 46
 	var expected: float = D.FUND_RETURN[g.phase]
 	y = ui.row(x, y, w, "Invertido (valor de mercado)", Fmt.money(g.fund), "accent")
 	y = ui.row(x, y, w, Lang.f("Rendimiento esperado en %s", Lang.noun(D.PHASES[g.phase].name)), Fmt.pct(expected),
@@ -1704,12 +1783,14 @@ func draw_crecimiento(g: Game) -> void:
 	if ui.button(Rect2(x + 2 * (bw + 5), y, bw, 34), "Retirar todo", g.fund > 0):
 		act(g.withdraw_fund(g.fund))
 
+
+func _draw_titles(g: Game, lw: float) -> void:
 	var rx := CX + lw + 12
 	var rw := CW - lw - 12
 	ui.panel(Rect2(rx, CY, rw, CH), "Títulos")
-	x = rx + 20
-	w = rw - 40
-	y = CY + 46
+	var x := rx + 20
+	var w := rw - 40
+	var y := CY + 46
 	var mins := g.play_seconds / 60.0
 	y = ui.row(x, y, w, "Tiempo de juego", Lang.f("%d h %02d min", [int(mins / 60), int(mins) % 60]) if mins >= 60 else Lang.f("%d min", roundi(mins)))
 	y = ui.row(x, y, w, "Modo", D.MODES[g.mode].name, "accent")
@@ -1799,8 +1880,11 @@ func draw_reportes(g: Game) -> void:
 	var x := rx + 20
 	var w := rw - 40
 	y = CY + 44
-	for it in [["Caja", "caja"], ["Bonos", "bonos"], ["Fondo de inversión", "fondo"], ["Inventario", "inventario"],
-			["Activos fijos netos", "activos_fijos"]]:
+	var b_rows := [["Caja", "caja"], ["Bonos", "bonos"], ["Fondo de inversión", "fondo"], ["Inventario", "inventario"],
+			["Activos fijos netos", "activos_fijos"]]
+	if not g.investing():
+		b_rows = b_rows.filter(func(it): return not it[1] in ["bonos", "fondo"])
+	for it in b_rows:
 		y = ui.row(x, y, w, it[0], Fmt.money(b[it[1]]), "text", null, 14)
 	y = ui.row(x, y, w, "Total activos", Fmt.money(b.activos), "accent", null, 14)
 	y += 4
@@ -1862,12 +1946,20 @@ func draw_noticias(g: Game) -> void:
 
 
 # ---------- Conceptos ----------
+## En el modo normal no se habla de bolsa ni de bonos.
+static func concepts_for(g: Game) -> Array:
+	if g.investing():
+		return D.CONCEPTS
+	return D.CONCEPTS.filter(func(c): return not ("bonos" in c[1] or "bolsa" in c[1]))
+
+
 func draw_conceptos(g: Game) -> void:
 	ui.panel(Rect2(CX, CY, CW, CH), "Conceptos de economía y rentabilidad que usa el juego")
 	var area := Rect2(CX + 10, CY + 44, CW - 20, CH - 54)
 	var colw := (area.size.x - 30) / 2
-	var heights: Array = cached("concept_heights", func():
-		return D.CONCEPTS.map(func(c): return ui.wrap_height(c[1], colw - 24, 14) + 48))
+	var concepts := concepts_for(g)
+	var heights: Array = cached("concept_heights_%d" % concepts.size(), func():
+		return concepts.map(func(c): return ui.wrap_height(c[1], colw - 24, 14) + 48))
 	var rows := []
 	for i in range(0, heights.size(), 2):
 		rows.append(heights.slice(i, i + 2).max())
@@ -1877,12 +1969,12 @@ func draw_conceptos(g: Game) -> void:
 	var s := scroll_area("concepts", area, total + 10)
 	ui.set_clip(area)
 	var y := area.position.y - s
-	for i in range(0, D.CONCEPTS.size(), 2):
+	for i in range(0, concepts.size(), 2):
 		var h: float = rows[i / 2]
 		for j in 2:
-			if i + j >= D.CONCEPTS.size():
+			if i + j >= concepts.size():
 				break
-			var c: Array = D.CONCEPTS[i + j]
+			var c: Array = concepts[i + j]
 			var x := area.position.x + 10 + j * (colw + 10)
 			if y + h > area.position.y and y < area.end.y:
 				ui.rect(Rect2(x, y, colw, h - 8), "panel2", 8)
@@ -2023,8 +2115,7 @@ func draw_rivales(g: Game) -> void:
 		if hot and ui.clicked:
 			rival_sel = r.key
 		var c := rect.position + Vector2(38, 40)
-		ui.circle(c, 26, r.color if active else Color(r.color, 0.35))
-		ui.text(initials(r), c + Vector2(0, 1), 19, Color8(16, 20, 30), true, "center")
+		rival_badge(ui, r, c, 26, not active)
 		ui.text(r.company, rect.position + Vector2(74, 18), 16, "text" if active else "muted", true, "topleft", cw - 84)
 		ui.text(r.name, rect.position + Vector2(74, 40), 13, "muted", false, "topleft", cw - 84)
 		ui.text(D.RIVAL_STYLES[r.style][0], rect.position + Vector2(74, 58), 12, Notifications.light(r.color, 0.3), true, "topleft", cw - 84)
@@ -2043,8 +2134,7 @@ func draw_rivales(g: Game) -> void:
 	var r := D.rival_by_key(rival_sel)
 	var p := ui.panel(Rect2(CX, y0, lw, CY + CH - y0))
 	var st := g.rival_state(r.key)
-	ui.circle(p.position + Vector2(48, 48), 30, r.color)
-	ui.text(initials(r), p.position + Vector2(48, 49), 22, Color8(16, 20, 30), true, "center")
+	rival_badge(ui, r, p.position + Vector2(48, 48), 30)
 	ui.text(r.name, p.position + Vector2(92, 18), 22, "text", true)
 	var markets: Array = r.products if r.products else r.get("needs", [])
 	var mk := ", ".join(markets.map(func(k): return D.PRODUCTS[k].name)) if markets else Lang.t("todos los mercados")

@@ -106,12 +106,12 @@ static func _tiles_texture() -> Texture2D:
 ## Una luz en `pos` (local a `parent`: si el padre se mueve, como un auto, la luz va con él). `level` es como el nivel
 ## de luz de Minecraft: alumbra hasta `level` metros y a 15 está a toda fuerza. Las de adentro (`indoor`) siempre están
 ## prendidas y alumbran solo el local donde están; las de afuera se prenden al atardecer (ver shaders/world.gdshader).
-## `moving`: va con algo que se mueve (los focos de un auto).
-static func add_light(parent: Node3D, pos: Vector3, level: float, indoor := false, moving := false) -> Node3D:
+## `moving`: va con algo que se mueve (los focos de un auto). `warm`: luz ámbar de ampolleta (los puestos).
+static func add_light(parent: Node3D, pos: Vector3, level: float, indoor := false, moving := false, warm := false) -> Node3D:
 	var n := Node3D.new()
 	n.position = pos
 	parent.add_child(n)
-	lights.append([n, level, indoor, moving])
+	lights.append([n, level, indoor, moving, warm])
 	return n
 
 

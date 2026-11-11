@@ -73,28 +73,37 @@ static func items(city) -> Array:
 				"color": c.rival.color, "icon": "", "target": t[0], "yaw": t[1], "clients": clients, "lost": 0.0})
 	# Terrenos en venta
 	for i in city.lots:
-		var plot: Array = City.PLOTS[i]
+		var plot: Array = City.plot_pos(i)
 		var t := plot_target(plot)
 		var beach: bool = i in D.BEACH_PLOTS
 		out.append({"id": "l%d" % i, "kind": "lot", "rect": plot_rect(plot, 1),
 				"name": Lang.f("Terreno %d en venta%s", [i + 1, " · playa" if beach else ""]),
 				"sub": Lang.f("Desde %s. Ve y apreta E para construir.", Fmt.short(g.location_cost(0))),
 				"color": LOT, "icon": "", "target": t[0], "yaw": t[1], "clients": 0.0, "lost": 0.0})
-	# Centro comercial (o su terreno en obra)
-	var mall_t := Mall.entrance()
-	if g.mall:
-		var used: int = g.locations.filter(func(l): return Game.mall_of(l) >= 0).size()
-		out.append({"id": "mall", "kind": "place", "rect": Mall.world_rect(), "name": "Tu centro comercial",
-				"sub": Lang.f("%d de %d vitrinas ocupadas. Entra y apreta E frente a una vitrina libre.", [used, int(D.MALL.slots)]),
-				"color": GOLD, "icon": "box", "target": mall_t, "yaw": 180.0, "clients": 0.0, "lost": 0.0})
-	else:
-		out.append({"id": "mall", "kind": "lot", "rect": Mall.world_rect(), "name": "Terreno del centro comercial",
-				"sub": Lang.f("%d vitrinas para puestos y locales · cómpralo por %s", [int(D.MALL.slots), Fmt.short(g.mall_cost())]),
-				"color": LOT, "icon": "", "target": mall_t, "yaw": 180.0, "clients": 0.0, "lost": 0.0})
+	# Centros comerciales (o sus terrenos en obra)
+	for mi in D.MALLS.size():
+		var mall_t := Mall.entrance(mi)
+		var yaw := Mall.entrance_yaw(mi)
+		var mname: String = Mall.name_of(mi)
+		var id := "mall" if mi == 0 else "mall%d" % mi
+		if g.has_mall(mi):
+			var n := int(D.MALL.slots)
+			var used: int = g.locations.filter(func(l): return Game.mall_of(l) >= mi * n and Game.mall_of(l) < (mi + 1) * n).size()
+			var riv := 0
+			for k in g.rival_mall:
+				if Game.mall_index(int(k)) == mi:
+					riv += 1
+			out.append({"id": id, "kind": "place", "rect": Mall.world_rect(mi), "name": Lang.f("Tu %s", Lang.noun(mname)),
+					"sub": Lang.f("%d vitrinas tuyas · %d de rivales · %d libres", [used, riv, n - used - riv]),
+					"color": GOLD, "icon": "box", "target": mall_t, "yaw": yaw, "clients": 0.0, "lost": 0.0})
+		else:
+			out.append({"id": id, "kind": "lot", "rect": Mall.world_rect(mi), "name": Lang.f("Terreno: %s", Lang.noun(mname)),
+					"sub": Lang.f("%d vitrinas · cómpralo por %s", [int(D.MALL.slots), Fmt.short(g.mall_cost(mi))]),
+					"color": LOT, "icon": "", "target": mall_t, "yaw": yaw, "clients": 0.0, "lost": 0.0})
 	# Tu oficina central
 	var hq_t := Blueprints.to_world(City.HQ, 0, -2.5)
 	out.append({"id": "hq", "kind": "place", "rect": Rect2(City.HQ[0] - 9, 11, 18, 16), "name": "Tu oficina central",
-			"sub": "Computadora, pizarra de estrategia, bolsa, trofeos y armario.", "color": GOLD, "icon": "building",
+			"sub": "Computadora, pizarra de estrategia, bolsa, trofeos y armario." if g.investing() else "Computadora, pizarra de estrategia, trofeos y armario.", "color": GOLD, "icon": "building",
 			"target": hq_t, "yaw": 0.0, "clients": 0.0, "lost": 0.0})
 	# Fábricas (parque industrial)
 	for k in D.PRODUCT_ORDER:

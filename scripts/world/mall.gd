@@ -1,21 +1,29 @@
 class_name Mall
 extends RefCounted
-## El centro comercial frente a tu oficina central (lado sur de la avenida). Mientras no lo compras es un terreno en
-## obra con su cartel; cuando lo compras se construye el edificio: un pasillo con fuente y 16 vitrinas (6 a cada
-## lado y 4 al fondo). Cada vitrina con una sucursal tuya muestra su letrero, mostrador, repisas y un vendedor; las
-## vacías tienen la cortina metálica abajo y el cartel SE ARRIENDA. Ver D.MALL y Game.open_location.
+## Un centro comercial: el de la avenida, frente a tu oficina (lado sur), y el de la playa, del lado de la oficina,
+## sobre el pasto justo antes de la arena. Los dos miran a la avenida. Mientras no lo compras es un terreno en obra con su cartel; cuando lo compras se
+## construye el edificio: un pasillo con fuente y 16 vitrinas (6 a cada lado y 4 al fondo). Cada vitrina con una
+## sucursal tuya muestra su letrero, mostrador, repisas y un vendedor; las vacías tienen la cortina metálica abajo y el
+## cartel SE ARRIENDA. Adentro pasea gente que mira tus vitrinas. Ver D.MALLS y Game.open_location.
 
-const PLOT := [-83, -1]
-const W := 32.0       # ancho (x local)
+# Dónde va cada uno: [x, lado de la calle], como un terreno.
+const PLOTS := [[-84, -1], [85, 1]]
+const PLOT := [-84, -1]   # el de la avenida
+const W := 36.0       # ancho (x local)
 const Z0 := 2.0       # frente (z local, hacia adentro)
-const Z1 := 32.0      # fondo
-const H := 7.0        # alto del cielo del pasillo
-const HALL := 9.0     # el pasillo va de −HALL a HALL
+const Z1 := 33.0      # fondo (detrás del de la playa pasa el pasaje del barrio)
+const H := 7.5        # alto del cielo del pasillo
+const HALL := 10.0    # el pasillo va de −HALL a HALL
 const SHOP_H := 3.6   # alto de la entrada de cada vitrina
-const BACK_Z := 26.0  # las vitrinas del fondo van de BACK_Z a Z1
-const SIDE_Z := [4.0, 26.0]
+const BACK_Z := 26.5  # las vitrinas del fondo van de BACK_Z a Z1
+const SIDE_Z := [4.0, 26.5]
+const LANE := 8.0     # por donde camina la gente a cada lado del pasillo (entre las bancas y las vitrinas)
 
 var city
+var idx := 0          # 0 = frente a la oficina, 1 = la playa
+var plot: Array = PLOT
+var shoppers := []    # gente paseando: {node, at (local), path (local), wait, stops, leaving}
+var spawn_t := 0.0
 var built := false
 var root: Node3D
 var bld: Building = null
@@ -26,8 +34,15 @@ var lot_spot := Vector3.ZERO
 var collide := []     # todo lo que choca (edificio + vitrinas), armado en cada sync
 
 
-func _init(owner_city) -> void:
+func _init(owner_city, index := 0) -> void:
 	city = owner_city
+	idx = index
+	plot = PLOTS[idx]
+
+
+## Número global de la vitrina i de este centro comercial (como lo guarda Game en loc.mall).
+func gslot(i: int) -> int:
+	return idx * int(D.MALL.slots) + i
 
 
 ## Rectángulo local [x0, x1, z0, z1] de la vitrina i y hacia dónde mira su entrada (en x o z local).
@@ -44,18 +59,32 @@ static func slot_rect(i: int) -> Array:
 
 
 ## Centro (x, z) en el mundo del rectángulo que ocupa el centro comercial, para el mapa.
-static func world_rect() -> Rect2:
-	var a := Blueprints.to_world(PLOT, -W / 2, Z0)
-	var b := Blueprints.to_world(PLOT, W / 2, Z1)
+static func world_rect(i := 0) -> Rect2:
+	var a := Blueprints.to_world(PLOTS[i], -W / 2, Z0)
+	var b := Blueprints.to_world(PLOTS[i], W / 2, Z1)
 	return Rect2(min(a.x, b.x), min(a.z, b.z), absf(a.x - b.x), absf(a.z - b.z))
 
 
 ## Dónde quedas al viajar al centro comercial: en la vereda, frente a la puerta.
-static func entrance() -> Vector3:
-	return Blueprints.to_world(PLOT, 0, -2.0)
+static func entrance(i := 0) -> Vector3:
+	return Blueprints.to_world(PLOTS[i], 0, -2.0)
+
+
+## Hacia dónde miras al llegar a la entrada (grados, como City.yaw): hacia adentro.
+static func entrance_yaw(i := 0) -> float:
+	var d := Blueprints.to_world(PLOTS[i], 0, 1.0) - Blueprints.to_world(PLOTS[i], 0, 0.0)
+	return rad_to_deg(atan2(d.x, d.z))
+
+
+static func name_of(i: int) -> String:
+	return D.MALLS[i].name
 
 
 func destroy() -> void:
+	_clear_shoppers()
+	if guard != null and is_instance_valid(guard):
+		guard.queue_free()
+	guard = null
 	for s in slots:
 		_clear_slot(s)
 	slots = []
@@ -74,9 +103,9 @@ func destroy() -> void:
 func sync(g: Game) -> void:
 	if g == null:
 		return
-	if g.mall != built or (root == null and bld == null):
+	if g.has_mall(idx) != built or (root == null and bld == null):
 		destroy()
-		built = g.mall
+		built = g.has_mall(idx)
 		if built:
 			_build()
 			bld.set_brand(g.company)
@@ -90,20 +119,36 @@ func sync(g: Game) -> void:
 # ---------- terreno en obra ----------
 func _build_lot(g: Game) -> void:
 	root = Node3D.new()
-	root.position = Vector3(PLOT[0], 0, PLOT[1] * Blueprints.FRONT)
-	root.rotation.y = PI
+	root.transform = Blueprints.plot_xf(plot)
 	city.add_child(root)
 	var b := Boxes.new()
 	b.box(Vector3(0, 0.015, (Z0 + Z1) / 2), Vector3(W, 0.03, Z1 - Z0), Color8(150, 135, 110))   # tierra
-	# Cerco de obra: paneles azules con postes, abierto al medio para entrar a mirar
+	# Cerco de obra: paneles azules con postes alrededor de todo el terreno (el cartel queda afuera, en la vereda)
 	var blue := Color8(40, 80, 150)
-	for x in range(-16, 17, 4):
-		b.box(Vector3(x, 1.1, Z0), Vector3(0.12, 2.2, 0.12), Color8(200, 200, 200))
-	for seg in [[-16.0, -3.0], [3.0, 16.0]]:
-		var cx: float = (seg[0] + seg[1]) / 2
-		var w: float = seg[1] - seg[0]
-		b.box(Vector3(cx, 1.0, Z0), Vector3(w, 1.8, 0.05), blue)
-		rects.append(_world_rect(seg[0], seg[1], Z0 - 0.1, Z0 + 0.1, 2.0))
+	var post := Color8(200, 200, 200)
+	var hw := W / 2
+	for side in [[Vector2(-hw, Z0), Vector2(GATE[0], Z0)], [Vector2(GATE[1], Z0), Vector2(hw, Z0)], [Vector2(-hw, Z1), Vector2(hw, Z1)],
+			[Vector2(-hw, Z0), Vector2(-hw, Z1)], [Vector2(hw, Z0), Vector2(hw, Z1)]]:
+		var a: Vector2 = side[0]
+		var e: Vector2 = side[1]
+		var along_x := absf(e.x - a.x) > 0.1
+		var length := a.distance_to(e)
+		var c := (a + e) / 2
+		b.box(Vector3(c.x, 1.0, c.y), Vector3(length if along_x else 0.05, 1.8, 0.05 if along_x else length), blue)
+		var n := ceili(length / 4.0)
+		for i in n + 1:
+			var p := a.lerp(e, float(i) / n)
+			b.box(Vector3(p.x, 1.1, p.y), Vector3(0.12, 2.2, 0.12), post)
+		rects.append(_world_rect(min(a.x, e.x) - 0.1, max(a.x, e.x) + 0.1, min(a.y, e.y) - 0.1, max(a.y, e.y) + 0.1, 2.0))
+	# La silla del guardia, con una mesita y su radio
+	var gp := Vector2(4.0, 10.0)
+	b.box(Vector3(gp.x, 0.43, gp.y + 0.05), Vector3(0.56, 0.07, 0.56), Color8(60, 90, 160))
+	b.box(Vector3(gp.x, 0.82, gp.y + 0.33), Vector3(0.56, 0.72, 0.06), Color8(60, 90, 160))
+	for lx in [-0.24, 0.24]:
+		for lz in [-0.2, 0.3]:
+			b.box(Vector3(gp.x + lx, 0.2, gp.y + lz), Vector3(0.05, 0.4, 0.05), Color8(150, 150, 155))
+	b.box(Vector3(gp.x + 0.9, 0.35, gp.y), Vector3(0.6, 0.7, 0.6), Color8(170, 120, 70))
+	b.box(Vector3(gp.x + 0.9, 0.82, gp.y), Vector3(0.22, 0.24, 0.1), Color8(30, 30, 34))
 	# Maqueta: grúa y cimientos
 	b.box(Vector3(-6, 0.3, 18), Vector3(14, 0.6, 10), Color8(170, 170, 165))
 	b.box(Vector3(9, 6.0, 22), Vector3(0.8, 12.0, 0.8), Color8(240, 190, 40))
@@ -116,21 +161,22 @@ func _build_lot(g: Game) -> void:
 	b.box(Vector3(0, 3.6, Z0 - 0.6), Vector3(7.5, 2.4, 0.15), Color8(25, 45, 85))
 	b.node(root, Mats.standard)
 	Building.label(root, "CENTRO COMERCIAL", Vector3(0, 4.25, Z0 - 0.69), 15, Color8(240, 190, 60))
-	Building.label(root, Lang.f("%d vitrinas · cómpralo por %s", [int(D.MALL.slots), Fmt.short(g.mall_cost())]),
+	Building.label(root, Lang.f("%d vitrinas · cómpralo por %s", [int(D.MALL.slots), Fmt.short(g.mall_cost(idx))]),
 			Vector3(0, 3.55, Z0 - 0.69), 8, Color.WHITE, false)
 	Building.label(root, "Presiona E aquí", Vector3(0, 2.95, Z0 - 0.69), 6, Color8(200, 210, 230), false)
-	lot_spot = Blueprints.to_world(PLOT, 0, -1.4)
+	lot_spot = Blueprints.to_world(plot, 0, -1.4)
+	_make_guard()
 
 
 func _world_rect(x0: float, x1: float, z0: float, z1: float, top: float) -> Array:
-	var a := Blueprints.to_world(PLOT, x0, z0)
-	var e := Blueprints.to_world(PLOT, x1, z1)
+	var a := Blueprints.to_world(plot, x0, z0)
+	var e := Blueprints.to_world(plot, x1, z1)
 	return [min(a.x, e.x), max(a.x, e.x), min(a.z, e.z), max(a.z, e.z), top]
 
 
 # ---------- el edificio ----------
 func _build() -> void:
-	bld = Building.new(city, PLOT, "mall", Color.WHITE, "")
+	bld = Building.new(city, plot, "mall", Color.WHITE, "")
 	root = bld.root
 	rects = bld.rects
 	spots = bld.spots
@@ -149,18 +195,22 @@ func _build() -> void:
 		else:
 			front = Vector2(cx, r[2] - 1.0)
 		slots.append({"rect": r, "face": face, "node": null, "sig": "x", "staff": null, "rects": [],
-				"front": Blueprints.to_world(PLOT, front.x, front.y)})
+				"front": Blueprints.to_world(plot, front.x, front.y), "front_local": front})
 
 
 ## Pone o cambia lo que hay en cada vitrina según tus sucursales.
 func _sync_slots(g: Game) -> void:
 	var by_slot := {}
 	for loc in g.locations:
-		if Game.mall_of(loc) >= 0:
-			by_slot[Game.mall_of(loc)] = loc
+		var m := Game.mall_of(loc)
+		if m >= 0 and Game.mall_index(m) == idx:
+			by_slot[m - gslot(0)] = loc
 	for i in slots.size():
 		var s: Dictionary = slots[i]
 		var loc = by_slot.get(i)
+		var rival_key = g.rival_mall.get(str(gslot(i)))
+		if loc == null and rival_key != null:   # la arrienda un rival: se arma como un local suyo
+			loc = {"id": -1, "size": 1, "product": rival_key, "rival": D.rival_for(rival_key)}
 		var sig = null if loc == null else [loc.id, loc.size, loc.product]
 		if s.sig is String or s.sig != sig:
 			_clear_slot(s)
@@ -229,6 +279,9 @@ func _fill_slot(i: int, s: Dictionary, loc) -> void:
 		return
 	var pc: Color = Blueprints.PRODUCT_COLORS[loc.product]
 	var name: String = D.PRODUCTS[loc.product].name
+	if loc.has("rival"):   # vitrina de la competencia: su color y su marca
+		pc = loc.rival.color
+		name = loc.rival.company
 	# Piso, letrero con el color de la marca y una franja de luz
 	b.box(Vector3(0, 0.07, depth / 2), Vector3(width - 0.3, 0.02, depth - 0.2), pc.lerp(Color.WHITE, 0.7))
 	b.box(Vector3(0, SHOP_H + 0.35, -0.02), Vector3(width - 0.3, 0.7, 0.08), pc)
@@ -261,7 +314,17 @@ func _fill_slot(i: int, s: Dictionary, loc) -> void:
 	n.add_child(reg)
 	var sign := Building.label(n, name.to_upper(), Vector3(0, SHOP_H + 0.42, -0.07), 9 if width > 4 else 8, Color.WHITE)
 	sign.rotation.y = PI
-	var sub := Building.label(n, D.SIZES[loc.size].name, Vector3(0, SHOP_H + 0.14, -0.07), 4, Color(1, 1, 1, 0.85), false)
+	if loc.has("rival") and Admin.rival_texture(loc.rival.key) != null:   # el logo del rival junto al letrero
+		var logo := Sprite3D.new()
+		logo.texture = Admin.rival_texture(loc.rival.key)
+		logo.pixel_size = 0.6 / 256.0
+		logo.position = Vector3(width / 2 - 0.55, SHOP_H + 0.35, -0.12)
+		logo.rotation.y = PI
+		logo.shaded = false
+		logo.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+		n.add_child(logo)
+	var sub := Building.label(n, D.PRODUCTS[loc.product].name if loc.has("rival") else D.SIZES[loc.size].name,
+			Vector3(0, SHOP_H + 0.14, -0.07), 4, Color(1, 1, 1, 0.85), false)
 	sub.rotation.y = PI
 	Mats.add_light(n, Vector3(0, SHOP_H - 0.3, depth / 2), 9.0, true)
 	# Vendedor detrás del mostrador, mirando al pasillo
@@ -293,32 +356,292 @@ func all_rects() -> Array:
 
 ## Pregunta antes de comprar el centro comercial.
 func ask_buy(g: Game) -> void:
-	city.confirm(Lang.f("¿Comprar el centro comercial por %s?", Fmt.money(g.mall_cost())), mall_pitch(g),
-			Lang.f("Sí, construir (%s)", Fmt.short(g.mall_cost())), func():
-				var res: Array = g.buy_mall()
+	city.confirm(Lang.f("¿Comprar %s por %s?", [Lang.noun(name_of(idx)), Fmt.money(g.mall_cost(idx))]), mall_pitch(g, idx),
+			Lang.f("Sí, construir (%s)", Fmt.short(g.mall_cost(idx))), func():
+				var res: Array = g.buy_mall(idx)
 				if res[0]:
 					city.sfx.play("record", 0.8)
 				city.toast(res[1], "good" if res[0] else "bad"))
 
 
 ## Qué ganas con el centro comercial (para el botón de compra y la tablet).
-static func mall_pitch(g: Game) -> String:
-	return Lang.f("%d vitrinas para puestos y locales cuando ya no quedan terrenos en la avenida. Las tiendas de adentro tienen +%d%% de clientes, están techadas y pagan la mitad del alquiler. Mantenimiento y seguridad: %s/mes. Es una inversión (CAPEX) que se deprecia en 5 años.", [int(D.MALL.slots), roundi((D.MALL.traffic - 1) * 100), Fmt.money(D.MALL.upkeep * g.price_index)])
+static func mall_pitch(g: Game, i := 0) -> String:
+	var m: Dictionary = D.MALLS[i]
+	return Lang.f("%d vitrinas para puestos y locales. +%d%% de clientes, techado y mitad de alquiler. Mantenimiento: %s/mes.", [int(m.slots), roundi((m.traffic - 1) * 100), Fmt.money(m.upkeep * g.price_index)])
 
 
 ## Lugares donde se apreta E: el cartel del terreno o la entrada de cada vitrina.
 func interactables(g: Game) -> Array:
 	var items := []
 	if not built:
-		items.append([lot_spot, Lang.f("Comprar el centro comercial (%s)", Fmt.money(g.mall_cost())), ask_buy.bind(g)])
+		items.append([lot_spot, Lang.f("Comprar %s (%s)", [Lang.noun(name_of(idx)), Fmt.money(g.mall_cost(idx))]), ask_buy.bind(g)])
 		return items
 	for i in slots.size():
 		var s: Dictionary = slots[i]
 		if s.get("loc") == null:
-			items.append([s.front, Lang.f("Abrir una tienda en la vitrina %d", i + 1), func(): city.overlays.show("vitrina", i)])
+			var gi := gslot(i)
+			items.append([s.front, Lang.f("Abrir una tienda en la vitrina %d", i + 1), func(): city.overlays.show("vitrina", gi)])
+		elif s.loc.has("rival"):
+			var key: String = s.loc.product
+			var gi := gslot(i)
+			if city.refusing("m%d" % gi):
+				continue
+			items.append([s.front, Lang.f("Comprar este local de %s (%s · %s)", [s.loc.rival.company, Lang.noun(D.PRODUCTS[key].name), Fmt.money(g.acquire_cost(key))]),
+					func(): city.buy_competitor(key, -1, gi)])
 		else:
 			var loc: Dictionary = s.loc
 			var key: String = loc.product
 			items.append([s.front, Lang.f("Administrar %s de %s (vitrina %d)", [Lang.noun(D.SIZES[loc.size].name), Lang.noun(D.PRODUCTS[key].name), i + 1]),
 					func(): city.manage_market(key)])
 	return items
+
+
+# ---------- gente paseando adentro ----------
+## Cuánta gente pasea: más mientras más vitrinas tuyas hay abiertas (de noche, poca).
+func _want_shoppers() -> int:
+	var open := _open_slots().size()
+	if open == 0:
+		return 0
+	var n := mini(3 + open, 14)
+	if city.sky != null and city.sky.night:
+		n = maxi(1, n / 3)
+	return n
+
+
+func _open_slots() -> Array:
+	var out := []
+	for i in slots.size():
+		if slots[i].get("loc") != null:
+			out.append(i)
+	return out
+
+
+## Camino (en coordenadas locales) desde `from` hasta el frente de la vitrina i, por el carril de su lado del pasillo
+## (así no pasa por la fuente, las bancas ni los maceteros).
+func _path_to_slot(from: Vector2, i: int) -> Array:
+	var s: Dictionary = slots[i]
+	var f: Vector2 = s.front_local
+	var lane := LANE if f.x > 0 else -LANE
+	var pts := []
+	if absf(from.x - lane) > 0.3:
+		if absf(from.x) < LANE - 0.5:   # está en la entrada: primero entra un poco
+			pts.append(Vector2(from.x, 3.2))
+			pts.append(Vector2(lane, 3.2))
+		else:                          # está en el otro carril o frente a una vitrina: cruza por adelante
+			pts.append(Vector2(signf(from.x) * LANE, from.y))
+			if signf(from.x) != signf(lane):
+				pts.append(Vector2(signf(from.x) * LANE, 3.2))
+				pts.append(Vector2(lane, 3.2))
+	pts.append(Vector2(lane, f.y))
+	var face: Vector2 = s.face
+	if face.y != 0:   # las del fondo: de lado hasta su frente
+		pts.append(f + Vector2(randf_range(-0.6, 0.6), randf_range(-0.3, 0.2)))
+	else:
+		pts.append(f + Vector2(0, randf_range(-0.6, 0.6)))
+	return pts
+
+
+func _spawn_shopper(inside := false) -> void:
+	var open := _open_slots()
+	if open.is_empty():
+		return
+	var p := Person.new()
+	city.add_child(p)
+	var at := Vector2(randf_range(-1.5, 1.5), -3.0)   # entra desde la vereda
+	var path := [Vector2(at.x, 2.5)] + _path_to_slot(Vector2(at.x, 2.5), open.pick_random())
+	if inside:   # al llegar ya hay gente adentro: empieza en el carril, cerca de su vitrina
+		at = path[-2]
+		path = [path[-1]]
+	p.position = Blueprints.to_world(plot, at.x, at.y)
+	shoppers.append({"node": p, "at": at, "path": path, "wait": 0.0, "stops": randi_range(1, 3), "leaving": false})
+
+
+func _clear_shoppers() -> void:
+	for sh in shoppers:
+		if is_instance_valid(sh.node):
+			sh.node.queue_free()
+	shoppers = []
+
+
+func _nearest_slot(at: Vector2) -> int:
+	var best := -1
+	var bd := 1e9
+	for i in slots.size():
+		var dd: float = (slots[i].front_local as Vector2).distance_to(at)
+		if dd < bd:
+			bd = dd
+			best = i
+	return best
+
+
+## Mueve a la gente por el pasillo: va a una vitrina, se queda mirando un rato (a veces sale con algo en la mano),
+## va a otra y al final sale por la puerta. Solo si estás cerca: lejos no se ve.
+func update(dt: float) -> void:
+	if not built and root != null:
+		_update_guard(dt)
+		return
+	if not built or root == null or slots.is_empty():
+		return
+	var center := Blueprints.to_world(plot, 0, (Z0 + Z1) / 2)
+	if city.player.position.distance_to(center) > 90.0:
+		if shoppers:
+			_clear_shoppers()
+		return
+	var want := _want_shoppers()
+	if shoppers.is_empty() and want > 0:
+		for k in mini(want, 6):
+			_spawn_shopper(true)
+	spawn_t -= dt
+	if spawn_t <= 0.0 and shoppers.size() < want:
+		spawn_t = randf_range(1.5, 4.0)
+		_spawn_shopper()
+	var speed := 1.3
+	for sh in shoppers.duplicate():
+		var p: Person = sh.node
+		if not is_instance_valid(p):
+			shoppers.erase(sh)
+			continue
+		if sh.wait > 0.0:
+			sh.wait -= dt
+			p.animate(0.0, dt)
+			continue
+		if sh.path.is_empty():
+			if sh.leaving:
+				p.queue_free()
+				shoppers.erase(sh)
+				continue
+			_arrive(sh)
+			continue
+		var goal: Vector2 = sh.path[0]
+		var d: Vector2 = goal - sh.at
+		var step := speed * dt
+		if d.length() <= step:
+			sh.at = goal
+			sh.path.pop_front()
+		else:
+			sh.at += d.normalized() * step
+		var w := Blueprints.to_world(plot, sh.at.x, sh.at.y)
+		var dir := w - p.position
+		p.position = w
+		if dir.length() > 0.001:
+			p.rotation.y = atan2(dir.x, dir.z)
+		p.animate(speed, dt)
+
+
+## Llegó frente a una vitrina: la mira un rato, a veces compra algo, y decide a cuál ir o si se va.
+func _arrive(sh: Dictionary) -> void:
+	var p: Person = sh.node
+	sh.wait = randf_range(2.5, 6.0)
+	sh.stops -= 1
+	var i := _nearest_slot(sh.at)
+	if i >= 0:
+		var s: Dictionary = slots[i]
+		var r: Array = s.rect
+		var c := Blueprints.to_world(plot, (r[0] + r[1]) / 2, (r[2] + r[3]) / 2)
+		p.rotation.y = atan2(c.x - p.position.x, c.z - p.position.z)
+		if s.get("loc") != null and p.item == null and randf() < 0.45:
+			p.hold(s.loc.product)
+	var open := _open_slots()
+	if sh.stops <= 0 or open.is_empty():
+		var lane := LANE if sh.at.x > 0 else -LANE
+		var out_x := randf_range(-1.5, 1.5)
+		sh.path = [Vector2(lane, sh.at.y), Vector2(lane, 3.2), Vector2(out_x, 2.5), Vector2(out_x, -3.0)]
+		sh.leaving = true
+	else:
+		sh.path = _path_to_slot(sh.at, open.pick_random())
+
+
+# ---------- guardia del terreno en obra ----------
+# Se puede entrar por el portón, pero es propiedad privada: si entras sin haber comprado el terreno, el guardia corre
+# hacia ti, te pega con la tonfa y sales volando a la vereda (City.hit_by_guard).
+const GATE := [6.0, 10.0]        # el portón del cerco de adelante (x local)
+const GUARD_POST := Vector2(4.0, 10.0)   # su silla, en medio de la obra (entre el portón y los cimientos)
+var guard: Person = null
+var guard_state := "post"        # post, chase, swing, back
+var guard_t := 0.0
+
+
+func _make_guard() -> void:
+	var look: Dictionary = Wardrobe.DEFAULT_LOOK.duplicate()
+	look.shirt = [32, 58, 128]      # uniforme azul de guardia
+	look.pants = [24, 34, 70]
+	look.shoes = [20, 20, 24]
+	look.hat = "gorra"
+	look.hair_style = "corto"
+	look.skin = [196, 150, 110]
+	guard = Person.new(null, null, false, look)
+	city.add_child(guard)
+	# La tonfa: palo negro con el mango de lado, en la mano derecha
+	var b := Boxes.new()
+	b.box(Vector3(0, 0, 0.22), Vector3(0.06, 0.06, 0.62), Color8(18, 18, 20))
+	b.box(Vector3(0, -0.08, 0.05), Vector3(0.05, 0.16, 0.05), Color8(18, 18, 20))
+	var baton := b.node(guard.arms[1], Mats.smooth, false)
+	baton.position = Vector3(0, -0.74, 0.04)
+	guard.position = Blueprints.to_world(plot, GUARD_POST.x, GUARD_POST.y)
+	guard.rotation.y = _yaw_to(Blueprints.to_world(plot, GUARD_POST.x, -5.0) - guard.position)
+	guard_state = "post"
+	guard.sit(1.0)
+
+
+static func _yaw_to(d: Vector3) -> float:
+	return atan2(d.x, d.z)
+
+
+## ¿El jugador está dentro del terreno (en coordenadas locales)?
+func _inside(p: Vector3) -> bool:
+	var l: Vector3 = root.transform.affine_inverse() * p
+	return absf(l.x) < W / 2 - 0.2 and l.z > Z0 + 0.25 and l.z < Z1 - 0.2
+
+
+func _update_guard(dt: float) -> void:
+	if guard == null or not is_instance_valid(guard):
+		return
+	var p: Vector3 = city.player.position
+	var trespass: bool = _inside(p) and city.knock == null and not city.overlays.open()
+	guard_t += dt
+	match guard_state:
+		"post", "back":
+			if trespass:
+				guard_state = "chase"
+				guard.sit(0.0)   # se para de un salto
+				city.pop(guard.position + Vector3(0, 0.4, 0), "¡Oiga! ¡Propiedad privada!", "red")
+			elif guard_state == "back":
+				var home := Blueprints.to_world(plot, GUARD_POST.x, GUARD_POST.y)
+				if _walk(home, 3.5, dt):
+					guard_state = "post"
+					guard.rotation.y = _yaw_to(Blueprints.to_world(plot, GUARD_POST.x, -5.0) - guard.position)
+			else:
+				guard.animate(0.0, dt)
+				guard.sit(1.0)   # sentado en su silla, mirando el portón
+		"chase":
+			if not trespass:
+				guard_state = "back"
+			elif Vector2(p.x - guard.position.x, p.z - guard.position.z).length() < 1.6:
+				guard_state = "swing"
+				guard_t = 0.0
+			else:
+				_walk(p, 9.0, dt)   # corre más rápido que tú (no te escapas corriendo)
+		"swing":
+			guard.rotation.y = _yaw_to(p - guard.position)
+			guard.animate(0.0, dt)
+			# Levanta la tonfa y la baja de golpe
+			var k := guard_t / 0.2
+			guard.arms[1].rotation.x = deg_to_rad(lerpf(-170.0, -30.0, clampf(k, 0.0, 1.0)))
+			if guard_t >= 0.12 and city.knock == null and _inside(p):
+				city.hit_by_guard(guard.position, self)
+			if guard_t > 0.5:
+				guard.arms[1].rotation.x = 0.0
+				guard_state = "back"
+
+
+## Camina hacia `to` (sin chocar: el terreno está vacío). Devuelve true al llegar.
+func _walk(to: Vector3, speed: float, dt: float) -> bool:
+	var d := Vector3(to.x - guard.position.x, 0, to.z - guard.position.z)
+	if d.length() < 0.15:
+		guard.animate(0.0, dt)
+		return true
+	var step: float = min(d.length(), speed * dt)
+	guard.position += d.normalized() * step
+	guard.rotation.y = _yaw_to(d)
+	guard.animate(speed, dt)
+	return false

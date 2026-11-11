@@ -22,22 +22,20 @@ var tutorial_tex := {}
 # Tutorial de la primera partida: [imagen, título, texto]
 ## La bienvenida: después siguen los pasos guiados jugando (ver Tutorial).
 const TUTORIAL := [
-	["meta", "Bienvenido a Capital", "Tienes un puestito de café y un poco de plata. Vende, invierte y conviértelo en un imperio.
+	["meta", "Bienvenido a Capital", "Tu meta: que tu empresa valga $10 millones.
 
-Tu meta: que tu empresa valga $10 millones. Arriba a la izquierda siempre ves cuánto vale.
-
-Vas a aprender jugando. Sigue la flecha amarilla, son pasos cortos."],
+Sigue la flecha amarilla."],
 ]
 ## Al terminar el tutorial: las claves para ganar.
 const TUTORIAL_END := [
 	["ganar", "Cómo se gana", ""],
 ]
 const WIN_TIPS := [
-	["1", "El precio justo", "Toca «Usar precio óptimo» en Mercado de vez en cuando. El mejor precio cambia con el tiempo."],
-	["2", "Que nadie se vaya sin comprar", "Si llega más gente de la que puedes atender, contrata o agranda tu tienda."],
-	["3", "Abre más tiendas", "Compra terrenos SE VENDE. Los de la playa venden más. Cada tienda te trae más plata."],
-	["4", "No te quedes sin plata", "Si estás en rojo 20 días seguidos, quiebras. Pide préstamos solo para crecer."],
-	["5", "Haz crecer tu imperio", "Desbloquea negocios nuevos, elige la jugada del mes y convierte tus tiendas en megatiendas."],
+	["1", "El precio justo", "Usa «precio óptimo» en Mercado de vez en cuando."],
+	["2", "Que nadie se vaya sin comprar", "Contrata o agranda tu tienda."],
+	["3", "Abre más tiendas", "Compra terrenos SE VENDE. Los de la playa venden más."],
+	["4", "No te quedes sin plata", "20 días seguidos en rojo y quiebras."],
+	["5", "Crece", "Negocios nuevos, la jugada del mes y megatiendas."],
 ]
 ## En el tutorial, al abrir la tablet: cómo se gana (cuánto vale tu empresa).
 const TUTORIAL_VALOR := [
@@ -48,6 +46,9 @@ var tutorial_pages: Array = TUTORIAL   # la bienvenida o las claves para ganar
 var shop_tab := "cabeza"
 var trying = null           # prenda que te estás probando en el armario (sin comprar): {key, value, name, price}
 var buy_key := "cafe"
+var decor_pick := ""         # artículo elegido con un clic (queda puesto hasta que lo compras o lo quitas)
+var decor_hover := ""        # artículo de la decoración bajo el mouse (la cámara va ahí y se ve puesto)
+var buy_mall_slot := -1     # vitrina del rival que le quieres comprar (-1: un local de la calle)
 var question = null          # confirmación en la ciudad (modo "confirmar"): {title, detail, yes, action}        # negocio del local de la competencia que estás por comprar (modo "compra")
 var saved_at := -9999
 
@@ -121,6 +122,8 @@ func draw() -> void:
 			draw_pause()
 		"personaje":
 			draw_custom()
+		"decorar":
+			draw_decor()
 		"estrategia":
 			ui.rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.35))
 			draw_strategy()
@@ -163,11 +166,14 @@ const COL_PANEL := Color8(22, 27, 34)
 ## Terreno de la avenida en venta, o vitrina vacía del centro comercial (modo "vitrina": solo puestos y locales).
 func draw_lot() -> void:
 	var g: Game = app.game
+	var tut_rect := Rect2()
 	var in_mall: bool = mode == "vitrina"
 	var beach: bool = lot in D.BEACH_PLOTS and not in_mall
 	ui.panel(Rect2(40, 30, W - 80, H - 60))
+	var mi := Game.mall_index(lot) if in_mall else 0
+	var mall_d: Dictionary = D.MALLS[mi]
 	if in_mall:
-		ui.text(Lang.f("Vitrina %d del centro comercial", lot + 1), Vector2(70, 60), 32, "accent", true)
+		ui.text(Lang.f("Vitrina %d · %s", [lot % int(D.MALL.slots) + 1, mall_d.name]), Vector2(70, 60), 32, "accent", true)
 	else:
 		ui.text(Lang.f("Terreno %d en venta%s", [lot + 1, " · en la playa" if beach else ""]), Vector2(70, 60), 32, "accent", true)
 	var y0 := 110.0
@@ -175,10 +181,9 @@ func draw_lot() -> void:
 		ui.text(Lang.f("Frente al mar: +%d%% de clientes por los turistas.", roundi((D.BEACH_BONUS - 1) * 100)), Vector2(72, 98), 16, "green", true)
 		y0 = 128
 	elif in_mall:
-		ui.text(Lang.f("+%d%% de clientes, techado (la lluvia no espanta) y mitad de alquiler. Solo puestos y locales.", roundi((D.MALL.traffic - 1) * 100)), Vector2(72, 98), 16, "green", true)
+		ui.text(Lang.f("+%d%% de clientes, techado y mitad de alquiler.", roundi((mall_d.traffic - 1) * 100)), Vector2(72, 98), 16, "green", true)
 		y0 = 128
-	ui.wrap_text("Elige qué negocio construir aquí. La construcción es una inversión (CAPEX) que se deprecia en 5 años; el alquiler es un costo fijo que pagas cada mes vendas o no. Más grande = más clientes y más empleados, pero también más costo fijo.",
-			Rect2(70, y0, W - 140, 80), 16, "muted")
+	ui.wrap_text("Elige qué abrir. Más grande = más clientes, pero más alquiler.", Rect2(70, y0, W - 140, 40), 16, "muted")
 	ui.text(Lang.f("Caja disponible: %s", Fmt.money(g.cash)), Vector2(W - 70, 64), 20, Admin.sc(g.cash), true, "topright")
 	var y := 200.0
 	for key in D.PRODUCT_ORDER:
@@ -191,23 +196,31 @@ func draw_lot() -> void:
 			for s in (2 if in_mall else D.SIZES.size()):
 				var size: Dictionary = D.SIZES[s]
 				var cost := g.location_cost(s)
-				var rent: float = size.rent * g.price_index * (D.MALL.rent_mult if in_mall else 1.0)
-				var tip := Lang.f("%s: inversión %s, alquiler %s/mes, hasta %d empleados, tráfico ×%d.", [size.name, Fmt.money(cost), Fmt.money(rent), size.max_emp, int(size.traffic)])
+				var rent: float = size.rent * g.price_index * (mall_d.rent_mult if in_mall else 1.0)
+				var tip := Lang.f("%s: cuesta %s, alquiler %s/mes, hasta %d empleados.", [size.name, Fmt.money(cost), Fmt.money(rent), size.max_emp])
+				if key == "cafe" and s == 0:
+					tut_rect = Rect2(290 + s * 300, y, 285, 44)
 				if ui.button(Rect2(290 + s * 300, y, 285, 44), Lang.f("%s · %s", [size.name, Fmt.money(cost)]), g.cash >= cost, "normal", 15, tip):
 					var plot := lot
 					var k: String = key
 					var sz: int = s
-					var title := (Lang.f("¿Abrir un %s de %s en la vitrina %d?", [Lang.noun(size.name), Lang.noun(d.name), plot + 1]) if in_mall
-							else Lang.f("¿Construir un %s de %s en el terreno %d?", [Lang.noun(size.name), Lang.noun(d.name), plot + 1]))
-					city.confirm(title, tip, Lang.f("Sí, construir (%s)", Fmt.short(cost)), func():
-								var res: Array = g.open_location(k, sz, null, plot) if in_mall else g.open_location(k, sz, plot)
-								if res[0]:
-									city.sfx.play("record", 0.7)
-								city.toast(res[1], "good" if res[0] else "bad"))
+					var build := func():
+						var res: Array = g.open_location(k, sz, null, plot) if in_mall else g.open_location(k, sz, plot)
+						if res[0]:
+							city.sfx.play("record", 0.7)
+						city.toast(res[1], "good" if res[0] else "bad")
+					hide()   # se abre al tiro, sin preguntar (puesto, local o megatienda)
+					build.call()
 					return
 		y += 74
 	if ui.button(Rect2(W / 2 - 140, H - 100, 280, 44), "Cancelar (Esc)"):
 		hide()
+		return
+	# Tutorial: la flecha señala el puesto de café
+	var tut: Tutorial = city.tutorial
+	if tut.active and Tutorial.STEPS[tut.step] == "comprar" and tut_rect.size.x > 0:
+		Tutorial.spotlight(ui, tut_rect.grow(8))
+		Tutorial.big_arrow(ui, tut_rect)
 
 
 # ---------- comprar el local de la competencia que tienes enfrente ----------
@@ -226,8 +239,7 @@ func draw_buy_competitor() -> void:
 	ui.rect(box, Color8(18, 22, 30), 20)
 	ui.rect(box, Color(r.color, 0.6), 20, 1.5)
 	var ic := box.position + Vector2(70, 72)
-	ui.circle(ic, 36, r.color)
-	ui.text(Admin.initials(r), ic + Vector2(0, 1), 26, Color8(16, 20, 30), true, "center")
+	Admin.rival_badge(ui, r, ic, 36)
 	ui.text("COMPRAR LOCAL DE LA COMPETENCIA", Vector2(box.position.x + 124, box.position.y + 40), 13, Notifications.light(r.color, 0.3), true)
 	ui.text(Lang.f("%s de %s", [r.company, name]), Vector2(box.position.x + 124, box.position.y + 60), 28, "text", true, "topleft", box.size.x - 150)
 	var text := Lang.f("Pagas %s y este mismo edificio pasa a ser tuyo: un local con 3 empleados que ya tiene clientes. %s pierde un local (te quedas con un competidor menos en %s). Lo que pagas por encima del valor del edificio es plusvalía.", [Fmt.money(cost), r.short, name])
@@ -237,7 +249,13 @@ func draw_buy_competitor() -> void:
 	ui.text(Lang.f("Caja disponible: %s", Fmt.money(g.cash)), Vector2(box.get_center().x, box.end.y - 104), 16, Admin.sc(g.cash), true, "center")
 	var can: bool = p.unlocked and g.cash >= cost and p.competitors > 0
 	if ui.button(Rect2(box.position.x + 40, box.end.y - 76, 280, 46), Lang.f("Sí, comprar (%s)", Fmt.short(cost)), can, "primary", 17):
-		var res := g.acquire(key, lot)
+		if randf() < 0.5:   # el rival no siempre quiere vender
+			hide()
+			city.refuse(lot, buy_mall_slot)
+			city.sfx.play("angry", 0.6)
+			city.toast(Lang.f("%s no quiso venderte este local.", r.company), "bad")
+			return
+		var res := g.acquire(key, lot, buy_mall_slot)
 		if res[0]:
 			hide()
 			city.sync(g)
@@ -406,12 +424,8 @@ func draw_pause() -> void:
 		app.view = "menu"
 		show("admin")
 		return
-	y += 54
-	if ui.menu_item("p:salir", Vector2(x, y), "SALIR DEL JUEGO", "", true, 24, 310.0, false, "red"):
-		city.close_pause()
-		city.quit_game()
-		return
-	ui.text("Esc: volver al juego · se guarda al salir", Vector2(x, H - 40), 13, "muted")
+	# (para cerrar el juego se va al menú principal: desde la partida no se sale directo)
+	ui.text("Esc: volver al juego", Vector2(x, H - 40), 13, "muted")
 	# Panel derecho: una línea vertical lo separa del menú, sin recuadro
 	ui.gradient(Rect2(420, 40, 1, H - 80), Color(1, 1, 1, 0.0), Color(1, 1, 1, 0.12), false)
 	var area := Rect2(470, 40, W - 520, H - 80)
@@ -671,12 +685,20 @@ func draw_credits() -> void:
 		y += 52
 	y = _credits_section("MÚSICA", y + 18)
 	var playing: Array = city.sfx.now_playing()
-	for sg in songs:
+	for si in songs.size():
+		var sg: Array = songs[si]
 		var on: bool = sg == playing
 		var title_w := ui.text_size(sg[1], 17, true).x
 		var by: String = "  ·  " + sg[2]
 		var x := cx - (title_w + ui.text_size(by, 15).x) / 2
-		ui.text(sg[1], Vector2(x, y + 13), 17, "accent" if on else "text", true, "midleft")
+		# Un clic en la canción la pone
+		var row := Rect2(x - 30, y, title_w + ui.text_size(by, 15).x + 40, 28)
+		var hot := ui.hover(row)
+		if hot:
+			ui.rect(row, Color(1, 1, 1, 0.06), 8)
+			if ui.clicked and not on:
+				city.sfx.play_song(si)
+		ui.text(sg[1], Vector2(x, y + 13), 17, "accent" if on or hot else "text", true, "midleft")
 		ui.text(by, Vector2(x + title_w, y + 13), 15, "muted", false, "midleft")
 		if on:   # ecualizador chiquito a la izquierda de la que suena
 			var t := Time.get_ticks_msec() / 1000.0
@@ -758,33 +780,18 @@ func draw_tutorial() -> void:
 
 func _draw_value_card() -> void:
 	var g: Game = app.game
-	var box := Rect2(W / 2 - 430, H / 2 - 255, 860, 510)
+	var box := Rect2(W / 2 - 400, H / 2 - 160, 800, 320)
 	glass_box(box)
 	var cx := box.get_center().x
 	ui.text("TUTORIAL", Vector2(cx, box.position.y + 28), 13, "accent", true, "center")
 	ui.text("Así se gana", Vector2(cx, box.position.y + 50), 40, "accent", true, "midtop")
-	ui.text(Lang.f("Ganas cuando tu empresa vale %s. Así se calcula:", Fmt.short(D.WIN_VALUE)),
-			Vector2(cx, box.position.y + 108), 18, "text", false, "midtop")
-	# La fórmula, con los números de tu empresa
-	var ebitda: float = max(0.0, g.recent_ebitda() * 12.0)
-	var parts := [[Lang.f("Lo que ganas en un año × %s", Fmt.num(g.valuation_multiple(), 1)),
-			Fmt.short(ebitda * g.valuation_multiple()), "green"],
-			["+ Tu plata", Fmt.short(g.cash + g.bonds + g.fund), "text"], ["− Lo que debes", Fmt.short(g.debt()), "red"]]
-	var pw := 230.0
-	var px := cx - (pw * 3 + 24) / 2
-	for i in parts.size():
-		var r := Rect2(px + i * (pw + 12), box.position.y + 150, pw, 86)
-		ui.rect(r, Color(1, 1, 1, 0.05), 12)
-		ui.text(parts[i][0], Vector2(r.get_center().x, r.position.y + 16), 15, "muted", false, "midtop")
-		ui.text(parts[i][1], Vector2(r.get_center().x, r.position.y + 42), 22, parts[i][2], true, "midtop")
+	ui.text(Lang.f("Haz que tu empresa valga %s.", Fmt.short(D.WIN_VALUE)), Vector2(cx, box.position.y + 108), 20, "text", false, "midtop")
 	var v := g.valuation()
-	ui.text(Lang.f("Hoy vale %s", Fmt.money(v)), Vector2(cx, box.position.y + 262), 24, "accent", true, "midtop")
-	var bar := Rect2(box.position.x + 80, box.position.y + 302, box.size.x - 160, 12)
+	ui.text(Lang.f("Hoy vale %s", Fmt.money(v)), Vector2(cx, box.position.y + 160), 24, "accent", true, "midtop")
+	var bar := Rect2(box.position.x + 80, box.position.y + 202, box.size.x - 160, 12)
 	ui.bar(bar, v / D.WIN_VALUE, "accent")
 	ui.text("$0", Vector2(bar.position.x, bar.end.y + 6), 12, "muted")
 	ui.text(Lang.f("Imperio · %s", Fmt.short(D.WIN_VALUE)), Vector2(bar.end.x, bar.end.y + 6), 12, "muted", false, "topright")
-	ui.wrap_text("Para que suba: gana más cada mes (buen precio, que nadie se quede sin atender y más tiendas) y no te endeudes de más. En la tablet lo ves siempre arriba, en «Valor empresa».",
-			Rect2(box.position.x + 80, box.position.y + 350, box.size.x - 160, 90), 17, "text")
 	if ui.button(Rect2(cx - 120, box.end.y - 66, 240, 48), "Entendido", true, "primary", 18):
 		tutorial_next()
 
@@ -794,7 +801,7 @@ func _draw_win_guide() -> void:
 	glass_box(box)
 	ui.text("TUTORIAL COMPLETO", Vector2(box.get_center().x, box.position.y + 28), 13, "green", true, "center")
 	ui.text("Cómo se gana", Vector2(box.get_center().x, box.position.y + 52), 40, "accent", true, "midtop")
-	ui.text(Lang.f("Haz que tu empresa valga %s. Mientras más ganes cada mes y menos debas, más vale.", Fmt.short(D.WIN_VALUE)),
+	ui.text(Lang.f("Haz que tu empresa valga %s.", Fmt.short(D.WIN_VALUE)),
 			Vector2(box.get_center().x, box.position.y + 108), 17, "text", false, "midtop")
 	var y := box.position.y + 150
 	for t in WIN_TIPS:
@@ -1115,7 +1122,7 @@ func cards(x: float, y: float, label: String, key: String, options: Array, cols:
 			if field == "hair_style":
 				preview["hat"] = "ninguno"  # para ver el peinado
 		var img = city.thumbs.get_thumb(preview, Thumbs.ITEM_FRAME.get(field, "torso"))
-		var side: float = min(w - 12, h - 44)
+		var side: float = min(w - 10, h - 34)
 		var ir := Rect2(r.get_center().x - side / 2, r.position.y + 6, side, side)
 		if img != null:
 			ui.image(img, ir)
@@ -1310,3 +1317,205 @@ func draw_strategy() -> void:
 			return
 	if ui.button(Rect2(box.get_center().x - 130, box.end.y - 70, 260, 44), "Cerrar (E)", true, "normal", 16):
 		hide()
+
+
+# ---------- decorar un local (la ciudad se ve a la derecha) ----------
+## Como el armario: una foto de cada artículo puesto en tu local y su precio. Pasar el mouse lo muestra puesto en la
+## ciudad (la cámara va ahí); un clic lo deja puesto para decidir si comprarlo.
+func draw_decor() -> void:
+	if city.decor_office:
+		_draw_office_decor()
+		return
+	var g: Game = app.game
+	var loc = g.find_location(city.decor_id) if g != null else null
+	if loc == null:
+		city.close_decor()
+		return
+	# Panel chico, solo del alto que necesita: se ve más ciudad (el armario sí es grande)
+	var items: Array = D.upgrades_for(int(loc.size))
+	var cols := 3
+	var gap := 8.0
+	var pw := 400.0
+	var inner := pw - 40
+	var w := (inner - gap * (cols - 1)) / cols
+	var h := 136.0
+	var rows := ceili(items.size() / float(cols))
+	var bar_h := 90.0 if decor_pick != "" else 0.0
+	var ph := 70 + rows * (h + gap) + bar_h + 62
+	var box := Rect2(24, 24, pw, ph)
+	glass_box(box)
+	ui.text("Decorar", box.position + Vector2(20, 16), 24, "accent", true)
+	ui.text(Fmt.money(g.cash), Vector2(box.end.x - 20, box.position.y + 22), 15, Admin.sc(g.cash), true, "topright")
+	var owned_list: Array = loc.get("upgrades", [])
+	if decor_pick != "" and decor_pick in owned_list:
+		decor_pick = ""
+	var variant: int = city.decor_store.plot_index + int(loc.id) * 31 if city.decor_store != null else -1
+	var x := box.position.x + 20
+	var y := box.position.y + 62
+	var hover := ""
+	for i in items.size():
+		var u: Dictionary = items[i]
+		var r := Rect2(x + (i % cols) * (w + gap), y + (i / cols) * (h + gap), w, h)
+		var owned: bool = u.key in owned_list
+		var hot := ui.hover(r)
+		if hot:
+			hover = u.key
+		ui.rect(r, Color8(44, 52, 68) if hot else ImUI.COL.panel2, 12)
+		var img = city.thumbs.get_decor_thumb(loc, variant, u.key)
+		var side: float = min(w - 12, h - 44)
+		var ir := Rect2(r.get_center().x - side / 2, r.position.y + 6, side, side)
+		if img != null:
+			ui.image(img, ir)
+		else:
+			ui.rect(ir, Color8(28, 33, 43), 8)
+			ui.text("…", ir.get_center(), 22, "muted", false, "center")
+		if decor_pick == u.key:
+			ui.rect(r, "blue", 12, 3)
+		elif owned:
+			ui.rect(r, "green", 12, 3)
+		elif hot:
+			ui.rect(r, "text", 12, 1)
+		var cost := g.decor_cost(loc, u.key)
+		if owned:
+			var c := Vector2(r.get_center().x, r.end.y - 15)   # visto verde: ya lo tienes
+			ui.line(c + Vector2(-9, 0), c + Vector2(-3, 6), ImUI.COL.green, 4)
+			ui.line(c + Vector2(-3, 6), c + Vector2(9, -7), ImUI.COL.green, 4)
+		else:
+			ui.text(Fmt.short(cost), Vector2(r.get_center().x, r.end.y - 15), 15, "accent" if g.cash >= cost else "red", true, "center")
+		ui.tooltip(r, Lang.f("%s · %s", [u.name, decor_effect(u)]))
+		if hot and ui.clicked and not owned:
+			decor_pick = u.key
+	# Lo que se muestra puesto: lo que tienes bajo el mouse o, si no, lo que elegiste con un clic
+	var show := hover if hover != "" else decor_pick
+	if show != decor_hover:
+		decor_hover = show
+		city.set_decor_preview(show if show != "" and not show in owned_list else "")
+	var by := box.end.y - 54
+	if decor_pick != "":
+		_decor_buy_bar(g, loc, x, by - bar_h, inner)
+	if ui.button(Rect2(x, by, inner, 38), "Listo (Esc)", true, "primary", 15):
+		city.close_decor()
+
+
+## Barra para comprar lo que elegiste (como «Te estás probando» del armario).
+func _decor_buy_bar(g: Game, loc: Dictionary, x: float, y: float, w: float) -> void:
+	var u: Dictionary = {}
+	for it in D.UPGRADES:
+		if it.key == decor_pick:
+			u = it
+	var cost := g.decor_cost(loc, decor_pick)
+	var r := Rect2(x, y, w, 82)
+	ui.rect(r, Color8(36, 30, 14), 12)
+	ui.rect(r, ImUI.COL.accent, 12, 2)
+	ui.text(u.name, r.position + Vector2(12, 8), 15, "text", true, "topleft", w - 24)
+	ui.text(decor_effect(u), r.position + Vector2(12, 28), 12, "muted", false, "topleft", w - 24)
+	var bw := (w - 34) / 2
+	if ui.button(Rect2(x + 12, y + 46, bw, 28), Lang.f("Comprar (%s)", Fmt.short(cost)), g.cash >= cost, "primary", 13):
+		var res: Array = g.buy_decor(loc, decor_pick)
+		city.sfx.play("coin" if res[0] else "angry", 0.7)
+		city.toast(res[1], "good" if res[0] else "bad")
+		decor_pick = ""
+		decor_hover = "?"   # que se vuelva a armar lo que se ve
+	if ui.button(Rect2(x + 22 + bw, y + 46, bw, 28), "Quitar", true, "normal", 13):
+		decor_pick = ""
+
+
+## El efecto de un artículo en pocas palabras (la descripción larga queda en el tooltip del precio).
+static func decor_effect(u: Dictionary) -> String:
+	var parts := []
+	if u.has("demand"):
+		parts.append(Lang.f("+%d%% clientes", roundi(u.demand * 100)))
+	if u.has("stars"):
+		parts.append(Lang.f("+%s estrellas", Fmt.num(u.stars, 2 if u.stars < 0.2 else 1)))
+	if u.has("capacity"):
+		parts.append(Lang.f("atienden %d%% más", roundi(u.capacity * 100)))
+	if u.has("weather"):
+		parts.append(Lang.t("el clima espanta menos"))
+	return " · ".join(parts)
+
+
+## Personalizar la oficina: el mismo panel chico que decorar un local, con las fotos de cada cosa.
+func _draw_office_decor() -> void:
+	var g: Game = app.game
+	if g == null:
+		city.close_decor()
+		return
+	var items: Array = D.OFFICE_DECOR
+	var cols := 3
+	var gap := 8.0
+	var pw := 400.0
+	var inner := pw - 40
+	var w := (inner - gap * (cols - 1)) / cols
+	var h := 136.0
+	var rows := ceili(items.size() / float(cols))
+	var bar_h := 90.0 if decor_pick != "" else 0.0
+	var box := Rect2(24, 24, pw, 70 + rows * (h + gap) + bar_h + 62)
+	glass_box(box)
+	ui.text("Tu oficina", box.position + Vector2(20, 16), 24, "accent", true)
+	ui.text(Fmt.money(g.cash), Vector2(box.end.x - 20, box.position.y + 22), 15, Admin.sc(g.cash), true, "topright")
+	var owned_list: Array = g.office_decor
+	if decor_pick != "" and decor_pick in owned_list:
+		decor_pick = ""
+	var x := box.position.x + 20
+	var y := box.position.y + 62
+	var hover := ""
+	for i in items.size():
+		var u: Dictionary = items[i]
+		var r := Rect2(x + (i % cols) * (w + gap), y + (i / cols) * (h + gap), w, h)
+		var owned: bool = u.key in owned_list
+		var hot := ui.hover(r)
+		if hot:
+			hover = u.key
+		ui.rect(r, Color8(44, 52, 68) if hot else ImUI.COL.panel2, 12)
+		var img = city.thumbs.get_office_thumb(city.office_tier, u.key)
+		var side: float = min(w - 10, h - 34)
+		var ir := Rect2(r.get_center().x - side / 2, r.position.y + 6, side, side)
+		if img != null:
+			ui.image(img, ir)
+		else:
+			ui.rect(ir, Color8(28, 33, 43), 8)
+			ui.text("…", ir.get_center(), 22, "muted", false, "center")
+		if decor_pick == u.key:
+			ui.rect(r, "blue", 12, 3)
+		elif owned:
+			ui.rect(r, "green", 12, 3)
+		elif hot:
+			ui.rect(r, "text", 12, 1)
+		var cost := g.office_decor_cost(u.key)
+		if owned:
+			var c := Vector2(r.get_center().x, r.end.y - 15)
+			ui.line(c + Vector2(-9, 0), c + Vector2(-3, 6), ImUI.COL.green, 4)
+			ui.line(c + Vector2(-3, 6), c + Vector2(9, -7), ImUI.COL.green, 4)
+		else:
+			ui.text(Fmt.short(cost), Vector2(r.get_center().x, r.end.y - 15), 15, "accent" if g.cash >= cost else "red", true, "center")
+		ui.tooltip(r, Lang.f("%s · +%d de reputación", [u.name, int(u.rep)]))
+		if hot and ui.clicked and not owned:
+			decor_pick = u.key
+	var show := hover if hover != "" else decor_pick
+	if show != decor_hover:
+		decor_hover = show
+		city.set_decor_preview(show if show != "" and not show in owned_list else "")
+	var by := box.end.y - 54
+	if decor_pick != "":
+		var u: Dictionary = {}
+		for it in items:
+			if it.key == decor_pick:
+				u = it
+		var cost := g.office_decor_cost(decor_pick)
+		var r := Rect2(x, by - bar_h, inner, 82)
+		ui.rect(r, Color8(36, 30, 14), 12)
+		ui.rect(r, ImUI.COL.accent, 12, 2)
+		ui.text(u.name, r.position + Vector2(12, 8), 15, "text", true, "topleft", inner - 24)
+		ui.text(Lang.f("+%d de reputación", int(u.rep)), r.position + Vector2(12, 28), 12, "muted")
+		var bw := (inner - 34) / 2
+		if ui.button(Rect2(x + 12, r.position.y + 46, bw, 28), Lang.f("Comprar (%s)", Fmt.short(cost)), g.cash >= cost, "primary", 13):
+			var res: Array = g.buy_office_decor(decor_pick)
+			city.sfx.play("coin" if res[0] else "angry", 0.7)
+			city.toast(res[1], "good" if res[0] else "bad")
+			decor_pick = ""
+			decor_hover = "?"
+			city.sync_office_decor(g)
+		if ui.button(Rect2(x + 22 + bw, r.position.y + 46, bw, 28), "Quitar", true, "normal", 13):
+			decor_pick = ""
+	if ui.button(Rect2(x, by, inner, 38), "Listo (Esc)", true, "primary", 15):
+		city.close_decor()

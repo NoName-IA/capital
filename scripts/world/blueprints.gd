@@ -27,11 +27,15 @@ static func B(c: Array, s: Array, key, solid = false) -> Array:
 
 
 ## Oficina central: torre corporativa de vidrio. Solo el vestíbulo (planta baja) se puede recorrer.
-static func hq() -> Array:
+## La oficina central según su aspecto (D.OFFICE_LOOKS): 0 garaje, 1 de barrio, 2 edificio corporativo, 3 torre de
+## lujo. Por dentro el vestíbulo es el mismo (computadora, pizarra, trofeos, armario); cambian la altura, los
+## materiales y lo de afuera.
+static func hq(tier := 2) -> Array:
 	var w := 16.0
 	var depth := 14.0
-	var h := 21.0
 	var lobby := 4.8
+	var floors: int = [1, 2, 4, 6][tier]
+	var h: float = lobby + 1.0 + floors * [3.0, 3.4, 3.8, 4.2][tier]
 	var door := 4.0
 	var door_h := 3.4
 	var z0 := 2.0
@@ -60,8 +64,6 @@ static func hq() -> Array:
 		B([0, door_h + 0.1, z0 - 0.25], [door + 0.4, 0.2, 0.2], "gold"),
 		B([0, 4.0, z0 - 1.5], [7, 0.22, 3.0], "hq_trim"),
 		B([0, 3.86, z0 - 1.5], [6.6, 0.06, 2.7], "gold"),
-		B([-3.2, 1.95, z0 - 2.8], [0.2, 3.9, 0.2], "gold", true),
-		B([3.2, 1.95, z0 - 2.8], [0.2, 3.9, 0.2], "gold", true),
 		B([0, 0.06, z0 - 1.4], [7, 0.12, 3.2], "marble"),
 		B([0, 0.13, z0 - 1.4], [2.6, 0.02, 3.0], "carpet"),
 		# Afuera: maceteros con arbustos y mástiles con banderas
@@ -69,10 +71,7 @@ static func hq() -> Array:
 		B([6, 0.4, z0 - 1.6], [2.2, 0.8, 1.0], "hq_stone", true),
 		B([-6, 1.05, z0 - 1.6], [1.9, 0.6, 0.8], "plant"),
 		B([6, 1.05, z0 - 1.6], [1.9, 0.6, 0.8], "plant"),
-		B([-7.6, 4.5, z0 - 3.2], [0.12, 9, 0.12], "white", true),
-		B([7.6, 4.5, z0 - 3.2], [0.12, 9, 0.12], "white", true),
-		B([-7.0, 8.4, z0 - 3.2], [1.2, 0.8, 0.04], "gold"),
-		B([8.2, 8.4, z0 - 3.2], [1.2, 0.8, 0.04], "green"),
+
 		# Vestíbulo: alfombra, mostrador de recepción, escritorio con la computadora, sala de espera
 		B([0, 0.07, 6.5], [4, 0.02, 8], "carpet"),
 		B([0, 0.4, 9], [3.4, 0.8, 1.4], "hq_wood", true),
@@ -112,8 +111,13 @@ static func hq() -> Array:
 	# Fachada de vidrio: vidrio en planta baja, franjas por piso y parteluces dorados (de noche se prenden)
 	for sx in [-1, 1]:
 		boxes.append(B([sx * sx_door, 2.2, z0 - 0.24], [side_w - 0.8, 3.4, 0.06], "hq_glass"))
-	var floor_h := (h - lobby - 1) / 4
-	for i in 4:
+	if tier >= 1:   # mástiles con banderas
+		boxes += [B([-7.6, 4.5, z0 - 3.2], [0.12, 9, 0.12], "white", true), B([7.6, 4.5, z0 - 3.2], [0.12, 9, 0.12], "white", true),
+				B([-7.0, 8.4, z0 - 3.2], [1.2, 0.8, 0.04], "gold"), B([8.2, 8.4, z0 - 3.2], [1.2, 0.8, 0.04], "green")]
+	if tier >= 2:   # columnas doradas de la marquesina
+		boxes += [B([-3.2, 1.95, z0 - 2.8], [0.2, 3.9, 0.2], "gold", true), B([3.2, 1.95, z0 - 2.8], [0.2, 3.9, 0.2], "gold", true)]
+	var floor_h := (h - lobby - 1) / floors
+	for i in floors:
 		var y := lobby + 0.9 + floor_h * (i + 0.5)
 		boxes.append(B([0, y, z0 - 0.24], [w - 1, floor_h * 0.68, 0.06], "hq_glass"))
 		for sx in [-1, 1]:
@@ -122,6 +126,23 @@ static func hq() -> Array:
 	for mx in [-6, -3, 0, 3, 6]:
 		boxes.append(B([mx, (lobby + h) / 2 + 0.4, z0 - 0.3], [0.14, h - lobby - 1.2, 0.1], "gold"))
 	boxes.append(B([0, h + 2.4, z0 + 0.6], [11, 2.2, 0.3], "hq_trim"))  # letrero del techo
+	if tier >= 3:   # torre de lujo: corona dorada, aguja con baliza, más banderas y focos en la fachada
+		boxes += [B([0, h + 0.62, zc], [w + 1.4, 0.34, depth + 1.4], "gold"),
+				B([0, h + 4.6, zc + 3], [0.5, 7.0, 0.5], "gold"),
+				B([0, h + 8.3, zc + 3], [0.7, 0.7, 0.7], ["glow", Color8(255, 70, 60)]),
+				B([-w / 2 - 0.3, h / 2, z0 - 0.3], [0.3, h, 0.3], "gold"), B([w / 2 + 0.3, h / 2, z0 - 0.3], [0.3, h, 0.3], "gold"),
+				B([-9.6, 5.5, z0 - 3.2], [0.12, 11, 0.12], "white", true), B([9.6, 5.5, z0 - 3.2], [0.12, 11, 0.12], "white", true),
+				B([-9.0, 10.4, z0 - 3.2], [1.2, 0.8, 0.04], "gold"), B([10.2, 10.4, z0 - 3.2], [1.2, 0.8, 0.04], "gold")]
+		for fx in [-5.5, 5.5]:
+			boxes.append(B([fx, 0.25, z0 - 3.4], [0.5, 0.5, 0.5], ["glow", Color8(255, 230, 170)]))
+	if tier <= 1:   # más sencilla: sin dorados ni mármol; el garaje además de estuco y madera
+		var swap := {"gold": "hq_trim", "marble": "floor"} if tier == 1 else \
+				{"gold": Color8(105, 105, 110), "marble": "floor", "hq_stone": Color8(206, 190, 160), "hq_trim": Color8(120, 96, 70),
+				"carpet": Color8(120, 110, 95), "hq_sofa": Color8(110, 90, 70)}
+		for b in boxes:
+			var key = b[2]
+			if not (key is Color or key is Array) and swap.has(key):
+				b[2] = swap[key]
 	var texts := [[Vector3(0, h + 2.45, z0 + 0.43), "CAPITAL", 46, "gold"],
 			[Vector3(0, 4.12, z0 - 3.02), "OFICINA CENTRAL", 13, "white"],
 			[Vector3(0, 2.95, z1 - 0.33), "CAPITAL", 30, "gold"],
@@ -232,6 +253,11 @@ static func mall() -> Array:
 	return [boxes, spots]
 
 
+## Luces cálidas de la guirnalda de ampolletas del puesto, de noche: [x, y, z, nivel] (ver Mats.add_light). Tres
+## repartidas bajo el toldo, que alumbran la fila y el frente del mostrador, y una sobre el mostrador.
+const STALL_BULBS := [[-1.65, 2.4, 2.6, 13.0], [0.0, 2.4, 2.6, 13.5], [1.65, 2.4, 2.6, 13.0], [0.0, 2.3, 4.6, 11.0]]
+
+
 ## Caja registradora del puesto: en el mostrador, justo frente al cajero (staff[0], en x = −0,9), girada para que la
 ## pantalla y el cajón miren hacia él, como en la vida real.
 const STALL_REGISTER := [Vector3(-0.9, 1.15, 4.8), PI]
@@ -251,7 +277,7 @@ static func stall_slots() -> Array:
 ## `variant` >= 0 arma un interior propio para ese local (ver _varied); -1 deja el plano clásico.
 static func blueprint(kind, variant := -1, product := "") -> Array:
 	if typeof(kind) == TYPE_STRING:
-		return mall() if kind == "mall" else hq()
+		return mall() if kind == "mall" else hq(variant if variant >= 0 else 2)
 	if variant >= 0:
 		return _varied(kind, variant, product)
 	var boxes := []
@@ -270,7 +296,7 @@ static func blueprint(kind, variant := -1, product := "") -> Array:
 				"lines": [{"slots": [[0, 1.9], [0, 1.0], [0, 0.1], [0, -0.8]], "exit": [[1.9, 1.9], [1.9, 0.0]]}],
 				"staff": [[-0.9, 5.9], [0.4, 5.9]], "serve": [1.6, 5.9], "manage": [-3.0, 0.6], "aisles": [],
 				"picks": [],
-				"lights": [[0, 2.5, 4, 6.5]]}
+				"lights": [[0, 2.5, 4, 6.5]], "bulbs": STALL_BULBS}
 		return [boxes, spots]
 
 	var dims: Array = [[14.0, 12.0, 4.5, 3.0], [22.0, 18.0, 7.0, 5.0]][kind - 1]
@@ -366,9 +392,22 @@ static func blueprint(kind, variant := -1, product := "") -> Array:
 
 
 ## Coordenadas locales de un terreno (z crece hacia adentro) a coordenadas del mundo.
+## Un terreno es [x, lado de la calle]; también puede ser [x, z, giro] para un edificio puesto en cualquier lugar
+## (el centro comercial de la playa, que mira al mar).
 static func to_world(plot: Array, lx: float, lz: float, y := 0.0) -> Vector3:
+	if plot.size() >= 3:
+		var v := Basis(Vector3.UP, float(plot[2])) * Vector3(lx, 0, lz)
+		return Vector3(plot[0] + v.x, y, plot[1] + v.z)
 	var side: float = plot[1]
 	return Vector3(plot[0] + side * lx, y, side * (FRONT + lz))
+
+
+## Transformación del terreno: de coordenadas locales (z hacia adentro) al mundo.
+static func plot_xf(plot: Array) -> Transform3D:
+	if plot.size() >= 3:
+		return Transform3D(Basis(Vector3.UP, float(plot[2])), Vector3(plot[0], 0, plot[1]))
+	var side: float = plot[1]
+	return Transform3D(Basis(Vector3.UP, 0.0 if side == 1 else PI), Vector3(plot[0], 0, side * FRONT))
 
 
 # ---------- interiores distintos para cada local ----------
@@ -415,7 +454,7 @@ static func _mirror(boxes: Array, spots: Dictionary) -> void:
 				spots[k] = v.map(func(r): return [Vector3(-r[0].x, r[0].y, r[0].z), r[1]])
 			"texts":
 				spots[k] = v.map(func(t): return [Vector3(-t[0].x, t[0].y, t[0].z), t[1], t[2], t[3]])
-			"lights", "indoor_lights":
+			"lights", "indoor_lights", "bulbs":   # [x, y, z, radio o nivel]: solo cambia x
 				spots[k] = v.map(func(l): return [-l[0], l[1], l[2], l[3]])
 			"restock":
 				v.sides = v.sides.map(func(s): return -s)
@@ -615,7 +654,7 @@ static func _varied_stall(boxes: Array, spots: Dictionary, rng: RandomNumberGene
 	spots.merge({"front": [0, -1.5], "door": null, "sign": [Vector3(0, 3.5, 2.48), 18, "white"],
 			"lines": [{"slots": [[0, 1.9], [0, 1.0], [0, 0.1], [0, -0.8]], "exit": [[1.9, 1.9], [1.9, 0.0]]}],
 			"staff": [[-0.9, 5.9], [0.4, 5.9]], "serve": [1.6, 5.9], "manage": [-3.0, 0.6], "aisles": [],
-			"picks": [], "lights": [[0, 2.5, 4, 6.5]],
+			"picks": [], "lights": [[0, 2.5, 4, 6.5]], "bulbs": STALL_BULBS,
 			"stall_slots": stall_slots(), "registers": [STALL_REGISTER], "seats": [[-0.9, 6.95]]})
 	boxes.append(B([-0.9, 0.22, 7.05], [0.42, 0.44, 0.42], wood))   # piso para descansar detrás del mostrador
 
@@ -987,4 +1026,4 @@ static func _stall_theme_boxes(boxes: Array, product: String, rng: RandomNumberG
 			boxes.append(B([1.4, top + 0.02, 4.5], [0.5, 0.03, 0.35], Color8(180, 185, 195)))
 			boxes.append(B([1.4, top + 0.2, 4.67], [0.5, 0.33, 0.02], GLOW(Color8(90, 170, 255))))
 	for i in 9:   # guirnalda de ampolletas en el borde del toldo
-		boxes.append(B([-2.2 + i * 0.55, 2.62 - 0.08 * sin(i * 1.1), 2.42], [0.1, 0.12, 0.1], GLOW(Color8(255, 220, 140))))
+		boxes.append(B([-2.2 + i * 0.55, 2.62 - 0.08 * sin(i * 1.1), 2.42], [0.1, 0.12, 0.1], GLOW(Color8(255, 205, 90))))

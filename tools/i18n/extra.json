@@ -1699,5 +1699,428 @@
  ],
  "Disponible": [
   "Available"
+ ],
+ "TU EMPRESA\\nVale %s": [
+  "YOUR COMPANY\\nWorth %s"
+ ],
+ "Centro Comercial de la Playa": [
+  "Beach Shopping Mall"
+ ],
+ "Vitrinas frente al mar": [
+  "Shops by the sea"
+ ],
+ "Pantalla: cuánto vale tu empresa": [
+  "Screen: what your company is worth"
+ ],
+ "Centro comercial de la playa": [
+  "Beach shopping mall"
+ ],
+ "CC playa %d": [
+  "BM %d"
+ ],
+ "No quedan terrenos en la avenida. Compra un centro comercial (pestaña Expansión) o vende franquicias.": [
+  "No lots left on the avenue. Buy a mall (Expansion tab) or sell franchises."
+ ],
+ "Compra tu primer puesto: busca un letrero SE VENDE.": [
+  "Buy your first stand: look for a FOR SALE sign."
+ ],
+ "del centro comercial de la playa": [
+  "in the beach mall"
+ ],
+ "del centro comercial": [
+  "in the mall"
+ ],
+ "Abriste un %s en la vitrina %d %s.": [
+  "You opened a %s in shop %d %s."
+ ],
+ "Ya tienes ese centro comercial.": [
+  "You already own that mall."
+ ],
+ "Inauguraste tu centro comercial de la playa: %d vitrinas frente al mar.": [
+  "You opened your beach mall: %d shops by the sea."
+ ],
+ "%s dejó su vitrina en tu centro comercial: quedó libre.": [
+  "%s left its shop in your mall: it's free now."
+ ],
+ "%s arrendó una vitrina de tu centro comercial y abrió un local de %s. Te paga alquiler.": [
+  "%s rented a shop in your mall and opened a %s store. It pays you rent."
+ ],
+ "Un empresario quiere comprar tu %s por %s al contado. En libros vale %s y el mes pasado aportó %s. La oferta vence hoy.": [
+  "A businessman wants to buy your %s for %s in cash. Its book value is %s and last month it brought in %s. The offer expires today."
+ ],
+ "Un virus bloqueó las cajas y el sistema de inventario de todos tus locales. En la pantalla aparece un mensaje: pagas %s o borran todo.": [
+  "A virus locked the registers and inventory system in all your stores. A message on screen says: pay %s or everything gets wiped."
+ ],
+ "Fundaste %s con %s en caja. Compra tu primer puesto.": [
+  "You founded %s with %s in cash. Buy your first stand."
+ ],
+ "Empiezas con poca plata y compras tu primer puesto. Sube rango por rango hasta construir tu imperio.": [
+  "You start with little money and buy your first stand. Climb rank by rank until you build your empire."
+ ],
+ "Valoración: EBITDA anual × múltiplo + caja + inventario − deuda. Define tu rango.": [
+  "Valuation: annual EBITDA × multiple + cash + inventory − debt. It sets your rank."
+ ],
+ "Tasa del banco central. Sube cuando hay inflación. Define el costo de los préstamos.": [
+  "Central bank rate. It rises with inflation. It sets the cost of loans."
+ ],
+ "Para crecer y pagar": [
+  "To grow and pay"
+ ],
+ "Dinero disponible para crecer y pagar costos.": [
+  "Money available to grow and pay costs."
+ ],
+ "Va a la vitrina %d de %s (la avenida está llena). ": [
+  "Goes to shop %d of %s (the avenue is full). "
+ ],
+ "Frente a la oficina": [
+  "By the office"
+ ],
+ "En la playa": [
+  "At the beach"
+ ],
+ "Construir %s (%s)": [
+  "Build %s (%s)"
+ ],
+ "¿Comprar %s por %s?": [
+  "Buy %s for %s?"
+ ],
+ "Vitrinas tuyas / de rivales": [
+  "Your shops / rivals' shops"
+ ],
+ "%d / %d de %d": [
+  "%d / %d of %d"
+ ],
+ "Mantenimiento": [
+  "Upkeep"
+ ],
+ "%s arrienda esta vitrina (%s). Te paga alquiler. Ve y apreta E para comprársela.": [
+  "%s rents this shop (%s). It pays you rent. Go there and press E to buy it."
+ ],
+ "Ve al centro comercial y apreta E frente a la vitrina.": [
+  "Go to the mall and press E in front of the shop."
+ ],
+ "Tu %s": [
+  "Your %s"
+ ],
+ "%d vitrinas tuyas · %d de rivales · %d libres": [
+  "%d yours · %d rivals' · %d free"
+ ],
+ "Terreno: %s": [
+  "Lot: %s"
+ ],
+ "Computadora, pizarra de estrategia, trofeos y armario.": [
+  "Computer, strategy board, trophies and wardrobe."
+ ],
+ "Tu meta: que tu empresa valga $10 millones.\\n\\nSigue la flecha amarilla.": [
+  "Your goal: make your company worth $10 million.\\n\\nFollow the yellow arrow."
+ ],
+ "Usa «precio óptimo» en Mercado de vez en cuando.": [
+  "Use \"optimal price\" in Market every now and then."
+ ],
+ "Contrata o agranda tu tienda.": [
+  "Hire or grow your store."
+ ],
+ "Compra terrenos SE VENDE. Los de la playa venden más.": [
+  "Buy FOR SALE lots. The beach ones sell more."
+ ],
+ "20 días seguidos en rojo y quiebras.": [
+  "20 days in a row in the red and you go bankrupt."
+ ],
+ "Crece": [
+  "Grow"
+ ],
+ "Negocios nuevos, la jugada del mes y megatiendas.": [
+  "New businesses, the move of the month and megastores."
+ ],
+ "Vitrina %d · %s": [
+  "Shop %d · %s"
+ ],
+ "+%d%% de clientes, techado y mitad de alquiler.": [
+  "+%d%% customers, covered and half the rent."
+ ],
+ "Elige qué abrir. Más grande = más clientes, pero más alquiler.": [
+  "Choose what to open. Bigger = more customers, but more rent."
+ ],
+ "%s: cuesta %s, alquiler %s/mes, hasta %d empleados.": [
+  "%s: costs %s, rent %s/month, up to %d employees."
+ ],
+ "%s no quiso venderte este local.": [
+  "%s wouldn't sell you this store."
+ ],
+ "Para que suba: gana más cada mes y no te endeudes de más.": [
+  "To raise it: earn more each month and don't borrow too much."
+ ],
+ "Haz que tu empresa valga %s.": [
+  "Make your company worth %s."
+ ],
+ "+%d%% clientes": [
+  "+%d%% customers"
+ ],
+ "+%s estrellas": [
+  "+%s stars"
+ ],
+ "atienden %d%% más": [
+  "serve %d%% more"
+ ],
+ "el clima espanta menos": [
+  "weather scares fewer away"
+ ],
+ "Muévete con %s %s %s %s": [
+  "Move with %s %s %s %s"
+ ],
+ "Ve a un letrero SE VENDE": [
+  "Go to a FOR SALE sign"
+ ],
+ "Sigue la flecha y aprieta %s.": [
+  "Follow the arrow and press %s."
+ ],
+ "Compra tu primer puesto": [
+  "Buy your first stand"
+ ],
+ "Café · Puesto.": [
+  "Coffee · Stand."
+ ],
+ "Abre la tablet": [
+  "Open the tablet"
+ ],
+ "Aprieta %s.": [
+  "Press %s."
+ ],
+ "Aprieta Entendido.": [
+  "Press Got it."
+ ],
+ "Ponle precio": [
+  "Set a price"
+ ],
+ "Mercado → «Usar precio óptimo».": [
+  "Market → \"Use optimal price\"."
+ ],
+ "Negocios → el + de tu puesto.": [
+  "Businesses → the + on your stand."
+ ],
+ "Adelanta el tiempo": [
+  "Speed up time"
+ ],
+ "Cierra la tablet y aprieta %s o %s.": [
+  "Close the tablet and press %s or %s."
+ ],
+ "%d vitrinas para puestos y locales. +%d%% de clientes, techado y mitad de alquiler. Mantenimiento: %s/mes.": [
+  "%d shops for stands and stores. +%d%% customers, covered and half the rent. Upkeep: %s/month."
+ ],
+ "Comprar %s (%s)": [
+  "Buy %s (%s)"
+ ],
+ "Tu meta: que tu empresa valga $10 millones.\n\nSigue la flecha amarilla.": [
+  "Your goal: make your company worth $10 million.\n\nFollow the yellow arrow."
+ ],
+ "Decisión importante: %s": [
+  "Big decision: %s"
+ ],
+ "El rumbo de tu marca": [
+  "Your brand's direction"
+ ],
+ "Tu empresa creció. Elige qué marca quieres ser.": [
+  "Your company grew. Choose what brand you want to be."
+ ],
+ "Marca premium": [
+  "Premium brand"
+ ],
+ "12% menos clientes, pero aguantan precios mucho más altos sin irse. +15 de reputación.": [
+  "12% fewer customers, but they put up with much higher prices without leaving. +15 reputation."
+ ],
+ "Precios bajos para todos": [
+  "Low prices for everyone"
+ ],
+ "22% más clientes y 10% más barato comprarle al proveedor, pero −8 de reputación.": [
+  "22% more customers and 10% cheaper from the supplier, but −8 reputation."
+ ],
+ "Tu marca ahora es premium: menos clientes, pero pagan más.": [
+  "Your brand is now premium: fewer customers, but they pay more."
+ ],
+ "Tu marca ahora es de precios bajos: llega mucha más gente.": [
+  "Your brand is now about low prices: many more people come."
+ ],
+ "Qué hacer con la competencia": [
+  "What to do about the competition"
+ ],
+ "Los grandes rivales te tomaron en serio. Te proponen una alianza... o puedes declararles la guerra.": [
+  "The big rivals take you seriously now. They offer an alliance... or you can declare war on them."
+ ],
+ "Aliarte con ellos": [
+  "Ally with them"
+ ],
+ "Nunca más te atacan y hay un competidor menos en cada negocio, pero le das 6% de tus ventas a la alianza.": [
+  "They never attack you again and there's one less competitor in each business, but you give 6% of your sales to the alliance."
+ ],
+ "Guerra total": [
+  "All-out war"
+ ],
+ "Comprar sus locales cuesta 35% menos, pero se enojan mucho y te atacan más seguido.": [
+  "Buying their stores costs 35% less, but they get very angry and attack you more often."
+ ],
+ "Firmaste la alianza: la competencia ya no te ataca.": [
+  "You signed the alliance: the competition won't attack you anymore."
+ ],
+ "Declaraste la guerra: sus locales están más baratos, pero cuidado.": [
+  "You declared war: their stores are cheaper, but watch out."
+ ],
+ "DECISIÓN IMPORTANTE · PARA SIEMPRE · DÍA %d DE %s": [
+  "BIG DECISION · FOREVER · DAY %d OF %s"
+ ],
+ "Compra artículos para este local: plantas, letrero luminoso, terraza, aire acondicionado...": [
+  "Buy items for this store: plants, neon sign, terrace, air conditioning..."
+ ],
+ "Comprar (%s)": [
+  "Buy (%s)"
+ ],
+ "Quitar": [
+  "Remove"
+ ],
+ "Esc: volver al juego": [
+  "Esc: back to the game"
+ ],
+ "Contrata otro empleado": [
+  "Hire another employee"
+ ],
+ "Contrata otro empleado.": [
+  "Hire another employee."
+ ],
+ "Cambia la velocidad": [
+  "Change the speed"
+ ],
+ "Presiona la tecla %s para ir a tu oficina.": [
+  "Press the %s key to go to your office."
+ ],
+ "Ventilador": [
+  "Fan"
+ ],
+ "Con calor se espantan menos clientes (+0,1 estrellas).": [
+  "When it's hot, fewer customers are scared off (+0.1 stars)."
+ ],
+ "Menú colgante": [
+  "Hanging menu"
+ ],
+ "Un letrero con los precios bajo el toldo: los clientes piden más rápido (atienden 8% más).": [
+  "A price board under the awning: customers order faster (8% more served)."
+ ],
+ "Pago con QR": [
+  "QR payments"
+ ],
+ "Los clientes pagan con el celular: cada empleado atiende 12% más.": [
+  "Customers pay with their phone: each employee serves 12% more."
+ ],
+ "Eso no se puede poner en esta sucursal.": [
+  "That can't go in this store."
+ ],
+ "¡Oiga! ¡Propiedad privada!": [
+  "Hey! Private property!"
+ ],
+ "¡PUM!": [
+  "WHAM!"
+ ],
+ "¡Propiedad privada! El guardia no deja entrar hasta que compres el terreno.": [
+  "Private property! The guard won't let you in until you buy the lot."
+ ],
+ "Oficina de garaje": [
+  "Garage office"
+ ],
+ "Oficina de barrio": [
+  "Neighborhood office"
+ ],
+ "Edificio corporativo": [
+  "Corporate building"
+ ],
+ "Torre de lujo": [
+  "Luxury tower"
+ ],
+ "Aspecto de la oficina": [
+  "Office look"
+ ],
+ "La tuya": [
+  "Yours"
+ ],
+ "Rango: %s": [
+  "Rank: %s"
+ ],
+ "Remodelar (%s)": [
+  "Remodel (%s)"
+ ],
+ "Remodelar la oficina: %s (%s)": [
+  "Remodel the office: %s (%s)"
+ ],
+ "Remodelar la oficina: se desbloquea con el rango %s": [
+  "Remodel the office: unlocks at rank %s"
+ ],
+ "Se desbloquea con el rango %s.": [
+  "Unlocks at rank %s."
+ ],
+ "¿Remodelar tu oficina: %s?": [
+  "Remodel your office: %s?"
+ ],
+ "Cambia cómo se ve tu edificio.": [
+  "Changes how your building looks."
+ ],
+ "Sí, remodelar (%s)": [
+  "Yes, remodel (%s)"
+ ],
+ "Ya tienes esa oficina.": [
+  "You already have that office."
+ ],
+ "Remodelación: %s": [
+  "Remodel: %s"
+ ],
+ "¡Remodelaste tu oficina! Ahora es: %s.": [
+  "You remodeled your office! It's now: %s."
+ ],
+ "¡Tu oficina ahora es: %s!": [
+  "Your office is now: %s!"
+ ],
+ "Ya puedes remodelar tu oficina: %s.": [
+  "You can now remodel your office: %s."
+ ],
+ "Alfombra roja": [
+  "Red carpet"
+ ],
+ "Jardín": [
+  "Garden"
+ ],
+ "Fuente": [
+  "Fountain"
+ ],
+ "Reflectores": [
+  "Floodlights"
+ ],
+ "Estatua dorada": [
+  "Golden statue"
+ ],
+ "Tu oficina": [
+  "Your office"
+ ],
+ "%s · +%d de reputación": [
+  "%s · +%d reputation"
+ ],
+ "+%d de reputación": [
+  "+%d reputation"
+ ],
+ "Personalizar la oficina (%d/%d)": [
+  "Customize the office (%d/%d)"
+ ],
+ "Tu oficina ya lo tiene.": [
+  "Your office already has it."
+ ],
+ "Oficina: %s": [
+  "Office: %s"
+ ],
+ "Instalaste %s en tu oficina.": [
+  "You installed %s at your office."
+ ],
+ "Mejorar oficina: %s": [
+  "Upgrade office: %s"
+ ],
+ "Tu empresa creció: tu oficina central puede verse a la altura.": [
+  "Your company grew: your headquarters can look the part."
+ ],
+ "Mejorar (%s)": [
+  "Upgrade (%s)"
  ]
 }

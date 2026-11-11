@@ -56,6 +56,16 @@ static func competitor(parent: Node3D, key: String, plot: Array, owner = null) -
 			[Vector3(-w / 2 - 0.9, 0.05, zc), Vector3(0.3, 0.05, z1 - z0 + 1.9)], [Vector3(w / 2 + 0.9, 0.05, zc), Vector3(0.3, 0.05, z1 - z0 + 1.9)]]:
 		e.box(bx[0], bx[1], red)
 	e.node(bld.root, Mats.emissive, false)
+	var tex = Admin.rival_texture(r.key)
+	if tex != null:   # el logo de la marca (o la foto del dueño) arriba de la fachada, mirando a la calle
+		var logo := Sprite3D.new()
+		logo.texture = tex
+		logo.pixel_size = 2.4 / 256.0
+		logo.position = Vector3(0, h + 1.5, z0 - 0.1)
+		logo.rotation.y = PI
+		logo.shaded = false
+		logo.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+		bld.root.add_child(logo)
 	Store.stock_shelves(bld.root, 1, key, bld.local)   # sus repisas también están llenas
 	Store.add_registers(bld.root, 1, bld.local)
 	var staff := []

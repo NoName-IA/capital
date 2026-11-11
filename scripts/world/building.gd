@@ -55,10 +55,8 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 	var local_spots: Dictionary = bp[1]
 	local = local_spots
 	blueprint_boxes = boxes
-	var side: float = plot[1]
 	root = Node3D.new()
-	root.position = Vector3(plot[0], 0, side * Blueprints.FRONT)
-	root.rotation.y = 0.0 if side == 1 else PI
+	root.transform = Blueprints.plot_xf(plot)
 	parent.add_child(root)
 	var parts := Boxes.new()
 	var glass := Boxes.new()
@@ -106,6 +104,8 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 	# Luz cálida adentro, que de noche sale por la puerta y las vitrinas: [x, y, z, radio] locales
 	for l in local_spots.get("lights", []):
 		Mats.add_light(root, Vector3(l[0], l[1], l[2]), 11.0)
+	for l in local_spots.get("bulbs", []):   # las ampolletas del puesto: cada una con su nivel
+		Mats.add_light(root, Vector3(l[0], l[1], l[2]), l[3], false, false, true)
 	if local_spots.has("indoor_lights") and not local_spots.has("lights"):
 		Mats.add_light(root, Vector3(0, 2.8, 1.2), 11.0)   # la luz de adentro que sale por la puerta a la vereda
 	# Luz de los paneles del techo: adentro siempre está prendida, de día y de noche
@@ -118,7 +118,7 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 			brand.append(l)
 	for k in local_spots:
 		var v = local_spots[k]
-		if k in ["sign", "texts", "screen", "lights", "indoor_lights", "pick_faces", "shelf_rows", "levels", "registers",
+		if k in ["sign", "texts", "screen", "lights", "bulbs", "indoor_lights", "pick_faces", "shelf_rows", "levels", "registers",
 				"stall_slots", "restock"]:
 			continue
 		if k == "ceiling":  # [x0, x1, z0, z1, altura] en el mundo
@@ -143,7 +143,7 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 		elif v is Array:
 			spots[k] = Blueprints.to_world(plot, v[0], v[1])
 	# Hacia dónde mira el personal (de frente a la calle)
-	spots["face_yaw"] = PI if side == 1 else 0.0
+	spots["face_yaw"] = fposmod(root.rotation.y + PI, TAU)
 	spots["local_screen"] = local_spots.get("screen")
 	spots["pick_faces"] = local_spots.get("pick_faces", [])
 

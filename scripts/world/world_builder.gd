@@ -40,8 +40,7 @@ func build() -> void:
 	windows.node(city, Mats.windows, false)
 	lamp_node = lamps.node(city, Mats.emissive, false)
 	_lamp_lights()
-	hq = Building.new(city, HQ, "hq", Blueprints.PALETTE.gold, "")
-	rects += hq.rects
+	hq = Building.new(city, HQ, "hq", Blueprints.PALETTE.gold, "", "", 0.0, 2)   # la ciudad la cambia según la partida
 	_eldiario()
 
 
@@ -390,17 +389,23 @@ func _barrio() -> void:
 			var row_z: float = row[0]
 			var face: int = row[1]
 			for x in range(int(x0) + 8, int(x1) - 4, 13):
-				if rng.randf() < 0.12:  # un terreno con jardín y árboles
+				var in_mall := Mall.world_rect(1).grow(3.0).has_point(Vector2(x, row_z))
+				if rng.randf() < 0.12 or in_mall:  # un terreno con jardín y árboles (o el centro comercial de la playa)
+					if in_mall:
+						continue
 					tree(Vector3(x + rng.randf_range(-2, 2), 0, row_z + rng.randf_range(-2, 2)))
 					continue
 				house(Vector3(x + rng.randf_range(-1, 1), 0, row_z), face, pastel, roofs)
 			for x in range(int(x0) + 14, int(x1) - 4, 26):
-				tree(Vector3(x + 6.5, 0, row_z - face * 6.2))
+				if not Mall.world_rect(1).grow(2.0).has_point(Vector2(x + 6.5, row_z - face * 6.2)):
+					tree(Vector3(x + 6.5, 0, row_z - face * 6.2))
 		# Faroles a los dos lados del pasaje, alternados, en el borde de la vereda (entre la solera y los cercos)
 		var n := 0
 		for x in range(int(x0) + 4, int(x1), 16):
 			var s: int = 1 if n % 2 == 0 else -1
 			n += 1
+			if Mall.world_rect(1).grow(1.0).has_point(Vector2(x, lane + s * 3.3)):
+				continue
 			_street_lamp(Vector3(x, 0, lane + s * 3.3), -s, 3.8)
 	for k in 6:  # bosquecito entre el distrito financiero y el parque (lado sur)
 		tree(Vector3(rng.randf_range(-38, -28), 0, rng.randf_range(-56, -30)))

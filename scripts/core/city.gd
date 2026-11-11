@@ -8,10 +8,10 @@ extends Node3D
 const PLOTS := [[-55, 1], [-33, 1], [-11, 1], [11, 1], [33, 1], [55, 1], [-55, -1], [-33, -1], [121, 1], [121, -1],
 		[33, -1], [55, -1], [143, 1], [143, -1]]
 const HQ := [-80, 1]
-# Locales de la competencia en los extremos de la calle (no se pueden comprar como terreno): al este, antes de la playa,
-# y al oeste, a la entrada de la ciudad por el valle. Alrededor de tu oficina central no hay ninguno. Se llenan en este
+# Locales de la competencia (no se pueden comprar como terreno): al sur, antes de la playa, al oeste de tu oficina
+# y a la entrada de la ciudad por el valle (al norte, antes de la playa, está tu segundo centro comercial). Se llenan en este
 # orden (ver competitor_plan).
-const COMP_PLOTS := [[77, 1], [77, -1], [99, 1], [99, -1], [-121, 1], [-121, -1], [-143, 1]]
+const COMP_PLOTS := [[-143, -1], [77, -1], [-101, 1], [99, -1], [-121, 1], [-121, -1], [-143, 1]]
 const SIDEWALK := 7.5
 
 
@@ -60,6 +60,7 @@ var game = null
 var stores := {}     # índice de terreno -> Store
 var lots := {}       # índice de terreno -> {root, manage}
 var mall: Mall       # el centro comercial frente a la oficina (o su terreno en obra)
+var malls := []      # los dos: el de la avenida (= mall) y el de la playa
 var factories := {}  # negocio -> {root, rects, sig}: tus fábricas en el parque industrial
 var comps := {}      # "c3" (local fijo de los extremos) o "p5" (terreno que compró el rival) -> competidor
 var customers := []
@@ -134,7 +135,8 @@ func _ready() -> void:
 	builder = WorldBuilder.new(self)
 	builder.build()
 	static_rects = builder.rects
-	mall = Mall.new(self)
+	mall = Mall.new(self, 0)
+	malls = [mall, Mall.new(self, 1)]
 	hq = builder.hq
 	hq_spots = hq.spots
 	sky = SkyLight.new(self)
@@ -164,6 +166,8 @@ func _ready() -> void:
 func setup_ui(admin: Admin, ui: ImUI, hud_parent: RID) -> void:
 	app = admin
 	app.go_to_loc = go_to_location
+	app.open_decor = open_decor
+	app.open_office_decor = open_office_decor
 	overlays = Overlays.new(self, ui, admin)
 	hud = Hud.new(self, hud_parent)
 	apply_settings()
@@ -283,6 +287,31 @@ func _build_office() -> void:
 	add_child(assistant)
 	assistant.position = Blueprints.to_world(HQ, -2.9, 9.0)
 	assistant.rotation.y = PI
+	_office_props()
+
+
+var office_tier := 2   # el aspecto con el que está armada la oficina ahora
+
+
+## Arma de nuevo la oficina con otro aspecto (al cargar una partida o al remodelar).
+func set_office_look(tier: int) -> void:
+	if tier == office_tier:
+		return
+	office_tier = tier
+	hq.destroy()
+	hq = Building.new(self, HQ, "hq", Blueprints.PALETTE.gold, "", "", 0.0, tier)
+	builder.hq = hq
+	hq_spots = hq.spots
+	trophies_node = null
+	trophy_count = -1
+	_office_props()
+	office_decor_sig = ["-"]
+	if game != null:
+		hq.set_brand(game.company)
+
+
+## Lo que va pegado a la oficina: pizarra, pantalla de la bolsa y la pantalla de la computadora.
+func _office_props() -> void:
 	board_text = Building.label(hq.root, "", Vector3(-7.64, 2.5, 11), 8, Color8(30, 40, 70), true, false)
 	board_text.rotation.y = PI / 2
 	ticker_text = Building.label(hq.root, "", Vector3(7.64, 2.6, 11), 9, Color8(120, 255, 120), true, false)
@@ -300,11 +329,18 @@ func _build_office() -> void:
 
 
 func sync_office(g: Game) -> void:
+	if g.office_look != office_tier:
+		set_office_look(g.office_look)
+	sync_office_decor(g)
 	var wait := g.strategy_wait()
 	board_text.text = Lang.t("REUNIÓN DE ESTRATEGIA") + "\n" + (Lang.t("Lista: acércate y presiona E") if not wait else Lang.f("Próxima en %d días", wait))
 	var chg := g.market_today * 100
-	ticker_text.text = Lang.f("BOLSA DE VALORES\nHoy %s%s%%\nTu fondo: %s", ["+" if chg >= 0 else "", Fmt.num(chg, 1), Fmt.short(g.fund)])
-	ticker_text.modulate = Color8(120, 255, 120) if chg >= 0 else Color8(255, 90, 90)
+	if g.investing():
+		ticker_text.text = Lang.f("BOLSA DE VALORES\nHoy %s%s%%\nTu fondo: %s", ["+" if chg >= 0 else "", Fmt.num(chg, 1), Fmt.short(g.fund)])
+		ticker_text.modulate = Color8(120, 255, 120) if chg >= 0 else Color8(255, 90, 90)
+	else:   # en el modo normal la pantalla muestra cuánto vale tu empresa
+		ticker_text.text = Lang.f("TU EMPRESA\nVale %s", Fmt.short(g.valuation()))
+		ticker_text.modulate = Color8(120, 255, 120)
 	if g.rank != trophy_count:
 		build_trophies(g.rank)
 
@@ -332,6 +368,38 @@ func build_trophies(count: int) -> void:
 	if not b.is_empty():
 		var m := Mats.textured(null, 0.25, Color.WHITE, Vector3.ONE, 0.8)
 		b.node(trophies_node, m, false)
+
+
+## Ventana «Mejorar oficina»: sale sola cuando ya tienes el rango y la plata para el siguiente aspecto (una vez por
+## aspecto; si dices que no, sigue en la tablet, pestaña Crecimiento).
+func _offer_office(g: Game) -> void:
+	var nl := g.next_office_look()
+	if nl < 0 or g.office_offered >= nl or tutorial.active or overlays.open() or app.modal != null or knock != null:
+		return
+	if g.rank < int(D.OFFICE_LOOKS[nl][1]) or g.cash < g.office_look_cost(nl) * 1.5:   # que no te deje sin caja
+		return
+	g.office_offered = nl
+	sfx.play("good", 0.7)
+	remodel_office()
+
+
+## Remodelar la oficina al siguiente aspecto.
+func remodel_office() -> void:
+	var g: Game = game
+	var nl := g.next_office_look()
+	if nl < 0:
+		return
+	var look: Array = D.OFFICE_LOOKS[nl]
+	if g.rank < int(look[1]):
+		toast(Lang.f("Se desbloquea con el rango %s.", D.RANKS[int(look[1])][1]), "bad")
+		return
+	confirm(Lang.f("Mejorar oficina: %s", look[0]), "Tu empresa creció: tu oficina central puede verse a la altura.",
+			Lang.f("Mejorar (%s)", Fmt.short(g.office_look_cost(nl))), func():
+				var res: Array = g.buy_office_look(nl)
+				if res[0]:
+					sync_office(g)
+					sfx.play("fanfare", 0.7)
+				toast(res[1], "good" if res[0] else "bad"))
 
 
 func open_growth() -> void:
@@ -376,9 +444,58 @@ func manage_market(key: String) -> void:
 
 
 ## Ventana para comprar el local de la competencia que tienes enfrente (el edificio pasa a ser tuyo).
-func buy_competitor(key: String, plot: int) -> void:
+func buy_competitor(key: String, plot: int, mall_slot := -1) -> void:
+	if refusing(_comp_id(plot, mall_slot)):
+		return
 	overlays.buy_key = key
+	overlays.buy_mall_slot = mall_slot
 	overlays.show("compra", plot)
+
+
+static func _comp_id(plot: int, mall_slot: int) -> String:
+	return "m%d" % mall_slot if mall_slot >= 0 else "p%d" % plot
+
+
+## Un rival que no quiso venderte: no se le puede volver a preguntar hasta que pase el tiempo (en minutos reales).
+var refused := {}   # id -> {until (ms), pos}
+
+
+func refusing(id: String) -> bool:
+	var r = refused.get(id)
+	if r == null:
+		return false
+	if Time.get_ticks_msec() >= int(r.until):
+		refused.erase(id)
+		return false
+	return true
+
+
+## El rival no te vendió: 5 minutos sin poder volver a preguntarle (cerca del edificio se ve un relojito).
+func refuse(plot: int, mall_slot: int) -> void:
+	var pos := player.position
+	if mall_slot >= 0:
+		var m: Mall = malls[Game.mall_index(mall_slot)]
+		var i := mall_slot % int(D.MALL.slots)
+		if i < m.slots.size():
+			pos = m.slots[i].front
+	else:
+		for slot in comps:
+			var idx := int(slot.substr(1)) + (PLOTS.size() if slot.begins_with("c") else 0)
+			if idx == plot:
+				pos = comps[slot].spots.manage
+	refused[_comp_id(plot, mall_slot)] = {"until": Time.get_ticks_msec() + 300000, "pos": pos}
+
+
+## El relojito del rival que no quiso venderte más cercano (si estás a menos de 14 m): [segundos que faltan, posición].
+func refuse_near() -> Array:
+	for id in refused.keys():
+		if not refusing(id):
+			continue
+		var r: Dictionary = refused[id]
+		var pos: Vector3 = r.pos
+		if Vector2(pos.x - player.position.x, pos.z - player.position.z).length() < 14.0:
+			return [(int(r.until) - Time.get_ticks_msec()) / 1000.0, pos]
+	return []
 
 
 func manage(store: Store) -> void:
@@ -425,10 +542,12 @@ func go_to_location(loc: Dictionary) -> void:
 	var label := Lang.f("%s de %s", [D.SIZES[loc.size].name, Lang.noun(D.PRODUCTS[loc.product].name)])
 	var pos: Vector3
 	var yaw_deg: float
-	if Game.mall_of(loc) >= 0 and Game.mall_of(loc) < mall.slots.size():
-		var s: Dictionary = mall.slots[Game.mall_of(loc)]
+	var mi := Game.mall_index(Game.mall_of(loc)) if Game.mall_of(loc) >= 0 else -1
+	if mi >= 0 and mi < malls.size() and Game.mall_of(loc) % int(D.MALL.slots) < malls[mi].slots.size():
+		var m: Mall = malls[mi]
+		var s: Dictionary = m.slots[Game.mall_of(loc) % int(D.MALL.slots)]
 		var r: Array = s.rect
-		var center := Blueprints.to_world(Mall.PLOT, (r[0] + r[1]) / 2, (r[2] + r[3]) / 2)
+		var center := Blueprints.to_world(m.plot, (r[0] + r[1]) / 2, (r[2] + r[3]) / 2)
 		pos = s.front
 		yaw_deg = rad_to_deg(atan2(center.x - pos.x, center.z - pos.z))
 	elif Game.plot_of(loc) >= 0:
@@ -744,6 +863,8 @@ func watch_news(g: Game) -> void:
 
 func react(n: Dictionary) -> void:
 	var fx = n.get("fx")
+	if tutorial.active and fx != "record":   # durante el tutorial solo los avisos de lo que vendes
+		return
 	var v = n.get("value")
 	var notes := hud.notes
 	var gold := Color8(240, 175, 40)
@@ -784,7 +905,7 @@ func react(n: Dictionary) -> void:
 			for w in r.name.replace("Dr. ", "").replace("Doña ", "").split(" ").slice(0, 2):
 				initials += w[0]
 			var said: String = n.text.split(": «", true, 1)[-1].trim_suffix("»")
-			notes.push("mensajes", Lang.f("%s · %s", [r.name, r.company]), Lang.f("«%s»", said), {"col": r.color, "initials": initials, "sound": "rival", "low": true})
+			notes.push("mensajes", Lang.f("%s · %s", [r.name, r.company]), Lang.f("«%s»", said), {"col": r.color, "initials": initials, "rival": r.key, "sound": "rival", "low": true})
 		"weather":
 			var wd: Dictionary = D.WEATHER[v]
 			var nxt: Dictionary = D.WEATHER[game.weather_next]
@@ -886,8 +1007,9 @@ func set_sky_lock(t: float) -> void:
 
 # ---------- sincronización con la simulación ----------
 func reset_world(g) -> void:
-	mall.destroy()
-	mall.built = false
+	for m in malls:
+		m.destroy()
+		m.built = false
 	for s in stores.values():
 		s.destroy()
 	for l in lots.values():
@@ -947,8 +1069,8 @@ func sync(g: Game) -> void:
 		if rival and lots.has(i):
 			lots[i].root.queue_free()
 			lots.erase(i)
-		if loc == null and not rival and not lots.has(i) and i < PLOTS.size():
-			lots[i] = Actors.lot(self, PLOTS[i], i, Fmt.short(g.location_cost(0)))
+		if loc == null and not rival and not lots.has(i) and i in D.LOT_PLOTS:
+			lots[i] = Actors.lot(self, plot_pos(i), i, Fmt.short(g.location_cost(0)))
 	for i in stores:
 		var s: Store = stores[i]
 		s.loc = by_plot[i]
@@ -958,7 +1080,8 @@ func sync(g: Game) -> void:
 	sync_competitors(g)
 	sync_factories(g)
 	sync_office(g)
-	mall.sync(g)
+	for m in malls:
+		m.sync(g)
 
 
 ## Qué competidores mostrar en los locales fijos de los extremos. Solo de los negocios donde ya compites: al empezar
@@ -976,7 +1099,7 @@ func competitor_plan(g: Game) -> Array:
 	var plan := []
 	for r in 3:
 		for k in want:
-			if want[k] > r and plan.size() < COMP_PLOTS.size():
+			if want[k] > r and plan.size() < COMP_PLOTS.size() - D.VALLEY_PLOTS.size():
 				plan.append(k)
 	return plan
 
@@ -1001,6 +1124,8 @@ func sync_competitors(g: Game) -> void:
 	for i in g.rival_plots:
 		if int(i) >= PLOTS.size():
 			taken[int(i) - PLOTS.size()] = true
+	for i in D.VALLEY_PLOTS:   # el valle son terrenos: ahí no se ponen locales fijos de la competencia
+		taken[i - PLOTS.size()] = true
 	for slot in comps.keys():
 		if slot.begins_with("p"):
 			continue
@@ -1070,14 +1195,17 @@ func spawn(dt: float) -> void:
 
 # ---------- choques ----------
 func all_rects() -> Array:
-	var out := [static_rects]
+	var out := [static_rects, hq.rects, office_decor_rects]
 	for s in stores.values():
 		out.append(s.rects)
 	for c in comps.values():
 		out.append(c.rects)
 	for f in factories.values():
 		out.append(f.rects)
-	out.append(mall.collide)
+	var thrown: bool = knock != null and knock.get("guard", false)
+	for m in malls:
+		if not (thrown and not m.built):   # el guardia te tira por encima del cerco
+			out.append(m.collide)
 	if cars_frozen:  # detenidos en pausa no atropellan, pero tampoco se pueden atravesar: son como una pared
 		var car_rects := []
 		for car in cars:
@@ -1118,7 +1246,8 @@ func blocked(x: float, z: float, r := 0.38, feet := 0.0) -> bool:
 		return true  # más adentro el mar ya es hondo
 	if not (BOUNDS[0] < x and x < BOUNDS[1] and BOUNDS[2] < z and z < BOUNDS[3]):
 		# Hacia los cerros se puede seguir un poco más por la calle y las veredas
-		if not (ROAD_WEST_LIMIT < x and x < BOUNDS[1] and absf(z) < SIDEWALK + 1.5):
+		var valley := -153.0 < x and x < -100.0 and absf(z) < 27.0   # los terrenos del valle, camino al túnel
+		if not valley and not (ROAD_WEST_LIMIT < x and x < BOUNDS[1] and absf(z) < SIDEWALK + 1.5):
 			return true
 	for rects in all_rects():
 		for q in rects:
@@ -1202,8 +1331,9 @@ func update_lights() -> void:
 	for c in comps.values():
 		if c.spots.get("ceiling") != null:
 			rooms.append(c.spots.ceiling)
-	if mall.spots.get("ceiling") != null:
-		rooms.append(mall.spots.ceiling)
+	for m in malls:
+		if m.spots.get("ceiling") != null:
+			rooms.append(m.spots.ceiling)
 	lights.update(camera.global_position, rooms)
 
 
@@ -1214,7 +1344,8 @@ func ceiling_over(pos: Vector3) -> Array:
 		spot_sets.append(s.spots)
 	for c in comps.values():
 		spot_sets.append(c.spots)
-	spot_sets.append(mall.spots)
+	for m in malls:
+		spot_sets.append(m.spots)
 	for sp in spot_sets:
 		var c = sp.get("ceiling")
 		if c != null and c[0] < pos.x and pos.x < c[1] and c[2] < pos.z and pos.z < c[3]:
@@ -1281,6 +1412,25 @@ func hit_by_car(car: Node3D) -> void:
 	sfx.play("angry", 0.9, 0.6)
 	sfx.play("bad", 0.5, 1.3)
 	toast("¡Te atropelló un auto! Cruza con cuidado.", "bad")
+
+
+## El guardia del terreno en obra te pega con la tonfa: sales volando por encima del cerco hasta la vereda.
+func hit_by_guard(from: Vector3, mall) -> void:
+	stop_serving()
+	var out: Vector3 = (Blueprints.to_world(mall.plot, 0, -1.0) - Blueprints.to_world(mall.plot, 0, 0.0)).normalized()
+	var local: Vector3 = mall.root.transform.affine_inverse() * player.position
+	var dist: float = local.z - Mall.Z0 + 2.0   # hasta la vereda (con el rebote queda ahí, no en la calle)
+	var vy := 9.5
+	var flight := 2.0 * vy / 22.0
+	var push := clampf(dist / flight, 8.0, 42.0)
+	var side := Vector3(-out.z, 0, out.x) * randf_range(-1.5, 1.5)
+	knock = {"t": 0.0, "vel": out * push + side + Vector3(0, vy, 0),
+			"spin": (1 if randf() < 0.5 else -1) * randf_range(480, 680), "down": false, "lie": 0.0, "guard": true}
+	shake = 0.55
+	pop(player.position + Vector3(0, 0.6, 0), "¡PUM!", "red")
+	sfx.play("angry", 1.0, 0.55)
+	sfx.play("bad", 0.6, 0.8)
+	toast("¡Propiedad privada! El guardia no deja entrar hasta que compres el terreno.", "bad")
 
 
 ## ¿Puede la gente enojarse contigo por taparle el paso? (no mientras atiendes, estás en un menú o ya te tiraron)
@@ -1419,6 +1569,9 @@ func update_camera(dt: float) -> void:
 	if overlays.mode == "personaje":
 		_custom_camera(dt)
 		return
+	if overlays.mode == "decorar":
+		_decor_camera(dt)
+		return
 	if game == null or app.view == "menu":
 		if not in_menu:
 			pick_menu_backdrop()
@@ -1499,6 +1652,8 @@ func update_zone() -> void:
 		z = ["Entrada de la ciudad", "El camino a los cerros y locales de la competencia"]
 	elif Mall.world_rect().grow(1.0).has_point(Vector2(p.x, p.z)):
 		z = ["Centro Comercial", "Vitrinas para puestos y locales" if game != null and game.mall else "Terreno en obra: cómpralo para tener más vitrinas"]
+	elif Mall.world_rect(1).grow(1.0).has_point(Vector2(p.x, p.z)):
+		z = ["Centro Comercial de la Playa", "Vitrinas frente al mar" if game != null and game.mall2 else "Terreno en obra: cómpralo para tener más vitrinas"]
 	elif p.x < -66:
 		z = ["Distrito Financiero", "Rascacielos y tu oficina central"]
 	elif p.x > 110:
@@ -1516,7 +1671,10 @@ func interactables() -> Array:
 	var g: Game = game
 	items.append([hq_spots.computer, "Usar la computadora de la oficina", func(): overlays.show("admin")])
 	items.append([hq_spots.board, "Pizarra: reunión de estrategia del mes", func(): overlays.show("estrategia")])
-	items.append([hq_spots.ticker, "Pantalla de la bolsa: ver tu fondo de inversión", open_growth])
+	if g.investing():
+		items.append([hq_spots.ticker, "Pantalla de la bolsa: ver tu fondo de inversión", open_growth])
+	else:
+		items.append([hq_spots.ticker, "Pantalla: cuánto vale tu empresa", open_growth])
 	items.append([hq_spots.trophies, "Vitrina de trofeos: tus títulos", show_trophies])
 	items.append([hq_spots.assistant, "Hablar con tu asistente", ask_assistant])
 	if g.wardrobe:
@@ -1544,11 +1702,14 @@ func interactables() -> Array:
 		elif cost > 0:
 			text += Lang.f(" (%s)", Fmt.money(cost))
 		items.append([builder.activity_spots[key], text, do_activity.bind(key)])
-	items += mall.interactables(g)
+	for m in malls:
+		items += m.interactables(g)
 	for slot in comps:
 		var c: Dictionary = comps[slot]
 		var name: String = Lang.noun(D.PRODUCTS[c.key].name)
 		var plot := int(slot.substr(1)) + (PLOTS.size() if slot.begins_with("c") else 0)
+		if refusing(_comp_id(plot, -1)):
+			continue
 		items.append([c.spots.manage, Lang.f("Comprar este local de %s (%s · %s)", [c.rival.company, name, Fmt.money(g.acquire_cost(c.key))]),
 				buy_competitor.bind(c.key, plot)])
 	return items
@@ -1581,6 +1742,12 @@ func update(dt: float) -> void:
 	if g != null:
 		watch_news(g)
 		tutorial.update(dt)
+		app.quiet = tutorial.active
+		_offer_office(g)
+		if tutorial.active:   # durante el tutorial no hay dilemas ni microdecisiones
+			g.next_choice_day = maxi(g.next_choice_day, g.day + 20)
+			g.next_micro_day = maxi(g.next_micro_day, g.day + 10)
+			g.micro = null
 		sync_timer -= dt
 		if sync_timer <= 0:
 			sync_timer = 0.2
@@ -1604,6 +1771,8 @@ func update(dt: float) -> void:
 	if not frozen:
 		for st in stores.values():
 			st.update(dt)
+		for m in malls:
+			m.update(dt)
 		for c in customers.duplicate():
 			c.update(dt)
 			if c.done:
@@ -1647,7 +1816,7 @@ func update(dt: float) -> void:
 		b.rotation.z = deg_to_rad(sin(t * 0.9 + ph) * 4)
 	hud.update(dt)
 	hud.update_danger(g, dt)
-	if overlays.mode == "personaje":
+	if overlays.mode in ["personaje", "decorar"]:
 		thumbs.step()
 	advance_sky(dt)
 	sky.moon_phase = fmod(game.day + 15.0, 29.5) / 29.5 if game != null else 0.5  # una fase por mes de juego
@@ -1677,8 +1846,9 @@ func camera_indoors() -> bool:
 	for s in stores.values():
 		if s.spots.get("ceiling") != null:
 			roofs.append(s.spots.ceiling)
-	if mall.spots.get("ceiling") != null:
-		roofs.append(mall.spots.ceiling)
+	for m in malls:
+		if m.spots.get("ceiling") != null:
+			roofs.append(m.spots.ceiling)
 	for c in roofs:
 		if c[0] < p.x and p.x < c[1] and c[2] < p.z and p.z < c[3] and p.y < c[4]:
 			return true
@@ -1782,6 +1952,10 @@ func _key(e: InputEventKey) -> void:
 		elif key == KEY_LEFT:
 			overlays.tutorial_page = max(0, overlays.tutorial_page - 1)
 		return
+	if overlays.mode == "decorar":
+		if key == KEY_ESCAPE:
+			close_decor()
+		return
 	if overlays.mode == "personaje":
 		if key == KEY_ESCAPE:
 			close_custom()
@@ -1875,3 +2049,139 @@ func _mouse_button(e: InputEventMouseButton) -> void:
 			set_sky_lock(hud.sky_button_at())
 		else:
 			capture_mouse()
+
+
+# ---------- decorar un local (desde la tablet) ----------
+var decor_office := false   # se está personalizando la oficina (no una sucursal)
+var office_preview := ""    # artículo de la oficina que se está mirando (puesto sin comprarlo)
+var office_decor_node: Node3D = null
+var office_decor_rects := []
+var office_decor_sig := []
+
+
+## Arma lo comprado para la oficina (y lo que se está mirando en la ventana de personalizar).
+func sync_office_decor(g: Game) -> void:
+	var keys: Array = g.office_decor.duplicate()
+	if office_preview != "" and not office_preview in keys:
+		keys.append(office_preview)
+	var sig := [office_tier] + keys
+	if sig == office_decor_sig:
+		return
+	office_decor_sig = sig
+	if office_decor_node != null and is_instance_valid(office_decor_node):
+		office_decor_node.queue_free()
+	office_decor_node = Node3D.new()
+	hq.root.add_child(office_decor_node)
+	office_decor_rects.clear()
+	for r in OfficeDecor.build(office_decor_node, office_tier, keys):
+		var a := Blueprints.to_world(HQ, r[0] - r[2] / 2, r[1] - r[3] / 2)
+		var e := Blueprints.to_world(HQ, r[0] + r[2] / 2, r[1] + r[3] / 2)
+		office_decor_rects.append([min(a.x, e.x), max(a.x, e.x), min(a.z, e.z), max(a.z, e.z), r[4]])
+
+
+## Personalizar la oficina: como decorar un local, con la cámara mirando la fachada.
+func open_office_decor() -> void:
+	if game == null:
+		return
+	decor_office = true
+	decor_id = -1
+	decor_store = null
+	decor_prev = app.paused
+	app.paused = true
+	app.modal = null
+	decor_eye = camera.global_position
+	decor_look = camera.global_position - camera.global_transform.basis.z * 10.0
+	overlays.decor_hover = ""
+	overlays.decor_pick = ""
+	player.visible = false
+	overlays.show("decorar")
+
+
+var decor_id := -1          # la sucursal que se decora
+var decor_store = null      # su Store en la ciudad (null si está en el centro comercial)
+var decor_prev := false     # si el juego estaba en pausa antes
+var decor_eye := Vector3.ZERO
+var decor_look := Vector3.ZERO
+
+
+## Como el armario: la tablet se guarda, la cámara va al local y, mientras pasas el mouse por cada artículo, se
+## acerca a donde va y lo muestra puesto (solo para ver cómo se ve: si no lo compras, se quita).
+func open_decor(loc_id: int) -> void:
+	if game == null:
+		return
+	var loc = game.find_location(loc_id)
+	if loc == null:
+		return
+	decor_office = false
+	decor_id = loc_id
+	decor_store = null
+	for s in stores.values():
+		if s.loc.id == loc_id:
+			decor_store = s
+	decor_prev = app.paused
+	app.paused = true
+	app.modal = null
+	decor_eye = camera.global_position
+	decor_look = camera.global_position - camera.global_transform.basis.z * 10.0
+	overlays.decor_hover = ""
+	overlays.decor_pick = ""
+	player.visible = false   # que no tape lo que estás mirando
+	overlays.show("decorar")
+
+
+func close_decor() -> void:
+	if overlays.mode != "decorar":
+		return
+	set_decor_preview("")
+	player.visible = true
+	app.paused = decor_prev
+	app.tab = "crecimiento" if decor_office else "negocios"
+	decor_office = false
+	overlays.show("admin")
+
+
+## Muestra puesto (sin comprarlo) el artículo que tienes bajo el mouse.
+func set_decor_preview(key: String) -> void:
+	if decor_office:
+		if office_preview != key:
+			office_preview = key
+			sync_office_decor(game)
+		return
+	if decor_store != null and is_instance_valid(decor_store.bld.root) and decor_store.preview != key:
+		decor_store.preview = key
+		decor_store.sync_decor()
+
+
+## Dónde mira la cámara al decorar: el artículo bajo el mouse o toda la fachada.
+func decor_target() -> Array:
+	if decor_office:
+		var f := OfficeDecor.frame(office_tier, overlays.decor_hover)
+		return [Blueprints.to_world(HQ, f[0].x, f[0].z, f[0].y), Blueprints.to_world(HQ, f[1].x, f[1].z, f[1].y)]
+	if decor_store != null:
+		return decor_store.decor_view(overlays.decor_hover)
+	var loc = game.find_location(decor_id) if game != null else null
+	if loc != null and Game.mall_of(loc) >= 0:   # vitrina del centro comercial: de frente, desde el pasillo
+		var m: Mall = malls[Game.mall_index(Game.mall_of(loc))]
+		var i := Game.mall_of(loc) % int(D.MALL.slots)
+		if i < m.slots.size():
+			var s: Dictionary = m.slots[i]
+			var r: Array = s.rect
+			var c := Blueprints.to_world(m.plot, (r[0] + r[1]) / 2, (r[2] + r[3]) / 2, 1.8)
+			var f: Vector3 = s.front
+			var out := (Vector3(f.x, 0, f.z) - Vector3(c.x, 0, c.z)).normalized()
+			return [Vector3(f.x, 2.4, f.z) + out * 3.0, c]
+	return [camera.global_position, camera.global_position - camera.global_transform.basis.z]
+
+
+func _decor_camera(dt: float) -> void:
+	var t := decor_target()
+	var k := minf(1.0, dt * 4.0)
+	decor_eye = decor_eye.lerp(t[0], k)
+	decor_look = decor_look.lerp(t[1], k)
+	camera.global_position = decor_eye
+	if decor_eye.distance_to(decor_look) > 0.01:
+		camera.look_at(decor_look)
+		# El panel tapa la mitad izquierda: lo que miras queda a la derecha, como en el armario
+		var right := camera.global_transform.basis.x
+		camera.look_at(decor_look - right * decor_eye.distance_to(decor_look) * 0.22)
+	mouse_delta = Vector2.ZERO
