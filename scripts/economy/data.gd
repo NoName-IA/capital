@@ -76,6 +76,18 @@ const RANKS := [
 ]
 
 # Sistemas de gestión de la oficina central: bajan los gastos corporativos (deseconomías de escala).
+# Aspecto de la oficina central: se desbloquea con el rango y se compra (remodelación). [nombre, rango, costo]
+const OFFICE_LOOKS := [["Oficina de garaje", 0, 0.0], ["Oficina de barrio", 1, 20000.0],
+		["Edificio corporativo", 2, 90000.0], ["Torre de lujo", 4, 900000.0]]
+# Para personalizar la oficina central (se ve en la ciudad). Cada uno sube un poco la reputación de tu marca.
+const OFFICE_DECOR := [
+	{"key": "alfombra", "name": "Alfombra roja", "cost": 6000.0, "rep": 1.0, "icon": "star"},
+	{"key": "jardin", "name": "Jardín", "cost": 12000.0, "rep": 1.0, "icon": "heart"},
+	{"key": "fuente", "name": "Fuente", "cost": 25000.0, "rep": 2.0, "icon": "cloud"},
+	{"key": "reflectores", "name": "Reflectores", "cost": 30000.0, "rep": 2.0, "icon": "sun"},
+	{"key": "neon", "name": "Letrero luminoso", "cost": 45000.0, "rep": 3.0, "icon": "bolt"},
+	{"key": "estatua", "name": "Estatua dorada", "cost": 120000.0, "rep": 4.0, "icon": "crown"},
+]
 const HQ_LEVELS := [
 	["Oficina básica", 0.0, 1.0],
 	["Software de gestión (ERP)", 150000.0, 0.65],
@@ -126,6 +138,10 @@ const WIN_VALUE := 10000000.0
 const WARDROBE_COST := 3000.0      # armario de la oficina (tienda de ropa del personaje)
 # Terrenos de la avenida. Los de la playa venden más por los turistas.
 const PLOT_COUNT := 14
+# Los cuatro lugares del valle, camino al túnel (City.COMP_PLOTS 0, 4, 5 y 6): terrenos como los de la avenida, que
+# puedes comprar tú o un rival. Los otros lugares de la competencia siguen siendo solo de ellos.
+const VALLEY_PLOTS := [14, 18, 19, 20]
+const LOT_PLOTS := [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18, 19, 20]   # todos los que se compran como terreno
 const BEACH_PLOTS := [8, 9, 12, 13]
 const BEACH_BONUS := 1.2
 const RIVAL_PLOT_MAX := 4          # los rivales nunca se quedan con más de 4 terrenos
@@ -133,7 +149,12 @@ const RIVAL_LAND_CHANCE := 0.25    # probabilidad mensual de que un rival compre
 # Centro comercial: frente a tu oficina. Cada sucursal necesita un lugar en la ciudad: un terreno de la avenida o una
 # vitrina del centro comercial (solo puestos y locales: las megatiendas no caben). El edificio es tuyo, así que las
 # vitrinas pagan la mitad del alquiler, pero el centro tiene un costo fijo de mantenimiento y seguridad.
-const MALL := {"cost": 150000.0, "slots": 16, "traffic": 1.25, "rent_mult": 0.5, "upkeep": 2500.0}
+const MALL := {"name": "Centro comercial", "cost": 900000.0, "slots": 16, "traffic": 1.25, "rent_mult": 0.5, "upkeep": 2500.0}
+# Los dos centros comerciales: el de la avenida, frente a tu oficina, y el de la playa (del mismo lado de la calle que
+# la oficina, mirando al mar): más caro, pero con los turistas tiene más clientes. Las vitrinas se numeran seguidas:
+# 0 a 15 el primero, 16 a 31 el de la playa (ver Game.mall_of).
+const MALLS := [MALL, {"name": "Centro comercial de la playa", "cost": 1500000.0, "slots": 16, "traffic": 1.45,
+		"rent_mult": 0.5, "upkeep": 3500.0}]
 # Franquicias en otras ciudades: el franquiciado pone el local y la plata; tú pones la marca, el manual y la
 # capacitación, y cobras regalías sobre sus ventas. No se ven en la ciudad.
 # Contrato: setup + setup_share del costo de desbloquear el negocio (las marcas caras cuestan más de franquiciar).
@@ -365,19 +386,24 @@ const UPGRADES := [
 	 "desc": "Maceteros en la entrada. El local se ve más cuidado: merece +0,3 estrellas."},
 	{"key": "letrero", "name": "Letrero luminoso", "cost": 900.0, "demand": 0.06, "icon": "star",
 	 "desc": "Neón alrededor del letrero: más gente ve tu local, sobre todo de noche (+6% de demanda)."},
-	{"key": "musica", "name": "Música ambiente", "cost": 400.0, "stars": 0.15, "demand": 0.02, "icon": "heart",
-	 "desc": "Parlantes en la entrada. Los clientes se quedan más contentos (+0,15 estrellas y +2% de demanda)."},
-	{"key": "wifi", "name": "Wifi gratis", "cost": 350.0, "demand": 0.04, "stars": 0.1, "icon": "bolt",
-	 "desc": "Internet gratis para los clientes: +4% de demanda y +0,1 estrellas."},
 	{"key": "terraza", "name": "Terraza con mesas", "cost": 1600.0, "demand": 0.08, "stars": 0.1, "icon": "sun",
 	 "desc": "Mesas con quitasol en la vereda: el local llama la atención (+8% de demanda y +0,1 estrellas)."},
 	{"key": "aire", "name": "Aire acondicionado", "cost": 1400.0, "stars": 0.15, "weather": 0.5, "icon": "cloud",
-	 "desc": "Con calor, lluvia o tormenta pierdes la mitad de los clientes que perderías sin él (+0,15 estrellas)."},
+	 "sizes": [1, 2], "desc": "Con calor, lluvia o tormenta pierdes la mitad de los clientes que perderías sin él (+0,15 estrellas)."},
 	{"key": "pantallas", "name": "Menú digital", "cost": 1100.0, "capacity": 0.1, "icon": "chart",
-	 "desc": "Pantallas con los precios: los clientes deciden más rápido y cada empleado atiende 10% más."},
+	 "sizes": [1, 2], "desc": "Pantallas con los precios: los clientes deciden más rápido y cada empleado atiende 10% más."},
 	{"key": "autopago", "name": "Cajas de autopago", "cost": 2200.0, "capacity": 0.15, "icon": "coin",
-	 "desc": "Los clientes se cobran solos: cada empleado atiende 15% más."},
+	 "sizes": [1, 2], "desc": "Los clientes se cobran solos: cada empleado atiende 15% más."},
+	# Las versiones del puesto (al aire libre, sin paredes ni puerta)
+	{"key": "ventilador", "name": "Ventilador", "cost": 900.0, "stars": 0.1, "weather": 0.35, "icon": "cloud",
+	 "sizes": [0], "desc": "Con calor se espantan menos clientes (+0,1 estrellas)."},
+	{"key": "menu", "name": "Menú colgante", "cost": 800.0, "capacity": 0.08, "icon": "chart",
+	 "sizes": [0], "desc": "Un letrero con los precios bajo el toldo: los clientes piden más rápido (atienden 8% más)."},
+	{"key": "qr", "name": "Pago con QR", "cost": 1200.0, "capacity": 0.12, "icon": "coin",
+	 "sizes": [0], "desc": "Los clientes pagan con el celular: cada empleado atiende 12% más."},
 ]
+# Al ampliar un puesto, lo del puesto pasa a ser su versión de local (y al revés en partidas viejas).
+const STALL_SWAP := {"ventilador": "aire", "menu": "pantallas", "qr": "autopago"}
 const UPGRADE_SIZE := [1.0, 3.0, 8.0]   # el mismo artículo cuesta más en un local y mucho más en una megatienda
 
 # Cómo tratas a tus empleados (vale para toda la empresa). wage = sueldo que pagas (sobre el normal),
@@ -409,6 +435,21 @@ func rival_for(product: String) -> Dictionary:
 		if product in r["products"]:
 			return r
 	return RIVALS[0]
+
+
+## Los artículos que se pueden poner en una sucursal de ese tamaño (0 puesto, 1 local, 2 megatienda).
+func upgrades_for(size: int) -> Array:
+	return UPGRADES.filter(func(u): return size in u.get("sizes", [0, 1, 2]))
+
+
+## La versión del artículo `key` que corresponde a ese tamaño (el ventilador del puesto es el aire del local).
+func upgrade_for_size(key: String, size: int) -> String:
+	if size == 0:
+		for k in STALL_SWAP:
+			if STALL_SWAP[k] == key:
+				return k
+		return key
+	return STALL_SWAP.get(key, key)
 
 
 func upgrade_by_key(key: String) -> Dictionary:

@@ -68,7 +68,7 @@ void fragment() {
 	SPECULAR = specular;
 
 	vec3 t = (world_pos + world_normal * 0.6 - city_grid_origin) / city_grid_size;   // la celda de enfrente de la cara
-	vec2 cell = texture(city_light_grid, vec3(t.x, t.z, t.y)).rg;
+	vec3 cell = texture(city_light_grid, vec3(t.x, t.z, t.y)).rgb;
 	// ¿Adentro de un local? Solo hace falta saberlo cerca de una luz de adentro. Se mide un poco hacia donde mira la
 	// cara: el techo y las paredes de adentro quedan adentro, las de afuera, afuera.
 	int room = cell.g > 0.002 ? room_of(world_pos + world_normal * 0.1) : -1;
@@ -84,6 +84,9 @@ void fragment() {
 	float block = max(level - sky * city_daylight * 0.5, 0.0);
 	block *= block;
 	vec3 tint = mix(vec3(1.0, 0.62, 0.32), vec3(1.0, 0.86, 0.72), sqrt(level));   // menos naranja que en Minecraft: la madera y la arena se ponían rojas
+	float warm = room < 0 ? clamp(cell.b / max(cell.r, 0.02) * 1.15, 0.0, 1.0) : 0.0;   // ampolletas de los puestos: amarillo cálido, como una guirnalda de verdad
+	tint = mix(tint, vec3(1.0, 0.74, 0.22), warm);
+	block *= 1.0 - 0.3 * warm;   // un poco menos fuerte: si no, se quema a blanco y no se ve el color
 	float face = 0.75 + 0.25 * world_normal.y;   // como en Minecraft: arriba más claro, abajo más oscuro
 	EMISSION = ALBEDO * tint * block * face * city_block_light + emission * emission_energy;
 }

@@ -1,13 +1,12 @@
 class_name Tutorial
 extends RefCounted
-## Tutorial guiado: después de la bienvenida, una lista de pasos que se hacen jugando (caminar, atender tu puesto,
-## abrir la tablet, mirar cuánto vale tu empresa, poner el mejor precio, contratar...). Cada paso explica cómo hacerlo
-## y para qué sirve para ganar, y se marca solo cuando lo haces. Una flecha grande muestra qué hacer: en la ciudad
+## Tutorial guiado: después de la bienvenida, una lista de pasos cortos que se hacen jugando (caminar, ir a un
+## terreno y comprar tu primer puesto, abrir la tablet, mirar cuánto vale tu empresa, poner el mejor precio,
+## contratar...). Cada paso dice solo lo necesario y se marca solo cuando lo haces. Una flecha grande muestra qué hacer: en la ciudad
 ## (con un haz de luz, visible a través de las paredes), sobre el botón de la pantalla o en el borde si queda fuera de
 ## la vista. Al final, una tarjeta con las claves para ganar (Overlays.TUTORIAL_END).
 
-const STEPS := ["caminar", "saltar", "puesto", "atender", "tablet", "valor", "precio", "contratar", "tiempo", "oficina",
-		"terreno"]
+const STEPS := ["caminar", "terreno", "comprar", "tablet", "valor", "precio", "contratar", "tiempo", "oficina"]
 const TABLET_STEPS := ["precio", "contratar"]   # se hacen con la tablet abierta
 
 var city
@@ -17,6 +16,7 @@ var step_t := 0.0          # segundos en el paso actual (para la animación al p
 var start_pos := Vector3.ZERO
 var start_price := 0.0
 var start_staff := 0
+var start_speed := 0
 var understood := false    # "Entendido" en los pasos que solo hay que leer
 var marker: Node3D
 
@@ -33,6 +33,8 @@ func start() -> void:
 	start_pos = city.player.position
 	start_price = city.game.products.cafe.price
 	start_staff = _staff()
+	start_speed = city.app.speed
+	city.hud.notes.clear()   # durante el tutorial no hay avisos (ver City.react)
 	if marker == null:
 		marker = _make_marker()
 		city.add_child(marker)
@@ -89,52 +91,29 @@ func stop() -> void:
 		marker.visible = false
 
 
-## [título, cómo hacerlo, para qué sirve] de cada paso.
+## [título, cómo hacerlo] de cada paso: solo lo necesario.
 func text(id: String) -> Array:
 	var k := func(a: String) -> String: return Keys.label(a)
 	match id:
 		"caminar":
-			return ["Camina por la ciudad", Lang.f("Muévete con %s %s %s %s y mira con el mouse. Mantén %s para correr.", [
-					k.call("forward"), k.call("left"), k.call("back"), k.call("right"), k.call("run")]),
-					"Esta ciudad es tuya para conquistar: tus tiendas, tu oficina y los terrenos que vas a comprar."]
-		"saltar":
-			return ["¡Salta!", Lang.f("Aprieta %s. Puedes subirte a bancas, jardineras y a los cercos del parque.", k.call("jump")), ""]
-		"puesto":
-			return ["Ve a tu puesto de café", "Sigue la flecha amarilla. Ahí empieza tu imperio.",
-					"Empiezas con un puestito de café y $1.500. De aquí sale todo lo demás."]
-		"atender":
-			return ["Atiende a tus clientes", Lang.f("Ponte detrás del mostrador y aprieta %s.", k.call("interact")),
-					"Si atiendes tú, es como tener un ayudante gratis: atiendes a más gente y ganas más."]
-		"tablet":
-			return ["Abre tu tablet", Lang.f("Aprieta %s o haz clic en el botón Tablet.", k.call("phone")),
-					"Desde la tablet controlas todo: precios, empleados, mercadería y préstamos."]
-		"valor":
-			return ["Así se gana", "Lee la tarjeta y aprieta Entendido.",
-					Lang.f("Haz que tu empresa valga %s y ganas. Mientras más ganes cada mes, más vale.", Fmt.short(D.WIN_VALUE))]
-		"precio":
-			return ["Ponle precio al café", "Entra a Mercado y toca «Usar precio óptimo». También puedes subirlo o bajarlo tú.",
-					"Muy barato: vendes mucho pero no ganas nada. Muy caro: nadie compra. El precio óptimo te deja más plata."]
-		"contratar":
-			return ["Contrata a alguien", "Entra a Negocios y toca el + de tu puesto.",
-					"Si llega más gente de la que puedes atender, se van sin comprar. Con más empleados no se te escapa nadie."]
-		"tiempo":
-			return ["Haz correr el tiempo", Lang.f("Cierra la tablet y aprieta %s o %s para adelantar el tiempo. %s vuelve a la normalidad y %s pausa.", [
-					k.call("speed2"), k.call("speed3"), k.call("speed1"), k.call("pause_quick")]),
-					"Cada día vendes y pagas tus gastos. Mira cómo crece tu plata arriba a la izquierda."]
-		"oficina":
-			return ["Visita tu oficina", Lang.f("Aprieta %s para ir directo o camina hasta la torre.", k.call("office")),
-					"Ahí eliges la jugada del mes, inviertes en la bolsa y guardas tus trofeos."]
+			return [Lang.f("Muévete con %s %s %s %s", [k.call("forward"), k.call("left"), k.call("back"), k.call("right")]), ""]
 		"terreno":
-			return ["Busca dónde abrir otra tienda", Lang.f("Acércate a un letrero SE VENDE y aprieta %s.", k.call("interact")),
-					"Cada tienda nueva te trae más plata y hace que tu empresa valga más."]
-	return ["", "", ""]
-
-
-func _stall() -> Store:
-	for s in city.stores.values():
-		if s.loc.size == 0:
-			return s
-	return null if city.stores.is_empty() else city.stores.values()[0]
+			return ["Ve a un letrero SE VENDE", Lang.f("Sigue la flecha y aprieta %s.", k.call("interact"))]
+		"comprar":
+			return ["Compra tu primer puesto", "Café · Puesto."]
+		"tablet":
+			return ["Abre la tablet", Lang.f("Aprieta %s.", k.call("phone"))]
+		"valor":
+			return ["Así se gana", "Aprieta Entendido."]
+		"precio":
+			return ["Ponle precio", "Mercado → «Usar precio óptimo»."]
+		"contratar":
+			return ["Contrata otro empleado", "Contrata otro empleado."]
+		"tiempo":
+			return ["Cambia la velocidad", Lang.f("Aprieta %s o %s.", [k.call("speed2"), k.call("speed3")])]
+		"oficina":
+			return ["Visita tu oficina", Lang.f("Presiona la tecla %s para ir a tu oficina.", k.call("office"))]
+	return ["", ""]
 
 
 ## ¿Queda algún negocio donde se pueda contratar? (si todos están llenos, el paso de contratar se da por hecho)
@@ -156,12 +135,11 @@ func _staff() -> int:
 func target():
 	var p: Vector3 = city.player.position
 	match STEPS[step]:
-		"puesto", "atender":
-			var s := _stall()
-			return s.spots.serve if s else null
 		"oficina":
 			return city.hq_spots.computer
-		"terreno":
+		"terreno", "comprar":
+			if not city.game.locations.is_empty():
+				return null
 			var best = null
 			for l in city.lots.values():
 				var m: Vector3 = l.manage
@@ -176,13 +154,8 @@ func _done(id: String) -> bool:
 	match id:
 		"caminar":
 			return Vector2(p.x - start_pos.x, p.z - start_pos.z).length() > 4.0
-		"saltar":
-			return p.y > city.floor_at(p.x, p.z, p.y) + 0.5
-		"puesto":
-			var t = target()
-			return t == null or Vector2(p.x - t.x, p.z - t.z).length() < 3.0
-		"atender":
-			return city.serving != null or _stall() == null
+		"comprar":
+			return not city.game.locations.is_empty()
 		"tablet":
 			return city.overlays.mode == "admin" and city.app.view == "game"
 		"valor":
@@ -191,13 +164,13 @@ func _done(id: String) -> bool:
 			return absf(city.game.products.cafe.price - start_price) > 0.001
 		"contratar":
 			return _staff() > start_staff or not _can_hire()
-		"tiempo":
-			return city.app.speed > 0 and not city.app.paused and not city.overlays.open()
+		"tiempo":   # basta con cambiar la velocidad (en la tablet o con las teclas)
+			return city.app.speed != start_speed
 		"oficina":
 			var c: Vector3 = city.hq_spots.computer
 			return Vector2(p.x - c.x, p.z - c.z).length() < 4.0
 		"terreno":
-			return city.overlays.mode == "lote" or city.lots.is_empty()
+			return city.overlays.mode == "lote" or city.lots.is_empty() or not city.game.locations.is_empty()
 	return true
 
 
@@ -212,6 +185,7 @@ func update(dt: float) -> void:
 		understood = false
 		start_price = city.game.products.cafe.price
 		start_staff = _staff()
+		start_speed = city.app.speed
 		if step >= STEPS.size():
 			finish()
 			return

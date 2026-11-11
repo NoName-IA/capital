@@ -112,7 +112,7 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 	ui.place_fill(size)
 	ui.begin(mouse_window, clicked, 0, false)
 	var g = city.game
-	var visible: bool = g != null and city.overlays.mode != "personaje"
+	var visible: bool = g != null and not city.overlays.mode in ["personaje", "decorar"]
 	if visible:
 		if city.weather.flash > 0.01 and not city.camera_indoors():  # relámpago de la tormenta
 			ui.rect(Rect2(0, 0, ui.W, ui.H), Color(0.9, 0.93, 1.0, city.weather.flash * 0.35))
@@ -344,6 +344,7 @@ func _draw_center() -> void:
 		var w := ui.text_size(prompt, 22, true).x + 36
 		ui.rect(Rect2(cx - w / 2, 590, w, 40), Color(0.05, 0.067, 0.09, 0.7), 20)
 		ui.text(prompt, Vector2(cx, 610), 22, Color.WHITE, true, "center")
+	_refuse_timer()
 	if help_timer > 0 and not city.overlays.open():
 		ui.canvas_alpha(clampf(help_timer, 0, 1))
 		var kl := func(a: String) -> String: return Keys.label(a)
@@ -445,3 +446,32 @@ func micro_at() -> int:
 		if ui.hover(micro_rects[i]):
 			return i
 	return -1
+
+
+## Relojito sobre el local del rival que no quiso venderte: cuánto falta para poder volver a preguntarle.
+func _refuse_timer() -> void:
+	if city.overlays.open() or city.game == null:
+		return
+	var near: Array = city.refuse_near()
+	if near.is_empty():
+		return
+	var secs := maxi(0, ceili(near[0]))
+	var label := "%d:%02d" % [secs / 60, secs % 60]
+	var cam: Camera3D = city.camera
+	var p: Vector3 = near[1] + Vector3(0, 2.6, 0)
+	var at := Vector2(ui.W / 2, 560)
+	if not cam.is_position_behind(p):
+		at = ui.to_virtual(cam.unproject_position(p))
+		at.x = clampf(at.x, 60, ui.W - 60)
+		at.y = clampf(at.y, 40, ui.H - 40)
+	var w := ui.text_size(label, 16, true).x + 44
+	var r := Rect2(at.x - w / 2, at.y - 15, w, 30)
+	ui.rect(r, Color(0.05, 0.067, 0.09, 0.8), 15)
+	ui.rect(r, Color(ImUI.COL.red, 0.8), 15, 1.5)
+	var c := Vector2(r.position.x + 16, r.get_center().y)
+	ui.ring(c, 8, ImUI.COL.red, 1.5)
+	var t := Time.get_ticks_msec() / 1000.0
+	ui.polygon(PackedVector2Array([c + Vector2(-0.8, 0), c + Vector2(0.8, 0), c + Vector2(0, -6)]), ImUI.COL.red)
+	var hand := Vector2(sin(t * 2.0), -cos(t * 2.0)) * 5.5
+	ui.polygon(PackedVector2Array([c + Vector2(-0.8, 0.8), c + Vector2(0.8, -0.8), c + hand]), Color.WHITE)
+	ui.text(label, Vector2(r.position.x + 30, r.get_center().y), 16, Color.WHITE, true, "midleft")

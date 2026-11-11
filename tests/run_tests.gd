@@ -13,7 +13,8 @@ func _ready() -> void:
 			"test_formats", "test_no_stock_without_stores", "test_loan_interest_accrues",
 			"test_weather_moves_demand", "test_stars", "test_city_activities", "test_decor", "test_solar",
 			"test_labor", "test_every_micro_is_booked", "test_rivals_alive", "test_buy_that_building", "test_old_saves",
-			"test_mall_and_franchises", "test_homeless_become_franchises"]:
+			"test_mall_and_franchises", "test_homeless_become_franchises", "test_beach_mall_and_rival_shops",
+			"test_new_game_without_stall", "test_normal_mode_has_no_investments", "test_key_decisions", "test_every_blueprint_is_whole", "test_office_looks"]:
 		var before := failures
 		call(t)
 		print(("OK    " if failures == before else "FALLA ") + t)
@@ -369,17 +370,21 @@ func test_decor() -> void:
 	booked(g, func(): check(g.buy_decor(loc, "letrero")[0], "letrero"), "letrero cuadra")
 	check(not g.buy_decor(loc, "letrero")[0], "no se compra dos veces")
 	near(g.demand_at(p, loc, p.price) / dem, 1.06, 0.001, "+6% demanda")
-	g.buy_decor(loc, "autopago")
-	near(g.capacity(loc) / cap, 1.15, 0.001, "+15% capacidad")
+	check(not g.buy_decor(loc, "autopago")[0], "el autopago no va en un puesto")
+	g.buy_decor(loc, "qr")
+	near(g.capacity(loc) / cap, 1.12, 0.001, "+12% capacidad con el QR")
 	check(loc.asset_ids.size() == 3, "los artículos son activos del local")
 	near(g.decor_cost(loc, "plantas") / g.decor_cost(g.make_location(0, "cafe", 2), "plantas"), 1.0 / 8.0, 0.001, "más caro en megatienda")
 	# Aire acondicionado: la tormenta espanta la mitad
 	g.weather = 5
 	var before := g.weather_factor("cafe", loc)
-	g.buy_decor(loc, "aire")
-	near(g.weather_factor("cafe", loc), lerpf(before, 1.0, 0.5), 0.001, "aire")
+	g.buy_decor(loc, "ventilador")
+	near(g.weather_factor("cafe", loc), lerpf(before, 1.0, 0.35), 0.001, "ventilador")
 	var b := Game.from_json(g.to_json())
-	check(b.locations[0].upgrades == ["letrero", "autopago", "aire"], "se guardan")
+	check(b.locations[0].upgrades == ["letrero", "qr", "ventilador"], "se guardan")
+	# Al ampliar a local, lo del puesto pasa a su versión de local
+	g.upgrade_location(loc)
+	check(loc.upgrades == ["letrero", "autopago", "aire"], "QR -> autopago y ventilador -> aire al ampliar")
 
 
 func test_solar() -> void:
@@ -583,9 +588,148 @@ func test_homeless_become_franchises() -> void:
 	dup.id = 999
 	state.locations.append(dup)
 	var h := Game.from_json(JSON.stringify(state))
-	check(h.locations.size() == 14, "quedan 14 en la avenida (%d)" % h.locations.size())
+	check(h.locations.size() == D.LOT_PLOTS.size(), "quedan las que caben en los terrenos (%d)" % h.locations.size())
 	check(h.franchises.size() == 8, "las que no cabían son franquicias (%d)" % h.franchises.size())
 	var used := {}
 	for loc in h.locations:
 		check(Game.plot_of(loc) >= 0 and not used.has(Game.plot_of(loc)), "cada una en su terreno")
 		used[Game.plot_of(loc)] = true
+
+
+func test_beach_mall_and_rival_shops() -> void:
+	var g := Game.new(33)
+	g.cash += 9000000
+	while g.free_plots():
+		g.open_location("cafe", 1)
+	check(g.buy_mall(1)[0], "comprar el de la playa")
+	check(not g.mall and g.mall2, "solo el de la playa")
+	check(g.free_mall_slots()[0] == int(D.MALL.slots), "las vitrinas de la playa van después de las 16 primeras")
+	check(g.open_location("cafe", 1)[0], "local en la playa")
+	var loc: Dictionary = g.locations[-1]
+	check(Game.mall_index(Game.mall_of(loc)) == 1, "quedó en el de la playa")
+	near(g.rent_daily(loc), D.SIZES[1].rent * g.price_index / 30.0 * D.MALLS[1].rent_mult, 0.01, "alquiler de la playa")
+	check(Game.place_label(loc) == "CC playa 1", "etiqueta de la vitrina")
+	check(g.buy_mall(0)[0], "comprar también el de la avenida")
+	near(g.mall_upkeep_monthly(), (D.MALLS[0].upkeep + D.MALLS[1].upkeep) * g.price_index, 0.01, "mantenimiento de los dos")
+	# Un rival arrienda una vitrina: compite, te paga alquiler y se la puedes comprar
+	var comp: int = g.products.cafe.competitors
+	var free := g.free_mall_slots().size()
+	g.rng.seed = 1
+	for i in 40:
+		g._rival_rents_vitrina()
+	check(not g.rival_mall.is_empty(), "los rivales arriendan vitrinas")
+	check(g.rival_mall.size() <= 10, "nunca más de 5 por centro comercial")
+	check(g.free_mall_slots().size() == free - g.rival_mall.size(), "la vitrina del rival ya no está libre")
+	var slot: String = g.rival_mall.keys()[0]
+	var key: String = g.rival_mall[slot]
+	var cash := g.cash
+	g._rival_mall_rent()
+	check(g.cash > cash, "el rival paga alquiler")
+	var before: int = g.products[key].competitors
+	var res := g.acquire(key, -1, int(slot))
+	check(res[0], "comprarle la vitrina al rival")
+	check(not g.rival_mall.has(slot), "la vitrina deja de ser del rival")
+	check(Game.mall_of(g.locations[-1]) == int(slot), "la sucursal comprada queda en esa vitrina")
+	check(g.products[key].competitors == before - 1, "un competidor menos")
+	# Se guarda y se carga
+	var h := Game.from_json(g.to_json())
+	check(h.mall2 and h.rival_mall.size() == g.rival_mall.size(), "se guardan el de la playa y las vitrinas de rivales")
+	check(comp >= 0, "")
+
+
+func test_new_game_without_stall() -> void:
+	var g := Game.new(5, "normal", false)
+	check(g.locations.is_empty(), "sin puesto al empezar")
+	near(g.cash, D.START_CASH + D.SIZES[0].capex, 0.01, "con la plata para comprarlo")
+	for i in 10:
+		g.step_day()
+		g.pending_choice = null
+		g.micro = null
+	check(g.cash >= D.START_CASH + D.SIZES[0].capex - 1.0, "sin tiendas no se gasta nada")
+	var before := g.cash
+	var cost := g.location_cost(0)
+	check(g.open_location("cafe", 0, 0)[0], "comprar el primer puesto")
+	near(g.cash, before - cost, 0.01, "se paga el puesto")
+
+
+func test_normal_mode_has_no_investments() -> void:
+	var g := Game.new(8)
+	check(not g.investing(), "modo normal sin inversiones")
+	check(Game.new(8, "inversionista").investing(), "el inversionista sí tiene bolsa")
+	check(Admin.concepts_for(g).filter(func(c): return "bolsa" in c[1] or "bonos" in c[1]).is_empty(), "conceptos sin bolsa ni bonos")
+	# Partida normal vieja con plata en bonos y en el fondo: vuelve a la caja
+	g.bonds = 1000.0
+	g.fund = 500.0
+	var cash: float = g.cash
+	var h := Game.from_json(g.to_json())
+	near(h.cash, cash + 1500.0, 0.01, "bonos y fondo vuelven a la caja")
+	check(h.bonds == 0.0 and h.fund == 0.0, "sin bonos ni fondo")
+
+
+func test_key_decisions() -> void:
+	var g := Game.new(41)
+	g.cash += 400000
+	check(g.key_decision_due() == "", "al empezar no hay decisión importante")
+	g.rank = 2
+	g.pending_choice = null
+	g._maybe_dilemma()
+	check(g.pending_choice != null and g.pending_choice.id == "rumbo", "al llegar a Pequeño empresario: el rumbo")
+	var loc: Dictionary = g.locations[0]
+	var p: Dictionary = g.products.cafe
+	var before := g.demand_at(p, loc, p.price)
+	g.resolve_choice(1)
+	check(g.path.rumbo == "masivo", "se guarda el rumbo")
+	check(g.demand_at(p, loc, p.price) > before * 1.1, "precios bajos: más clientes")
+	g.rank = 3
+	g._maybe_dilemma()
+	check(g.pending_choice != null and g.pending_choice.id == "rivales", "al llegar a Empresario: la competencia")
+	var cost := g.acquire_cost("cafe")
+	g.resolve_choice(1)
+	check(g.acquire_cost("cafe") < cost * 0.7, "guerra: sus locales más baratos")
+	check(g.key_decision_due() == "", "no se vuelve a preguntar")
+	var h := Game.from_json(g.to_json())
+	check(h.path.get("rivales") == "guerra" and h.path.get("rumbo") == "masivo", "las decisiones se guardan")
+	# Alianza: nunca más atacan y se lleva una parte de las ventas
+	var a := Game.new(42)
+	a.rank = 3
+	a.path["rumbo"] = "premium"
+	a._maybe_dilemma()
+	a.resolve_choice(0)
+	check(a.path.rivales == "alianza" and a.allied(D.RIVALS[0].key), "alianza con todos")
+	for d in 40:
+		a.step_day()
+		a.pending_choice = null
+		a.micro = null
+	check(not a.game_over, "la alianza no rompe la partida")
+
+
+## Todos los planos (también los que salen en espejo) traen las luces completas [x, y, z, nivel] y los lugares de
+## los empleados: si una luz queda con menos datos, el edificio se corta a la mitad y el local queda sin personal.
+func test_every_blueprint_is_whole() -> void:
+	var bad := 0
+	for kind in 3:
+		for product in D.PRODUCT_ORDER:
+			for variant in 60:
+				var spots: Dictionary = Blueprints.blueprint(kind, variant, product)[1]
+				for key in ["lights", "indoor_lights", "bulbs"]:
+					for l in spots.get(key, []):
+						if l.size() < 4:
+							bad += 1
+				if spots.get("staff", []).is_empty():
+					bad += 1
+	check(bad == 0, "planos completos (%d con problemas)" % bad)
+
+
+func test_office_looks() -> void:
+	var g := Game.new(9)
+	check(g.office_look == 0, "las partidas nuevas empiezan en el garaje")
+	g.cash += 2000000
+	check(not g.buy_office_look(1)[0], "sin el rango no se puede remodelar")
+	g.rank = 1
+	check(g.buy_office_look(1)[0], "con Emprendedor: oficina de barrio")
+	check(not g.buy_office_look(1)[0], "no se compra dos veces")
+	check(not g.buy_office_look(3)[0], "la torre de lujo pide Magnate")
+	var h := Game.from_json(g.to_json())
+	check(h.office_look == 1, "se guarda")
+	var old := Game.from_json(g.to_json().replace('"office_look":1', '"otra_cosa":1'))
+	check(old.office_look == 2, "las partidas de antes quedan con la oficina de siempre (la penúltima)")

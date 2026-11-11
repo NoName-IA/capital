@@ -48,7 +48,7 @@ func push(app: String, title: String, body := "", opts := {}) -> void:
 	city.app.unread += 1
 	var spec: Array = APPS.get(app, APPS.noticias)
 	var d := {"app": spec[0], "col": opts.get("col", spec[1]), "icon": opts.get("initials", opts.get("icon", spec[2])),
-			"letters": opts.has("initials"),
+			"letters": opts.has("initials"), "rival": opts.get("rival"),
 			"title": title, "body": body, "count": opts.get("count"), "when": _when(), "repeat": 1,
 			"sound": opts.get("sound"), "t": 0.0, "alpha": 0.0, "y": -1.0}
 	# Lo mismo otra vez (por ejemplo, varias multas seguidas): se suma a la tarjeta que ya está
@@ -168,7 +168,10 @@ func _draw_card(ui: ImUI, c: Dictionary, r: Rect2, alert := false) -> void:
 	ui.rect(r, Color(c.col, 0.55), 14, 1.0)
 	var x := r.position.x + 14
 	var y := r.position.y + 11
-	app_icon(ui, Rect2(x, y, 20, 20), c.col, c.icon, c.get("letters", false))
+	if c.get("rival") != null and Admin.rival_texture(c.rival) != null:   # el logo o la foto del rival
+		Admin.rival_badge(ui, D.rival_by_key(c.rival), Vector2(x + 10, y + 10), 9)
+	else:
+		app_icon(ui, Rect2(x, y, 20, 20), c.col, c.icon, c.get("letters", false))
 	var app := ui.text(c.app, Vector2(x + 28, y + 3), 11, Notifications.light(c.col, 0.25), true)
 	if c.repeat > 1:
 		var tag := Lang.f("x%d", c.repeat)

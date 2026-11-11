@@ -16,7 +16,7 @@ const MAX_MOVING := 8
 const MAX_ROOMS := 40   # locales, megatiendas, la competencia y la oficina (antes 16: con muchos abiertos, algunos quedaban a oscuras)
 const STRENGTH := 3.5   # fuerza de la luz de las lámparas sobre los colores
 
-var grid := PackedByteArray()   # 2 bytes por celda: afuera, adentro (0 a 255 = nivel 0 a 15)
+var grid := PackedByteArray()   # 3 bytes por celda: afuera, adentro (0 a 255 = nivel 0 a 15) y la luz cálida que llega (ampolletas)
 var deep := PackedByteArray()   # 1 = celda bien adentro de un local: ahí no llega la luz de afuera
 var grid_tex: ImageTexture3D
 var baked := {}                 # id del nodo -> [posición, nivel, adentro] tal como quedó en la grilla
@@ -26,7 +26,7 @@ var moving_tex := ImageTexture.create_from_image(moving_img)
 
 
 func _init() -> void:
-	grid.resize(NX * NY * NZ * 2)
+	grid.resize(NX * NY * NZ * 3)
 	deep.resize(NX * NY * NZ)
 	RenderingServer.global_shader_parameter_set("city_lights", moving_tex)
 	RenderingServer.global_shader_parameter_set("city_block_light", STRENGTH)
@@ -61,7 +61,7 @@ func update(cam: Vector3, rooms: Array) -> void:
 		seen[id] = true
 		if not baked.has(id):
 			var p := n.global_position
-			baked[id] = [p, l[1], l[2]]
+			baked[id] = [p, l[1], l[2], l.size() > 4 and l[4]]
 			dirty.append(_reach(p, l[1]))
 	for id in baked.keys():
 		if not seen.has(id):   # el local se vendió o se reemplazó
@@ -113,11 +113,12 @@ func _clear(box: Array) -> void:
 	var c := _cells(box)
 	for y in range(c[2], c[3] + 1):
 		for z in range(c[4], c[5] + 1):
-			var i: int = ((y * NZ + z) * NX + c[0]) * 2
+			var i: int = ((y * NZ + z) * NX + c[0]) * 3
 			for x in range(c[0], c[1] + 1):
 				grid[i] = 0
 				grid[i + 1] = 0
-				i += 2
+				grid[i + 2] = 0
+				i += 3
 
 
 ## Celdas bien adentro de un local (a más de 1 m de las paredes): ahí no entra la luz de afuera.
@@ -142,6 +143,7 @@ func _bake(b: Array, box: Array) -> void:
 	var p: Vector3 = b[0]
 	var level: float = b[1]
 	var indoor: bool = b[2]
+	var warm: bool = b.size() > 3 and b[3] and not indoor
 	var lo: Vector3 = box[0]
 	var hi: Vector3 = box[1]
 	if indoor:   # solo dentro de su local (con 1 m de margen, para que las caras junto a la pared lean bien)
@@ -179,20 +181,22 @@ func _bake(b: Array, box: Array) -> void:
 				if d2 >= l2 or (not indoor and deep[row + x] == 1):
 					continue
 				var v := mini(255, int((level - sqrt(d2)) * 17.0))
-				var k := (row + x) * 2 + ch
+				var k := (row + x) * 3 + ch
 				if v > grid[k]:
 					grid[k] = v
+				if warm and v > grid[(row + x) * 3 + 2]:   # cuánta luz cálida llega (el shader la compara con el total)
+					grid[(row + x) * 3 + 2] = v
 
 
 ## Sube la grilla a la textura 3D (una imagen por cada capa de altura).
 func _upload() -> void:
 	var slices: Array[Image] = []
-	var size := NX * NZ * 2
+	var size := NX * NZ * 3
 	for y in NY:
-		slices.append(Image.create_from_data(NX, NZ, false, Image.FORMAT_RG8, grid.slice(y * size, (y + 1) * size)))
+		slices.append(Image.create_from_data(NX, NZ, false, Image.FORMAT_RGB8, grid.slice(y * size, (y + 1) * size)))
 	if grid_tex == null:
 		grid_tex = ImageTexture3D.new()
-		grid_tex.create(Image.FORMAT_RG8, NX, NZ, NY, false, slices)
+		grid_tex.create(Image.FORMAT_RGB8, NX, NZ, NY, false, slices)
 		RenderingServer.global_shader_parameter_set("city_light_grid", grid_tex)
 	else:
 		grid_tex.update(slices)

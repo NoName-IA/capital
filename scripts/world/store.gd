@@ -26,6 +26,7 @@ var jobs := {}                    # empleado -> tarea que está haciendo (ver _i
 var decor: Node3D = null          # lo que compraste para el local (ver sync_decor)
 var decor_sig := []
 var decor_rects := []
+var preview := ""                  # artículo que se está mirando en la ventana de decorar (se ve, pero no es tuyo)
 var seated := {}                  # silla de los clientes (índice en spots.chairs) -> el Customer sentado ahí
 
 
@@ -82,10 +83,12 @@ func sync_stars() -> void:
 
 
 ## Lo que compraste para el local se ve por fuera (y algo por dentro): maceteros, neón alrededor del letrero,
-## parlantes, terraza con quitasoles, el aire acondicionado en el techo, el cartel del wifi, pantallas y cajas de
+## terraza con quitasoles, el aire acondicionado en el techo, pantallas y cajas de
 ## autopago. Se rehace solo cuando cambia la lista.
 func sync_decor() -> void:
-	var ups: Array = loc.get("upgrades", [])
+	var ups: Array = loc.get("upgrades", []).duplicate()
+	if preview != "" and not preview in ups:
+		ups.append(preview)
 	if ups == decor_sig:
 		return
 	decor_sig = ups.duplicate()
@@ -96,11 +99,18 @@ func sync_decor() -> void:
 	decor_rects = []
 	decor = Node3D.new()
 	bld.root.add_child(decor)
-	var kind: int = loc.size
+	for r in build_decor(decor, loc.size, loc.product, ups):
+		_decor_rect(r[0], r[1], r[2], r[3], r[4])
+
+
+## Arma lo comprado para un local (`ups`) dentro de `parent`, en coordenadas del local. Devuelve los choques
+## [x, z, ancho, fondo, alto]. También lo usan las fotos de la ventana de decorar (Thumbs).
+static func build_decor(parent: Node3D, kind: int, product: String, ups: Array, lit := true) -> Array:
+	var out := []
 	var w: float = [4.8, 14.0, Blueprints.MEGA_W][kind]
 	var h: float = [2.8, 4.5, 7.0][kind]
 	var door: float = [3.0, 3.0, 5.0][kind]
-	var pcol: Color = Blueprints.PRODUCT_COLORS[loc.product]
+	var pcol: Color = Blueprints.PRODUCT_COLORS[product]
 	var b := Boxes.new()
 	var glow := Boxes.new()
 	if "plantas" in ups:   # maceteros a los lados de la puerta
@@ -112,30 +122,27 @@ func sync_decor() -> void:
 			b.box(Vector3(x + 0.15, 1.35, z), Vector3(0.45, 0.4, 0.35), Color8(80, 165, 85))
 			for fx in [-0.25, 0.2]:   # flores
 				b.box(Vector3(x + fx, 1.3, z - 0.22), Vector3(0.12, 0.12, 0.08), [Color8(240, 90, 120), Color8(250, 210, 70)][int(fx > 0)])
-			_decor_rect(x, z, 0.9, 0.6, 1.2)
+			out.append([x, z, 0.9, 0.6, 1.2])
 	if "letrero" in ups:   # neón alrededor del letrero
 		var sw: float = [3.6, 8.0, 12.0][kind]
 		var sh: float = [0.8, 1.2, 1.8][kind]
 		var sy: float = 3.5 if kind == 0 else h + 0.3 + sh / 2
 		var sz: float = 2.38 if kind == 0 else 1.78
-		var neon := pcol.lightened(0.5)
-		for k in [[0, sh / 2 + 0.08, sw + 0.3, 0.09], [0, -sh / 2 - 0.08, sw + 0.3, 0.09]]:
-			glow.box(Vector3(k[0], sy + k[1], sz), Vector3(k[2], k[3], 0.06), neon)
+		var neon := pcol.lightened(0.65)
+		# Marco de neón grueso, doble, con focos que alumbran el letrero y la vereda de día y de noche
+		for k in [[0, sh / 2 + 0.12, sw + 0.5, 0.18], [0, -sh / 2 - 0.12, sw + 0.5, 0.18]]:
+			glow.box(Vector3(k[0], sy + k[1], sz - 0.02), Vector3(k[2], k[3], 0.1), neon)
 		for sx in [-1, 1]:
-			glow.box(Vector3(sx * (sw / 2 + 0.11), sy, sz), Vector3(0.09, sh + 0.25, 0.06), neon)
-	if "musica" in ups and kind > 0:   # parlantes sobre la puerta
+			glow.box(Vector3(sx * (sw / 2 + 0.2), sy, sz - 0.02), Vector3(0.18, sh + 0.42, 0.1), neon)
+		for k in [[0, sh / 2 + 0.34, sw + 0.9, 0.07], [0, -sh / 2 - 0.34, sw + 0.9, 0.07]]:
+			glow.box(Vector3(k[0], sy + k[1], sz - 0.03), Vector3(k[2], k[3], 0.06), Color8(255, 250, 235))
 		for sx in [-1, 1]:
-			var x: float = sx * (door / 2 + 0.35)
-			var y: float = (3.2 if kind == 1 else 3.6) + 0.45
-			b.box(Vector3(x, y, 1.75), Vector3(0.45, 0.6, 0.35), Color8(30, 30, 34))
-			b.box(Vector3(x, y - 0.1, 1.57), Vector3(0.28, 0.28, 0.02), Color8(90, 90, 96))
-	if "wifi" in ups:   # cartel WIFI GRATIS en la vitrina
-		var x: float = (door / 2 + 1.6) if kind > 0 else 1.6
-		var y := 2.65 if kind > 0 else 3.05
-		var z := 1.76 if kind > 0 else 2.35
-		b.box(Vector3(x, y, z + 0.01), Vector3(1.5, 0.42, 0.03), Color8(40, 110, 200))
-		var l := Building.label(decor, "WIFI GRATIS", Vector3(x, y, z - 0.02), 6, Color.WHITE)
-		l.position = Vector3(x, y, z - 0.02)
+			glow.box(Vector3(sx * (sw / 2 + 0.42), sy, sz - 0.03), Vector3(0.07, sh + 0.75, 0.06), Color8(255, 250, 235))
+		var n_bulbs := int(sw / 0.6)
+		for i in n_bulbs + 1:   # fila de ampolletas debajo, como en las marquesinas
+			glow.box(Vector3(-sw / 2 + i * sw / n_bulbs, sy - sh / 2 - 0.55, sz - 0.05), Vector3(0.14, 0.14, 0.14), Color8(255, 235, 170))
+		if lit:   # (en las fotos de Thumbs no: esa luz es de la ciudad)
+			Mats.add_light(parent, Vector3(0, sy, sz - 1.2), 12.0)
 	if "terraza" in ups:   # mesas con quitasol en la vereda
 		var xs: Array = [-(w / 2 - 1.6), w / 2 - 1.6] if kind > 0 else [-3.6]
 		for x in xs:
@@ -148,7 +155,7 @@ func sync_decor() -> void:
 			b.box(Vector3(x, 1.5, z), Vector3(0.06, 1.6, 0.06), Color8(60, 60, 66))
 			b.box(Vector3(x, 2.3, z), Vector3(2.2, 0.08, 2.2), pcol)
 			b.box(Vector3(x, 2.38, z), Vector3(1.4, 0.08, 1.4), Color8(250, 250, 245))
-			_decor_rect(x, z, 2.0, 1.0, 0.8)
+			out.append([x, z, 2.0, 1.0, 0.8])
 	if "aire" in ups and kind > 0:   # equipo en el techo y la unidad en la fachada
 		b.box(Vector3(w / 2 - 2.0, h + 0.75, 6.0), Vector3(1.6, 0.9, 1.2), Color8(215, 218, 222))
 		b.box(Vector3(w / 2 - 2.0, h + 0.75, 5.39), Vector3(1.2, 0.6, 0.02), Color8(120, 125, 130))
@@ -164,10 +171,41 @@ func sync_decor() -> void:
 			b.box(Vector3(x, 0.7, 2.35), Vector3(0.08, 1.4, 0.08), Color8(60, 60, 66))
 			b.box(Vector3(x, 1.45, 2.35), Vector3(0.6, 0.45, 0.12), Color8(230, 232, 236))
 			glow.box(Vector3(x, 1.47, 2.28), Vector3(0.48, 0.33, 0.02), Color8(90, 200, 120))
+	# Lo del puesto: ventilador en el poste del toldo, menú colgante y el cartelito del QR en el mostrador
+	if "ventilador" in ups and kind == 0:
+		var fp := Vector3(-1.95, 2.25, 2.78)
+		b.box(fp + Vector3(0, 0, 0.08), Vector3(0.16, 0.16, 0.16), Color8(60, 62, 70))           # motor
+		b.box(fp + Vector3(0, -0.18, 0.1), Vector3(0.06, 0.22, 0.06), Color8(60, 62, 70))
+		b.box(fp + Vector3(0, 0, -0.04), Vector3(0.52, 0.52, 0.03), Color8(215, 220, 228))     # rejilla
+		for k in 3:   # aspas
+			b.box_rot(fp + Vector3(0, 0, -0.07), Vector3(0.44, 0.09, 0.02), Color8(90, 150, 210), Vector3(0, 0, k * 60))
+		b.box(fp + Vector3(0, 0, -0.08), Vector3(0.08, 0.08, 0.03), Color8(60, 62, 70))
+	if "menu" in ups and kind == 0:
+		var mp := Vector3(0.4, 2.3, 2.95)
+		b.box(mp + Vector3(0, 0.33, 0), Vector3(0.03, 0.22, 0.03), Color8(60, 60, 66))
+		b.box(mp + Vector3(-1.0, 0.33, 0), Vector3(0.03, 0.22, 0.03), Color8(60, 60, 66))
+		b.box(mp + Vector3(-0.5, 0, 0), Vector3(1.5, 0.48, 0.05), Color8(35, 45, 40))
+		for k in 3:   # renglones del menú, escritos con tiza
+			b.box(mp + Vector3(-0.75, 0.13 - k * 0.12, -0.03), Vector3(0.7, 0.04, 0.01), Color8(235, 235, 225))
+			b.box(mp + Vector3(-0.08, 0.13 - k * 0.12, -0.03), Vector3(0.22, 0.04, 0.01), pcol.lightened(0.4))
+	if "qr" in ups and kind == 0:
+		var qp := Vector3(1.25, 1.15, 3.02)
+		b.box(qp + Vector3(0, 0.02, 0.06), Vector3(0.3, 0.04, 0.16), Color8(40, 40, 46))
+		b.box_rot(qp + Vector3(0, 0.2, 0.04), Vector3(0.28, 0.36, 0.03), Color8(245, 245, 245), Vector3(-12, 0, 0))
+		for i in 4:   # el código: cuadritos negros
+			for j in 4:
+				if (i * 3 + j * 5 + i * j) % 3 != 0:
+					b.box_rot(qp + Vector3(-0.08 + i * 0.055, 0.18 + j * 0.055, 0.02), Vector3(0.045, 0.045, 0.01),
+							Color8(20, 20, 24), Vector3(-12, 0, 0))
+		for corner in [Vector2(-0.08, 0.34), Vector2(0.08, 0.34), Vector2(-0.08, 0.18)]:   # las tres esquinas del QR
+			b.box_rot(qp + Vector3(corner.x, corner.y - 0.05, 0.015), Vector3(0.08, 0.08, 0.012), Color8(20, 20, 24), Vector3(-12, 0, 0))
+		glow.box(qp + Vector3(0, 0.4, 0.03), Vector3(0.24, 0.04, 0.02), pcol.lightened(0.3))
+		out.append([1.25, 3.05, 0.3, 0.16, 1.4])
 	if not b.is_empty():
-		b.node(decor, Mats.standard)
+		b.node(parent, Mats.standard)
 	if not glow.is_empty():
-		glow.node(decor, Mats.emissive, false)
+		glow.node(parent, Mats.emissive, false)
+	return out
 
 
 ## Choque de una cosa de la fachada (coordenadas del local) para que no se camine a través.
@@ -848,3 +886,54 @@ func destroy() -> void:
 	for p in staff:
 		p.queue_free()
 	bld.destroy()
+
+
+## Dónde se pone la cámara para mirar un artículo de la decoración (o toda la fachada si `key` es ""): [ojo, punto]
+## en el mundo. Las medidas son las mismas de sync_decor.
+func decor_view(key: String) -> Array:
+	var f := decor_frame(loc.size, key)
+	return [Blueprints.to_world(plot, f[0].x, f[0].z, f[0].y), Blueprints.to_world(plot, f[1].x, f[1].z, f[1].y)]
+
+
+## Lo mismo en coordenadas del local: [ojo, punto] (también para las fotos de Thumbs).
+static func decor_frame(kind: int, key: String) -> Array:
+	var w: float = [4.8, 14.0, Blueprints.MEGA_W][kind]
+	var h: float = [2.8, 4.5, 7.0][kind]
+	var door: float = [3.0, 3.0, 5.0][kind]
+	var look := Vector3(0, h * 0.5, 1.5)
+	var eye := Vector3(0, h * 0.6 + 1.2, -(w * 0.75 + 4.0))
+	match key:
+		"plantas":
+			var x: float = (door / 2 + 0.9) if kind > 0 else 2.9
+			look = Vector3(x, 0.9, 1.25 if kind > 0 else 2.0)
+			eye = look + Vector3(1.6, 1.3, -4.2)
+		"letrero":
+			var sw: float = [3.6, 8.0, 12.0][kind]
+			var sy: float = 3.5 if kind == 0 else h + 0.3 + [0.8, 1.2, 1.8][kind] / 2
+			look = Vector3(0, sy, 1.8)
+			eye = Vector3(0, sy - 0.8, -(sw * 0.7 + 3.0))
+		"terraza":
+			look = Vector3((w / 2 - 1.6) if kind > 0 else -3.6, 1.1, 0.4)
+			eye = look + Vector3(-3.4 if kind > 0 else 3.4, 2.6, -6.8)
+		"aire":
+			if kind > 0:
+				look = Vector3(w / 2 - 2.0, h + 0.6, 5.0)
+				eye = Vector3(w / 2 - 4.0, h + 5.0, -6.5)
+		"ventilador":
+			look = Vector3(-1.95, 2.2, 2.75)
+			eye = look + Vector3(1.4, 0.3, -3.0)
+		"menu":
+			look = Vector3(-0.1, 2.3, 2.95)
+			eye = look + Vector3(0.3, -0.5, -3.2)
+		"qr":
+			look = Vector3(1.25, 1.35, 3.0)
+			eye = look + Vector3(0.3, 0.45, -1.9)
+		"pantallas":
+			if kind > 0:
+				look = Vector3(door / 2 + 1.6, 2.15, 2.25)
+				eye = look + Vector3(-0.8, 0.1, -3.4)
+		"autopago":
+			if kind > 0:
+				look = Vector3(door / 2 + 0.75, 1.3, 2.35)
+				eye = look + Vector3(-0.6, 0.6, -3.0)
+	return [eye, look]

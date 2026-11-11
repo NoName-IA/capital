@@ -1,0 +1,9 @@
+Imágenes de los rivales (solo para uso personal; las marcas son de sus dueños). Descargadas de Wikimedia Commons:
+- starbucks.png  <- File:STARBUCKS logo (monochrome).jpg (recortada y teñida de verde)
+- bimbo.png      <- File:Logo Grupo BIMBO.svg
+- mcdonalds.png  <- File:McDonald's Golden Arches.svg
+- zara.png       <- File:Zara Logo.svg
+- apple.png      <- File:Apple logo black.svg
+- trump.png      <- File:Donald Trump official portrait (cropped).jpg
+- musk.png       <- File:Elon Musk Royal Society (crop2).jpg
+- bezos.png      <- File:Jeff Bezos 2016 (cropped).jpg
