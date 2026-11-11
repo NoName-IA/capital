@@ -8,6 +8,7 @@ extends RefCounted
 
 const LIFE := 6.0          # segundos que dura una tarjeta (el reloj se detiene con un menú abierto)
 const MAX_CARDS := 3
+const SOUND_VOL := {"record": 0.45, "coin": 0.45}   # los avisos de plata suenan más bajito
 const CARD_W := 372.0
 const TOP := 92.0          # debajo de la velocidad y los botones Día / Tarde / Noche
 const GAP := 8.0
@@ -103,7 +104,7 @@ func update(dt: float, frozen: bool) -> void:
 		var d: Dictionary = waiting.pop_front()
 		cards.push_front(d)
 		if d.sound != null:
-			city.sfx.play(d.sound)
+			city.sfx.play(d.sound, SOUND_VOL.get(d.sound, 1.0))
 		if cards.size() > MAX_CARDS:  # la más vieja se va para dar lugar
 			cards[-1].t = max(cards[-1].t, LIFE)
 	for c in cards.duplicate():
@@ -115,7 +116,7 @@ func update(dt: float, frozen: bool) -> void:
 	if hero == null and heroes:
 		hero = heroes.pop_front()
 		if hero.sound != null:
-			city.sfx.play(hero.sound)
+			city.sfx.play(hero.sound, SOUND_VOL.get(hero.sound, 1.0))
 		if hero.confetti:
 			city.hud.confetti.burst(hero.confetti, Vector2(city.hud.ui.W / 2, 300))
 	if hero != null:

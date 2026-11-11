@@ -22,21 +22,13 @@ var tutorial_tex := {}
 # Tutorial de la primera partida: [imagen, título, texto]
 ## La bienvenida: después siguen los pasos guiados jugando (ver Tutorial).
 const TUTORIAL := [
-	["meta", "Bienvenido a Capital", "Tu meta: que tu empresa valga $10 millones.
-
-Sigue la flecha amarilla."],
+	["meta", "Bienvenido a Capital", ""],
 ]
-## Al terminar el tutorial: las claves para ganar.
+## Al terminar el tutorial: tres consejos y a jugar.
 const TUTORIAL_END := [
-	["ganar", "Cómo se gana", ""],
+	["ganar", "", ""],
 ]
-const WIN_TIPS := [
-	["1", "El precio justo", "Usa «precio óptimo» en Mercado de vez en cuando."],
-	["2", "Que nadie se vaya sin comprar", "Contrata o agranda tu tienda."],
-	["3", "Abre más tiendas", "Compra terrenos SE VENDE. Los de la playa venden más."],
-	["4", "No te quedes sin plata", "20 días seguidos en rojo y quiebras."],
-	["5", "Crece", "Negocios nuevos, la jugada del mes y megatiendas."],
-]
+const END_TIPS := ["Abre más locales.", "20 días en números negativos provocan bancarrota.", "Cuidado con la competencia."]
 ## En el tutorial, al abrir la tablet: cómo se gana (cuánto vale tu empresa).
 const TUTORIAL_VALOR := [
 	["valor", "Así se gana", ""],
@@ -78,13 +70,9 @@ func hide() -> void:
 
 
 func draw() -> void:
-	var mentor: bool = city.tutorial.talking() and app.view == "game" and mode in ["admin", "lote", "vitrina"]
-	var click := ui.clicked
-	if mentor:
-		ui.clicked = false   # mientras habla, la tablet y la ventana esperan
 	_draw_mode()
-	if mentor:
-		ui.clicked = click
+	# El mentor no desaparece en todo el tutorial (con la tablet abierta habla sin que tengas que esperar)
+	if city.tutorial.active and app.view == "game" and mode in ["admin", "lote", "vitrina"]:
 		city.tutorial.draw_mentor(ui)
 
 
@@ -759,31 +747,11 @@ func draw_tutorial() -> void:
 	if page[0] == "valor":
 		_draw_value_card()
 		return
-	var box := Rect2(W / 2 - 470, H / 2 - 350, 940, 700)
+	# La bienvenida: solo el nombre del juego y el botón para empezar
+	var box := Rect2(W / 2 - 330, H / 2 - 120, 660, 240)
 	glass_box(box)
-	ui.text("BIENVENIDA" if tutorial_pages.size() == 1 else Lang.f("TUTORIAL · %d de %d", [tutorial_page + 1, tutorial_pages.size()]),
-			box.position + Vector2(40, 24), 13, "muted", true)
-	var img := Rect2(box.position.x + 150, box.position.y + 60, 640, 360)
-	var key: String = page[0]
-	if not tutorial_tex.has(key):
-		var path := "res://assets/imagenes/tutorial/%s.png" % key
-		tutorial_tex[key] = load(path) if ResourceLoader.exists(path) else null
-	if tutorial_tex[key]:
-		ui.image(tutorial_tex[key], img)
-	else:
-		ui.rect(img, "panel2", 10)
-	ui.rect(img, "border", 4, 1)
-	ui.text(page[1], Vector2(box.get_center().x, img.end.y + 18), 28, "accent", true, "midtop")
-	ui.wrap_text(page[2], Rect2(box.position.x + 70, img.end.y + 64, box.size.x - 140, 130), 16, "text")
-	# Puntos de las páginas
-	var n := tutorial_pages.size()
-	for i in n:
-		ui.circle(Vector2(box.get_center().x + (i - (n - 1) / 2.0) * 22, box.end.y - 86), 5,
-				"accent" if i == tutorial_page else "border")
-	var last := tutorial_page == n - 1
-	if tutorial_page > 0 and ui.button(Rect2(box.position.x + 40, box.end.y - 64, 200, 44), "< Anterior", true, "normal", 16):
-		tutorial_page -= 1
-	if ui.button(Rect2(box.end.x - 260, box.end.y - 64, 220, 44), "Empezar el tutorial" if last else "Siguiente >", true, "primary", 17):
+	ui.text(page[1], Vector2(box.get_center().x, box.position.y + 46), 40, "accent", true, "midtop")
+	if ui.button(Rect2(box.get_center().x - 140, box.end.y - 84, 280, 50), "Empezar tutorial", true, "primary", 18):
 		tutorial_next()
 
 
@@ -806,23 +774,16 @@ func _draw_value_card() -> void:
 
 
 func _draw_win_guide() -> void:
-	var box := Rect2(W / 2 - 470, H / 2 - 330, 940, 660)
+	var box := Rect2(W / 2 - 360, H / 2 - 170, 720, 340)
 	glass_box(box)
-	ui.text("TUTORIAL COMPLETO", Vector2(box.get_center().x, box.position.y + 28), 13, "green", true, "center")
-	ui.text("Cómo se gana", Vector2(box.get_center().x, box.position.y + 52), 40, "accent", true, "midtop")
-	ui.text(Lang.f("Haz que tu empresa valga %s.", Fmt.short(D.WIN_VALUE)),
-			Vector2(box.get_center().x, box.position.y + 108), 17, "text", false, "midtop")
-	var y := box.position.y + 150
-	for t in WIN_TIPS:
-		var r := Rect2(box.position.x + 50, y, box.size.x - 100, 78)
-		ui.rect(r, Color(1, 1, 1, 0.04), 12)
-		var c := Vector2(r.position.x + 40, r.get_center().y)
-		ui.circle(c, 22, ImUI.COL.accent)
-		ui.text(t[0], c, 22, Color8(20, 20, 24), true, "center")
-		ui.text(t[1], Vector2(r.position.x + 80, r.position.y + 14), 19, "accent", true)
-		ui.wrap_text(t[2], Rect2(r.position.x + 80, r.position.y + 42, r.size.x - 100, 34), 15, "text")
-		y += 88
-	if ui.button(Rect2(box.get_center().x - 120, box.end.y - 62, 240, 46), "¡A jugar!", true, "primary", 18):
+	var y := box.position.y + 44
+	for i in END_TIPS.size():
+		var c := Vector2(box.position.x + 70, y + 20)
+		ui.circle(c, 18, ImUI.COL.accent)
+		ui.text(str(i + 1), c, 18, Color8(20, 20, 24), true, "center")
+		ui.text(END_TIPS[i], Vector2(c.x + 34, c.y), 21, "text", true, "midleft", box.size.x - 140)
+		y += 62
+	if ui.button(Rect2(box.get_center().x - 120, box.end.y - 80, 240, 50), "¡A jugar!", true, "primary", 20):
 		tutorial_next()
 
 

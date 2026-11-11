@@ -800,7 +800,7 @@ func pay(store: Store, pos: Vector3) -> void:
 	var units: float = max(1.0, roundf(store.loc.sold / 60.0))
 	var amount: float = p.price * units
 	pop(pos, "+" + Fmt.money(amount, 2 if amount < 100 else 0), "green")
-	sfx.play("coin", 0.55 * near(pos), randf_range(0.95, 1.08))
+	sfx.play("coin", 0.3 * near(pos), randf_range(0.95, 1.08))
 	# Lo que dicen los clientes refleja tus decisiones: precio, calidad, reputación y si atiendes tú.
 	var ratio: float = p.price / game.ref_price(p)
 	var lines := []
@@ -1531,7 +1531,7 @@ func move_player(dt: float) -> void:
 	var right := Vector3(-fwd.z, 0, fwd.x)
 	var f := float(Keys.pressed("forward")) - float(Keys.pressed("back"))
 	var s := float(Keys.pressed("right")) - float(Keys.pressed("left"))
-	if tutorial.talking():   # el mentor está hablando: te quedas quieto escuchando
+	if tutorial.blocking():   # el mentor está hablando: te quedas quieto escuchando
 		f = 0.0
 		s = 0.0
 	var move := fwd * f + right * s
@@ -1730,13 +1730,16 @@ func update(dt: float) -> void:
 		tutorial.stop()
 		if g != null and overlays.open() and app.modal == null:
 			overlays.hide()
-		# Partida nueva: siempre empieza con el tutorial (no se puede saltar)
-		tutorial_pending = g != null and app.just_created and not main.testing
+		# El tutorial sale una sola vez: en la primera partida nueva (no se puede saltar)
+		tutorial_pending = g != null and app.just_created and not main.testing and not settings.tutorial_seen
 		app.just_created = false
 		if tutorial_pending:
 			g.tutorial_step = 0   # si sale antes de terminarlo, al volver sigue el tutorial
 		elif g != null and int(g.tutorial_step) >= 0 and not main.testing:
-			tutorial.start(int(g.tutorial_step))   # partida con el tutorial a medias: sigue donde iba
+			if settings.tutorial_seen:
+				g.tutorial_step = -1   # ya lo terminaste (aunque esta partida no se guardó después)
+			else:
+				tutorial.start(int(g.tutorial_step))   # partida con el tutorial a medias: sigue donde iba
 	if tutorial_pending and not overlays.open() and app.modal == null:
 		tutorial_pending = false
 		open_tutorial()
@@ -1824,7 +1827,7 @@ func update(dt: float) -> void:
 		b.rotation.z = deg_to_rad(sin(t * 0.9 + ph) * 4)
 	hud.update(dt)
 	hud.update_danger(g, dt)
-	if overlays.mode in ["personaje", "decorar"] or tutorial.talking():   # el mentor también es una foto
+	if overlays.mode in ["personaje", "decorar"] or tutorial.active:   # el mentor también es una foto
 		thumbs.step()
 	advance_sky(dt)
 	sky.moon_phase = fmod(game.day + 15.0, 29.5) / 29.5 if game != null else 0.5  # una fase por mes de juego
@@ -1885,12 +1888,13 @@ func open_tutorial() -> void:
 
 
 ## Cierra la bienvenida y empieza los pasos guiados (el tutorial no se puede saltar).
-func close_tutorial(_guided := false) -> void:
+## `guided`: se cerró la bienvenida (no la tarjeta del final, que antes volvía a empezar el tutorial).
+func close_tutorial(guided := false) -> void:
 	if overlays.mode != "tutorial":
 		return
 	overlays.hide()
 	app.paused = tutorial_prev
-	if game != null:
+	if guided and game != null:
 		tutorial.start()   # el tutorial no se puede saltar
 
 
@@ -1946,12 +1950,12 @@ func _key(e: InputEventKey) -> void:
 		sfx.music_on = not sfx.music_on
 		toast("Música activada." if sfx.music_on else Lang.f("Música en silencio (%s para volver).", Keys.label("music")), "info")
 		return
-	# El mentor está hablando: Enter o Espacio pasan la frase y las demás teclas esperan (Esc sí pausa)
-	if tutorial.talking() and app.view == "game" and overlays.mode in [null, "admin", "lote", "vitrina"]:
+	# El mentor habla en la ciudad: Enter o Espacio pasan la frase y las demás teclas esperan (Esc sí pausa)
+	if tutorial.blocking() and app.view == "game" and overlays.mode == null:
 		if key in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
 			tutorial.advance()
 			return
-		if key != KEY_ESCAPE or overlays.open():
+		if key != KEY_ESCAPE:
 			return
 	if overlays.mode == "tutorial":
 		if key == KEY_ESCAPE:
@@ -2021,7 +2025,7 @@ func _key(e: InputEventKey) -> void:
 
 func _mouse_button(e: InputEventMouseButton) -> void:
 	# El mentor habla en la ciudad: un clic en cualquier parte pasa la frase (con una ventana abierta, el clic va al cuadro)
-	if tutorial.talking() and app.view == "game" and not overlays.open():
+	if tutorial.blocking() and app.view == "game":
 		if e.button_index == MOUSE_BUTTON_LEFT and not e.pressed:
 			tutorial.advance()
 		return

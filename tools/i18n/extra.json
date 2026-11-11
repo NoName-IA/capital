@@ -2142,7 +2142,7 @@
   "Hey, partner! I'm you... a few years from now. I'm already a millionaire."
  ],
  "Vine a enseñarte cómo lo logré. Primero lo básico: camina un poco.": [
-  "I came to show you how I did it. First the basics: walk around a bit."
+  "I came to show you how I did it. First, the basics: walk around a bit."
  ],
  "¡Eso! Todo imperio empieza con un negocio chiquito.": [
   "That's it! Every empire starts with a tiny business."
@@ -2182,5 +2182,56 @@
  ],
  "Ahora te toca a ti. Nos vemos en la cima.": [
   "Now it's your turn. See you at the top."
+ ],
+ "¡Eso! Todo imperio empieza con un negocio pequeño.": [
+  "That's it! Every empire starts with a small business."
+ ],
+ "Sigue la flecha amarilla hasta un letrero SE VENDE y aprieta %s.": [
+  "Follow the yellow arrow to a FOR SALE sign and press %s."
+ ],
+ "Tu mejor precio ahora es %s. En Mercado, aprieta «Usar precio óptimo».": [
+  "Your best price right now is %s. In Market, press \"Use optimal price\"."
+ ],
+ "Solo no puedes con todo. En tu puesto, aprieta + para contratar a alguien.": [
+  "You can't do it all alone. On your stall, press + to hire someone."
+ ],
+ "Los negocios crecen con el tiempo. Acelera el reloj a x2 o x3 (o con %s y %s).": [
+  "Businesses grow over time. Speed up the clock to x2 or x3 (or with %s and %s)."
+ ],
+ "Para salir de la tablet, aprieta Esc o %s.": [
+  "To leave the tablet, press Esc or %s."
+ ],
+ "Ahora, tu oficina. Ahí están tu computadora y tu armario.": [
+  "Now, your office. Your computer and your wardrobe are there."
+ ],
+ "Aprieta %s para ir.": [
+  "Press %s to go."
+ ],
+ "Lo último y más importante: cómo se gana.": [
+  "Last and most important: how you win."
+ ],
+ "Empezar tutorial": [
+  "Start tutorial"
+ ],
+ "Abre más locales.": [
+  "Open more stores."
+ ],
+ "20 días en números negativos provocan bancarrota.": [
+  "20 days in the red means bankruptcy."
+ ],
+ "Cuidado con la competencia.": [
+  "Watch out for the competition."
+ ],
+ "Caminar": [
+  "Walk"
+ ],
+ "Correr": [
+  "Run"
+ ],
+ "Saltar": [
+  "Jump"
+ ],
+ "Mirar": [
+  "Look"
  ]
 }

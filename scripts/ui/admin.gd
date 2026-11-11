@@ -784,7 +784,7 @@ func draw_top() -> void:
 	var x := 1074.0
 	if ui.button(Rect2(x, 15, 46, 30), "II", true, "normal", 15, "Pausa (P)", paused):
 		paused = not paused
-	marks.velocidad = Rect2(x + 52, 15, 46 * 3 + 52 * 2 - 46, 30)
+	marks.velocidad = Rect2(x + 52, 15, 52 * (SPEEDS.size() - 1) + 46, 30)
 	for i in SPEEDS.size():
 		if ui.button(Rect2(x + 52 + i * 52, 15, 46, 30), SPEEDS[i][1], true, "normal", 15,
 				Lang.f("Velocidad %s (tecla %d)", [SPEEDS[i][1], i + 1]), not paused and speed == i):
@@ -1216,6 +1216,7 @@ func draw_negocios(g: Game) -> void:
 		ui.text("%d/%d" % [loc.employees, size.max_emp], Vector2(x0 + 201, cy), 15, "text", false, "center")
 		if not marks.has("contratar"):
 			marks.contratar = Rect2(x0 + 236, cy - 13, 26, 26)
+			marks.puesto1 = Rect2(area.position.x, ry, area.size.x, rows - 4)   # la fila entera (tutorial)
 		if ui.button(Rect2(x0 + 236, cy - 13, 26, 26), "+", loc.employees < size.max_emp and not p.manager, "normal", 15,
 				Lang.f("Contratar: %s de reclutamiento y %s/mes de salario.", [Fmt.money(D.HIRING_COST * g.price_index), Fmt.money(g.wage_daily() * 30)])):
 			act(g.hire(loc))
