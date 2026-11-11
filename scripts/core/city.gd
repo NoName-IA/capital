@@ -28,7 +28,7 @@ const BOUNDS := [-100.0, 200.0, -58.0, 58.0]  # incluye el barrio, el parque, la
 const WADE_DEPTH := 0.75   # hasta dónde se puede entrar al mar (metros bajo el agua)
 const MAX_CUSTOMERS := 30
 static var config_path := "user://config.json"
-const DEFAULT_SETTINGS := {"music": 0.7, "effects": 0.8, "sensitivity": 1.0, "fov": 70.0, "invert_y": false,
+const DEFAULT_SETTINGS := {"music": 0.7, "effects": 0.8, "sensitivity": 1.0, "fov": 70.0, "invert_y": false, "mute": false,
 		"fullscreen": false, "day_night": true, "comments": true, "help": true, "blur": true,
 		"tutorial_seen": false,
 		"lang": "",   # idioma (ver Lang); vacío = todavía no se eligió: se usa el del sistema
@@ -209,6 +209,7 @@ func save_settings() -> void:
 func apply_settings() -> void:
 	sfx.music_volume = settings.music
 	sfx.effects_volume = settings.effects
+	AudioServer.set_bus_mute(0, settings.get("mute", false))   # silencia todo el juego
 	camera.fov = settings.fov
 	Graphics.apply(settings, get_viewport(), sky, ao, flare)
 	camera.far = Graphics.VIEW_DIST[int(settings.g_view)]
@@ -947,7 +948,7 @@ func advance_sky(dt: float) -> void:
 		sky_game = game
 		sky_t = 0.0
 	if game != null and not app.paused and app.modal == null and not game.game_over:
-		# A más velocidad de juego, el día pasa más rápido también en el cielo (x2 = el doble, x4 = cuatro veces)
+		# A más velocidad de juego, el día pasa más rápido también en el cielo (x2 = el doble, x3 = tres veces)
 		var mult: float = Admin.SPEEDS[app.speed][0] / Admin.SPEEDS[0][0]
 		sky_t = fmod(sky_t + dt * mult / SKY_DAY_SECONDS, 1.0)
 
@@ -1530,6 +1531,9 @@ func move_player(dt: float) -> void:
 	var right := Vector3(-fwd.z, 0, fwd.x)
 	var f := float(Keys.pressed("forward")) - float(Keys.pressed("back"))
 	var s := float(Keys.pressed("right")) - float(Keys.pressed("left"))
+	if tutorial.talking():   # el mentor está hablando: te quedas quieto escuchando
+		f = 0.0
+		s = 0.0
 	var move := fwd * f + right * s
 	if serving:
 		if move.length() > 0:
@@ -1726,9 +1730,13 @@ func update(dt: float) -> void:
 		tutorial.stop()
 		if g != null and overlays.open() and app.modal == null:
 			overlays.hide()
-		# Partida nueva: siempre empieza con el tutorial (se puede saltar)
+		# Partida nueva: siempre empieza con el tutorial (no se puede saltar)
 		tutorial_pending = g != null and app.just_created and not main.testing
 		app.just_created = false
+		if tutorial_pending:
+			g.tutorial_step = 0   # si sale antes de terminarlo, al volver sigue el tutorial
+		elif g != null and int(g.tutorial_step) >= 0 and not main.testing:
+			tutorial.start(int(g.tutorial_step))   # partida con el tutorial a medias: sigue donde iba
 	if tutorial_pending and not overlays.open() and app.modal == null:
 		tutorial_pending = false
 		open_tutorial()
@@ -1816,7 +1824,7 @@ func update(dt: float) -> void:
 		b.rotation.z = deg_to_rad(sin(t * 0.9 + ph) * 4)
 	hud.update(dt)
 	hud.update_danger(g, dt)
-	if overlays.mode in ["personaje", "decorar"]:
+	if overlays.mode in ["personaje", "decorar"] or tutorial.talking():   # el mentor también es una foto
 		thumbs.step()
 	advance_sky(dt)
 	sky.moon_phase = fmod(game.day + 15.0, 29.5) / 29.5 if game != null else 0.5  # una fase por mes de juego
@@ -1876,16 +1884,14 @@ func open_tutorial() -> void:
 	overlays.show("tutorial")
 
 
-## Cierra la bienvenida. `guided`: empieza los pasos guiados (si no, saltaste el tutorial).
-func close_tutorial(guided := false) -> void:
+## Cierra la bienvenida y empieza los pasos guiados (el tutorial no se puede saltar).
+func close_tutorial(_guided := false) -> void:
 	if overlays.mode != "tutorial":
 		return
 	overlays.hide()
 	app.paused = tutorial_prev
-	if guided and game != null:
-		tutorial.start()
-	else:
-		tutorial.skip()
+	if game != null:
+		tutorial.start()   # el tutorial no se puede saltar
 
 
 # ---------- teclado y mouse ----------
@@ -1940,10 +1946,15 @@ func _key(e: InputEventKey) -> void:
 		sfx.music_on = not sfx.music_on
 		toast("Música activada." if sfx.music_on else Lang.f("Música en silencio (%s para volver).", Keys.label("music")), "info")
 		return
+	# El mentor está hablando: Enter o Espacio pasan la frase y las demás teclas esperan (Esc sí pausa)
+	if tutorial.talking() and app.view == "game" and overlays.mode in [null, "admin", "lote", "vitrina"]:
+		if key in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
+			tutorial.advance()
+			return
+		if key != KEY_ESCAPE or overlays.open():
+			return
 	if overlays.mode == "tutorial":
-		if key == KEY_ESCAPE and overlays.tutorial_pages == Overlays.TUTORIAL:
-			close_tutorial()
-		elif key == KEY_ESCAPE:
+		if key == KEY_ESCAPE:
 			overlays.tutorial_next()   # en las tarjetas del medio y del final, Esc es «Entendido»
 		elif key in [KEY_RIGHT, KEY_ENTER, KEY_SPACE]:
 			overlays.tutorial_next()
@@ -2009,6 +2020,11 @@ func _key(e: InputEventKey) -> void:
 
 
 func _mouse_button(e: InputEventMouseButton) -> void:
+	# El mentor habla en la ciudad: un clic en cualquier parte pasa la frase (con una ventana abierta, el clic va al cuadro)
+	if tutorial.talking() and app.view == "game" and not overlays.open():
+		if e.button_index == MOUSE_BUTTON_LEFT and not e.pressed:
+			tutorial.advance()
+		return
 	if overlays.mode == "personaje":
 		if e.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
 			if e.pressed and not overlays.over_custom_ui():

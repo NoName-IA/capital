@@ -78,6 +78,17 @@ func hide() -> void:
 
 
 func draw() -> void:
+	var mentor: bool = city.tutorial.talking() and app.view == "game" and mode in ["admin", "lote", "vitrina"]
+	var click := ui.clicked
+	if mentor:
+		ui.clicked = false   # mientras habla, la tablet y la ventana esperan
+	_draw_mode()
+	if mentor:
+		ui.clicked = click
+		city.tutorial.draw_mentor(ui)
+
+
+func _draw_mode() -> void:
 	match mode:
 		"admin":
 			if app.view == "menu" or app.game == null:
@@ -628,6 +639,7 @@ func draw_settings(area: Rect2) -> void:
 	y = group_title(area, y, "SONIDO")
 	y = row_slider(area, y, "Música", "music", 0, 1, pct, "Volumen de la música. La música se pone tensa cuando estás cerca de la quiebra.")
 	y = row_slider(area, y, "Efectos de sonido", "effects", 0, 1, pct, "Monedas, clientes enojados, avisos y el latido del peligro.")
+	y = row_toggle(area, y, "Silenciar todo", "mute", "Apaga la música y los efectos sin perder el volumen que elegiste.")
 	y = group_title(area, y, "CÁMARA Y MOUSE")
 	y = row_slider(area, y, "Sensibilidad del mouse", "sensitivity", 0.3, 2.5, func(v): return Fmt.num(v, 1) + "x",
 			"Qué tan rápido gira la cámara al mover el mouse.")
@@ -751,9 +763,6 @@ func draw_tutorial() -> void:
 	glass_box(box)
 	ui.text("BIENVENIDA" if tutorial_pages.size() == 1 else Lang.f("TUTORIAL · %d de %d", [tutorial_page + 1, tutorial_pages.size()]),
 			box.position + Vector2(40, 24), 13, "muted", true)
-	if ui.button(Rect2(box.end.x - 170, box.position.y + 18, 130, 32), "Saltar (Esc)", true, "normal", 13):
-		city.close_tutorial()
-		return
 	var img := Rect2(box.position.x + 150, box.position.y + 60, 640, 360)
 	var key: String = page[0]
 	if not tutorial_tex.has(key):
@@ -823,7 +832,7 @@ func draw_controls(area: Rect2) -> void:
 	if ui.button(Rect2(area.end.x - 380, area.position.y + 14, 170, 36), "Restablecer teclas", true, "normal", 14):
 		Keys.map = Keys.defaults()
 		city.save_settings()
-	if app.view == "game" and ui.button(Rect2(area.end.x - 200, area.position.y + 14, 200, 36), "Ver el tutorial", true, "normal", 14):
+	if app.view == "game" and not city.tutorial.active and ui.button(Rect2(area.end.x - 200, area.position.y + 14, 200, 36), "Ver el tutorial", true, "normal", 14):
 		pause_page = "main"
 		city.close_pause()
 		city.open_tutorial()

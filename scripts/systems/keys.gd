@@ -22,7 +22,7 @@ const ACTIONS := [
 	["pause_quick", "Pausa rápida (sin menú)", KEY_P, "JUEGO"],
 	["speed1", "Velocidad x1", KEY_1, "JUEGO"],
 	["speed2", "Velocidad x2", KEY_2, "JUEGO"],
-	["speed3", "Velocidad x4", KEY_3, "JUEGO"],
+	["speed3", "Velocidad x3", KEY_3, "JUEGO"],
 	["music", "Música sí / no", KEY_N, "JUEGO"],
 	["help", "Ayuda en pantalla", KEY_H, "JUEGO"],
 	["fullscreen", "Pantalla completa", KEY_F11, "JUEGO"],

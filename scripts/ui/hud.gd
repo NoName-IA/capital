@@ -119,7 +119,7 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 		_draw_danger(g)
 		_draw_panel(g)
 		_draw_panel_buttons(g)
-		if not city.overlays.open():
+		if not city.overlays.open() and not city.tutorial.talking():
 			mini_rect = CityMap.draw_mini(ui, city, Vector2(15, ui.H - CityMap.MINI_SIZE.y - 15))
 			_draw_micro(g)
 		else:
@@ -345,7 +345,7 @@ func _draw_center() -> void:
 		ui.rect(Rect2(cx - w / 2, 590, w, 40), Color(0.05, 0.067, 0.09, 0.7), 20)
 		ui.text(prompt, Vector2(cx, 610), 22, Color.WHITE, true, "center")
 	_refuse_timer()
-	if help_timer > 0 and not city.overlays.open():
+	if help_timer > 0 and not city.overlays.open() and not city.tutorial.talking():
 		ui.canvas_alpha(clampf(help_timer, 0, 1))
 		var kl := func(a: String) -> String: return Keys.label(a)
 		var lines := [Lang.f("%s%s%s%s: caminar · %s: correr · %s: saltar · Mouse: mirar · Rueda/%s: cámara · %s: música", [

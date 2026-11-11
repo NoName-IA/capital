@@ -14,8 +14,8 @@ const CW := W - SIDE - 24.0
 const CH := H - TOP - 12.0 - 44.0
 const SLOTS := 3
 # Días de juego por segundo real; los nombres dicen cuántas veces más rápido que x1 va cada una (x1: un día dura
-# casi 7 segundos; x2: 3,3 segundos; x4: 1,7 segundos). Un buen jugador llega al Imperio en unos 700 días.
-const SPEEDS := [[0.15, "x1"], [0.3, "x2"], [0.6, "x4"]]
+# casi 7 segundos; x2: 3,3 segundos; x3: 2,2 segundos). Un buen jugador llega al Imperio en unos 700 días.
+const SPEEDS := [[0.15, "x1"], [0.3, "x2"], [0.45, "x3"]]
 const TABS := [["resumen", "Resumen"], ["negocios", "Negocios"], ["expansion", "Expansión"], ["mercado", "Mercado"], ["finanzas", "Finanzas"],
 		["crecimiento", "Crecimiento"], ["rivales", "Rivales"], ["personal", "Personal"], ["reportes", "Reportes"],
 		["noticias", "Noticias"], ["conceptos", "Conceptos"]]

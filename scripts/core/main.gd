@@ -83,6 +83,9 @@ func _process(dt: float) -> void:
 	var size := get_viewport().get_visible_rect().size
 	var mouse := get_viewport().get_mouse_position()
 	var overlay_open: bool = city.overlays.open()
+	if city.tutorial.eat_click:   # ese clic pasó la frase del mentor
+		city.tutorial.eat_click = false
+		mouse_clicked = false
 	city.hud.draw(mouse, mouse_clicked and not overlay_open, size)
 	# Desenfoque: con un menú abierto la ciudad de fondo se desenfoca (en el armario no: hay que ver al personaje)
 	var goal := 1.0 if city.settings.blur and overlay_open and not city.overlays.mode in ["personaje", "decorar"] else 0.0

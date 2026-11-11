@@ -8,6 +8,7 @@ const SIZE := 192
 # Encuadres: [punto que mira la cámara, posición de la cámara], relativos al maniquí (que mira hacia +z).
 const FRAMES := {
 	"cabeza": [Vector3(0, 1.98, 0), Vector3(0.75, 2.2, 1.55)],
+	"busto": [Vector3(0, 1.7, 0), Vector3(0.7, 1.9, 3.0)],   # de la cintura para arriba (el mentor del tutorial)
 	"cuello": [Vector3(0, 1.62, 0), Vector3(0.7, 1.85, 1.75)],
 	"torso": [Vector3(0, 1.32, 0), Vector3(1.05, 1.65, 2.6)],
 	"espalda": [Vector3(0, 1.35, 0), Vector3(-1.1, 1.7, -2.5)],

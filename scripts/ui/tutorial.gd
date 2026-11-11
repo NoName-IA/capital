@@ -19,15 +19,26 @@ var start_staff := 0
 var start_speed := 0
 var understood := false    # "Entendido" en los pasos que solo hay que leer
 var marker: Node3D
+# El mentor: tu personaje ya millonario, que explica cada paso antes de que lo hagas
+var talk: Array = []       # lo que va a decir en este paso (una frase por globo)
+var talk_i := 0            # la frase que está diciendo
+var talk_t := 0.0          # segundos desde que empezó la frase (las letras salen de a poco)
+var talk_in := 0.0         # 0 a 1: el mentor entrando desde abajo
+var ending := false        # ya terminaste el último paso: solo falta la despedida
+var eat_click := false     # el clic que pasó la frase no debe apretar nada más
+
+const MENTOR_NAME := "TÚ, YA MILLONARIO"
+const TYPE_SPEED := 48.0   # letras por segundo
 
 
 func _init(owner_city) -> void:
 	city = owner_city
 
 
-func start() -> void:
+func start(from := 0) -> void:
 	active = true
-	step = 0
+	step = clampi(from, 0, STEPS.size() - 1)
+	city.game.tutorial_step = step
 	step_t = 0.0
 	understood = false
 	start_pos = city.player.position
@@ -39,6 +50,8 @@ func start() -> void:
 		marker = _make_marker()
 		city.add_child(marker)
 	marker.visible = false
+	ending = false
+	_say(lines(STEPS[step]), true)
 
 
 ## Flecha grande que apunta hacia abajo, con un haz de luz vertical (se ve a través de las paredes y desde lejos).
@@ -87,8 +100,95 @@ func _make_marker() -> Node3D:
 
 func stop() -> void:
 	active = false
+	talk = []
+	ending = false
 	if marker:
 		marker.visible = false
+
+
+## Lo que dice el mentor antes de cada paso (frases cortas; con Enter, Espacio o un clic pasa a la siguiente).
+func lines(id: String) -> Array:
+	var k := func(a: String) -> String: return Keys.label(a)
+	match id:
+		"caminar":
+			return ["¡Hola, socio! Soy tú... pero dentro de unos años. Ya soy millonario.",
+					"Vine a enseñarte cómo lo logré. Primero lo básico: camina un poco."]
+		"terreno":
+			return ["¡Eso! Todo imperio empieza con un negocio chiquito.",
+					"Sigue la flecha hasta un letrero SE VENDE."]
+		"comprar":
+			return ["Aquí empecé yo. Abre un puesto de café: es barato y se vende solo."]
+		"tablet":
+			return ["¡Tu primer negocio! Felicidades.", Lang.f("Todo se maneja desde la tablet. Ábrela con %s.", k.call("phone"))]
+		"valor":
+			return ["Antes de seguir, lo más importante: cómo se gana."]
+		"precio":
+			return ["El precio lo es todo. Muy caro, nadie compra. Muy barato, no ganas nada.",
+					"En Mercado está el precio óptimo. Úsalo."]
+		"contratar":
+			return ["Solo no puedes con todo. Contrata a alguien que te ayude."]
+		"tiempo":
+			return ["Los negocios crecen con el tiempo. Acelera un poco el reloj."]
+		"oficina":
+			return ["Por último, tu oficina. Ahí están tu computadora y tu armario."]
+	return []
+
+
+## Las frases que dice al final, después del último paso.
+const GOODBYE := ["¡Listo, socio! Ya sabes lo mismo que yo sabía.", "Ahora te toca a ti. Nos vemos en la cima."]
+
+
+## Empieza a decir `what`. `first`: el mentor recién aparece (entra desde abajo).
+func _say(what: Array, first := false) -> void:
+	talk = what
+	talk_i = 0
+	talk_t = 0.0
+	if first:
+		talk_in = 0.0
+
+
+func talking() -> bool:
+	return active and talk_i < talk.size()
+
+
+## Enter, Espacio o clic: si la frase todavía se está escribiendo la muestra entera; si no, pasa a la siguiente.
+func advance() -> void:
+	if not talking():
+		return
+	eat_click = true
+	var full: String = Lang.t(talk[talk_i])
+	if talk_t * TYPE_SPEED < full.length():
+		talk_t = full.length() / TYPE_SPEED + 0.01
+		return
+	talk_i += 1
+	talk_t = 0.0
+	city.sfx.play("select", 0.4)
+	if talk_i >= talk.size():
+		_talk_done()
+
+
+## Terminó de hablar: ahora lo haces tú (lo que hiciste mientras hablaba no cuenta).
+func _talk_done() -> void:
+	if ending:
+		finish()
+		return
+	step_t = 0.0
+	start_pos = city.player.position
+	start_price = city.game.products.cafe.price
+	start_staff = _staff()
+	start_speed = city.app.speed
+	if STEPS[step] == "valor":
+		city.overlays.show_value_card()
+
+
+## Tu personaje, pero millonario: blazer oscuro, camisa blanca, corbata y reloj de oro.
+func mentor_look() -> Dictionary:
+	var look: Dictionary = Wardrobe.DEFAULT_LOOK.duplicate()
+	if city.game != null and city.game.look is Dictionary:
+		look.merge(city.game.look, true)
+	look.merge({"jacket": "blazer", "jacket_color": [28, 30, 38], "shirt": [245, 245, 245], "tie": true, "watch": true,
+			"headphones": false, "backpack": false}, true)
+	return look
 
 
 ## [título, cómo hacerlo] de cada paso: solo lo necesario.
@@ -178,19 +278,22 @@ func update(dt: float) -> void:
 	if not active or city.game == null:
 		return
 	step_t += dt
-	if step_t > 0.6 and _done(STEPS[step]):
+	talk_t += dt
+	talk_in = minf(1.0, talk_in + dt * 3.5)
+	if not talking() and not ending and step_t > 0.6 and _done(STEPS[step]):
 		city.sfx.play("good", 0.7)
-		step += 1
-		step_t = 0.0
 		understood = false
-		start_price = city.game.products.cafe.price
-		start_staff = _staff()
-		start_speed = city.app.speed
-		if step >= STEPS.size():
-			finish()
-			return
-		if STEPS[step] == "valor":
-			city.overlays.show_value_card()
+		if step + 1 >= STEPS.size():
+			ending = true
+			_say(GOODBYE)
+		else:
+			step += 1
+			step_t = 0.0
+			city.game.tutorial_step = step
+			_say(lines(STEPS[step]))
+	if ending:
+		marker.visible = false
+		return
 	var t = target()
 	marker.visible = t != null and not city.overlays.open()
 	if t != null:
@@ -205,6 +308,7 @@ func update(dt: float) -> void:
 
 func finish() -> void:
 	stop()
+	city.game.tutorial_step = -1
 	city.settings.tutorial_seen = true
 	city.save_settings()
 	city.sfx.play("fanfare", 0.8)
@@ -213,6 +317,8 @@ func finish() -> void:
 
 func skip() -> void:
 	stop()
+	if city.game != null:
+		city.game.tutorial_step = -1
 	city.settings.tutorial_seen = true
 	city.save_settings()
 
@@ -257,6 +363,10 @@ static func spotlight(ui: ImUI, hole: Rect2, dim := 0.62) -> void:
 func draw(ui: ImUI) -> void:
 	if not active or city.overlays.open():
 		return   # con la tablet abierta el paso se ve debajo de la tablet (ver draw_phone)
+	if talking():
+		draw_mentor(ui)
+		_edge_arrow(ui)
+		return
 	var id: String = STEPS[step]
 	var tx := text(id)
 	var goal = null   # el botón del HUD que señala la flecha
@@ -277,13 +387,6 @@ func draw(ui: ImUI) -> void:
 	ui.rect(box, Color(0.05, 0.065, 0.09, 0.9), 14)
 	ui.rect(box, Color(ImUI.COL.accent, 0.6), 14, 1.5)
 	ui.text(Lang.f("TUTORIAL · PASO %d DE %d", [step + 1, rows]), Vector2(x + 18, y + 14), 11, "accent", true)
-	var sk := Rect2(box.end.x - 74, y + 9, 62, 24)
-	var hot := ui.hover(sk)
-	ui.rect(sk, ImUI.COL.button_hot if hot else Color(1, 1, 1, 0.06), 12)
-	ui.text("Saltar", sk.get_center(), 12, Color.WHITE if hot else ImUI.COL.muted, false, "center")
-	if hot and ui.clicked:
-		skip()
-		return
 	# El paso actual, grande y con un brillo al aparecer
 	var k := clampf(step_t / 0.35, 0.0, 1.0)
 	ui.text(tx[0], Vector2(x + 18 + 12 * (1.0 - k), y + 34), 20, Color(1, 1, 1, k), true, "topleft", pw - 36)
@@ -295,7 +398,7 @@ func draw(ui: ImUI) -> void:
 		var col: Color = ImUI.COL.green if i < step else (ImUI.COL.accent if i == step else Color(1, 1, 1, 0.15))
 		ui.rect(Rect2(x + 18 + i * (seg + 4), by, seg, 6), col, 3)
 	# Flechas sobre la pantalla: abrir la tablet (también para los pasos que se hacen en ella) y la velocidad
-	if id == "valor" and not city.overlays.open():
+	if id == "valor" and not city.overlays.open() and not understood:
 		city.overlays.show_value_card()   # se cerró sin leerla: vuelve a salir
 	if goal != null:
 		big_arrow(ui, goal)
@@ -305,8 +408,8 @@ func draw(ui: ImUI) -> void:
 ## Con la tablet abierta: el paso en una franja debajo de la tablet, para qué sirve arriba, y una flecha grande sobre
 ## el botón que hay que apretar (la pestaña, el precio óptimo, el + de contratar, la velocidad). En coordenadas de la tablet.
 func draw_phone(ui: ImUI) -> void:
-	if not active:
-		return
+	if not active or talking():
+		return   # mientras habla, el mentor se dibuja encima de todo (Overlays.draw -> draw_mentor)
 	var id: String = STEPS[step]
 	var tx := text(id)
 	if id == "valor":
@@ -333,6 +436,44 @@ func draw_phone(ui: ImUI) -> void:
 	spotlight(ui, goal.grow(8))
 	_note_by_arrow(ui, goal, tx[1])
 	big_arrow(ui, goal)
+
+
+## El mentor hablando: de la cintura para arriba a la izquierda, saliendo por encima de un cuadro de diálogo abajo
+## al centro. Las letras salen de a poco; abajo a la derecha, cómo seguir.
+func draw_mentor(ui: ImUI) -> void:
+	if not talking():
+		return
+	var e := 1.0 - pow(1.0 - talk_in, 3)
+	var w := 780.0
+	var h := 128.0
+	var box := Rect2(ui.W / 2 - w / 2 + 70, ui.H - h - 22 + (1.0 - e) * 220, w, h)
+	# El retrato: la foto de tu personaje millonario (Thumbs, encuadre "busto"), más alto que el cuadro
+	var pr := Rect2(box.position.x - 186, box.end.y - 200, 200, 200)
+	ui.rect(pr, Color(ImUI.COL.accent, 0.95), 16)
+	ui.rect(pr.grow(-4), Color(0.17, 0.2, 0.26), 12)
+	var img = city.thumbs.get_thumb(mentor_look(), "busto")
+	if img != null:
+		ui.image(img, pr.grow(-4))
+	ui.rect(box, Color(0.04, 0.05, 0.075, 0.96), 16)
+	ui.rect(box, Color(ImUI.COL.accent, 0.9), 16, 2)
+	# Nombre en una pestaña sobre el cuadro
+	var nw := ui.text_size(MENTOR_NAME, 13, true).x + 28
+	var tab := Rect2(box.position.x + 30, box.position.y - 15, nw, 28)
+	ui.rect(tab, ImUI.COL.accent, 14)
+	ui.text(MENTOR_NAME, tab.get_center(), 13, Color8(16, 20, 30), true, "center")
+	# La frase, escribiéndose
+	var full: String = Lang.t(talk[talk_i])
+	var n := mini(full.length(), int(talk_t * TYPE_SPEED))
+	ui.wrap_text(full.substr(0, n), Rect2(box.position.x + 30, box.position.y + 26, w - 60, h - 50), 20, Color.WHITE)
+	# Cómo seguir (titila cuando la frase ya terminó)
+	var blink := 0.55 + 0.45 * sin(Time.get_ticks_msec() / 180.0) if n >= full.length() else 0.35
+	ui.text(Lang.t("Enter / clic") + "  ▸", Vector2(box.end.x - 22, box.end.y - 18), 13, Color(ImUI.COL.accent, blink), true, "midright")
+	# Puntitos: cuántas frases quedan
+	for i in talk.size():
+		var c: Color = ImUI.COL.accent if i == talk_i else Color(1, 1, 1, 0.25 if i > talk_i else 0.5)
+		ui.circle(Vector2(box.position.x + 36 + i * 14, box.end.y - 18), 4, c)
+	if ui.clicked and city.overlays.open() and box.grow(10).merge(pr).has_point(ui.mouse):
+		advance()
 
 
 ## Dónde va un recuadro de `size` pegado al botón que señala big_arrow, centrado sobre él: justo debajo del botón

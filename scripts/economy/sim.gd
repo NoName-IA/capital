@@ -83,6 +83,7 @@ var mall := false         # ¿compraste el centro comercial frente a la oficina?
 var mall2 := false        # ¿y el de la playa?
 var office_offered := 0   # hasta qué aspecto ya se ofreció con la ventana «Mejorar oficina»
 var office_decor := []    # lo que compraste para la fachada de la oficina (D.OFFICE_DECOR)
+var tutorial_step := -1  # paso del tutorial guiado en el que vas (-1: ya terminado); no se puede saltar
 var office_look := 0      # aspecto de la oficina (D.OFFICE_LOOKS); las partidas de antes tienen el 2 (el de siempre)
 var path := {}            # decisiones importantes tomadas: {"rumbo": "premium"/"masivo", "rivales": "alianza"/"guerra"}
 var rival_mall := {}      # "vitrina" -> negocio del rival que la arrienda en tu centro comercial (te paga alquiler)
@@ -96,7 +97,7 @@ const SAVED := ["day", "cash", "bonds", "products", "locations", "loans", "asset
 		"wardrobe", "owned_items", "look", "hq_level", "fund", "play_seconds", "win_seconds", "mode",
 		"strategy_ready_day", "market_today", "rank_log", "rival_plots", "company",
 		"weather", "weather_next", "weather_days", "activity_day", "beach_boost_days",
-		"labor", "morale", "micro", "next_micro_day", "rivals", "plot_owner", "passed", "mall", "franchises", "mall2", "rival_mall", "path", "office_look", "office_offered", "office_decor"]
+		"labor", "morale", "micro", "next_micro_day", "rivals", "plot_owner", "passed", "mall", "franchises", "mall2", "rival_mall", "path", "office_look", "office_offered", "office_decor", "tutorial_step"]
 
 
 static func new_ledger() -> Dictionary:

@@ -42,5 +42,8 @@ func run(m) -> void:
 	c.overlays.hide()
 	await m.frames(20)
 	await m.shot(ProjectSettings.globalize_path(OUT + "tutorial_oficina.png"))
+	# El paso queda en la partida guardada: al volver a cargarla, sigue donde iba
+	var saved: Dictionary = g.to_state() if g.has_method("to_state") else {}
+	print("paso guardado en la partida: ", g.tutorial_step, " (", Tutorial.STEPS[c.tutorial.step], ")", " · en SAVED: ", "tutorial_step" in Game.SAVED)
 	print("dilema: ", g.pending_choice, " · micro: ", g.micro, " · próximo dilema día ", g.next_choice_day, " (hoy ", g.day, ")")
 	c.tutorial.stop()
