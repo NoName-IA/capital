@@ -474,7 +474,8 @@ func draw(ui: ImUI) -> void:
 	draw_skip(ui, city.hud.speed_rect)
 
 
-## Botón «Saltar tutorial» arriba a la derecha (en la ciudad, a la izquierda del reloj de velocidad `beside`). El
+## Botón «Saltar tutorial» arriba a la derecha, solo en la ciudad (a la izquierda del reloj de velocidad `beside`; en la
+## tablet no sale porque tapaba la velocidad). El
 ## primer clic pregunta «¿Seguro?» y el segundo, dentro de 3 s, lo salta. Con el mouse atrapado en la ciudad, Alt lo suelta.
 func draw_skip(ui: ImUI, beside := Rect2()) -> void:
 	if not active:
