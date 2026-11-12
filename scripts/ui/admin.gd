@@ -37,6 +37,7 @@ var fund_amount := 100000.0
 var confirm_sell = null
 var cache := {}
 var acc := 0.0
+var in_pc := false          # estás sentado en la computadora de la oficina (City lo marca)
 var modal = null
 var running := true
 var slot := 1
@@ -125,8 +126,9 @@ func update(dt: float) -> void:
 	var g := game
 	if modal == "dilema":
 		last_dilemma_ms = now_ms()
-	g.hold_dilemma = now_ms() - last_rank_ms < GAP_MS   # recién subiste de rango: la decisión espera
-	if g.pending_choice != null and modal == null and not g.game_over:
+	# recién subiste de rango, o estás en la computadora: la decisión espera
+	g.hold_dilemma = now_ms() - last_rank_ms < GAP_MS or in_pc
+	if g.pending_choice != null and modal == null and not g.game_over and not in_pc:
 		modal = "dilema"
 	if paused or modal != null or g.game_over:
 		return

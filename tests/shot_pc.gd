@@ -73,11 +73,18 @@ func run(m) -> void:
 	c.overlays.hide()
 	await m.frames(5)
 	print("al cerrar la tablet -> ventana: ", c.overlays.mode, " · fase ", c.pc_phase)
-	# Levantarse
-	c.pc_os.escape()
-	await m.frames(30)
+	# Una decisión urgente mientras estás en la compu: espera a que te levantes
+	g.pending_choice = g.build_dilemma("soborno")
+	await m.frames(10)
+	print("decisión en la compu: pendiente ", g.pending_choice != null, " · modal ", m.app.modal, " · ventana ", c.overlays.mode)
+	# Apagar desde el menú Inicio: te levantas solo
+	c.pc_os.leaving = 0.6
+	await m.frames(60)
+	print("después de Apagar: fase '", c.pc_phase, "'")
+	await m.frames(10)
 	await _shot(m, "8_saliendo")
 	await _wait_phase(m, c, "")
 	await m.frames(10)
+	print("decisión al levantarte -> modal ", m.app.modal)
 	print("después de levantarte: fase '", c.pc_phase, "' · altura ", snappedf(c.player.position.y, 0.01), " · ventana ", c.overlays.mode)
 	await _shot(m, "9_de_pie")

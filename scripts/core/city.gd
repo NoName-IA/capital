@@ -651,6 +651,8 @@ func _pc_update(dt: float) -> void:
 			p.animate(0.0, dt)
 			p.sit(1.0)
 			pc_os.update(dt)
+			if pc_phase != "os":   # «Apagar»: ya te estás levantando, no se vuelve a abrir la pantalla
+				return
 			if not overlays.open():
 				if app.modal != null:
 					overlays.show("admin", -1, true)   # una decisión urgente: sale encima y después vuelves aquí
@@ -692,8 +694,11 @@ func _pc_close() -> Transform3D:
 	var seat := _pc_seat()
 	var scr := _pc_screen()
 	var d := Vector3(scr.x - seat.x, 0, scr.z - seat.z).normalized()
-	var half := 0.22 if game != null and game.office_look == 0 else 0.27   # media altura de la pantalla
-	var dist := half / tan(deg_to_rad(camera.fov) / 2.0) * 0.9
+	# Lo bastante lejos para que la pantalla ocupe casi toda la vista (alto o ancho, lo que llegue primero)
+	var vs := get_viewport().get_visible_rect().size
+	var tv := tan(deg_to_rad(camera.fov) / 2.0)
+	var th := tv * vs.x / maxf(vs.y, 1.0)
+	var dist := maxf(float(hq_spots.pc_screen_h) / 2.0 / tv, float(hq_spots.pc_screen_w) / 2.0 / th) / Ventanas.FILL
 	var eye := scr - d * dist
 	return Transform3D(Basis.looking_at(scr - eye, Vector3.UP), eye)
 
@@ -730,6 +735,20 @@ func _pc_camera() -> void:
 				camera.global_transform = _xf_lerp(_pc_shoulder(), _pc_follow(), (k - 0.5) * 2)
 		"stand":
 			camera.global_transform = _pc_follow()
+
+
+## Dónde se ve la pantalla del monitor en tu pantalla (píxeles): Ventanas se dibuja justo ahí, del mismo tamaño.
+func pc_screen_rect() -> Rect2:
+	var scr := _pc_screen()
+	var seat := _pc_seat()
+	var d := Vector3(scr.x - seat.x, 0, scr.z - seat.z).normalized()
+	var face := scr - d * 0.011   # la cara de adelante de la pantalla
+	var side := Vector3(-d.z, 0, d.x) * float(hq_spots.pc_screen_w) / 2.0
+	var up := Vector3(0, float(hq_spots.pc_screen_h) / 2.0, 0)
+	var r := Rect2(camera.unproject_position(face - side - up), Vector2.ZERO)
+	for p in [face + side - up, face - side + up, face + side + up]:
+		r = r.expand(camera.unproject_position(p))
+	return r
 
 
 ## Negro encima de todo al final de la entrada a la pantalla y al principio de la salida (la pantalla "se prende").
@@ -1954,6 +1973,7 @@ func update(dt: float) -> void:
 	if g != null:
 		watch_news(g)
 		tutorial.update(dt)
+		app.in_pc = pc_phase != ""
 		if pc_phase != "":
 			_pc_update(dt)
 		if rank_wait != null and not rank_must_wait():

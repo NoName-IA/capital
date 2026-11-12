@@ -148,6 +148,7 @@ static func hq(tier := 2) -> Array:
 			[Vector3(5.4, 2.55, 14.05), "ARMARIO", 6, "gold"]]
 	var spots := {"front": [0, -1.5], "door": [0, 1.8], "texts": texts, "computer": PC_STAND, "screen": Vector3(0, 1.35, 9.35),
 			"pc_seat": PC_SEAT, "pc_screen": [PC_SCREEN_X[tier], PC_Z], "pc_screen_y": PC_SCREEN_Y[tier],
+			"pc_screen_w": PC_SCREEN_SIZE[tier][0], "pc_screen_h": PC_SCREEN_SIZE[tier][1],
 			"ceiling": [-w / 2, w / 2, z0, z1, lobby - 0.1], "wardrobe": [5.4, 12.7], "trophies": [-5.4, 12.8],
 			"indoor_lights": [[-4, 4.0, 5, 6.5], [4, 4.0, 5, 6.5], [-4, 4.0, 9.5, 6.5], [4, 4.0, 9.5, 6.5],
 					[-4, 4.0, 13.5, 6.5], [4, 4.0, 13.5, 6.5]],   # debajo de cada panel del techo
@@ -162,6 +163,7 @@ const PC_SEAT := [-5.6, PC_Z]          # donde queda tu personaje sentado
 const PC_STAND := [-4.6, PC_Z]         # donde aprietas E para sentarte
 const PC_SCREEN_X := [-6.93, -7.13, -7.13, -7.13]   # la cara de la pantalla según el aspecto de la oficina
 const PC_SCREEN_Y := [1.12, 1.3, 1.3, 1.34]
+const PC_SCREEN_SIZE := [[0.704, 0.44], [0.864, 0.54], [0.864, 0.54], [0.96, 0.6]]   # ancho × alto (16:10, como Ventanas)
 
 
 ## Escritorio, silla y computadora según el aspecto de la oficina: monitor gordo en el garaje, pantalla plana en el
@@ -185,15 +187,15 @@ static func _office_pc(tier: int) -> Array:
 	]
 	match tier:
 		0:   # monitor gordo de los de antes
-			b += [B([-7.2, 1.1, z], [0.52, 0.6, 0.66], Color8(205, 198, 182)),
-					B([PC_SCREEN_X[0], 1.12, z], [0.02, 0.44, 0.54], glow)]
+			b += [B([-7.2, 1.1, z], [0.52, 0.6, 0.84], Color8(205, 198, 182)),
+					B([PC_SCREEN_X[0], 1.12, z], [0.02, 0.44, 0.704], glow)]
 		3:   # pantalla grande y otra chica al lado
-			b += [B([-7.25, 0.95, z], [0.14, 0.32, 0.14], "dark"), B([-7.18, 1.34, z], [0.06, 0.68, 1.2], "dark"),
-					B([PC_SCREEN_X[3], 1.34, z], [0.02, 0.6, 1.12], glow),
+			b += [B([-7.25, 0.95, z], [0.14, 0.32, 0.14], "dark"), B([-7.18, 1.34, z], [0.06, 0.68, 1.04], "dark"),
+					B([PC_SCREEN_X[3], 1.34, z], [0.02, 0.6, 0.96], glow),
 					B([-7.18, 1.25, z - 1.0], [0.06, 0.45, 0.62], "dark"), B([-7.14, 1.25, z - 1.0], [0.02, 0.38, 0.55], glow)]
 		_:
-			b += [B([-7.25, 0.95, z], [0.14, 0.32, 0.14], "dark"), B([-7.18, PC_SCREEN_Y[tier], z], [0.06, 0.62, 1.05], "dark"),
-					B([PC_SCREEN_X[tier], PC_SCREEN_Y[tier], z], [0.02, 0.54, 0.97], glow)]
+			b += [B([-7.25, 0.95, z], [0.14, 0.32, 0.14], "dark"), B([-7.18, PC_SCREEN_Y[tier], z], [0.06, 0.62, 0.94], "dark"),
+					B([PC_SCREEN_X[tier], PC_SCREEN_Y[tier], z], [0.02, 0.54, 0.864], glow)]
 	return b
 
 

@@ -38,7 +38,9 @@ var nag_done := false
 var web_tries := 0
 var leaving := -1.0            # «Apagar»: segundos que quedan del mensaje de cierre
 var wallpaper: Texture2D
-var vis := Rect2(0, 0, 1280, 760)   # la parte de la pantalla que se ve (en una pantalla más ancha, más que 1280×760)
+var ui_ref: ImUI
+var vis := Rect2(0, 0, 1280, 760)   # la pantalla del monitor (casi toda tu pantalla, con el borde del monitor alrededor)
+const FILL := 0.88             # cuánto de tu pantalla ocupa la del monitor (alto o ancho)
 
 
 func _init(owner_city) -> void:
@@ -77,6 +79,7 @@ func update(dt: float) -> void:
 	if leaving >= 0:
 		leaving -= dt
 		if leaving < 0:
+			leaving = -1.0
 			city.leave_computer()
 	if booted() and not chimed:
 		chimed = true
@@ -91,23 +94,26 @@ func update(dt: float) -> void:
 func draw(ui: ImUI) -> void:
 	var W := ui.W
 	var H := ui.H
-	var vs: Vector2 = city.get_viewport().get_visible_rect().size
-	var tl: Vector2 = ui.to_virtual(Vector2.ZERO)
-	vis = Rect2(tl, ui.to_virtual(vs) - tl)
-	ui.rect(Rect2(-3000, -3000, W + 6000, H + 6000), INK)
+	# Justo encima de la pantalla del monitor, del mismo tamaño (alrededor se ve el monitor de verdad y tu oficina)
+	var sr: Rect2 = city.pc_screen_rect()
+	var tl: Vector2 = ui.to_virtual(sr.position)
+	vis = Rect2(tl, ui.to_virtual(sr.end) - tl)
+	ui.set_clip(vis)
+	ui.rect(vis, INK)
 	if not booted():
 		_draw_boot(ui)
 		prev_down = ui.down
+		ui.set_clip(null)
 		return
 	if leaving >= 0:
-		ui.rect(Rect2(-3000, -3000, W + 6000, H + 6000), Color8(0, 0, 0))
-		ui.text("Cerrando sesión...", Vector2(W / 2, H / 2), 22, Color8(255, 170, 40), true, "center")
+		ui.text("Cerrando sesión...", vis.get_center(), 22, Color8(255, 170, 40), true, "center")
 		prev_down = ui.down
+		ui.set_clip(null)
 		return
-	var click := ui.clicked
-	var press: bool = ui.down and not prev_down
+	var click := ui.clicked and vis.has_point(ui.mouse)
+	var press: bool = ui.down and not prev_down and vis.has_point(ui.mouse)
 	# Fondo: la foto de tu ciudad (y verde agua alrededor, como siempre)
-	ui.rect(Rect2(-3000, -3000, W + 6000, H + 6000), TEAL)
+	ui.rect(vis, TEAL)
 	if wallpaper:
 		ui.image(wallpaper, Rect2(vis.position, Vector2(vis.size.x, vis.size.y - BAR)))
 	# Qué recibe el clic: el mensaje, el menú Inicio, la ventana de más arriba bajo el mouse, la barra o el escritorio
@@ -155,11 +161,17 @@ func draw(ui: ImUI) -> void:
 		_draw_message(ui)
 	ui.clicked = click
 	prev_down = ui.down
+	ui.set_clip(null)
+
+
+## Recorta dentro de la pantalla del monitor (set_clip no se anida).
+func _clip(r) -> void:
+	ui_ref.set_clip(vis if r == null else (r as Rect2).intersection(vis))
 
 
 ## Pantalla de inicio: el logo, el nombre y la barrita que se mueve.
 func _draw_boot(ui: ImUI) -> void:
-	var c := Vector2(ui.W / 2, ui.H / 2 - 40)
+	var c := vis.get_center() - Vector2(0, 40)
 	var a := clampf(t / 0.5, 0, 1)
 	logo(ui, Rect2(c.x - 170, c.y - 60, 92, 120), a)
 	ui.text("Ventanas", Vector2(c.x - 60, c.y - 34), 54, Color(1, 1, 1, a), true, "midleft")
@@ -169,12 +181,13 @@ func _draw_boot(ui: ImUI) -> void:
 	ui.rect(bar, Color8(30, 30, 30))
 	ui.rect(bar, Color8(90, 90, 90), 0, 1)
 	var k := fmod(t * 0.9, 1.4) - 0.2
-	ui.set_clip(bar.grow(-2))
+	ui_ref = ui
+	_clip(bar.grow(-2))
 	for i in 3:
 		ui.rect(Rect2(bar.position.x + k * bar.size.x + i * 16, bar.position.y + 3, 12, 12), Color8(40, 90, 230))
-	ui.set_clip(null)
+	_clip(null)
 	ui.text("Cargando tu imperio...", Vector2(c.x, bar.end.y + 22), 14, Color(0.7, 0.7, 0.75, a), false, "center")
-	ui.text("Copyright © 1998 Capital Corp. Todos los derechos reservados (y algunos más).", Vector2(c.x, ui.H - 40), 12,
+	ui.text("Copyright © 1998 Capital Corp. Todos los derechos reservados (y algunos más).", Vector2(c.x, vis.end.y - 30), 12,
 			Color(0.5, 0.5, 0.55, a), false, "center")
 
 
@@ -235,7 +248,8 @@ func _open(id: String) -> void:
 	var titles := {"remodelar": "Remodelar.exe", "docs": "Mis Documentos", "web": "Internet Explorador", "papelera": "Papelera"}
 	var sz: Vector2 = sizes[id]
 	var n := wins.size()
-	var r := Rect2(Vector2((1280 - sz.x) / 2 + n * 24, max(12.0, (760 - BAR - sz.y) / 2 + n * 24)), sz)
+	sz = sz.min(vis.size - Vector2(40, BAR + 30))
+	var r := Rect2(vis.position + Vector2((vis.size.x - sz.x) / 2 + n * 24, max(12.0, (vis.size.y - BAR - sz.y) / 2 + n * 24)), sz)
 	wins.append({"id": id, "title": titles[id], "r": r, "min": false})
 
 
@@ -319,11 +333,10 @@ func _start_rect(ui: ImUI) -> Rect2:
 
 
 func _draw_taskbar(ui: ImUI) -> void:
-	var W := ui.W
 	var H := vis.end.y
-	var bar := Rect2(-3000, H - BAR, W + 6000, BAR + 3000)
+	var bar := Rect2(vis.position.x, H - BAR, vis.size.x, BAR)
 	ui.rect(bar, GRAY)
-	ui.rect(Rect2(-3000, H - BAR, W + 6000, 2), LIGHT)
+	ui.rect(Rect2(vis.position.x, H - BAR, vis.size.x, 2), LIGHT)
 	# Inicio
 	var sr := Rect2(vis.position.x + 4, H - BAR + 5, 96, 30)
 	var hot := ui.hover(sr)
@@ -391,12 +404,12 @@ func _draw_start(ui: ImUI, r: Rect2) -> void:
 	ui.text("Apagar...", Vector2(off.position.x + 44, off.get_center().y), 15, LIGHT if hot2 else INK, false, "midleft")
 	if hot2 and ui.clicked:
 		start_open = false
-		leaving = 1.0
+		leaving = 0.6
 
 
 func _draw_message(ui: ImUI) -> void:
-	var r := Rect2(ui.W / 2 - 230, ui.H / 2 - 100, 460, 170)
-	ui.rect(Rect2(-3000, -3000, ui.W + 6000, ui.H + 6000), Color(0, 0, 0, 0.15))
+	var r := Rect2(vis.get_center() - Vector2(230, 100), Vector2(460, 170))
+	ui.rect(vis, Color(0, 0, 0, 0.15))
 	bevel(ui, r, false, GRAY)
 	var tb := Rect2(r.position.x + 4, r.position.y + 4, r.size.x - 8, 26)
 	ui.gradient(tb, NAVY, BLUE)
@@ -445,7 +458,8 @@ func _app_remodel(ui: ImUI, body: Rect2) -> void:
 	if ui.hover(inner) and ui.wheel != 0:
 		list_scroll -= ui.wheel * row_h
 	list_scroll = clampf(list_scroll, 0, maxf(0, locs.size() * row_h - inner.size.y))
-	ui.set_clip(inner)
+	ui_ref = ui
+	_clip(inner)
 	var sel_loc = null
 	var sel_n := 1
 	for i in locs.size():
@@ -465,7 +479,7 @@ func _app_remodel(ui: ImUI, body: Rect2) -> void:
 			loc_sel = int(loc.id)
 			item_sel = ""
 			city.sfx.play("select", 0.3)
-	ui.set_clip(null)
+	_clip(null)
 	if sel_loc == null:
 		return
 	# Artículos de la sucursal elegida
