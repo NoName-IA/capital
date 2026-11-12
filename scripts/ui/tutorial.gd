@@ -154,6 +154,7 @@ func lines(id: String) -> Array:
 					"Vine a enseñarte cómo lo logré. Primero lo básico: camina un poco."]
 		"terreno":
 			return ["¡Eso! Todo imperio empieza con un negocio pequeño.",
+					Lang.f("A la derecha te dejo todos los controles. Con %s los vuelves a ver cuando quieras.", k.call("help")),
 					Lang.f("Sigue la flecha amarilla hasta un letrero SE VENDE y aprieta %s.", k.call("interact"))]
 		"comprar":
 			return ["Aquí empecé yo. Abre un puesto de café: es barato y se vende solo."]
@@ -555,9 +556,11 @@ func draw_mentor(ui: ImUI) -> void:
 	var e := 1.0 - pow(1.0 - talk_in, 3)
 	var w := 780.0
 	var h := 128.0
-	var box := Rect2(ui.W / 2 - w / 2 + 70, ui.H - h - 22 + (1.0 - e) * 220, w, h)
+	var pw := 200.0    # el retrato
+	var sep := 18.0    # aire entre el retrato y el cuadro
+	var box := Rect2(ui.W / 2 - (pw + sep + w) / 2 + pw + sep, ui.H - h - 22 + (1.0 - e) * 220, w, h)
 	# El retrato: la foto de tu personaje millonario (Thumbs, encuadre "busto"), más alto que el cuadro
-	var pr := Rect2(box.position.x - 186, box.end.y - 200, 200, 200)
+	var pr := Rect2(box.position.x - sep - pw, box.end.y - pw, pw, pw)
 	ui.rect(pr, Color(ImUI.COL.accent, 0.95), 16)
 	ui.rect(pr.grow(-4), Color(0.17, 0.2, 0.26), 12)
 	var img = city.thumbs.get_thumb(mentor_look(), "busto")

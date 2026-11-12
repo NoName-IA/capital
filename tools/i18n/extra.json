@@ -2605,5 +2605,32 @@
  ],
  "No se puede vaciar la papelera: los malos planes siempre vuelven.": [
   "The Recycle Bin can't be emptied: bad plans always come back."
+ ],
+ "OTROS": [
+  "OTHER"
+ ],
+ "Mirar alrededor": [
+  "Look around"
+ ],
+ "Pausa": [
+  "Pause"
+ ],
+ "Menú": [
+  "Menu"
+ ],
+ "Tablet": [
+  "Tablet"
+ ],
+ "Mapa": [
+  "Map"
+ ],
+ "Mostrar / ocultar esto": [
+  "Show / hide this"
+ ],
+ "Cámara 1ª / 3ª persona": [
+  "1st / 3rd person camera"
+ ],
+ "A la derecha te dejo todos los controles. Con %s los vuelves a ver cuando quieras.": [
+  "On the right are all the controls. Press %s to see them again anytime."
  ]
 }

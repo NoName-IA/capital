@@ -8,7 +8,7 @@ var city
 var ui: ImUI
 var notes: Notifications
 var confetti := Confetti.new()
-var help_timer := 30.0
+var help_timer := 0.0   # > 0: se ve la tarjeta de controles (tecla de Ayuda)
 var zone := ["", ""]
 var zone_t := 99.0
 var danger_phase := 0.0
@@ -348,21 +348,94 @@ func _draw_center() -> void:
 		ui.rect(Rect2(cx - w / 2, 590, w, 40), Color(0.05, 0.067, 0.09, 0.7), 20)
 		ui.text(prompt, Vector2(cx, 610), 22, Color.WHITE, true, "center")
 	_refuse_timer()
-	if help_timer > 0 and not city.overlays.open() and not city.tutorial.active:
-		ui.canvas_alpha(clampf(help_timer, 0, 1))
-		var kl := func(a: String) -> String: return Keys.label(a)
-		var lines := [Lang.f("%s%s%s%s: caminar · %s: correr · %s: saltar · Mouse: mirar · Rueda/%s: cámara · %s: música", [
-				kl.call("forward"), kl.call("left"), kl.call("back"), kl.call("right"), kl.call("run"), kl.call("jump"),
-				kl.call("camera"), kl.call("music")]),
-				Lang.f("%s: interactuar · %s: tablet · %s: mapa · %s: pausa · %s/%s/%s: velocidad · %s: pantalla completa · Esc: menú · Alt: mouse libre", [
-				kl.call("interact"), kl.call("phone"), kl.call("map"), kl.call("pause_quick"), kl.call("speed1"), kl.call("speed2"),
-				kl.call("speed3"), kl.call("fullscreen")])]
-		ui.rect(Rect2(cx - 490, 500, 980, 58), Color(0.05, 0.067, 0.09, 0.6), 12)
-		for i in 2:
-			ui.text(lines[i], Vector2(cx, 516 + i * 24), 15, Color.WHITE, false, "center")
+	var tut_keys: bool = city.tutorial.active and Tutorial.STEPS[city.tutorial.step] == "terreno" and not city.tutorial.talking()
+	if (help_timer > 0 or tut_keys) and not city.overlays.open():
+		ui.canvas_alpha(1.0 if tut_keys else clampf(help_timer, 0, 1))
+		_draw_controls()
 		ui.canvas_alpha(1.0)
 	if city.first_person and not city.overlays.open():
 		ui.circle(Vector2(cx, ui.H / 2), 3, Color(1, 1, 1, 0.9))
+
+
+## Tarjeta de controles a la derecha, con las teclas dibujadas como en el teclado y ordenadas en grupos
+## (Moverte · Acciones · Juego). Sale en el paso del tutorial donde caminas hasta un terreno y con la tecla de Ayuda.
+## Las teclas se iluminan cuando las aprietas.
+func _draw_controls() -> void:
+	var kl := func(a: String) -> String: return Keys.label(a)
+	var cols := [
+		[["MOVERTE", [
+			[["forward", "left", "back", "right"], "Caminar"],
+			[["run"], "Correr (mantener)"],
+			[["jump"], "Saltar"],
+			[["·mouse"], "Mirar alrededor"],
+			[["camera"], "Cámara 1ª / 3ª persona"],
+		]],
+		["JUEGO", [
+			[["pause_quick"], "Pausa"],
+			[["speed1", "speed2", "speed3"], "Velocidad"],
+			[["·Esc"], "Menú"],
+		]]],
+		[["ACCIONES", [
+			[["interact"], "Interactuar"],
+			[["phone"], "Tablet"],
+			[["map"], "Mapa"],
+			[["office"], "Ir a la oficina"],
+		]],
+		["OTROS", [
+			[["music"], "Música sí / no"],
+			[["fullscreen"], "Pantalla completa"],
+			[["help"], "Mostrar / ocultar esto"],
+		]]],
+	]
+	const KH := 30.0      # alto de una tecla
+	const ROW := 38.0
+	const HEAD := 26.0
+	const COL_W := 250.0
+	const PAD := 18.0
+	var heights := []
+	for col in cols:
+		var h := 0.0
+		for grp in col:
+			h += HEAD + grp[1].size() * ROW + 10
+		heights.append(h)
+	var size := Vector2(COL_W * 2 + PAD * 3, max(heights[0], heights[1]) + PAD + 34)
+	var card := Rect2(ui.W - size.x - 12, 90, size.x, size.y)   # debajo de los botones Día / Tarde / Noche
+	ui.rect(card, Color(0.04, 0.05, 0.075, 0.82), 16)
+	ui.text("CONTROLES", Vector2(card.position.x + PAD, card.position.y + 14), 15, "accent", true)
+	for ci in cols.size():
+		var x: float = card.position.x + PAD + ci * (COL_W + PAD)
+		var y: float = card.position.y + 46
+		for grp in cols[ci]:
+			ui.text(grp[0], Vector2(x, y), 11, Color(1, 1, 1, 0.45), true)
+			ui.rect(Rect2(x, y + 17, COL_W, 1), Color(1, 1, 1, 0.1))
+			y += HEAD
+			for row in grp[1]:
+				var kx := x
+				for act in row[0]:
+					kx += _keycap(Vector2(kx, y), act, kl, KH) + 5
+				ui.text(row[1], Vector2(kx + 6, y + KH / 2), 14, Color.WHITE, false, "midleft")
+				y += ROW
+			y += 10
+
+
+## Una tecla amarilla como las del tutorial (más clara si la estás apretando). Devuelve su ancho.
+## `act` es una acción de Keys, o "·Texto" para una tecla fija (Esc) y "·mouse" para el dibujo del mouse.
+func _keycap(pos: Vector2, act: String, kl: Callable, kh: float) -> float:
+	if act == "·mouse":
+		var mr := Rect2(pos.x + 4, pos.y - 2, 22, kh + 4)
+		var down := Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+		ui.rect(mr, Color8(255, 214, 90) if down else Color8(255, 196, 50), 11)
+		ui.line(Vector2(mr.get_center().x, mr.position.y + 3), Vector2(mr.get_center().x, mr.position.y + 13), Color8(20, 22, 30), 1.5)
+		ui.line(Vector2(mr.position.x + 3, mr.position.y + 13), Vector2(mr.end.x - 3, mr.position.y + 13), Color8(20, 22, 30), 1.5)
+		return 30.0
+	var label: String = act.substr(1) if act.begins_with("·") else kl.call(act)
+	var down: bool = false if act.begins_with("·") else Keys.pressed(act)
+	var w: float = max(kh, ui.text_size(label, 14, true).x + 16)
+	var r := Rect2(pos, Vector2(w, kh))
+	ui.rect(r, Color8(255, 214, 90) if down else Color8(255, 196, 50), 6)
+	ui.rect(Rect2(r.position.x, r.end.y - 4, r.size.x, 4), Color(0, 0, 0, 0.0 if down else 0.18), 6)
+	ui.text(label, r.get_center() + Vector2(0, -1), 14, Color8(20, 22, 30), true, "center")
+	return w
 
 
 func _draw_danger(g) -> void:

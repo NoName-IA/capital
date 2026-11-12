@@ -1258,7 +1258,7 @@ func reset_world(g) -> void:
 		yaw = 0.0
 		player.rotation.y = 0.0
 		pitch = 15.0
-		hud.help_timer = 30.0 if settings.help else 0.0
+		hud.help_timer = 0.0   # los controles ya no salen solos al entrar (los muestra el tutorial o la tecla de Ayuda)
 		sync(g)
 
 
