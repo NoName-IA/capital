@@ -9,6 +9,7 @@ var ui: ImUI
 var notes: Notifications
 var confetti := Confetti.new()
 var help_timer := 0.0   # > 0: se ve la tarjeta de controles (tecla de Ayuda)
+var tut_controls_hidden := false   # en el tutorial la ocultaste con la tecla de Ayuda
 var zone := ["", ""]
 var zone_t := 99.0
 var danger_phase := 0.0
@@ -348,7 +349,7 @@ func _draw_center() -> void:
 		ui.rect(Rect2(cx - w / 2, 590, w, 40), Color(0.05, 0.067, 0.09, 0.7), 20)
 		ui.text(prompt, Vector2(cx, 610), 22, Color.WHITE, true, "center")
 	_refuse_timer()
-	var tut_keys: bool = city.tutorial.active and Tutorial.STEPS[city.tutorial.step] == "terreno" and not city.tutorial.talking()
+	var tut_keys: bool = city.tutorial.active and Tutorial.STEPS[city.tutorial.step] == "terreno" and not city.tutorial.talking() and not tut_controls_hidden
 	if (help_timer > 0 or tut_keys) and not city.overlays.open():
 		ui.canvas_alpha(1.0 if tut_keys else clampf(help_timer, 0, 1))
 		_draw_controls()
@@ -384,7 +385,7 @@ func _draw_controls() -> void:
 		["OTROS", [
 			[["music"], "Música sí / no"],
 			[["fullscreen"], "Pantalla completa"],
-			[["help"], "Mostrar / ocultar esto"],
+			[["help"], "Mostrar / ocultar controles"],
 		]]],
 	]
 	const KH := 30.0      # alto de una tecla

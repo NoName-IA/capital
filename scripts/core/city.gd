@@ -1260,6 +1260,7 @@ func reset_world(g) -> void:
 		player.rotation.y = 0.0
 		pitch = 15.0
 		hud.help_timer = 0.0   # los controles ya no salen solos al entrar (los muestra el tutorial o la tecla de Ayuda)
+		hud.tut_controls_hidden = false
 		sync(g)
 
 
@@ -2251,7 +2252,10 @@ func _key(e: InputEventKey) -> void:
 	elif Keys.is_event(e, "micro1") or Keys.is_event(e, "micro2") or Keys.is_event(e, "micro3"):
 		answer_micro(0 if Keys.is_event(e, "micro1") else (1 if Keys.is_event(e, "micro2") else 2))
 	elif Keys.is_event(e, "help"):
-		hud.help_timer = 0.0 if hud.help_timer > 0 else 30.0
+		if tutorial.active and Tutorial.STEPS[tutorial.step] == "terreno":   # el tutorial la muestra: H la oculta o la vuelve a mostrar
+			hud.tut_controls_hidden = not hud.tut_controls_hidden
+		else:
+			hud.help_timer = 0.0 if hud.help_timer > 0 else 30.0
 
 
 func _mouse_button(e: InputEventMouseButton) -> void:

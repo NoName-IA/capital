@@ -2624,9 +2624,6 @@
  "Mapa": [
   "Map"
  ],
- "Mostrar / ocultar esto": [
-  "Show / hide this"
- ],
  "Cámara 1ª / 3ª persona": [
   "1st / 3rd person camera"
  ],
@@ -2644,5 +2641,8 @@
  ],
  "Tutorial saltado.": [
   "Tutorial skipped."
+ ],
+ "Mostrar / ocultar controles": [
+  "Show / hide controls"
  ]
 }
