@@ -220,6 +220,9 @@ func delete_save(n := 0) -> void:
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
 	slot_cache.erase(n if n else slot)
+	# Borraste la partida que estaba abierta (desde el menú): se suelta, si no al cerrar el juego se volvía a guardar
+	if (n == 0 or n == slot) and view == "menu":
+		game = null
 
 
 ## Resumen de lo guardado en un espacio (o null si está vacío). Se recalcula solo si cambió el archivo.

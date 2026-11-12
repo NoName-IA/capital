@@ -1951,16 +1951,13 @@ func update(dt: float) -> void:
 		tutorial.stop()
 		if g != null and overlays.open() and app.modal == null:
 			overlays.hide()
-		# El tutorial sale una sola vez: en la primera partida nueva (no se puede saltar)
-		tutorial_pending = g != null and app.just_created and not main.testing and not settings.tutorial_seen
+		# El tutorial sale en cada partida nueva (se puede saltar con «Saltar tutorial»)
+		tutorial_pending = g != null and app.just_created and not main.testing
 		app.just_created = false
 		if tutorial_pending:
 			g.tutorial_step = 0   # si sale antes de terminarlo, al volver sigue el tutorial
 		elif g != null and int(g.tutorial_step) >= 0 and not main.testing:
-			if settings.tutorial_seen:
-				g.tutorial_step = -1   # ya lo terminaste (aunque esta partida no se guardó después)
-			else:
-				tutorial.start(int(g.tutorial_step))   # partida con el tutorial a medias: sigue donde iba
+			tutorial.start(int(g.tutorial_step))   # partida con el tutorial a medias: sigue donde iba
 	if tutorial_pending and not overlays.open() and app.modal == null:
 		tutorial_pending = false
 		open_tutorial()
@@ -2115,7 +2112,7 @@ func open_tutorial() -> void:
 	overlays.show("tutorial")
 
 
-## Cierra la bienvenida y empieza los pasos guiados (el tutorial no se puede saltar).
+## Cierra la bienvenida y empieza los pasos guiados.
 ## `guided`: se cerró la bienvenida (no la tarjeta del final, que antes volvía a empezar el tutorial).
 func close_tutorial(guided := false) -> void:
 	if overlays.mode != "tutorial":
@@ -2123,7 +2120,7 @@ func close_tutorial(guided := false) -> void:
 	overlays.hide()
 	app.paused = tutorial_prev
 	if guided and game != null:
-		tutorial.start()   # el tutorial no se puede saltar
+		tutorial.start()
 
 
 # ---------- teclado y mouse ----------
