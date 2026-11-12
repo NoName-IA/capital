@@ -2632,5 +2632,17 @@
  ],
  "A la derecha te dejo todos los controles. Con %s los vuelves a ver cuando quieras.": [
   "On the right are all the controls. Press %s to see them again anytime."
+ ],
+ "Saltar tutorial": [
+  "Skip tutorial"
+ ],
+ "¿Seguro? Clic otra vez": [
+  "Sure? Click again"
+ ],
+ "Alt: usar el mouse": [
+  "Alt: use the mouse"
+ ],
+ "Tutorial saltado.": [
+  "Tutorial skipped."
  ]
 }

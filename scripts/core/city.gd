@@ -2260,6 +2260,8 @@ func _key(e: InputEventKey) -> void:
 func _mouse_button(e: InputEventMouseButton) -> void:
 	# El mentor habla en la ciudad: un clic en cualquier parte pasa la frase (con una ventana abierta, el clic va al cuadro)
 	if tutorial.blocking() and app.view == "game":
+		if tutorial.over_skip(hud.ui.mouse):
+			return   # el clic es para «Saltar tutorial» (lo atiende el botón del HUD)
 		if e.button_index == MOUSE_BUTTON_LEFT and not e.pressed:
 			tutorial.advance()
 		return

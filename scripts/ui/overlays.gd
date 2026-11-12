@@ -74,6 +74,7 @@ func draw() -> void:
 	# El mentor no desaparece en todo el tutorial (con la tablet abierta habla sin que tengas que esperar)
 	if city.tutorial.active and app.view == "game" and mode in ["admin", "lote", "vitrina"]:
 		city.tutorial.draw_mentor(ui)
+		city.tutorial.draw_skip(ui)
 
 
 func _draw_mode() -> void:

@@ -30,6 +30,8 @@ var talk_in := 0.0         # 0 a 1: el mentor entrando desde abajo
 var eat_click := false     # el clic que pasó la frase no debe apretar nada más
 var held := false          # el juego está en pausa porque el mentor está explicando
 var held_prev := false     # si estaba en pausa antes de que empezara a hablar
+var skip_rect := Rect2()   # botón «Saltar tutorial» (en coordenadas del ImUI donde se dibujó)
+var skip_ask_ms := 0       # hasta cuándo el botón pide confirmar («¿Seguro?»)
 
 const MENTOR_NAME := "TÚ, YA MILLONARIO"
 const TYPE_SPEED := 48.0   # letras por segundo
@@ -469,6 +471,33 @@ func draw(ui: ImUI) -> void:
 		draw_keys(ui)
 	draw_mentor(ui)
 	_edge_arrow(ui)
+	draw_skip(ui, city.hud.speed_rect)
+
+
+## Botón «Saltar tutorial» arriba a la derecha (en la ciudad, a la izquierda del reloj de velocidad `beside`). El
+## primer clic pregunta «¿Seguro?» y el segundo, dentro de 3 s, lo salta. Con el mouse atrapado en la ciudad, Alt lo suelta.
+func draw_skip(ui: ImUI, beside := Rect2()) -> void:
+	if not active:
+		skip_rect = Rect2()
+		return
+	var asking := Time.get_ticks_msec() < skip_ask_ms
+	var label := Lang.t("¿Seguro? Clic otra vez") if asking else Lang.t("Saltar tutorial")
+	var w := ui.text_size(label, 15, true).x + 32
+	var x := (beside.position.x - 10 - w) if beside.size.x > 0 else ui.W - 12 - w
+	skip_rect = Rect2(x, 12, w, 34)
+	if ui.button(skip_rect, label, true, "danger" if asking else "normal", 15):
+		if asking:
+			skip()
+			city.toast("Tutorial saltado.", "info")
+		else:
+			skip_ask_ms = Time.get_ticks_msec() + 3000
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		ui.text("Alt: usar el mouse", Vector2(skip_rect.get_center().x, skip_rect.end.y + 4), 11, Color(1, 1, 1, 0.6), false, "midtop")
+
+
+## El mouse está sobre «Saltar tutorial»: ese clic no pasa la frase del mentor.
+func over_skip(mouse: Vector2) -> bool:
+	return active and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and skip_rect.has_point(mouse)
 
 
 ## Con la tablet abierta: todo se oscurece menos lo que hay que tocar y una flecha grande lo señala (la pestaña, el
