@@ -388,11 +388,6 @@ func interactables(g: Game) -> Array:
 				continue
 			items.append([s.front, Lang.f("Comprar este local de %s (%s · %s)", [s.loc.rival.company, Lang.noun(D.PRODUCTS[key].name), Fmt.money(g.acquire_cost(key))]),
 					func(): city.buy_competitor(key, -1, gi)])
-		else:
-			var loc: Dictionary = s.loc
-			var key: String = loc.product
-			items.append([s.front, Lang.f("Administrar %s de %s (vitrina %d)", [Lang.noun(D.SIZES[loc.size].name), Lang.noun(D.PRODUCTS[key].name), i + 1]),
-					func(): city.manage_market(key)])
 	return items
 
 

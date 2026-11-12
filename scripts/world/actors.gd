@@ -39,11 +39,14 @@ static func rep_color(value: float) -> Color:
 	return Color8(120, 230, 90) if value >= 60 else (Color8(240, 160, 50) if value >= 35 else Color8(240, 70, 60))
 
 
-## Local de la competencia: borde rojo que se ve de día y de noche, letrero COMPETENCIA y empleados del rival.
+## Local de la competencia: borde rojo que se ve de día y de noche, letrero con la marca y su logo grandes («competencia» chiquito abajo) y empleados del rival.
 static func competitor(parent: Node3D, key: String, plot: Array, owner = null) -> Dictionary:
 	var r := D.rival_for(key) if owner == null else D.rival_by_key(owner)
-	var bld := Building.new(parent, plot, 1, Blueprints.PRODUCT_COLORS[key], "COMPETENCIA",
-			Lang.f("%s · %s", [r.company, D.PRODUCTS[key].name]), 17, absi(int(plot[0] * 13 + plot[1] * 7)) + 500, key)
+	# La marca en grande; «competencia» queda chiquito abajo
+	var brand: String = r.get("short", r.company)
+	var bld := Building.new(parent, plot, 1, Blueprints.PRODUCT_COLORS[key], brand.to_upper(),
+			Lang.f("Competencia · %s", D.PRODUCTS[key].name), minf(30.0, 220.0 / maxf(brand.length(), 1)),
+			absi(int(plot[0] * 13 + plot[1] * 7)) + 500, key)
 	var w := 14.0
 	var h := 4.5
 	var z0 := 2.0
@@ -60,8 +63,8 @@ static func competitor(parent: Node3D, key: String, plot: Array, owner = null) -
 	if tex != null:   # el logo de la marca (o la foto del dueño) arriba de la fachada, mirando a la calle
 		var logo := Sprite3D.new()
 		logo.texture = tex
-		logo.pixel_size = 2.4 / 256.0
-		logo.position = Vector3(0, h + 1.5, z0 - 0.1)
+		logo.pixel_size = 3.6 / 256.0   # grande: es lo que más se tiene que ver
+		logo.position = Vector3(0, h + 2.1, z0 - 0.1)
 		logo.rotation.y = PI
 		logo.shaded = false
 		logo.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD

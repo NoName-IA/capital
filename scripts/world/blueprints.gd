@@ -78,9 +78,6 @@ static func hq(tier := 2) -> Array:
 		B([0, 0.82, 9], [3.6, 0.06, 1.6], "gold"),
 		B([0, 1.35, 9.4], [1.4, 0.85, 0.08], "dark"),
 		B([0, 0.55, 10.4], [0.9, 1.1, 0.8], "dark"),
-		B([-5.9, 0.35, 6.5], [1.4, 0.7, 3.6], "hq_sofa", true),
-		B([-6.5, 0.9, 6.5], [0.3, 0.8, 3.6], "hq_sofa"),
-		B([-4.4, 0.25, 6.5], [1.0, 0.5, 1.8], "marble", true),
 		B([5.9, 0.35, 6.5], [1.4, 0.7, 3.6], "hq_sofa", true),
 		B([6.5, 0.9, 6.5], [0.3, 0.8, 3.6], "hq_sofa"),
 		B([4.4, 0.25, 6.5], [1.0, 0.5, 1.8], "marble", true),
@@ -105,6 +102,7 @@ static func hq(tier := 2) -> Array:
 		B([w / 2 - 0.25, 2.6, 11], [0.08, 1.9, 3.4], "hq_trim"),
 		B([w / 2 - 0.3, 2.6, 11], [0.05, 1.7, 3.2], "dark"),
 	]
+	boxes += _office_pc(tier)
 	for pp in [[-7, 3], [7, 3], [-7, 14.8], [7, 14.8]]:
 		boxes.append(B([pp[0], 0.4, pp[1]], [0.7, 0.8, 0.7], "hq_trim", true))
 		boxes.append(B([pp[0], 1.4, pp[1]], [1.0, 1.3, 1.0], "plant"))
@@ -148,12 +146,55 @@ static func hq(tier := 2) -> Array:
 			[Vector3(0, 2.95, z1 - 0.33), "CAPITAL", 30, "gold"],
 			[Vector3(0, 2.15, z1 - 0.33), "Vende · Invierte · Crece", 9, "white"],
 			[Vector3(5.4, 2.55, 14.05), "ARMARIO", 6, "gold"]]
-	var spots := {"front": [0, -1.5], "door": [0, 1.8], "texts": texts, "computer": [0, 7.6], "screen": Vector3(0, 1.35, 9.35),
+	var spots := {"front": [0, -1.5], "door": [0, 1.8], "texts": texts, "computer": PC_STAND, "screen": Vector3(0, 1.35, 9.35),
+			"pc_seat": PC_SEAT, "pc_screen": [PC_SCREEN_X[tier], PC_Z], "pc_screen_y": PC_SCREEN_Y[tier],
 			"ceiling": [-w / 2, w / 2, z0, z1, lobby - 0.1], "wardrobe": [5.4, 12.7], "trophies": [-5.4, 12.8],
 			"indoor_lights": [[-4, 4.0, 5, 6.5], [4, 4.0, 5, 6.5], [-4, 4.0, 9.5, 6.5], [4, 4.0, 9.5, 6.5],
 					[-4, 4.0, 13.5, 6.5], [4, 4.0, 13.5, 6.5]],   # debajo de cada panel del techo
 			"board": [-6.5, 11], "ticker": [6.5, 11], "assistant": [-2.9, 7.6]}
 	return [boxes, spots]
+
+
+# El escritorio de la computadora, a la derecha al entrar a la oficina (x negativo), contra la pared: te sientas
+# mirando hacia la pared y la pantalla queda de frente (ver City.sit_at_computer y Ventanas).
+const PC_Z := 6.5
+const PC_SEAT := [-5.6, PC_Z]          # donde queda tu personaje sentado
+const PC_STAND := [-4.6, PC_Z]         # donde aprietas E para sentarte
+const PC_SCREEN_X := [-6.93, -7.13, -7.13, -7.13]   # la cara de la pantalla según el aspecto de la oficina
+const PC_SCREEN_Y := [1.12, 1.3, 1.3, 1.34]
+
+
+## Escritorio, silla y computadora según el aspecto de la oficina: monitor gordo en el garaje, pantalla plana en el
+## barrio y el corporativo, y pantalla grande con una segunda al lado en la torre de lujo.
+static func _office_pc(tier: int) -> Array:
+	var z := PC_Z
+	var wood = "hq_wood" if tier < 3 else Color8(30, 32, 38)
+	var glow := ["glow", Color8(70, 140, 215)]
+	var b := [
+		B([-6.9, 0.76, z], [1.2, 0.06, 2.3], wood, true),                      # tablero
+		B([-7.38, 0.37, z - 1.0], [0.08, 0.74, 0.08], "dark"), B([-7.38, 0.37, z + 1.0], [0.08, 0.74, 0.08], "dark"),
+		B([-6.42, 0.37, z - 1.0], [0.08, 0.74, 0.08], "dark"), B([-6.42, 0.37, z + 1.0], [0.08, 0.74, 0.08], "dark"),
+		B([-6.55, 0.805, z], [0.22, 0.03, 0.62], "dark"),                       # teclado
+		B([-6.55, 0.805, z + 0.52], [0.13, 0.03, 0.09], "dark"),                # mouse
+		# Silla de escritorio (respaldo detrás de ti, que miras hacia la pared)
+		B([-5.6, 0.47, z], [0.6, 0.08, 0.6], Color8(38, 40, 48)),
+		B([-5.27, 0.88, z], [0.08, 0.72, 0.58], Color8(38, 40, 48)),
+		B([-5.6, 0.24, z], [0.08, 0.44, 0.08], "dark"),
+		B([-5.6, 0.03, z], [0.62, 0.04, 0.62], "dark"),
+		B([-7.32, 0.93, z + 0.95], [0.22, 0.28, 0.22], "plant"),                # matita
+	]
+	match tier:
+		0:   # monitor gordo de los de antes
+			b += [B([-7.2, 1.1, z], [0.52, 0.6, 0.66], Color8(205, 198, 182)),
+					B([PC_SCREEN_X[0], 1.12, z], [0.02, 0.44, 0.54], glow)]
+		3:   # pantalla grande y otra chica al lado
+			b += [B([-7.25, 0.95, z], [0.14, 0.32, 0.14], "dark"), B([-7.18, 1.34, z], [0.06, 0.68, 1.2], "dark"),
+					B([PC_SCREEN_X[3], 1.34, z], [0.02, 0.6, 1.12], glow),
+					B([-7.18, 1.25, z - 1.0], [0.06, 0.45, 0.62], "dark"), B([-7.14, 1.25, z - 1.0], [0.02, 0.38, 0.55], glow)]
+		_:
+			b += [B([-7.25, 0.95, z], [0.14, 0.32, 0.14], "dark"), B([-7.18, PC_SCREEN_Y[tier], z], [0.06, 0.62, 1.05], "dark"),
+					B([PC_SCREEN_X[tier], PC_SCREEN_Y[tier], z], [0.02, 0.54, 0.97], glow)]
+	return b
 
 
 ## Centro comercial (ver Mall): fachada de vidrio con el nombre de tu empresa, un pasillo alto con fuente y bancas, y

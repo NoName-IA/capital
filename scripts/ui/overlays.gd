@@ -123,6 +123,8 @@ func _draw_mode() -> void:
 			draw_custom()
 		"decorar":
 			draw_decor()
+		"pc":
+			city.pc_os.draw(ui)
 		"estrategia":
 			ui.rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.35))
 			draw_strategy()

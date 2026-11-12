@@ -2233,5 +2233,377 @@
  ],
  "Mirar": [
   "Look"
+ ],
+ "Un inspector te pide %s por debajo de la mesa para no multarte.": [
+  "An inspector wants %s under the table not to fine you."
+ ],
+ "Pagarle (%s)": [
+  "Pay him (%s)"
+ ],
+ "Casi siempre nadie se entera.": [
+  "Almost always, nobody finds out."
+ ],
+ "1 de cada 4 veces te descubren: multa de %s y −25 de reputación.": [
+  "1 in 4 times you get caught: %s fine and −25 reputation."
+ ],
+ "No pagar": [
+  "Don't pay"
+ ],
+ "+5 de reputación por honesto.": [
+  "+5 reputation for being honest."
+ ],
+ "Pagas una multa de %s.": [
+  "You pay a %s fine."
+ ],
+ "Una influencer quiere hacer un video de tu %s. Cobra %s.": [
+  "An influencer wants to make a video about your %s. She charges %s."
+ ],
+ "Contratarla (%s)": [
+  "Hire her (%s)"
+ ],
+ "55% de que se haga viral: +40% de ventas por 20 días y +20 de reputación.": [
+  "55% chance it goes viral: +40% sales for 20 days and +20 reputation."
+ ],
+ "45% de que nadie lo vea: pierdes la plata.": [
+  "45% chance nobody sees it: you lose the money."
+ ],
+ "No": [
+  "No"
+ ],
+ "No gastas nada.": [
+  "You spend nothing."
+ ],
+ "Camila, tu mejor empleada, pide un bono de %s o se va con %s.": [
+  "Camila, your best employee, wants a %s bonus or she leaves for %s."
+ ],
+ "Darle el bono (%s)": [
+  "Give her the bonus (%s)"
+ ],
+ "El equipo atiende mejor: +8 de reputación.": [
+  "The team serves better: +8 reputation."
+ ],
+ "La mitad de las veces se queda.": [
+  "Half the time she stays."
+ ],
+ "La otra mitad renuncia: un empleado menos y −10 de reputación.": [
+  "The other half she quits: one less employee and −10 reputation."
+ ],
+ "Te ofrecen %d unidades de %s a mitad de precio. No tienen factura.": [
+  "You're offered %d units of %s at half price. No invoice."
+ ],
+ "65%% de que esté bueno: ahorras %s.": [
+  "65%% chance it's good: you save %s."
+ ],
+ "35% de que esté malo: lo botas y −15 de reputación.": [
+  "35% chance it's bad: you throw it away and −15 reputation."
+ ],
+ "Nada cambia.": [
+  "Nothing changes."
+ ],
+ "Un cliente dice que se enfermó en tu %s y te demanda.": [
+  "A customer says they got sick at your %s and sues you."
+ ],
+ "Llegar a un acuerdo (%s)": [
+  "Settle (%s)"
+ ],
+ "Se acaba el problema.": [
+  "The problem goes away."
+ ],
+ "Ir a juicio": [
+  "Go to court"
+ ],
+ "La mitad de las veces ganas: no pagas y +5 de reputación.": [
+  "Half the time you win: you pay nothing and +5 reputation."
+ ],
+ "La otra mitad pierdes: pagas %s y −20 de reputación.": [
+  "The other half you lose: you pay %s and −20 reputation."
+ ],
+ "%s quiere que los dos suban los precios de %s. Es ilegal.": [
+  "%s wants you both to raise %s prices. It's illegal."
+ ],
+ "Aceptar": [
+  "OK"
+ ],
+ "+30% de ventas por 60 días.": [
+  "+30% sales for 60 days."
+ ],
+ "30%% de que te descubran: multa de %s y −30 de reputación.": [
+  "30%% chance you get caught: %s fine and −30 reputation."
+ ],
+ "Rechazar": [
+  "Refuse"
+ ],
+ "No arriesgas nada.": [
+  "You risk nothing."
+ ],
+ "La mitad de las veces abre otro local para competirte.": [
+  "Half the time they open another store to compete with you."
+ ],
+ "Denunciarlo": [
+  "Report them"
+ ],
+ "La mitad de las veces le cierran un local.": [
+  "Half the time one of their stores gets shut down."
+ ],
+ "La otra mitad abre dos locales para vengarse.": [
+  "The other half they open two stores for revenge."
+ ],
+ "Te ofrecen %s por tu %s. El mes pasado te dejó %s.": [
+  "You're offered %s for your %s. Last month it made you %s."
+ ],
+ "Vender (%s)": [
+  "Sell (%s)"
+ ],
+ "Plata ahora.": [
+  "Money now."
+ ],
+ "Pierdes lo que ese local te iba a dejar.": [
+  "You lose what that store would have made you."
+ ],
+ "No vender": [
+  "Don't sell"
+ ],
+ "Sigue ganando para ti.": [
+  "It keeps earning for you."
+ ],
+ "%s te ofrece %s por tu %s%s. El mes pasado te dejó %s.": [
+  "%s offers you %s for your %s%s. Last month it made you %s."
+ ],
+ "El local pasa a ser de la competencia.": [
+  "The store goes to the competition."
+ ],
+ "Te quedas con el local.": [
+  "You keep the store."
+ ],
+ "30% de que compre un terreno para abrir cerca.": [
+  "30% chance they buy a lot to open nearby."
+ ],
+ "Tus empleados de %s piden un bono de %s o hacen huelga.": [
+  "Your %s employees want a %s bonus or they strike."
+ ],
+ "Pagar (%s)": [
+  "Pay (%s)"
+ ],
+ "Equipo contento: +4 de reputación.": [
+  "Happy team: +4 reputation."
+ ],
+ "La mitad de las veces se echan para atrás.": [
+  "Half the time they back down."
+ ],
+ "La otra mitad: 7 días vendiendo la mitad y −8 de reputación.": [
+  "The other half: 7 days selling half as much and −8 reputation."
+ ],
+ "Un empresario te paga %s por abrir locales de %s con tu marca.": [
+  "A businessman pays you %s to open %s stores under your brand."
+ ],
+ "Vender (+%s)": [
+  "Sell (+%s)"
+ ],
+ "Plata hoy y una parte de sus ventas.": [
+  "Money today and a share of their sales."
+ ],
+ "35% de que atienda mal: −12 de reputación.": [
+  "35% chance they serve badly: −12 reputation."
+ ],
+ "Un virus bloqueó tus cajas. Piden %s para desbloquearlas.": [
+  "A virus locked your registers. They want %s to unlock them."
+ ],
+ "Recuperas todo.": [
+  "You get everything back."
+ ],
+ "20% de que igual publiquen tus datos: −10 de reputación.": [
+  "20% chance they leak your data anyway: −10 reputation."
+ ],
+ "Llamar a un técnico": [
+  "Call a technician"
+ ],
+ "La mitad de las veces lo arregla por %s.": [
+  "Half the time they fix it for %s."
+ ],
+ "La otra mitad pierdes 40% del inventario y vendes menos 3 días.": [
+  "The other half you lose 40% of your stock and sell less for 3 days."
+ ],
+ "El equipo de fútbol del barrio juega la final y busca auspiciador.": [
+  "The neighborhood soccer team is playing the final and needs a sponsor."
+ ],
+ "Auspicio chico (%s)": [
+  "Small sponsorship (%s)"
+ ],
+ "+5 de reputación.": [
+  "+5 reputation."
+ ],
+ "Auspicio grande (%s)": [
+  "Big sponsorship (%s)"
+ ],
+ "Si ganan (55%): +12 de reputación y +15% de ventas por 10 días.": [
+  "If they win (55%): +12 reputation and +15% sales for 10 days."
+ ],
+ "Si pierden: solo +3 de reputación.": [
+  "If they lose: only +3 reputation."
+ ],
+ "−2 de reputación.": [
+  "−2 reputation."
+ ],
+ "Un proveedor nuevo te vende %s 15%% más barato por 60 días si le compras solo a él.": [
+  "A new supplier sells you %s 15%% cheaper for 60 days if you buy only from them."
+ ],
+ "Tu mercadería cuesta 15% menos por 60 días.": [
+  "Your goods cost 15% less for 60 days."
+ ],
+ "25% de que falle una entrega: pierdes la mitad del inventario y −8 de reputación.": [
+  "25% chance a delivery fails: you lose half your stock and −8 reputation."
+ ],
+ "Venden una fábrica de %s a mitad de precio. Con fábrica tu mercadería cuesta 30%% menos.": [
+  "A %s factory is for sale at half price. With a factory your goods cost 30%% less."
+ ],
+ "Comprarla (%s)": [
+  "Buy it (%s)"
+ ],
+ "Tu mercadería cuesta 30% menos desde hoy.": [
+  "Your goods cost 30% less starting today."
+ ],
+ "25%% de que haya que repararla: %s más.": [
+  "25%% chance it needs repairs: %s more."
+ ],
+ "Puedes construir una cuando quieras.": [
+  "You can build one whenever you want."
+ ],
+ "Elige qué marca quieres ser.": [
+  "Choose what kind of brand you want to be."
+ ],
+ "Te pagan precios más altos y +15 de reputación.": [
+  "Customers pay higher prices and +15 reputation."
+ ],
+ "12% menos clientes.": [
+  "12% fewer customers."
+ ],
+ "Precios bajos": [
+  "Low prices"
+ ],
+ "22% más clientes y mercadería 10% más barata.": [
+  "22% more customers and goods 10% cheaper."
+ ],
+ "−8 de reputación.": [
+  "−8 reputation."
+ ],
+ "Los grandes rivales te proponen una alianza.": [
+  "The big rivals offer you an alliance."
+ ],
+ "Aliarte": [
+  "Join them"
+ ],
+ "No te atacan más y hay un competidor menos en cada negocio.": [
+  "They stop attacking you and there's one less competitor in each business."
+ ],
+ "Le das 6% de tus ventas a la alianza.": [
+  "You give 6% of your sales to the alliance."
+ ],
+ "Guerra": [
+  "War"
+ ],
+ "Comprar sus locales cuesta 35% menos.": [
+  "Buying their stores costs 35% less."
+ ],
+ "Se enojan y te atacan más seguido.": [
+  "They get angry and attack you more often."
+ ],
+ "Competencia · %s": [
+  "Competitor · %s"
+ ],
+ "Sentarte en la computadora": [
+  "Sit at the computer"
+ ],
+ "Mi Empresa": [
+  "My Company"
+ ],
+ "Personalizar oficina": [
+  "Customize office"
+ ],
+ "Mis Documentos": [
+  "My Documents"
+ ],
+ "Internet Explorador": [
+  "Internet Exploder"
+ ],
+ "Papelera": [
+  "Recycle Bin"
+ ],
+ "Inicio": [
+  "Start"
+ ],
+ "Apagar...": [
+  "Shut down..."
+ ],
+ "Cerrando sesión...": [
+  "Logging off..."
+ ],
+ "Cargando tu imperio...": [
+  "Loading your empire..."
+ ],
+ "Edición Millonario": [
+  "Millionaire Edition"
+ ],
+ "Copyright © 1998 Capital Corp. Todos los derechos reservados (y algunos más).": [
+  "Copyright © 1998 Capital Corp. All rights reserved (and then some)."
+ ],
+ "Ventanas Update": [
+  "Ventanas Update"
+ ],
+ "Hay 1 actualización obligatoria (4,7 TB). Tu computadora se reiniciará en 10 minutos.": [
+  "There is 1 mandatory update (4.7 TB). Your computer will restart in 10 minutes."
+ ],
+ "Recordarme en 10 años": [
+  "Remind me in 10 years"
+ ],
+ "Todavía no tienes locales. Compra un terreno SE VENDE.": [
+  "You don't have any stores yet. Buy a FOR SALE lot."
+ ],
+ "Ver en vivo": [
+  "See it live"
+ ],
+ "✓ Ya lo tienes": [
+  "✓ You have it"
+ ],
+ "Elige un artículo para ver qué hace.": [
+  "Pick an item to see what it does."
+ ],
+ "Archivo   Edición   Ver   Ayuda": [
+  "File   Edit   View   Help"
+ ],
+ "Esta carpeta está vacía.": [
+  "This folder is empty."
+ ],
+ "Aquí iban tus impuestos.": [
+  "Your taxes were supposed to be here."
+ ],
+ "Dirección": [
+  "Address"
+ ],
+ "No se puede mostrar la página": [
+  "The page cannot be displayed"
+ ],
+ "El módem está ocupado: alguien levantó el teléfono de la casa.": [
+  "The modem is busy: someone picked up the home phone."
+ ],
+ "Pruebe lo siguiente:": [
+  "Try the following:"
+ ],
+ "•  Desenchufar el módem y volver a enchufarlo.": [
+  "•  Unplug the modem and plug it back in."
+ ],
+ "•  Gritar «¡CUELGA EL TELÉFONO!».": [
+  "•  Yell \"HANG UP THE PHONE!\"."
+ ],
+ "Intento %d: sigue ocupado.": [
+  "Attempt %d: still busy."
+ ],
+ "Reintentar": [
+  "Retry"
+ ],
+ "Vaciar papelera": [
+  "Empty Recycle Bin"
+ ],
+ "No se puede vaciar la papelera: los malos planes siempre vuelven.": [
+  "The Recycle Bin can't be emptied: bad plans always come back."
  ]
 }

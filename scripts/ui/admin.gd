@@ -116,8 +116,16 @@ func now_ms() -> int:
 
 
 # ---------- partida ----------
+const GAP_MS := 60000          # al menos 1 minuto real entre una decisión urgente y el aviso de nuevo rango
+var last_rank_ms := -GAP_MS    # cuándo salió el último aviso de rango
+var last_dilemma_ms := -GAP_MS # cuándo se cerró la última decisión (mientras está abierta, cuenta como ahora)
+
+
 func update(dt: float) -> void:
 	var g := game
+	if modal == "dilema":
+		last_dilemma_ms = now_ms()
+	g.hold_dilemma = now_ms() - last_rank_ms < GAP_MS   # recién subiste de rango: la decisión espera
 	if g.pending_choice != null and modal == null and not g.game_over:
 		modal = "dilema"
 	if paused or modal != null or g.game_over:
@@ -962,14 +970,16 @@ func draw_dilemma() -> void:
 	var bw := 880.0
 	var pad := 44.0
 	var text_h := ui.wrap_height(c.text, bw - pad * 2, 17)
-	var details := []
+	var details := []   # alto de lo bueno y de lo malo de cada opción
 	var total := 0.0
+	var lw := bw - pad * 2 - 74
 	for o in c.options:
-		var dh := ui.wrap_height(o.detail, bw - pad * 2 - 44, 14)
-		details.append(dh)
-		total += 52 + dh + 12
+		var gh: float = ui.wrap_height(o.get("good", o.detail), lw, 15)
+		var bdh: float = ui.wrap_height(o.bad, lw, 15) + 6 if o.get("bad", "") != "" else 0.0
+		details.append([gh, bdh])
+		total += 50 + gh + bdh + 12
 	var head := 124.0
-	var bh := head + 24 + text_h + 22 + total + 46
+	var bh := head + 24 + text_h + 22 + total + 20
 	var box := Rect2(W / 2 - bw / 2, max(16.0, H / 2 - bh / 2), bw, bh)
 	ui.rect(box.grow(10), Color(0, 0, 0, 0.35), 26)  # sombra
 	ui.rect(box, Color8(18, 22, 30), 20)
@@ -999,21 +1009,26 @@ func draw_dilemma() -> void:
 	# Opciones como tarjetas
 	for i in c.options.size():
 		var o: Dictionary = c.options[i]
-		var r := Rect2(box.position.x + pad, y, bw - pad * 2, 52 + details[i])
+		var r := Rect2(box.position.x + pad, y, bw - pad * 2, 50 + details[i][0] + details[i][1])
 		var hot := ui.hover(r)
 		var k := ui.tween(Lang.f("dilema%d", i), 1.0 if hot else 0.0)
 		ui.rect(r, ImUI.COL.panel2.lerp(Color8(44, 52, 66), k), 12)
 		ui.rect(r, Color(accent, 0.25 + 0.6 * k), 12, 1.0 + k)
 		ui.text(o.label, Vector2(r.position.x + 22, r.position.y + 14), 17, "text", true, "topleft", r.size.x - 44)
-		ui.wrap_text(o.detail, Rect2(r.position.x + 22, r.position.y + 40, r.size.x - 44, details[i]), 14, "muted")
+		# Lo bueno (verde) y lo malo (rojo), cada uno en su línea
+		var ly := r.position.y + 42
+		ui.text("+", Vector2(r.position.x + 30, ly + 9), 18, "green", true, "center")
+		ui.wrap_text(o.get("good", o.detail), Rect2(r.position.x + 48, ly, lw, details[i][0]), 15, Color8(150, 225, 170))
+		if details[i][1] > 0:
+			ly += details[i][0] + 6
+			ui.text("−", Vector2(r.position.x + 30, ly + 9), 18, "red", true, "center")
+			ui.wrap_text(o.bad, Rect2(r.position.x + 48, ly, lw, details[i][1]), 15, Color8(240, 150, 140))
 		if hot and ui.clicked:
 			var res := g.resolve_choice(i)
 			modal = null
 			say(res[1], "good" if res[0] else "bad")
 			return
 		y += r.size.y + 12
-	ui.text("Lee las probabilidades: el valor esperado y el riesgo no siempre van juntos (ver Conceptos).",
-			Vector2(box.get_center().x, box.end.y - 28), 13, "muted", false, "center")
 
 
 # ---------- Resumen ----------

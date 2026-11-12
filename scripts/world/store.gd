@@ -17,6 +17,7 @@ var rep_stars: MeshInstance3D = null
 var rep_full := -1
 var rep_sub: Label3D              # nota con un decimal debajo
 var rep_value := -1
+var number: Label3D               # "Puesto #1", arriba de las estrellas (el mismo número que en la tablet)
 var bounce := 0.0                 # salto de las estrellas cuando suben o bajan
 var shelf := []                   # los productos en las repisas, uno por modelo (MultiMesh)
 var items := []                   # cada producto de la repisa: {mm, i, xf, pos (mundo), gone, since}
@@ -55,6 +56,16 @@ func _init(owner_city, index: int, location: Dictionary) -> void:
 	rep_sub.outline_modulate = Color(0, 0, 0, 0.55)
 	rep_sub.position = rep.position + Vector3(0, -0.62, 0)
 	bld.root.add_child(rep_sub)
+	number = Label3D.new()
+	number.font = Building.title_font
+	number.font_size = 64
+	number.pixel_size = 0.012
+	number.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	number.outline_size = 12
+	number.outline_modulate = Color(0, 0, 0, 0.7)
+	number.modulate = Color8(255, 210, 80)
+	number.position = rep.position + Vector3(0, 1.0, 0)
+	bld.root.add_child(number)
 	shelf = stock_shelves(bld.root, loc.size, loc.product, bld.local)
 	for s in shelf:   # cada producto por separado: así se saca y se repone uno por uno
 		for i in s.multimesh.instance_count:
@@ -62,6 +73,12 @@ func _init(owner_city, index: int, location: Dictionary) -> void:
 			items.append({"mm": s.multimesh, "i": i, "xf": xf, "pos": bld.root.transform * xf.origin, "gone": false, "since": 0.0})
 	add_registers(bld.root, loc.size, bld.local)
 	_build_nav()
+
+
+## El número de la sucursal, como en la tablet (Negocios): se cuenta por negocio, en el orden en que las abriste.
+func sync_number(g: Game) -> void:
+	var i: int = g.locs(loc.product).find(loc)
+	number.text = Lang.f("%s #%d", [D.SIZES[loc.size].name, i + 1]) if i >= 0 else ""
 
 
 ## Las estrellas del local (cada local tiene las suyas): llenas, media y vacías, con la nota debajo.

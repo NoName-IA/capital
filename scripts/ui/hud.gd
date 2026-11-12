@@ -112,7 +112,7 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 	ui.place_fill(size)
 	ui.begin(mouse_window, clicked, 0, false)
 	var g = city.game
-	var visible: bool = g != null and not city.overlays.mode in ["personaje", "decorar"]
+	var visible: bool = g != null and not city.overlays.mode in ["personaje", "decorar"] and city.pc_phase == ""
 	if visible:
 		if city.weather.flash > 0.01 and not city.camera_indoors():  # relámpago de la tormenta
 			ui.rect(Rect2(0, 0, ui.W, ui.H), Color(0.9, 0.93, 1.0, city.weather.flash * 0.35))
@@ -129,6 +129,9 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 		city.tutorial.draw(ui)
 		notes.draw(ui)
 	confetti.draw(ui)
+	var fade: float = city.pc_fade()   # la pantalla de la computadora "se prende" (ver City._pc_camera)
+	if fade > 0.0:
+		ui.rect(Rect2(-3000, -3000, ui.W + 6000, ui.H + 6000), Color(0, 0, 0, fade))
 	ui.end()
 
 

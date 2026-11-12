@@ -211,6 +211,15 @@ func advance() -> void:
 	_next_line()
 
 
+## Apretaste una tecla del juego mientras hablaba: deja de hablar (queda escrita su última frase) y lo haces tú.
+func skip_talk() -> void:
+	if not talking():
+		return
+	talk_i = talk.size()
+	talk_t = 0.0
+	_talk_done()
+
+
 func _next_line() -> void:
 	talk_i += 1
 	talk_t = 0.0

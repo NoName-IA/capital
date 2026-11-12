@@ -98,6 +98,14 @@ var custom_drag = null     # [última posición del mouse, "left" o "right"]
 var weather: Weather
 var life: CityLife
 var diario_t := 0.0
+# La computadora de la oficina: te sientas, la cámara entra a la pantalla y se prende «Ventanas 98» (Ventanas)
+var pc_phase := ""     # "", "walk" (vas a la silla), "sit", "zoom" (la cámara entra), "os", "out" (sale), "stand"
+var pc_t := 0.0
+var pc_pos_from := Vector3.ZERO
+var pc_rot_from := 0.0
+var pc_cam_from := Transform3D()
+var pc_os := Ventanas.new(self)
+var rank_wait = null   # aviso de nuevo rango guardado hasta que pase un minuto desde la última decisión
 var tutorial_pending := false
 var tutorial_prev := false
 var tutorial := Tutorial.new(self)   # los pasos guiados después de la bienvenida
@@ -561,6 +569,179 @@ func go_to_location(loc: Dictionary) -> void:
 	teleport(pos, yaw_deg, label)
 
 
+# ---------- la computadora de la oficina ----------
+const PC_WALK := 0.6
+const PC_SIT := 0.4
+const PC_ZOOM := 1.5
+const PC_OUT := 1.1
+
+
+## E frente al escritorio: caminas a la silla, te sientas y la cámara entra a la pantalla.
+func sit_at_computer() -> void:
+	if pc_phase != "" or game == null:
+		return
+	stop_serving()
+	first_person = false
+	pc_phase = "walk"
+	pc_t = 0.0
+	pc_pos_from = player.position
+	pc_rot_from = player.rotation.y
+	pc_cam_from = camera.global_transform
+	vy = 0.0
+
+
+## Esc o «Apagar»: la cámara sale de la pantalla y te paras.
+func leave_computer() -> void:
+	if pc_phase != "os":
+		return
+	if overlays.open():
+		overlays.hide()
+	pc_phase = "out"
+	pc_t = 0.0
+	yaw = rad_to_deg(_pc_face())
+	pitch = 14.0
+
+
+func _pc_seat() -> Vector3:
+	return hq_spots.pc_seat
+
+
+func _pc_screen() -> Vector3:
+	var sc: Vector3 = hq_spots.pc_screen
+	return Vector3(sc.x, hq_spots.pc_screen_y, sc.z)
+
+
+## Hacia dónde miras sentado (de frente a la pantalla).
+func _pc_face() -> float:
+	var d := _pc_screen() - _pc_seat()
+	return atan2(d.x, d.z)
+
+
+func _pc_update(dt: float) -> void:
+	pc_t += dt
+	var p := player
+	match pc_phase:
+		"walk":
+			var k := clampf(pc_t / PC_WALK, 0, 1)
+			var e := k * k * (3 - 2 * k)
+			p.position = pc_pos_from.lerp(_pc_seat(), e)
+			p.rotation.y = lerp_angle(pc_rot_from, _pc_face(), e)
+			p.animate(2.5 if k < 1 else 0.0, dt)
+			if k >= 1:
+				pc_phase = "sit"
+				pc_t = 0.0
+		"sit":
+			var k := clampf(pc_t / PC_SIT, 0, 1)
+			p.animate(0.0, dt)
+			p.sit(k)
+			if k >= 1:
+				pc_phase = "zoom"
+				pc_t = 0.0
+				sfx.play("select", 0.5, 0.7)
+		"zoom":
+			p.animate(0.0, dt)
+			p.sit(1.0)
+			p.visible = pc_t < PC_ZOOM * 0.3   # la cámara pasa por donde está tu cabeza: te escondes
+			if pc_t >= PC_ZOOM:
+				pc_phase = "os"
+				pc_t = 0.0
+				pc_os.start()
+				overlays.show("pc")
+		"os":
+			p.animate(0.0, dt)
+			p.sit(1.0)
+			pc_os.update(dt)
+			if not overlays.open():
+				if app.modal != null:
+					overlays.show("admin", -1, true)   # una decisión urgente: sale encima y después vuelves aquí
+				else:
+					overlays.show("pc")
+			elif overlays.mode == "pc" and app.modal != null:
+				overlays.show("admin", -1, true)
+		"out":
+			p.animate(0.0, dt)
+			p.sit(1.0)
+			p.visible = pc_t > PC_OUT * 0.45
+			if pc_t >= PC_OUT:
+				pc_phase = "stand"
+				pc_t = 0.0
+		"stand":
+			var k := clampf(pc_t / 0.3, 0, 1)
+			p.animate(0.0, dt)
+			p.sit(1.0 - k)
+			if k >= 1:
+				p.sit(0.0)
+				p.position.y = 0.0
+				p.visible = true
+				pc_phase = ""
+				capture_mouse()
+
+
+## Dónde va la cámara: detrás de tu hombro mirando la pantalla.
+func _pc_shoulder() -> Transform3D:
+	var seat := _pc_seat()
+	var scr := _pc_screen()
+	var d := Vector3(scr.x - seat.x, 0, scr.z - seat.z).normalized()
+	var side := Vector3(-d.z, 0, d.x)
+	var eye := seat + Vector3(0, 1.85, 0) - d * 1.0 + side * 0.85
+	return Transform3D(Basis.looking_at(scr - eye, Vector3.UP), eye)
+
+
+## Pegada a la pantalla: la pantalla llena toda la vista.
+func _pc_close() -> Transform3D:
+	var seat := _pc_seat()
+	var scr := _pc_screen()
+	var d := Vector3(scr.x - seat.x, 0, scr.z - seat.z).normalized()
+	var half := 0.22 if game != null and game.office_look == 0 else 0.27   # media altura de la pantalla
+	var dist := half / tan(deg_to_rad(camera.fov) / 2.0) * 0.9
+	var eye := scr - d * dist
+	return Transform3D(Basis.looking_at(scr - eye, Vector3.UP), eye)
+
+
+## La cámara de seguir al personaje cuando te levantas (como update_camera, sin choques).
+func _pc_follow() -> Transform3D:
+	var look := look_dir(yaw, pitch)
+	var target := player.position + Vector3(0, 1.6, 0)
+	var eye := target - look * minf(zoom, 3.2)
+	return Transform3D(Basis.looking_at(look, Vector3.UP), eye)
+
+
+static func _xf_lerp(a: Transform3D, b: Transform3D, k: float) -> Transform3D:
+	return Transform3D(Basis(a.basis.get_rotation_quaternion().slerp(b.basis.get_rotation_quaternion(), k)), a.origin.lerp(b.origin, k))
+
+
+func _pc_camera() -> void:
+	mouse_delta = Vector2.ZERO
+	var sm := func(k: float) -> float: return k * k * (3 - 2 * k)
+	match pc_phase:
+		"walk", "sit":
+			var k: float = sm.call(clampf((pc_t + (PC_WALK if pc_phase == "sit" else 0.0)) / (PC_WALK + PC_SIT), 0, 1))
+			camera.global_transform = _xf_lerp(pc_cam_from, _pc_shoulder(), k)
+		"zoom":
+			var k: float = sm.call(clampf(pc_t / PC_ZOOM, 0, 1))
+			camera.global_transform = _xf_lerp(_pc_shoulder(), _pc_close(), k)
+		"os":
+			camera.global_transform = _pc_close()
+		"out":
+			var k: float = sm.call(clampf(pc_t / PC_OUT, 0, 1))
+			if k < 0.5:
+				camera.global_transform = _xf_lerp(_pc_close(), _pc_shoulder(), k * 2)
+			else:
+				camera.global_transform = _xf_lerp(_pc_shoulder(), _pc_follow(), (k - 0.5) * 2)
+		"stand":
+			camera.global_transform = _pc_follow()
+
+
+## Negro encima de todo al final de la entrada a la pantalla y al principio de la salida (la pantalla "se prende").
+func pc_fade() -> float:
+	match pc_phase:
+		"zoom":
+			return clampf((pc_t / PC_ZOOM - 0.72) / 0.28, 0, 1)
+		"out":
+			return clampf(1.0 - pc_t / (PC_OUT * 0.3), 0, 1)
+	return 0.0
+
+
 ## Te lleva al vestíbulo de la oficina central, frente a la computadora.
 func go_to_office() -> void:
 	if game == null:
@@ -862,6 +1043,11 @@ func watch_news(g: Game) -> void:
 		react(n)
 
 
+## El aviso de nuevo rango espera si hay una decisión urgente abierta o se cerró hace menos de un minuto.
+func rank_must_wait() -> bool:
+	return game.pending_choice != null or app.modal == "dilema" or app.now_ms() - app.last_dilemma_ms < Admin.GAP_MS
+
+
 func react(n: Dictionary) -> void:
 	var fx = n.get("fx")
 	if tutorial.active and fx != "record":   # durante el tutorial solo los avisos de lo que vendes
@@ -874,7 +1060,11 @@ func react(n: Dictionary) -> void:
 	var orange := Color8(240, 140, 50)
 	match fx:
 		"rank":
-			notes.push_hero("NUEVO RANGO", v, Lang.f("Tu empresa vale %s. ¡Sigue así!", Fmt.money(game.valuation())), gold, "fanfare", 140)
+			if rank_must_wait():
+				rank_wait = n   # sale cuando pase un minuto desde la última decisión urgente
+			else:
+				app.last_rank_ms = app.now_ms()
+				notes.push_hero("NUEVO RANGO", v, Lang.f("Tu empresa vale %s. ¡Sigue así!", Fmt.money(game.valuation())), gold, "fanfare", 140)
 		"win":
 			if game.mode == "normal":
 				notes.push_hero("IMPERIO", "¡Construiste un imperio!", Lang.f("En %d minutos de juego", roundi(game.win_seconds / 60.0)), gold, "fanfare", 180, null, "crown")
@@ -1008,6 +1198,10 @@ func set_sky_lock(t: float) -> void:
 
 # ---------- sincronización con la simulación ----------
 func reset_world(g) -> void:
+	rank_wait = null
+	if pc_phase != "":
+		pc_phase = ""
+		player.visible = true
 	for m in malls:
 		m.destroy()
 		m.built = false
@@ -1077,6 +1271,7 @@ func sync(g: Game) -> void:
 		s.loc = by_plot[i]
 		s.sync_staff()
 		s.sync_stars()
+		s.sync_number(g)
 		s.sync_decor()
 	sync_competitors(g)
 	sync_factories(g)
@@ -1524,6 +1719,8 @@ func knocked(dt: float) -> void:
 # ---------- jugador y cámara ----------
 func move_player(dt: float) -> void:
 	var p := player
+	if pc_phase != "":   # en la computadora: lo mueve _pc_update
+		return
 	if knock != null:
 		knocked(dt)
 		return
@@ -1531,9 +1728,12 @@ func move_player(dt: float) -> void:
 	var right := Vector3(-fwd.z, 0, fwd.x)
 	var f := float(Keys.pressed("forward")) - float(Keys.pressed("back"))
 	var s := float(Keys.pressed("right")) - float(Keys.pressed("left"))
-	if tutorial.blocking():   # el mentor está hablando: te quedas quieto escuchando
-		f = 0.0
-		s = 0.0
+	if tutorial.blocking():   # el mentor está hablando: si caminas, deja de hablar y te puedes mover
+		if f != 0.0 or s != 0.0:
+			tutorial.skip_talk()
+		else:
+			f = 0.0
+			s = 0.0
 	var move := fwd * f + right * s
 	if serving:
 		if move.length() > 0:
@@ -1570,6 +1770,9 @@ func look_dir(yaw_deg: float, pitch_deg: float) -> Vector3:
 
 
 func update_camera(dt: float) -> void:
+	if pc_phase != "" and overlays.mode != "decorar":
+		_pc_camera()
+		return
 	if overlays.mode == "personaje":
 		_custom_camera(dt)
 		return
@@ -1673,7 +1876,7 @@ func update_zone() -> void:
 func interactables() -> Array:
 	var items := []
 	var g: Game = game
-	items.append([hq_spots.computer, "Usar la computadora de la oficina", func(): overlays.show("admin")])
+	items.append([hq_spots.computer, "Sentarte en la computadora", sit_at_computer])
 	items.append([hq_spots.board, "Pizarra: reunión de estrategia del mes", func(): overlays.show("estrategia")])
 	if g.investing():
 		items.append([hq_spots.ticker, "Pantalla de la bolsa: ver tu fondo de inversión", open_growth])
@@ -1687,12 +1890,10 @@ func interactables() -> Array:
 		items.append([hq_spots.wardrobe, Lang.f("Comprar el armario (%s): tienda de ropa", Fmt.money(g.wardrobe_cost())), use_wardrobe])
 	for i in stores:
 		var store: Store = stores[i]
-		var name := Lang.f("%s de %s", [D.SIZES[store.loc.size].name, Lang.noun(D.PRODUCTS[store.loc.product].name)])
 		if serving == store:
 			items.append([store.spots.serve, "Dejar de atender", stop_serving])
 		else:
 			items.append([store.spots.serve, "Atender el mostrador (+1 empleado gratis: tú)", start_serving.bind(store)])
-		items.append([store.spots.manage, Lang.f("Administrar %s", name), manage.bind(store)])
 	for i in lots:
 		items.append([lots[i].manage, Lang.f("Comprar el terreno %d", (i + 1)), func(): overlays.show("lote", i)])
 	# Actividades de la ciudad (parque, barrio, playa, muelle)
@@ -1753,6 +1954,12 @@ func update(dt: float) -> void:
 	if g != null:
 		watch_news(g)
 		tutorial.update(dt)
+		if pc_phase != "":
+			_pc_update(dt)
+		if rank_wait != null and not rank_must_wait():
+			var waiting: Dictionary = rank_wait
+			rank_wait = null
+			react(waiting)
 		app.quiet = tutorial.active
 		_offer_office(g)
 		if tutorial.active:   # durante el tutorial no hay dilemas ni microdecisiones
@@ -1827,7 +2034,7 @@ func update(dt: float) -> void:
 		b.rotation.z = deg_to_rad(sin(t * 0.9 + ph) * 4)
 	hud.update(dt)
 	hud.update_danger(g, dt)
-	if overlays.mode in ["personaje", "decorar"] or tutorial.active:   # el mentor también es una foto
+	if overlays.mode in ["personaje", "decorar", "pc"] or tutorial.active:   # el mentor también es una foto
 		thumbs.step()
 	advance_sky(dt)
 	sky.moon_phase = fmod(game.day + 15.0, 29.5) / 29.5 if game != null else 0.5  # una fase por mes de juego
@@ -1931,6 +2138,11 @@ func _key(e: InputEventKey) -> void:
 		alt_combo = true
 		return
 	var key := e.keycode
+	# En la computadora: durante la transición nada; en el escritorio, Esc cierra lo de arriba o te levanta
+	if pc_phase != "" and (pc_phase != "os" or overlays.mode == "pc"):
+		if pc_phase == "os" and key == KEY_ESCAPE:
+			pc_os.escape()
+		return
 	if app.naming:  # escribiendo el nombre de la empresa: las teclas van al nombre
 		app.type_key(e)
 		return
@@ -1950,13 +2162,14 @@ func _key(e: InputEventKey) -> void:
 		sfx.music_on = not sfx.music_on
 		toast("Música activada." if sfx.music_on else Lang.f("Música en silencio (%s para volver).", Keys.label("music")), "info")
 		return
-	# El mentor habla en la ciudad: Enter o Espacio pasan la frase y las demás teclas esperan (Esc sí pausa)
+	# El mentor habla en la ciudad: Enter o Espacio pasan la frase. Cualquier otra tecla del juego (la O para ir a la
+	# oficina, Tab para la tablet...) lo deja terminar de una y hace lo suyo (Esc pausa)
 	if tutorial.blocking() and app.view == "game" and overlays.mode == null:
 		if key in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
 			tutorial.advance()
 			return
 		if key != KEY_ESCAPE:
-			return
+			tutorial.skip_talk()
 	if overlays.mode == "tutorial":
 		if key == KEY_ESCAPE:
 			overlays.tutorial_next()   # en las tarjetas del medio y del final, Esc es «Entendido»
@@ -2157,7 +2370,7 @@ func close_decor() -> void:
 	app.paused = decor_prev
 	app.tab = "crecimiento" if decor_office else "negocios"
 	decor_office = false
-	overlays.show("admin")
+	overlays.show("pc" if pc_phase == "os" else "admin")   # si venías de la computadora, vuelves a ella
 
 
 ## Muestra puesto (sin comprarlo) el artículo que tienes bajo el mouse.
