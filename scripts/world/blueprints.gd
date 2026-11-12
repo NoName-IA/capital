@@ -72,12 +72,9 @@ static func hq(tier := 2) -> Array:
 		B([-6, 1.05, z0 - 1.6], [1.9, 0.6, 0.8], "plant"),
 		B([6, 1.05, z0 - 1.6], [1.9, 0.6, 0.8], "plant"),
 
-		# Vestíbulo: alfombra, mostrador de recepción, escritorio con la computadora, sala de espera
-		B([0, 0.07, 6.5], [4, 0.02, 8], "carpet"),
-		B([0, 0.4, 9], [3.4, 0.8, 1.4], "hq_wood", true),
-		B([0, 0.82, 9], [3.6, 0.06, 1.6], "gold"),
-		B([0, 1.35, 9.4], [1.4, 0.85, 0.08], "dark"),
-		B([0, 0.55, 10.4], [0.9, 1.1, 0.8], "dark"),
+		# Vestíbulo: alfombra persa en el medio, sala de espera
+		# Base de la alfombra persa (el dibujo lo pone City._office_props encima, ver OFFICE_RUG)
+		B([OFFICE_RUG[0], 0.07, OFFICE_RUG[1]], [OFFICE_RUG[2], 0.02, OFFICE_RUG[3]], Color8(98, 18, 24)),
 		B([5.9, 0.35, 6.5], [1.4, 0.7, 3.6], "hq_sofa", true),
 		B([6.5, 0.9, 6.5], [0.3, 0.8, 3.6], "hq_sofa"),
 		B([4.4, 0.25, 6.5], [1.0, 0.5, 1.8], "marble", true),
@@ -146,7 +143,7 @@ static func hq(tier := 2) -> Array:
 			[Vector3(0, 2.95, z1 - 0.33), "CAPITAL", 30, "gold"],
 			[Vector3(0, 2.15, z1 - 0.33), "Vende · Invierte · Crece", 9, "white"],
 			[Vector3(5.4, 2.55, 14.05), "ARMARIO", 6, "gold"]]
-	var spots := {"front": [0, -1.5], "door": [0, 1.8], "texts": texts, "computer": PC_STAND, "screen": Vector3(0, 1.35, 9.35),
+	var spots := {"front": [0, -1.5], "door": [0, 1.8], "texts": texts, "computer": PC_STAND,
 			"pc_seat": PC_SEAT, "pc_screen": [PC_SCREEN_X[tier], PC_Z], "pc_screen_y": PC_SCREEN_Y[tier],
 			"pc_screen_w": PC_SCREEN_SIZE[tier][0], "pc_screen_h": PC_SCREEN_SIZE[tier][1],
 			"ceiling": [-w / 2, w / 2, z0, z1, lobby - 0.1], "wardrobe": [5.4, 12.7], "trophies": [-5.4, 12.8],
@@ -155,6 +152,10 @@ static func hq(tier := 2) -> Array:
 			"board": [-6.5, 11], "ticker": [6.5, 11], "assistant": [-2.9, 7.6]}
 	return [boxes, spots]
 
+
+# La alfombra persa del vestíbulo: [centro x, centro z, ancho, largo]. Dibujo: assets/imagenes/oficina/alfombra.png
+# (hecho con tools/alfombra_oficina.py, pixel art de 62×125 agrandado ×6).
+const OFFICE_RUG := [0.0, 8.0, 5.0, 10.0]
 
 # El escritorio de la computadora, a la derecha al entrar a la oficina (x negativo), contra la pared: te sientas
 # mirando hacia la pared y la pantalla queda de frente (ver City.sit_at_computer y Ventanas).

@@ -319,22 +319,23 @@ func set_office_look(tier: int) -> void:
 		hq.set_brand(game.company)
 
 
-## Lo que va pegado a la oficina: pizarra, pantalla de la bolsa y la pantalla de la computadora.
+## Lo que va pegado a la oficina: pizarra y pantalla de la bolsa.
 func _office_props() -> void:
 	board_text = Building.label(hq.root, "", Vector3(-7.64, 2.5, 11), 8, Color8(30, 40, 70), true, false)
 	board_text.rotation.y = PI / 2
 	ticker_text = Building.label(hq.root, "", Vector3(7.64, 2.6, 11), 9, Color8(120, 255, 120), true, false)
 	ticker_text.rotation.y = -PI / 2
-	# Pantalla de la computadora del vestíbulo
-	var screen := Boxes.new()
-	var sp: Vector3 = hq.spots.local_screen
-	screen.box(sp + Vector3(0, 0, -0.03), Vector3(1.3, 0.77, 0.02), Color8(40, 70, 120))
-	var mi := screen.node(hq.root, Mats.emissive, false)
-	mi.name = "Pantalla"
-	var screen_brand := Building.label(hq.root, "CAPITAL", sp + Vector3(0, 0.08, -0.05), 7, Blueprints.PALETTE.gold)
-	screen_brand.set_meta("size", screen_brand.pixel_size)
-	hq.brand.append(screen_brand)
-	Building.label(hq.root, "Presiona E", sp + Vector3(0, -0.14, -0.05), 4, Color.WHITE, false)
+	# Alfombra persa del vestíbulo (pixel art sobre su base, ver Blueprints.OFFICE_RUG)
+	var r: Array = Blueprints.OFFICE_RUG
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(r[2], r[3])
+	var rug := MeshInstance3D.new()
+	rug.name = "Alfombra"
+	rug.mesh = pm
+	rug.material_override = Mats.textured(load("res://assets/imagenes/oficina/alfombra.png"), 0.95, Color(0.74, 0.66, 0.68))   # más oscura: la luz del vestíbulo la aclara
+	rug.position = Vector3(r[0], 0.082, r[1])
+	rug.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	hq.root.add_child(rug)
 
 
 func sync_office(g: Game) -> void:

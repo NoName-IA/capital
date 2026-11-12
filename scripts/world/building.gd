@@ -144,7 +144,6 @@ func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: St
 			spots[k] = Blueprints.to_world(plot, v[0], v[1])
 	# Hacia dónde mira el personal (de frente a la calle)
 	spots["face_yaw"] = fposmod(root.rotation.y + PI, TAU)
-	spots["local_screen"] = local_spots.get("screen")
 	spots["pc_screen_y"] = local_spots.get("pc_screen_y", 1.3)
 	spots["pc_screen_w"] = local_spots.get("pc_screen_w", 0.864)
 	spots["pc_screen_h"] = local_spots.get("pc_screen_h", 0.54)
