@@ -209,11 +209,12 @@ func load_slot(n: int) -> bool:
 	view = "game"
 	tab = "resumen"
 	sel = "cafe"
-	paused = true
+	paused = false   # al reanudar sigue corriendo, a velocidad normal
+	speed = 0
 	modal = null
 	acc = 0.0
 	win_shown = game.won
-	say(Lang.f("Partida del espacio %d cargada. Presiona P para continuar.", n), "info")
+	say(Lang.f("Partida del espacio %d cargada.", n), "info")
 	return true
 
 
