@@ -455,7 +455,7 @@ func house(pos: Vector3, face: int, pastel: Array, roofs: Array) -> void:
 	props.box(pos + Vector3(w * 0.25, h + d * 0.35, 0.8), Vector3(0.7, 1.6, 0.7), Color8(150, 80, 60))
 	var front := pos.z + face * (d / 2 + 0.02)
 	var dx := (1 if rng.randf() < 0.5 else -1) * w * 0.22
-	houses.append({"pos": pos, "face": face, "w": w, "d": d, "door": dx})
+	houses.append({"pos": pos, "face": face, "w": w, "d": d, "door": dx, "h": h})
 	props.box(Vector3(pos.x + dx, 1.05, front), Vector3(1.1, 2.1, 0.08), Color8(120, 75, 45))
 	props.box(Vector3(pos.x + dx, 0.1, front + face * 0.6), Vector3(1.6, 0.2, 1.2), Color8(185, 180, 170))
 	# Foco de la entrada: de noche alumbra la puerta y el antejardín

@@ -120,6 +120,7 @@ var tower: Tower          # la presidencia (último piso) y los pisos de ejecuti
 var finale: Finale        # «La última reunión»: el final del juego (ver Finale)
 var plant: PowerPlant     # la planta eléctrica junto al túnel (ver PowerPlant y Game.power_fail)
 var power_scene: PowerScene   # la cinemática de cuando falla por primera vez
+var grid: PowerGrid       # la red eléctrica: torres, postes y cables (ver PowerGrid)
 var board_text: Label3D
 var ticker_text: Label3D
 var trophies_node: Node3D
@@ -153,6 +154,8 @@ func _ready() -> void:
 	builder.build()
 	static_rects = builder.rects
 	plant = PowerPlant.new(self)
+	grid = PowerGrid.new(self)   # postes, cables y torres por toda la ciudad
+	grid.build()
 	mall = Mall.new(self, 0)
 	malls = [mall, Mall.new(self, 1)]
 	hq = builder.hq
