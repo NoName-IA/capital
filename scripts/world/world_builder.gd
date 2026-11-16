@@ -117,31 +117,85 @@ func _lamp_lights() -> void:
 		Mats.add_light(city, Vector3(x, 0.9, 9.6), 12.0)
 
 
-## La calle sigue por la arena y se mete al mar: tramos cortos que siguen la pendiente (ver Actors.road_y). Las
-## veredas y las soleras bajan con ella.
+## La calle sigue por la arena y se mete al mar: una superficie continua que sigue la pendiente (ver Actors.road_y),
+## desde donde termina la avenida plana (x = 158). Antes eran cajas inclinadas de 2 m que se montaban entre sí y con
+## la avenida: el asfalto, las veredas y las soleras parpadeaban (dos caras a la misma altura).
+const SEA_ROAD_FROM := 158.0
+
+
 func _road_to_sea() -> void:
-	var asphalt := Boxes.new()
-	var lines := Boxes.new()
-	var walk := Boxes.new()
-	var x := 157.0
-	while x < Actors.ROAD_END:
-		var y0 := Actors.road_y(x)
-		var y1 := Actors.road_y(x + 2.0)
-		var tilt := rad_to_deg(atan2(y1 - y0, 2.0))
-		var c := Vector3(x + 1.0, (y0 + y1) / 2.0 - 0.02, 0)
-		asphalt.box_rot(c, Vector3(2.05, 0.06, 12), Color.WHITE, Vector3(0, 0, tilt))
-		for z in [-0.15, 0.15]:   # un poco más arriba que el asfalto: si no, la línea se ve cortada
-			lines.box_rot(c + Vector3(0, 0.045, z), Vector3(2.05, 0.01, 0.12), Color8(230, 190, 60), Vector3(0, 0, tilt))
-		if int(x) % 8 == 1:   # las líneas blancas de los carriles siguen cada 8 m, como en la avenida
-			for z in [-3.0, 3.0]:
-				lines.box_rot(c + Vector3(0, 0.045, z), Vector3(3, 0.01, 0.15), Color8(220, 220, 220), Vector3(0, 0, tilt))
-		for side in [-1, 1]:
-			walk.box_rot(c + Vector3(0, 0.02, side * SIDEWALK), Vector3(2.05, 0.1, 3), Color.WHITE, Vector3(0, 0, tilt))
-			lines.box_rot(c + Vector3(0, 0.07, side * 6.0), Vector3(2.05, 0.12, 0.12), Color8(150, 150, 145), Vector3(0, 0, tilt))
-		x += 2.0
-	asphalt.node(city, Mats.textured(Mats.asphalt, 0.95, Color8(80, 83, 90), Vector3(1, 1, 1)), false)
-	lines.node(city, Mats.standard, false)
-	walk.node(city, Mats.textured(Mats.tiles, 0.9, Color8(200, 200, 195), Vector3(0.67, 0.67, 1)), false)
+	var asphalt := SurfaceTool.new()
+	var lines := SurfaceTool.new()
+	var walk := SurfaceTool.new()
+	for st in [asphalt, lines, walk]:
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var x0 := SEA_ROAD_FROM
+	var x_end := Actors.ROAD_END + 2.0
+	_strip(asphalt, x0, x_end, -6.0, 6.0, 0.01, Color.WHITE)
+	for z in [-0.15, 0.15]:   # línea amarilla doble del centro
+		_strip(lines, x0, x_end, z - 0.06, z + 0.06, 0.025, Color8(230, 190, 60))
+	var dash := 162.0   # las líneas blancas siguen cada 8 m, centradas como en la avenida (… 146, 154, 162 …)
+	while dash - 1.5 < x_end:
+		for z in [-3.0, 3.0]:
+			_strip(lines, maxf(dash - 1.5, x0), minf(dash + 1.5, x_end), z - 0.075, z + 0.075, 0.025, Color8(220, 220, 220))
+		dash += 8.0
+	for side in [-1, 1]:
+		# vereda (arriba como la de la avenida) con su borde de afuera hasta la arena
+		_strip(walk, x0, x_end, 6.0 if side > 0 else -9.0, 9.0 if side > 0 else -6.0, 0.04, Color.WHITE)
+		_side(walk, x0, x_end, side * 9.0, 0.04, -0.12, side, Color.WHITE)
+		# solera: tira levantada con sus dos costados
+		var zc: float = side * 6.0
+		_strip(lines, x0, x_end, zc - 0.06, zc + 0.06, 0.12, Color8(150, 150, 145))
+		_side(lines, x0, x_end, zc + 0.06, 0.12, -0.05, 1, Color8(150, 150, 145))
+		_side(lines, x0, x_end, zc - 0.06, 0.12, -0.05, -1, Color8(150, 150, 145))
+	var nodes := [[asphalt, Mats.textured(Mats.asphalt, 0.95, Color8(80, 83, 90), Vector3(1, 1, 1))], [lines, Mats.standard],
+			[walk, Mats.textured(Mats.tiles, 0.9, Color8(200, 200, 195), Vector3(0.67, 0.67, 1))]]
+	for n in nodes:
+		var st: SurfaceTool = n[0]
+		var mi := MeshInstance3D.new()
+		mi.mesh = st.commit()
+		mi.material_override = n[1]
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		city.add_child(mi)
+
+
+## Una tira horizontal de z0 a z1 que sigue la pendiente de la calle, `up` metros sobre ella, en tramos de 1 m.
+## La textura va en metros del mundo (/2, como las cajas): no se corta entre un tramo y otro.
+func _strip(st: SurfaceTool, x0: float, x1: float, z0: float, z1: float, up: float, col: Color) -> void:
+	var x := x0
+	while x < x1 - 0.001:
+		var xb := minf(x + 1.0, x1)
+		var ya := Actors.road_y(x) + up
+		var yb := Actors.road_y(xb) + up
+		var n := Vector3(-(yb - ya), xb - x, 0).normalized()
+		_quad(st, [Vector3(x, ya, z0), Vector3(xb, yb, z0), Vector3(xb, yb, z1), Vector3(x, ya, z1)], n, col)
+		x = xb
+
+
+## Un costado vertical en z, de `top` a `bottom` metros sobre la calle, mirando hacia `facing` (+1 o −1 en z).
+func _side(st: SurfaceTool, x0: float, x1: float, z: float, top: float, bottom: float, facing: int, col: Color) -> void:
+	var x := x0
+	while x < x1 - 0.001:
+		var xb := minf(x + 1.0, x1)
+		var ya := Actors.road_y(x)
+		var yb := Actors.road_y(xb)
+		_quad(st, [Vector3(x, ya + bottom, z), Vector3(xb, yb + bottom, z), Vector3(xb, yb + top, z), Vector3(x, ya + top, z)],
+				Vector3(0, 0, facing), col)
+		x = xb
+
+
+## Cuadrilátero con la cara de frente hacia `n` (Godot dibuja de frente las caras en sentido horario).
+func _quad(st: SurfaceTool, p: Array, n: Vector3, col: Color) -> void:
+	var tris := [[p[0], p[1], p[2]], [p[0], p[2], p[3]]]
+	for t in tris:
+		if (t[1] - t[0]).cross(t[2] - t[0]).dot(n) > 0:
+			t = [t[0], t[2], t[1]]
+		for v in t:
+			st.set_color(col)
+			st.set_normal(n)
+			# coordenadas de textura en metros: en el suelo x y z, en los costados x y la altura
+			st.set_uv(Vector2(v.x, v.z if absf(n.y) > 0.5 else v.y) / 2.0)
+			st.add_vertex(v)
 
 
 func _mesh_node(mesh: Mesh, material: Material, pos: Vector3, shadows := false) -> MeshInstance3D:
