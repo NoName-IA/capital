@@ -3172,5 +3172,578 @@
  ],
  "PRUEBAS Y CONTROL DE CALIDAD": [
   "TESTING AND QUALITY ASSURANCE"
+ ],
+ "Tu presidencia estrena %s.": [
+  "Your executive suite now has %s."
+ ],
+ "una alfombra y una biblioteca": [
+  "a rug and a bookcase"
+ ],
+ "una sala con sillones de cuero y la pantalla con lo que vale tu empresa": [
+  "a lounge with leather sofas and a screen showing what your company is worth"
+ ],
+ "un techo con luces cálidas, mármol con filos dorados y más plantas": [
+  "a ceiling with warm lights, gold-trimmed marble and more plants"
+ ],
+ "un bar con botellas iluminadas": [
+  "a bar with lit bottles"
+ ],
+ "una lámpara de aros dorados, una vitrina con lingotes de oro y un ascensor dorado": [
+  "a golden ring chandelier, a display case with gold bars and a golden elevator"
+ ],
+ "Alfombra": [
+  "Rug"
+ ],
+ "Rueda del mouse: ver más": [
+  "Mouse wheel: see more"
+ ],
+ "Juego": [
+  "Game"
+ ],
+ "Velocidad del tiempo": [
+  "Time speed"
+ ],
+ "Sonido": [
+  "Sound"
+ ],
+ "Cada barra se suma al volumen general.": [
+  "Each bar is scaled by the master volume."
+ ],
+ "Volumen general": [
+  "Master volume"
+ ],
+ "Sube o baja todo el juego a la vez.": [
+  "Turns the whole game up or down at once."
+ ],
+ "Monedas, clientes enojados, avisos y cinemáticas.": [
+  "Coins, angry customers, alerts and cutscenes."
+ ],
+ "Sonidos de los menús": [
+  "Menu sounds"
+ ],
+ "El clic y el roce al pasar por las opciones de los menús.": [
+  "The click and swish when moving through menu options."
+ ],
+ "Latido de peligro": [
+  "Danger heartbeat"
+ ],
+ "Un corazón que late cuando la caja está por quebrar.": [
+  "A beating heart when your cash is about to run out."
+ ],
+ "Silenciar si cambias de ventana": [
+  "Mute when in another window"
+ ],
+ "El juego se calla cuando usas otro programa (Alt+Tab) y vuelve a sonar al volver.": [
+  "The game goes quiet while you use another program (Alt+Tab) and comes back when you return."
+ ],
+ "Ventana": [
+  "Windowed"
+ ],
+ "Exclusiva": [
+  "Exclusive"
+ ],
+ "Modo de pantalla": [
+  "Display mode"
+ ],
+ "Ventana, pantalla completa o exclusiva (el juego toma la pantalla solo; en algunas tarjetas va más rápido, pero Alt+Tab tarda). %s cambia entre ventana y pantalla completa.": [
+  "Windowed, fullscreen or exclusive (the game takes over the screen; faster on some cards, but Alt+Tab is slower). %s switches between windowed and fullscreen."
+ ],
+ "Resolución 3D": [
+  "3D resolution"
+ ],
+ "Dibuja la ciudad más chica y la agranda: menos nítida pero muchos más FPS. Los menús y los textos siguen nítidos.": [
+  "Renders the city smaller and scales it up: less sharp but many more FPS. Menus and text stay sharp."
+ ],
+ "La planta volvió a fallar": [
+  "The power plant failed again"
+ ],
+ "Con el arreglo hay luz asegurada por %d días: sin apagones, tus locales venden normal.": [
+  "The repair guarantees power for %d days: no blackouts, your stores sell as usual."
+ ],
+ "Todavía te quedan %d días de luz. Si pagas ahora se suman %d días más.": [
+  "You still have %d days of power. Paying now adds %d more days."
+ ],
+ "¿Pagar el arreglo de la planta eléctrica?": [
+  "Pay for the power plant repair?"
+ ],
+ "La planta funciona bien: todavía no hay nada que pagar.": [
+  "The plant is working fine: nothing to pay yet."
+ ],
+ "Te faltan %s para pagar el arreglo de la planta.": [
+  "You need %s more to pay for the plant repair."
+ ],
+ "Pagaste el arreglo de la planta eléctrica (%s): hay luz asegurada por %d días.": [
+  "You paid for the power plant repair (%s): power is guaranteed for %d days."
+ ],
+ "¡Volvió la luz! Pagaste %s: tienes luz asegurada por %d días.": [
+  "The power is back! You paid %s: power is guaranteed for %d days."
+ ],
+ "La planta eléctrica de la ciudad empezó a fallar: vienen apagones. El arreglo se paga en la planta, junto al túnel.": [
+  "The city's power plant started failing: blackouts are coming. The repair is paid at the plant, next to the tunnel."
+ ],
+ "Se acabó el arreglo que pagaste: la planta eléctrica volvió a fallar. Ve a pagar a la planta, junto al túnel.": [
+  "The repair you paid for ran out: the power plant failed again. Go pay at the plant, next to the tunnel."
+ ],
+ "Apagón en la ciudad: sin luz, tus locales venden mucho menos. Paga el arreglo en la planta.": [
+  "Blackout in the city: without power, your stores sell much less. Pay for the repair at the plant."
+ ],
+ "Planta eléctrica": [
+  "Power plant"
+ ],
+ "Le da luz a la ciudad. Cuando falla, el arreglo se paga en su caseta.": [
+  "Powers the city. When it fails, the repair is paid at its booth."
+ ],
+ "Apagón": [
+  "Blackout"
+ ],
+ "Planta fallando": [
+  "Plant failing"
+ ],
+ "La planta eléctrica está fallando: algunos días hay apagón y tus locales venden %s menos. Paga el arreglo en la planta, junto al túnel (%s).": [
+  "The power plant is failing: some days there are blackouts and your stores sell %s less. Pay for the repair at the plant, next to the tunnel (%s)."
+ ],
+ "MEJORAR OFICINA": [
+  "UPGRADE OFFICE"
+ ],
+ "AHORA": [
+  "NOW"
+ ],
+ "DESPUÉS": [
+  "AFTER"
+ ],
+ "Ahora no": [
+  "Not now"
+ ],
+ "GENERAL": [
+  "GENERAL"
+ ],
+ "PANTALLA": [
+  "DISPLAY"
+ ],
+ "Emojis de los clientes": [
+  "Customer emojis"
+ ],
+ "Sobre la cabeza de los clientes sale un emoji con lo que piensan de tu precio: feliz si es barato, molesto si es caro.": [
+  "An emoji pops up over customers' heads showing what they think of your price: happy if it's cheap, annoyed if it's expensive."
+ ],
+ "VOLUMEN": [
+  "VOLUME"
+ ],
+ "VENTANA": [
+  "WINDOW"
+ ],
+ "RESOLUCIÓN": [
+  "RESOLUTION"
+ ],
+ "PLANTA ELÉCTRICA": [
+  "POWER PLANT"
+ ],
+ "PAGO DEL ARREGLO": [
+  "REPAIR PAYMENTS"
+ ],
+ "Planta eléctrica: funciona bien": [
+  "Power plant: working fine"
+ ],
+ "Pagar el arreglo de la planta (%s · luz por %d días)": [
+  "Pay for the plant repair (%s · power for %d days)"
+ ],
+ "Planta eléctrica: luz asegurada por %d días más": [
+  "Power plant: power guaranteed for %d more days"
+ ],
+ "¿Viste eso? Es la planta eléctrica que le da luz a toda la ciudad. Está vieja y acaba de fallar.": [
+  "Did you see that? That's the power plant that lights up the whole city. It's old and it just failed."
+ ],
+ "Desde hoy va a haber apagones: sin luz tus locales venden mucho menos y de noche la ciudad queda a oscuras.": [
+  "From today on there will be blackouts: without power your stores sell much less, and at night the city goes dark."
+ ],
+ "Para que vuelva a funcionar hay que pagar el arreglo, y se paga aquí mismo: en la caseta de la planta, junto al túnel.": [
+  "To get it working again you have to pay for the repair, right here: at the plant's booth, next to the tunnel."
+ ],
+ "Hoy cuesta %s y te da luz por %d días. Después vuelve a fallar, así que tenlo en cuenta en tus cuentas.": [
+  "Today it costs %s and gives you power for %d days. Then it fails again, so keep it in your budget."
+ ],
+ "Ven cuando puedas: en el mapa la planta está marcada con un rayo.": [
+  "Come when you can: the plant is marked with a lightning bolt on the map."
+ ],
+ "La planta eléctrica está fallando: paga el arreglo en su caseta, junto al túnel.": [
+  "The power plant is failing: pay for the repair at its booth, next to the tunnel."
+ ],
+ "—¡¿Qué fue eso?!": [
+  "—What was that?!"
+ ],
+ "APAGÓN EN LA CIUDAD": [
+  "BLACKOUT IN THE CITY"
+ ],
+ "Enter o clic: saltar": [
+  "Enter or click: skip"
+ ],
+ "¡Ya voy, jefe!": [
+  "I'm on it, boss!"
+ ],
+ "¡Auch! ¡Más rápido!": [
+  "Ouch! Faster!"
+ ],
+ "¡Está bien, está bien!": [
+  "Okay, okay!"
+ ],
+ "¡Ay, mi cabeza!": [
+  "Ow, my head!"
+ ],
+ "Batazo (con el bate puesto)": [
+  "Bat swing (with the bat on)"
+ ],
+ "SUBESTACIÓN ESTE": [
+  "EAST SUBSTATION"
+ ],
+ "CONTROL": [
+  "CONTROL"
+ ],
+ "Bate de béisbol": [
+  "Baseball bat"
+ ],
+ "¡Ay!": [
+  "Ow!"
+ ],
+ "No tienes caja para pagar el arreglo de la planta.": [
+  "You have no cash to pay for the plant repair."
+ ],
+ "Se fue la luz en toda la ciudad: tus locales venden mucho menos. Paga el arreglo en la planta, junto al túnel.": [
+  "The power went out across the city: your stores sell much less. Pay for the repair at the plant, next to the tunnel."
+ ],
+ "Volvió la luz, pero la planta sigue fallando: se puede volver a cortar.": [
+  "The power is back, but the plant is still failing: it can go out again."
+ ],
+ "¡Se fue la luz!": [
+  "The power went out!"
+ ],
+ "Volvió la luz": [
+  "Power is back"
+ ],
+ "Cuesta el 5 %% de la caja que tengas al pagar (hoy serían %s) y te da luz por %d días. Después vuelve a fallar.": [
+  "It costs 5%% of your cash when you pay (today that's %s) and gives you power for %d days. Then it fails again."
+ ],
+ "Manos": [
+  "Hands"
+ ],
+ "Bate": [
+  "Bat"
+ ],
+ "%s: batazo": [
+  "%s: swing"
+ ],
+ "Sacar o guardar el bate": [
+  "Take out or put away the bat"
+ ],
+ "Así que usted decide: ¿qué va a hacer con nosotros?": [
+  "So it's up to you, boss: what are you going to do with us?"
+ ],
+ "DELEGADO DEL SINDICATO": [
+  "UNION REPRESENTATIVE"
+ ],
+ "DESPEDISTE A TODOS": [
+  "YOU FIRED EVERYONE"
+ ],
+ "DIGNIDAD": [
+  "DIGNITY"
+ ],
+ "Desde hoy estamos en huelga. Ninguno de sus locales abre hasta que nos dé una respuesta.": [
+  "As of today we're on strike. None of your stores opens until you give us an answer."
+ ],
+ "Despedirlos a todos": [
+  "Fire them all"
+ ],
+ "Despediste a los %d huelguistas (%s). El personal nuevo llega en %d días.": [
+  "You fired the %d strikers (%s). The new staff arrives in %d days."
+ ],
+ "Despediste a todos. Los nuevos llegan en %d días.": [
+  "You fired everyone. The new staff arrives in %d days."
+ ],
+ "Despediste a todos: el personal nuevo llega en %d días.": [
+  "You fired everyone: the new staff arrives in %d days."
+ ],
+ "Esto no se va a quedar así...": [
+  "This isn't over..."
+ ],
+ "Ganan %d %% más para siempre. Vuelven hoy mismo y con mejor ánimo.": [
+  "They earn %d%% more forever. They come back today, in better spirits."
+ ],
+ "Hablar con el delegado de la huelga": [
+  "Talk to the strike representative"
+ ],
+ "Huelga": [
+  "Strike"
+ ],
+ "Ignorarlos": [
+  "Ignore them"
+ ],
+ "Ignoraste a los huelguistas: siguen protestando y tus locales siguen cerrados.": [
+  "You ignored the strikers: they keep protesting and your stores stay closed."
+ ],
+ "Indemnizar y contratar gente nueva: %s. Tus locales quedan sin nadie %d días y baja tu fama.": [
+  "Severance and hiring new people: %s. Your stores have no staff for %d days and your reputation drops."
+ ],
+ "Jefe, aquí estamos todos. Nos cansamos de los batazos: nadie trabaja así.": [
+  "Boss, we're all here. We're sick of the bat: nobody can work like this."
+ ],
+ "LA HUELGA SIGUE": [
+  "THE STRIKE GOES ON"
+ ],
+ "La huelga sigue. Puedes hablar con el delegado frente a tu oficina.": [
+  "The strike goes on. You can talk to the representative in front of your office."
+ ],
+ "La huelga sigue: habla con el delegado frente a tu oficina cuando quieras.": [
+  "The strike goes on: talk to the representative in front of your office whenever you want."
+ ],
+ "Llegó el personal nuevo: tus locales vuelven a atender.": [
+  "The new staff arrived: your stores are open again."
+ ],
+ "No hay ninguna huelga.": [
+  "There's no strike."
+ ],
+ "No te alcanza la caja": [
+  "Not enough cash"
+ ],
+ "RESPETO": [
+  "RESPECT"
+ ],
+ "Siguen en huelga: tus empleados no atienden y no vendes. Puedes volver a hablar con el delegado.": [
+  "They stay on strike: nobody serves and you don't sell. You can talk to the representative again."
+ ],
+ "Sin personal": [
+  "No staff"
+ ],
+ "Subirles el sueldo": [
+  "Raise their pay"
+ ],
+ "TERMINÓ LA HUELGA": [
+  "THE STRIKE IS OVER"
+ ],
+ "Terminó la huelga": [
+  "The strike is over"
+ ],
+ "Terminó la huelga: el sueldo de tus empleados sube %d %%.": [
+  "The strike is over: your employees' pay goes up %d%%."
+ ],
+ "Terminó la huelga: les subiste el sueldo %d %% a todos tus empleados.": [
+  "The strike is over: you raised all your employees' pay by %d%%."
+ ],
+ "Terminó la huelga: tus empleados vuelven contentos.": [
+  "The strike is over: your employees come back happy."
+ ],
+ "Tus empleados están en huelga: nadie atiende tus locales. Habla con el delegado frente a tu oficina.": [
+  "Your employees are on strike: nobody serves at your stores. Talk to the representative in front of your office."
+ ],
+ "Tus empleados están molestos": [
+  "Your employees are upset"
+ ],
+ "Tus empleados hablan de hacer huelga: el sindicato ya está organizando a la gente.": [
+  "Your employees are talking about a strike: the union is already organizing them."
+ ],
+ "Tus empleados murmuran contra ti: no les gusta nada el bate.": [
+  "Your employees grumble about you: they don't like the bat at all."
+ ],
+ "Un golpe más y paramos todos.": [
+  "One more hit and we all walk out."
+ ],
+ "Voy a hablar con el sindicato.": [
+  "I'm going to the union."
+ ],
+ "¡Abajo el bate!": [
+  "Down with the bat!"
+ ],
+ "¡Amenazan con huelga!": [
+  "They threaten to strike!"
+ ],
+ "¡Así se habla, jefe! ¡Volvemos al trabajo!": [
+  "That's more like it, boss! Back to work!"
+ ],
+ "¡BASTA DE GOLPES!": [
+  "NO MORE HITTING!"
+ ],
+ "¡El pueblo unido!": [
+  "The people united!"
+ ],
+ "¡Esto no se va a quedar así!": [
+  "This isn't over!"
+ ],
+ "¡HUELGA!": [
+  "STRIKE!"
+ ],
+ "¡HUELGA! Tus empleados dejaron de trabajar y protestan frente a tu oficina: nadie atiende tus locales.": [
+  "STRIKE! Your employees stopped working and are protesting in front of your office: nobody serves at your stores."
+ ],
+ "¡Huelga!": [
+  "Strike!"
+ ],
+ "¡Huelga, huelga!": [
+  "Strike, strike!"
+ ],
+ "¡NO AL BATE!": [
+  "NO TO THE BAT!"
+ ],
+ "¡No más golpes!": [
+  "No more hitting!"
+ ],
+ "¡No nos vamos a mover de aquí!": [
+  "We're not moving from here!"
+ ],
+ "¡Que salga el jefe!": [
+  "Bring out the boss!"
+ ],
+ "¡Queremos sueldo justo!": [
+  "We want fair pay!"
+ ],
+ "¡Respeto!": [
+  "Respect!"
+ ],
+ "¡SIN BATE!": [
+  "NO BAT!"
+ ],
+ "¡SUELDO JUSTO!": [
+  "FAIR PAY!"
+ ],
+ "¡Ya vas a ver, jefe!": [
+  "You'll see, boss!"
+ ],
+ "¿Qué haces con los huelguistas?": [
+  "What do you do with the strikers?"
+ ],
+ "¿Y, jefe? ¿Ya lo pensó? Seguimos aquí y ningún local abre hasta que nos dé una respuesta.": [
+  "So, boss? Have you thought it over? We're still here and no store opens until you give us an answer."
+ ],
+ "—¡Jefe! ¡Tenemos que hablar!": [
+  "—Boss! We need to talk!"
+ ],
+ "¡FUERA EL JEFE!": [
+  "BOSS OUT!"
+ ],
+ "¡JEFE ABUSADOR!": [
+  "ABUSIVE BOSS!"
+ ],
+ "¡TIRANO!": [
+  "TYRANT!"
+ ],
+ "¡NI UN GOLPE MÁS!": [
+  "NOT ONE MORE HIT!"
+ ],
+ "¡EXPLOTADOR!": [
+  "EXPLOITER!"
+ ],
+ "¡Fuera el abusador!": [
+  "Out with the bully!"
+ ],
+ "¡Sal a dar la cara, cobarde!": [
+  "Come out and face us, coward!"
+ ],
+ "¡Explotador!": [
+  "Exploiter!"
+ ],
+ "¡Tirano!": [
+  "Tyrant!"
+ ],
+ "¡Que salga el matón del bate!": [
+  "Bring out the thug with the bat!"
+ ],
+ "¡No le tenemos miedo!": [
+  "We're not afraid of you!"
+ ],
+ "¡Te vamos a cerrar todo!": [
+  "We're shutting you down!"
+ ],
+ "¡Abusador, abusador!": [
+  "Bully, bully!"
+ ],
+ "¡Ladrón de sueldos!": [
+  "Wage thief!"
+ ],
+ "¡Sin nosotros no eres nada!": [
+  "Without us you're nothing!"
+ ],
+ "¿Otra vez tú? Seguimos aquí, abusador. Ningún local abre hasta que nos des una respuesta de verdad.": [
+  "You again? We're still here, bully. No store opens until you give us a real answer."
+ ],
+ "Nos tienes hartos. Nos pegas como a animales y encima pagas una miseria. ¡Se acabó!": [
+  "We're fed up with you. You beat us like animals and pay us peanuts. It's over!"
+ ],
+ "Desde hoy estamos en huelga. Tus locales se quedan cerrados, y si sacas el bate, vamos a la prensa y a la policía.": [
+  "As of today we're on strike. Your stores stay closed, and if you pull out that bat, we go to the press and the police."
+ ],
+ "—¡Sal, cobarde! ¡Da la cara!": [
+  "—Come out, coward! Face us!"
+ ],
+ "¡Por fin entendiste! Pero si vuelves a sacar el bate, paramos otra vez.": [
+  "You finally get it! But pull out that bat again and we walk out again."
+ ],
+ "¡Maldito! ¡Te vas a arrepentir de esto!": [
+  "Damn you! You're going to regret this!"
+ ],
+ "¿Nos ignoras? ¡De aquí no nos mueve nadie, sinvergüenza!": [
+  "You're ignoring us? Nobody moves us from here, you scoundrel!"
+ ],
+ "¡Abusador! Esto no se va a quedar así.": [
+  "Bully! This isn't over."
+ ],
+ "Un golpe más y paramos todos, matón.": [
+  "One more hit and we all walk out, thug."
+ ],
+ "¡Ya vas a ver, cobarde!": [
+  "You'll see, coward!"
+ ],
+ "Voy a hablar con el sindicato, desgraciado.": [
+  "I'm going to the union, you jerk."
+ ],
+ "¡Vuelve a tocarme y te denuncio!": [
+  "Touch me again and I'll report you!"
+ ],
+ "¡Somos trabajadores, no tus sacos de boxeo!": [
+  "We're workers, not your punching bags!"
+ ],
+ "¡Por fin sales! ¿Creíste que nos íbamos a dejar pegar para siempre?": [
+  "You finally come out! Did you think we'd let you hit us forever?"
+ ],
+ "Así que decide de una vez: ¿qué vas a hacer con nosotros?": [
+  "So make up your mind: what are you going to do with us?"
+ ],
+ "Barra: casilla 1 (sacar o guardar el bate)": [
+  "Bar: slot 1 (take out or put away the bat)"
+ ],
+ "Clic: cambiar la velocidad (x1, x2, x3)": [
+  "Click: change the speed (x1, x2, x3)"
+ ],
+ "Qué tan rápido pasan los días. También con un clic en la velocidad, arriba a la derecha.": [
+  "How fast the days go by. You can also click the speed in the top right."
+ ],
+ "Los negocios crecen con el tiempo. Acelera el reloj a x2 o x3.": [
+  "Businesses grow over time. Speed up the clock to x2 or x3."
+ ],
+ "La planta eléctrica de la ciudad falló: no hay luz hasta que pagues el arreglo en la planta, junto al túnel.": [
+  "The city's power plant failed: there's no power until you pay for the repair at the plant, next to the tunnel."
+ ],
+ "Se acabó el arreglo que pagaste: la planta volvió a fallar y se fue la luz. No vuelve hasta que pagues en la planta, junto al túnel.": [
+  "The repair you paid for ran out: the plant failed again and the power went out. It won't come back until you pay at the plant, next to the tunnel."
+ ],
+ "Se fue la luz en toda la ciudad: tus locales venden mucho menos. No vuelve hasta que pagues el arreglo en la planta, junto al túnel.": [
+  "The whole city lost power: your stores sell much less. It won't come back until you pay for the repair at the plant, next to the tunnel."
+ ],
+ "La ciudad se quedó sin luz, y no va a volver sola: sin luz tus locales venden mucho menos y de noche todo queda a oscuras.": [
+  "The city has no power, and it won't come back on its own: without power your stores sell much less and at night everything goes dark."
+ ],
+ "Cuesta el 5 %% de la caja que tengas al pagar (hoy serían %s) y te da luz por unos 3 meses (%d días). Después vuelve a fallar.": [
+  "It costs 5%% of your cash when you pay (today that's %s) and gives you power for about 3 months (%d days). Then it fails again."
+ ],
+ "Se fue la luz y no vuelve hasta que pagues: tus locales venden %s menos. Paga el arreglo en la planta, junto al túnel (%s).": [
+  "The power is out and won't come back until you pay: your stores sell %s less. Pay for the repair at the plant, next to the tunnel (%s)."
+ ],
+ "Los locales del centro comercial no se decoran. Compra un terreno SE VENDE para tener uno propio.": [
+  "Stores in the mall can't be decorated. Buy a FOR SALE lot to have one of your own."
+ ],
+ "No vuelve hasta que pagues el arreglo en la planta, junto al túnel (%s).": [
+  "It won't come back until you pay for the repair at the plant, next to the tunnel (%s)."
+ ],
+ "Partida del espacio %d cargada.": [
+  "Game in slot %d loaded."
+ ],
+ "ALERTA": [
+  "ALERT"
  ]
 }
