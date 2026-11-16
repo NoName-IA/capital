@@ -630,6 +630,26 @@ func _update_luxury(g: Game) -> void:
 		toast(Lang.f("Tu presidencia estrena %s.", Lang.t(Tower.LUXURY[want])), "good")
 
 
+## ¿Toca el final? Ganaste y todavía no lo viste (también si la partida ya venía ganada sin haberlo visto). Espera a
+## que no haya tutorial, ventana encima, ni viaje en el ascensor; si estás en la computadora, te saca (Finale.start).
+func _want_finale(g: Game) -> bool:
+	return g.won and not g.finale_seen and not finale.active() and not g.game_over and not tutorial.active 			and app.modal == null and not tower.busy() and not overlays.mode in ["personaje", "decorar"]
+
+
+## Te para de la computadora al instante (el final empieza aunque estés sentado en ella).
+func drop_computer() -> void:
+	if pc_phase == "":
+		return
+	pc_phase = ""
+	pc_t = 0.0
+	app.in_pc = false
+	if overlays.open():
+		overlays.hide()
+	player.sit(0.0)
+	player.position.y = 0.0
+	player.visible = true
+
+
 ## Esc o «Apagar»: la cámara sale de la pantalla y te paras.
 func leave_computer() -> void:
 	if pc_phase != "os":
@@ -1129,8 +1149,8 @@ func react(n: Dictionary) -> void:
 				notes.push_hero("NUEVO RANGO", v, Lang.f("Tu empresa vale %s", Fmt.money(game.valuation())), gold, "fanfare", 0, null,
 						"star", {"rank": ri})
 		"win":
-			if not game.finale_seen:   # la primera vez: el final completo
-				finale.start()
+			if not game.finale_seen:   # la primera vez: el final completo (lo arranca City.update, ver _want_finale)
+				pass
 			elif game.mode == "normal":
 				notes.push_hero("IMPERIO", "¡Construiste un imperio!", Lang.f("En %d minutos de juego", roundi(game.win_seconds / 60.0)), gold, "fanfare", 180, null, "crown")
 			else:
@@ -2098,6 +2118,8 @@ func update(dt: float) -> void:
 			_pc_update(dt)
 		tower.update(dt)
 		_update_luxury(g)
+		if _want_finale(g):
+			finale.start()
 		finale.update(dt)
 		if rank_wait != null and not rank_must_wait():
 			var waiting: Dictionary = rank_wait

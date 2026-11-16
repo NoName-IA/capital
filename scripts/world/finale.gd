@@ -80,6 +80,7 @@ func active() -> bool:
 func start() -> void:
 	if active() or city.game == null:
 		return
+	city.drop_computer()
 	if city.overlays.open():
 		city.overlays.hide()
 	city.stop_serving()
