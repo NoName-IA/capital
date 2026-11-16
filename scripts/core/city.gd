@@ -306,6 +306,7 @@ func _build_office() -> void:
 
 
 var office_tier := 2   # el aspecto con el que está armada la oficina ahora
+var luxury_game = null  # la partida con la que se armó el lujo de la presidencia (para avisar solo al subir de rango)
 
 
 ## Arma de nuevo la oficina con otro aspecto (al cargar una partida o al remodelar).
@@ -609,6 +610,24 @@ func sit_at_computer() -> void:
 	pc_rot_from = player.rotation.y
 	pc_cam_from = camera.global_transform
 	vy = 0.0
+
+
+## La presidencia se vuelve más lujosa con cada rango: se rearma cuando no estás viajando en el ascensor, ni sentado en
+## la computadora, ni viendo el final; al subir de rango (no al cargar) avisa lo que estrena.
+func _update_luxury(g: Game) -> void:
+	var want := Tower.lux_for(int(g.rank))
+	if want == tower.lux:
+		luxury_game = g
+		return
+	if tower.busy() or finale.active() or pc_phase != "":
+		return
+	var announce: bool = luxury_game == g and want > tower.lux
+	luxury_game = g
+	tower.lux = want
+	tower.build(office_tier)
+	tower.set_company(g.company, Fmt.short(g.valuation()))
+	if announce:
+		toast(Lang.f("Tu presidencia estrena %s.", Lang.t(Tower.LUXURY[want])), "good")
 
 
 ## Esc o «Apagar»: la cámara sale de la pantalla y te paras.
@@ -2078,6 +2097,7 @@ func update(dt: float) -> void:
 		if pc_phase != "":
 			_pc_update(dt)
 		tower.update(dt)
+		_update_luxury(g)
 		finale.update(dt)
 		if rank_wait != null and not rank_must_wait():
 			var waiting: Dictionary = rank_wait

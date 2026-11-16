@@ -47,6 +47,22 @@ var anim_t := 0.0
 var finale_mode := false   # la subida del final (Finale): más lenta, los ejecutivos de pie celebrando mirándote y el visor con los años
 var milestones := []       # [año, título] de cada rango que conseguiste, del primero al último
 var lobby_doors: Array[Node3D] = []   # las puertas del ascensor del vestíbulo (en la oficina)
+var lux := 0               # cuánto lujo tiene la presidencia: sube con tu rango (ver LUXURY)
+
+# Lo que estrena la presidencia en cada rango (el índice es el rango; 0 = Vendedor ambulante: lo básico).
+const LUXURY := [
+	"",
+	"una alfombra y una biblioteca",
+	"una sala con sillones de cuero y la pantalla con lo que vale tu empresa",
+	"un techo con luces cálidas, mármol con filos dorados y más plantas",
+	"un bar con botellas iluminadas",
+	"una lámpara de aros dorados, una vitrina con lingotes de oro y un ascensor dorado",
+]
+
+
+## El lujo de la presidencia para un rango.
+static func lux_for(rank: int) -> int:
+	return clampi(rank, 0, LUXURY.size() - 1)
 
 
 func _init(owner_city) -> void:
@@ -123,6 +139,46 @@ func _ceo_room() -> void:
 	var leather := Color8(118, 74, 46)   # cuero coñac
 	# Piso de mármol claro en losas grandes con juntas doradas y un borde de mármol negro
 	b.box(Vector3(0, -0.15, 0), Vector3(W, 0.3, D), marble)
+	if lux >= 3:
+		_floor_trim(b, black_marble)
+	if lux >= 1:
+		_rug(b, gold)
+	_ceiling(shell, warm, ceiling)
+	if lux >= 5:
+		_chandelier(b, warm, gold)
+	_walls(b, shell, walnut, black_marble, lacquer, gold)
+	_desk(b, glow, warm, lacquer, gold, leather)
+	if lux >= 1:
+		_bookcase(b, warm, lacquer, gold)
+	if lux >= 5:
+		_gold_vitrine(b, warm, black_marble, gold)
+	if lux >= 2:
+		_lounge(b, black_marble, gold, leather)
+	if lux >= 4:
+		_bar(b, warm, black_marble, gold)
+	_screens(b, glow, warm, lacquer, gold)
+	_plants(b, lacquer, gold)
+	b.node(root, Mats.standard)
+	shell.node(root, Mats.standard, false)
+	glow.node(root, Mats.emissive, false)
+	warm.node(root, Mats.emissive, false)
+	company_label = Building.label(root, "", Vector3(-4.6, 2.1, -D / 2 + 0.11), 16, gold, true, false)
+	company_label.rotation.y = 0.0
+	worth_label = Building.label(root, "", Vector3(4.6, 2.55, -D / 2 + 0.15), 9, Color8(150, 255, 190), true, false)
+	worth_label.rotation.y = 0.0
+	worth_label.visible = lux >= 2
+	var plate := Building.label(root, "CEO", DESK + Vector3(-0.2, 0.9, -0.52), 4, Color8(40, 30, 20), true, false)
+	plate.rotation.y = PI
+	for x in [-4.0, 4.0]:   # bien iluminada: luces del techo (más cálidas con lujo), la lámpara y una sobre el escritorio
+		for z in [-3.5, 0.5, 4.5]:
+			_light(root, Vector3(x, ROOM_H - 0.5, z), 10.0, 1.5 if lux >= 3 else 1.3,
+					Color(1.0, 0.9, 0.76) if lux >= 3 else Color(1.0, 0.96, 0.9))
+	if lux >= 5:
+		_light(root, Vector3(0, 2.75, 1.0), 7.0, 1.3, Color(1.0, 0.86, 0.66))
+	_light(root, DESK + Vector3(0, 2.4, 0), 6.0, 0.9, Color(1.0, 0.9, 0.75))
+
+
+func _floor_trim(b: Boxes, black_marble: Color) -> void:
 	for i in range(1, 8):
 		b.box(Vector3(-W / 2 + i * 2, 0.002, 0), Vector3(0.018, 0.01, D - 1.2), Color8(200, 184, 150))
 	for i in range(1, 7):
@@ -131,13 +187,24 @@ func _ceo_room() -> void:
 		b.box(Vector3(sx * (W / 2 - 0.3), 0.004, 0), Vector3(0.6, 0.01, D), black_marble)
 	for sz in [-1, 1]:
 		b.box(Vector3(0, 0.004, sz * (D / 2 - 0.3)), Vector3(W, 0.01, 0.6), black_marble)
+
+
+func _rug(b: Boxes, gold: Color) -> void:
 	# Alfombra azul noche con doble borde dorado
 	b.box(Vector3(0, 0.015, 1.0), Vector3(7.2, 0.02, 6.4), gold)
 	b.box(Vector3(0, 0.022, 1.0), Vector3(7.0, 0.02, 6.2), Color8(22, 30, 52))
 	b.box(Vector3(0, 0.028, 1.0), Vector3(6.2, 0.02, 5.4), gold)
 	b.box(Vector3(0, 0.034, 1.0), Vector3(6.1, 0.02, 5.3), Color8(28, 38, 64))
-	# Techo con un cajón al medio: cornisa con luz cálida escondida y focos empotrados alrededor
+
+
+func _ceiling(shell: Boxes, warm: Boxes, ceiling: Color) -> void:
+	# Techo; con lujo, un cajón al medio con luz cálida escondida en la cornisa y focos empotrados alrededor
 	shell.box(Vector3(0, ROOM_H + 0.1, 0), Vector3(W + 0.6, 0.2, D + 0.6), ceiling)
+	if lux < 3:
+		for x in [-4.0, 4.0]:   # paneles de luz sencillos
+			for z in [-3.5, 0.5, 4.5]:
+				warm.box(Vector3(x, ROOM_H - 0.01, z), Vector3(1.2, 0.02, 0.6), Color8(245, 245, 240))
+		return
 	for sz in [-1, 1]:
 		shell.box(Vector3(0, ROOM_H - 0.2, sz * (D / 2 - 1.2)), Vector3(W, 0.4, 2.4), ceiling)
 	for sx in [-1, 1]:
@@ -153,6 +220,9 @@ func _ceo_room() -> void:
 	for z in [-3.0, 0.0, 3.0]:
 		for sx in [-1, 1]:
 			warm.box(Vector3(sx * 6.8, ROOM_H - 0.41, z), Vector3(0.22, 0.02, 0.22), Color8(255, 240, 210))
+
+
+func _chandelier(b: Boxes, warm: Boxes, gold: Color) -> void:
 	# Lámpara colgante: dos aros dorados con luces, sobre la alfombra
 	var ch := Vector3(0, 2.75, 1.0)
 	b.box(ch + Vector3(0, 0.5, 0), Vector3(0.03, 0.7, 0.03), gold)
@@ -164,13 +234,17 @@ func _ceo_room() -> void:
 			b.box_rot(p, Vector3(r * 0.42, 0.05, 0.05), gold, Vector3(0, -rad_to_deg(a) + 90, 0))
 			if i % 2 == 0:
 				warm.box(p + Vector3(0, -0.07, 0), Vector3(0.09, 0.09, 0.09), Color8(255, 236, 190))
+
+
+func _walls(b: Boxes, shell: Boxes, walnut: Color, black_marble: Color, lacquer: Color, gold: Color) -> void:
 	# Paredes: paneles de nogal con listones y un filete dorado (costados y frente); atrás un ventanal de punta a punta
 	for sx in [-1, 1]:
 		shell.box(Vector3(sx * (W / 2 + 0.15), ROOM_H / 2, 0), Vector3(0.3, ROOM_H, D), walnut)
 		for i in 14:
 			b.box(Vector3(sx * (W / 2 - 0.02), ROOM_H / 2 - 0.25, -D / 2 + 0.5 + i * 1.0), Vector3(0.04, ROOM_H - 0.5, 0.05),
 					Color8(86, 54, 34))
-		b.box(Vector3(sx * (W / 2 - 0.03), 0.9, 0), Vector3(0.04, 0.03, D), gold)
+		if lux >= 3:
+			b.box(Vector3(sx * (W / 2 - 0.03), 0.9, 0), Vector3(0.04, 0.03, D), gold)
 		b.box(Vector3(sx * (W / 2 - 0.03), 0.12, 0), Vector3(0.05, 0.24, D), black_marble)   # zócalo
 	_rect(-W / 2 - 0.3, -W / 2, -D / 2, D / 2, ROOM_H)
 	_rect(W / 2, W / 2 + 0.3, -D / 2, D / 2, ROOM_H)
@@ -183,28 +257,34 @@ func _ceo_room() -> void:
 	b.box(Vector3(0, ROOM_H - 0.1, D / 2 + 0.15), Vector3(W, 0.2, 0.3), lacquer)
 	for i in 9:   # parteluces negros finos con un filo dorado
 		b.box(Vector3(-W / 2 + i * 2, ROOM_H / 2, D / 2 + 0.15), Vector3(0.08, ROOM_H, 0.16), lacquer)
-		b.box(Vector3(-W / 2 + i * 2, ROOM_H / 2, D / 2 + 0.06), Vector3(0.02, ROOM_H, 0.02), gold)
+		if lux >= 3:
+			b.box(Vector3(-W / 2 + i * 2, ROOM_H / 2, D / 2 + 0.06), Vector3(0.02, ROOM_H, 0.02), gold)
 	_rect(-W / 2, W / 2, D / 2, D / 2 + 0.3, ROOM_H)
-	# Marco dorado y puertas doradas del ascensor (se abren al llegar)
-	b.box(Vector3(-1.1, 1.35, -D / 2 + 0.02), Vector3(0.2, 2.7, 0.1), gold)
-	b.box(Vector3(1.1, 1.35, -D / 2 + 0.02), Vector3(0.2, 2.7, 0.1), gold)
-	b.box(Vector3(0, 2.75, -D / 2 + 0.02), Vector3(2.4, 0.2, 0.1), gold)
+	# Marco y puertas del ascensor (se abren al llegar): de acero, y doradas cuando ya eres un imperio
+	var frame := gold if lux >= 5 else Color8(150, 154, 160)
+	b.box(Vector3(-1.1, 1.35, -D / 2 + 0.02), Vector3(0.2, 2.7, 0.1), frame)
+	b.box(Vector3(1.1, 1.35, -D / 2 + 0.02), Vector3(0.2, 2.7, 0.1), frame)
+	b.box(Vector3(0, 2.75, -D / 2 + 0.02), Vector3(2.4, 0.2, 0.1), frame)
 	for sx in [-1, 1]:
 		var dn := Boxes.new()
-		dn.box(Vector3.ZERO, Vector3(1.0, 2.6, 0.06), Color8(196, 160, 92))
-		dn.box(Vector3(0, 0, 0.035), Vector3(0.9, 2.5, 0.01), Color8(216, 182, 110))
+		dn.box(Vector3.ZERO, Vector3(1.0, 2.6, 0.06), Color8(196, 160, 92) if lux >= 5 else Color8(170, 174, 180))
+		dn.box(Vector3(0, 0, 0.035), Vector3(0.9, 2.5, 0.01), Color8(216, 182, 110) if lux >= 5 else Color8(196, 200, 206))
 		var door := dn.node(root, Mats.standard)
 		door.position = Vector3(sx * 0.5, 1.3, -D / 2 - 0.05)
 		doors.append(door)
+
+
+func _desk(b: Boxes, glow: Boxes, warm: Boxes, lacquer: Color, gold: Color, leather: Color) -> void:
 	# Escritorio del CEO: laca negra con filos dorados, pantalla, placa, lámpara y un sillón alto de cuero
 	var dk := DESK
 	b.box(dk + Vector3(0, 0.78, 0), Vector3(3.6, 0.08, 1.4), lacquer)
-	b.box(dk + Vector3(0, 0.83, 0), Vector3(3.62, 0.02, 1.42), gold)
+	var trim := gold if lux >= 3 else lacquer   # los filos dorados llegan con el lujo
+	b.box(dk + Vector3(0, 0.83, 0), Vector3(3.62, 0.02, 1.42), trim)
 	b.box(dk + Vector3(0, 0.4, -0.55), Vector3(3.4, 0.76, 0.1), lacquer)
-	b.box(dk + Vector3(0, 0.12, -0.61), Vector3(3.4, 0.03, 0.03), gold)
+	b.box(dk + Vector3(0, 0.12, -0.61), Vector3(3.4, 0.03, 0.03), trim)
 	for sx in [-1, 1]:
 		b.box(dk + Vector3(sx * 1.6, 0.38, 0), Vector3(0.2, 0.76, 1.3), lacquer)
-		b.box(dk + Vector3(sx * 1.71, 0.38, 0), Vector3(0.02, 0.76, 1.3), gold)
+		b.box(dk + Vector3(sx * 1.71, 0.38, 0), Vector3(0.02, 0.76, 1.3), trim)
 	b.box(dk + Vector3(0, 0.98, 0.35), Vector3(0.12, 0.26, 0.12), gold)
 	b.box(dk + Vector3(0, 1.3, 0.35), Vector3(1.06, 0.68, 0.05), lacquer)
 	glow.box(dk + Vector3(0, 1.3, PC_SCREEN_Z), Vector3(0.96, 0.6, 0.01), Color8(40, 110, 200))   # mira al sillón
@@ -218,6 +298,9 @@ func _ceo_room() -> void:
 	b.box(dk + Vector3(0, 0.22, 1.25), Vector3(0.1, 0.44, 0.1), gold)
 	b.box(dk + Vector3(0, 0.03, 1.25), Vector3(0.7, 0.04, 0.7), gold)
 	_rect(dk.x - 1.8, dk.x + 1.8, dk.z - 0.7, dk.z + 0.7, 0.9)
+
+
+func _bookcase(b: Boxes, warm: Boxes, lacquer: Color, gold: Color) -> void:
 	# Biblioteca empotrada a la derecha al entrar: laca negra, repisas doradas con luz cálida y algún adorno
 	var bx := -W / 2 + 0.35
 	b.box(Vector3(bx, 1.5, 1.5), Vector3(0.6, 3.0, 4.6), lacquer)
@@ -234,6 +317,9 @@ func _ceo_room() -> void:
 			var hh := 0.38 + (k * 7 % 5) * 0.04
 			b.box(Vector3(bx + 0.2, 0.6 + row * 0.7 + hh / 2, -0.55 + k * 0.3), Vector3(0.36, hh, 0.22), books[(k + row) % books.size()])
 	_rect(-W / 2, -W / 2 + 0.7, -0.9, 3.9, 3.0)
+
+
+func _gold_vitrine(b: Boxes, warm: Boxes, black_marble: Color, gold: Color) -> void:
 	var gv := Vector3(-5.6, 0, -4.6)   # vitrina con lingotes de oro sobre mármol negro, con luz arriba
 	b.box(gv + Vector3(0, 0.5, 0), Vector3(1.0, 1.0, 1.0), black_marble)
 	b.box(gv + Vector3(0, 1.01, 0), Vector3(1.04, 0.03, 1.04), gold)
@@ -247,6 +333,9 @@ func _ceo_room() -> void:
 	b.box(gv + Vector3(0, 1.81, 0), Vector3(1.0, 0.03, 1.0), gold)
 	warm.box(gv + Vector3(0, 1.78, 0), Vector3(0.6, 0.02, 0.6), Color8(255, 236, 190))
 	_rect(gv.x - 0.5, gv.x + 0.5, gv.z - 0.5, gv.z + 0.5, 1.8)
+
+
+func _lounge(b: Boxes, black_marble: Color, gold: Color, leather: Color) -> void:
 	# Sala chica a la izquierda al entrar: dos sillones de cuero coñac y una mesa de mármol negro con filo dorado
 	for sz in [-1, 1]:
 		var sv := Vector3(5.2, 0, 0.6 + sz * 1.8)
@@ -260,6 +349,9 @@ func _ceo_room() -> void:
 	b.box(Vector3(5.2, 0.35, 0.6), Vector3(1.64, 0.03, 1.04), gold)
 	b.box(Vector3(5.2, 0.17, 0.6), Vector3(0.2, 0.34, 0.2), gold)
 	b.box(Vector3(5.0, 0.46, 0.5), Vector3(0.12, 0.1, 0.12), Color8(250, 250, 250))
+
+
+func _bar(b: Boxes, warm: Boxes, black_marble: Color, gold: Color) -> void:
 	# Bar de mármol negro con botellas iluminadas al fondo, a la izquierda
 	var bar := Vector3(W / 2 - 0.4, 0, 5.2)
 	b.box(bar + Vector3(0, 0.55, 0), Vector3(0.7, 1.1, 2.4), black_marble)
@@ -269,7 +361,16 @@ func _ceo_room() -> void:
 	for i in 6:
 		b.box(bar + Vector3(0, 1.3, -0.9 + i * 0.36), Vector3(0.12, 0.34, 0.12), bottles[i % bottles.size()])
 	_rect(bar.x - 0.35, bar.x + 0.35, bar.z - 1.2, bar.z + 1.2, 1.2)
-	# Pantalla grande con marco dorado: lo que vale tu empresa (a la izquierda de la puerta); el logo a la derecha
+
+
+func _screens(b: Boxes, glow: Boxes, warm: Boxes, lacquer: Color, gold: Color) -> void:
+	# El logo de tu empresa a la derecha de la puerta; con más lujo, a la izquierda la pantalla grande con lo que vale
+	b.box(Vector3(-4.6, 2.1, -D / 2 + 0.05), Vector3(3.6, 1.4, 0.06), gold if lux >= 3 else lacquer)
+	b.box(Vector3(-4.6, 2.1, -D / 2 + 0.08), Vector3(3.4, 1.2, 0.04), lacquer)
+	if lux >= 3:
+		warm.box(Vector3(-4.6, 2.88, -D / 2 + 0.2), Vector3(2.6, 0.03, 0.1), Color8(255, 226, 170))   # luz sobre el logo
+	if lux < 2:
+		return
 	b.box(Vector3(4.6, 2.0, -D / 2 + 0.06), Vector3(3.3, 1.9, 0.08), gold)
 	b.box(Vector3(4.6, 2.0, -D / 2 + 0.08), Vector3(3.2, 1.8, 0.08), lacquer)
 	glow.box(Vector3(4.6, 2.0, -D / 2 + 0.13), Vector3(3.0, 1.6, 0.01), Color8(16, 40, 34))
@@ -280,31 +381,19 @@ func _ceo_room() -> void:
 		var mid := (a + c) / 2
 		glow.box_rot(Vector3(mid.x, mid.y, -D / 2 + 0.14), Vector3(a.distance_to(c) + 0.03, 0.05, 0.01), Color8(90, 230, 140),
 				Vector3(0, 0, rad_to_deg((c - a).angle())))
-	b.box(Vector3(-4.6, 2.1, -D / 2 + 0.05), Vector3(3.6, 1.4, 0.06), gold)
-	b.box(Vector3(-4.6, 2.1, -D / 2 + 0.08), Vector3(3.4, 1.2, 0.04), lacquer)
-	warm.box(Vector3(-4.6, 2.88, -D / 2 + 0.2), Vector3(2.6, 0.03, 0.1), Color8(255, 226, 170))   # luz sobre el logo
-	# Maceteros altos de laca negra con filo dorado
-	for pv in [Vector3(-7.0, 0, 6.2), Vector3(7.0, 0, 2.6), Vector3(-2.2, 0, -6.2), Vector3(2.2, 0, -6.2)]:
+
+
+func _plants(b: Boxes, lacquer: Color, gold: Color) -> void:
+	# Maceteros altos de laca negra (con filo dorado cuando hay lujo): dos al principio, cuatro después
+	var spots_p := [Vector3(-2.2, 0, -6.2), Vector3(2.2, 0, -6.2)]
+	if lux >= 3:
+		spots_p += [Vector3(-7.0, 0, 6.2), Vector3(7.0, 0, 2.6)]
+	for pv in spots_p:
 		b.box(pv + Vector3(0, 0.45, 0), Vector3(0.6, 0.9, 0.6), lacquer)
-		b.box(pv + Vector3(0, 0.91, 0), Vector3(0.64, 0.03, 0.64), gold)
+		b.box(pv + Vector3(0, 0.91, 0), Vector3(0.64, 0.03, 0.64), gold if lux >= 3 else lacquer)
 		b.box(pv + Vector3(0, 1.4, 0), Vector3(0.7, 0.9, 0.7), Color8(50, 120, 60))
 		b.box(pv + Vector3(0, 2.0, 0), Vector3(0.45, 0.5, 0.45), Color8(66, 140, 74))
 		_rect(pv.x - 0.3, pv.x + 0.3, pv.z - 0.3, pv.z + 0.3, 2.2)
-	b.node(root, Mats.standard)
-	shell.node(root, Mats.standard, false)
-	glow.node(root, Mats.emissive, false)
-	warm.node(root, Mats.emissive, false)
-	company_label = Building.label(root, "", Vector3(-4.6, 2.1, -D / 2 + 0.11), 16, gold, true, false)
-	company_label.rotation.y = 0.0
-	worth_label = Building.label(root, "", Vector3(4.6, 2.55, -D / 2 + 0.15), 9, Color8(150, 255, 190), true, false)
-	worth_label.rotation.y = 0.0
-	var plate := Building.label(root, "CEO", dk + Vector3(-0.2, 0.9, -0.52), 4, Color8(40, 30, 20), true, false)
-	plate.rotation.y = PI
-	for x in [-4.0, 4.0]:   # bien iluminada y cálida: luces del techo, la lámpara colgante y una sobre el escritorio
-		for z in [-3.5, 0.5, 4.5]:
-			_light(root, Vector3(x, ROOM_H - 0.5, z), 10.0, 1.5, Color(1.0, 0.9, 0.76))
-	_light(root, ch, 7.0, 1.3, Color(1.0, 0.86, 0.66))
-	_light(root, dk + Vector3(0, 2.4, 0), 6.0, 0.9, Color(1.0, 0.9, 0.75))
 
 
 func set_company(name: String, worth: String) -> void:
