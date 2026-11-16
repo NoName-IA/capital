@@ -83,10 +83,8 @@ const OFFICE_LOOKS := [["Oficina de garaje", 0, 0.0], ["Oficina de barrio", 1, 2
 const OFFICE_DECOR := [
 	{"key": "alfombra", "name": "Alfombra roja", "cost": 6000.0, "rep": 1.0, "icon": "star"},
 	{"key": "jardin", "name": "Jardín", "cost": 12000.0, "rep": 1.0, "icon": "heart"},
-	{"key": "fuente", "name": "Fuente", "cost": 25000.0, "rep": 2.0, "icon": "cloud"},
-	{"key": "reflectores", "name": "Reflectores", "cost": 30000.0, "rep": 2.0, "icon": "sun"},
+	{"key": "guardia", "name": "Guardia de seguridad", "cost": 30000.0, "rep": 2.0, "icon": "person"},
 	{"key": "neon", "name": "Letrero luminoso", "cost": 45000.0, "rep": 3.0, "icon": "bolt"},
-	{"key": "estatua", "name": "Estatua dorada", "cost": 120000.0, "rep": 4.0, "icon": "crown"},
 ]
 const HQ_LEVELS := [
 	["Oficina básica", 0.0, 1.0],
@@ -112,6 +110,9 @@ const ACTIVITIES := [
 	["pesca", "Pescar en la punta del muelle", 1,
 	 "Un rato libre: lo que pescas lo vendes en el mercado del puerto. Mejor de madrugada y al atardecer."],
 ]
+# Casas del Barrio Las Lomas que se venden para alquilar: precio base, cuánto sube cada casa que ya tienes y la
+# renta mensual (sobre lo que pagaste). Suman su precio al valor de tu empresa y la renta entra como ingreso.
+const HOUSE := {"count": 8, "cost": 40000.0, "step": 0.15, "rent": 0.02}
 # Fondo de inversión en bolsa: rendimiento anual esperado según la fase del ciclo (con mucha volatilidad diaria).
 const FUND_RETURN := {"expansion": 0.10, "auge": 0.18, "recesion": -0.20, "recuperacion": 0.22}
 const FUND_VOLATILITY := 0.011

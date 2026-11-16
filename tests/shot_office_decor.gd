@@ -46,6 +46,13 @@ func run(m) -> void:
 	c.update_lights()
 	await m.frames(6)
 	await m.shot(ProjectSettings.globalize_path(OUT + "oficina_deco_noche.png"))
+	# La alfombra roja termina antes del paso de la gente
+	c.sky.set_time(0.45)
+	c.update_lights()
+	c.camera.global_position = Blueprints.to_world(City.HQ, 7, -7, 3.0)
+	c.camera.look_at(Blueprints.to_world(City.HQ, 0, -1, 0))
+	await m.frames(6)
+	await m.shot(ProjectSettings.globalize_path(OUT + "oficina_deco_bordillo.png"))
 	# El guardia sentado en medio de la obra
 	c.sky.set_time(0.45)
 	var mall: Mall = c.malls[1]

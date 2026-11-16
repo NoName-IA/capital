@@ -126,18 +126,13 @@ func _stage_shop(spec: Dictionary) -> Array:
 		Store.build_decor(shop_decor, kind, spec.product, [spec.key], false)
 	# Qué encuadrar: si el artículo va a los dos lados de la puerta, solo uno (se ve más grande)
 	var pts := PackedVector3Array()
-	for n in shop_decor.get_children():
-		if n is MeshInstance3D and n.mesh != null:
+	for n in shop_decor.find_children("*", "MeshInstance3D", true, false):   # también las de adentro (el guardia)
+		if n.mesh != null:
+			var xf: Transform3D = shop_decor.global_transform.affine_inverse() * n.global_transform
 			for i in n.mesh.get_surface_count():
-				pts.append_array(n.mesh.surface_get_arrays(i)[Mesh.ARRAY_VERTEX])
-	if spec.key == "reflectores" and spec.has("office"):   # uno solo, de cerca
-		var one := PackedVector3Array()
-		for v in pts:
-			if v.x > 5.5:
-				one.append(v)
-		if not one.is_empty():
-			pts = one
-	elif spec.key in ["plantas", "pantallas", "autopago", "terraza"]:
+				for v in n.mesh.surface_get_arrays(i)[Mesh.ARRAY_VERTEX]:
+					pts.append(xf * v)
+	if spec.key in ["plantas", "pantallas", "autopago", "terraza"]:
 		var right := PackedVector3Array()
 		for v in pts:
 			if v.x > 0.05:
