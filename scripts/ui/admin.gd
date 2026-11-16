@@ -1254,7 +1254,8 @@ func draw_negocios(g: Game) -> void:
 			ui.text(Fmt.short(loc.month_contrib), Vector2(x0 + 476, cy), 15, "muted", false, "midright")
 			ui.text("—", Vector2(x0 + 544, cy), 15, "muted", false, "midright")
 		var n_dec: int = loc.get("upgrades", []).size()
-		if ui.button(Rect2(x0 + 552, cy - 14, 76, 28), Lang.f("Decorar %d/%d", [n_dec, D.upgrades_for(int(loc.size)).size()]) if n_dec else "Decorar", true, "normal", 13,
+		# los locales del centro comercial no se decoran (la vitrina es del centro comercial)
+		if Game.mall_of(loc) < 0 and ui.button(Rect2(x0 + 552, cy - 14, 76, 28), Lang.f("Decorar %d/%d", [n_dec, D.upgrades_for(int(loc.size)).size()]) if n_dec else "Decorar", true, "normal", 13,
 				"Compra artículos para este local: plantas, letrero luminoso, terraza, aire acondicionado..."):
 			decor_loc = loc.id
 			if open_decor != null:

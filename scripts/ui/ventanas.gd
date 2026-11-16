@@ -738,12 +738,13 @@ func _app_remodel(ui: ImUI, body: Rect2) -> void:
 	for k in D.PRODUCT_ORDER:
 		var ls: Array = g.locs(k)
 		for i in ls.size():
-			locs.append([ls[i], i + 1])
+			if Game.mall_of(ls[i]) < 0:   # los del centro comercial no se decoran
+				locs.append([ls[i], i + 1])
 	# Lista de sucursales
 	var lr := Rect2(body.position.x, body.position.y, 250, body.size.y)
 	bevel(ui, lr, true, LIGHT)
 	if locs.is_empty():
-		ui.wrap_text("Todavía no tienes locales. Compra un terreno SE VENDE.", lr.grow(-12), 14, INK)
+		ui.wrap_text("Los locales del centro comercial no se decoran. Compra un terreno SE VENDE para tener uno propio." if g.locations else "Todavía no tienes locales. Compra un terreno SE VENDE.", lr.grow(-12), 14, INK)
 		return
 	var found := false
 	for e in locs:

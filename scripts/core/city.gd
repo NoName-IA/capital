@@ -2808,7 +2808,7 @@ func open_decor(loc_id: int) -> void:
 	if game == null:
 		return
 	var loc = game.find_location(loc_id)
-	if loc == null:
+	if loc == null or Game.mall_of(loc) >= 0:   # los del centro comercial no se decoran
 		return
 	decor_office = false
 	decor_id = loc_id
