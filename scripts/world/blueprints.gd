@@ -26,7 +26,8 @@ static func B(c: Array, s: Array, key, solid = false) -> Array:
 	return [Vector3(c[0], c[1], c[2]), Vector3(s[0], s[1], s[2]), key, solid]
 
 
-## Oficina central: torre corporativa de vidrio. Solo el vestíbulo (planta baja) se puede recorrer.
+## Oficina central: torre corporativa de vidrio. El vestíbulo (planta baja) se recorre: al fondo el ascensor a la
+## presidencia (Tower), a la izquierda al entrar el armario, a la derecha la vitrina de trofeos y la recepción.
 ## La oficina central según su aspecto (D.OFFICE_LOOKS): 0 garaje, 1 de barrio, 2 edificio corporativo, 3 torre de
 ## lujo. Por dentro el vestíbulo es el mismo (computadora, pizarra, trofeos, armario); cambian la altura, los
 ## materiales y lo de afuera.
@@ -75,32 +76,38 @@ static func hq(tier := 2) -> Array:
 		# Vestíbulo: alfombra persa en el medio, sala de espera
 		# Base de la alfombra persa (el dibujo lo pone City._office_props encima, ver OFFICE_RUG)
 		B([OFFICE_RUG[0], 0.07, OFFICE_RUG[1]], [OFFICE_RUG[2], 0.02, OFFICE_RUG[3]], Color8(98, 18, 24)),
-		B([5.9, 0.35, 6.5], [1.4, 0.7, 3.6], "hq_sofa", true),
-		B([6.5, 0.9, 6.5], [0.3, 0.8, 3.6], "hq_sofa"),
-		B([4.4, 0.25, 6.5], [1.0, 0.5, 1.8], "marble", true),
-		B([5.4, 1.45, 14.6], [2.6, 2.9, 1.0], "hq_wood", true),          # armario (tienda de ropa)
-		B([5.4, 1.45, 14.09], [0.05, 2.7, 0.02], "dark"),
-		B([5.2, 1.5, 14.07], [0.06, 0.45, 0.04], "gold"),
-		B([5.6, 1.5, 14.07], [0.06, 0.45, 0.04], "gold"),
-		B([5.4, 2.97, 14.6], [2.8, 0.14, 1.1], "gold"),
-		B([-5.4, 0.55, 14.6], [2.6, 1.1, 1.0], "hq_wood", 2.52),         # vitrina de trofeos (choca hasta el techo de la vitrina)
-		B([-5.4, 1.12, 14.6], [2.7, 0.06, 1.1], "gold"),
-		B([-5.4, 1.8, 15.05], [2.6, 1.4, 0.1], "hq_trim"),
-		B([-5.4, 1.75, 14.6], [2.6, 0.04, 1.0], "white"),
-		B([-5.4, 2.48, 14.6], [2.7, 0.08, 1.1], "hq_wood"),
-		B([-6.67, 1.8, 14.6], [0.06, 1.4, 1.0], "hq_wood"),
-		B([-4.13, 1.8, 14.6], [0.06, 1.4, 1.0], "hq_wood"),
-		# Pared del logo, pizarra de estrategia y pantalla de la bolsa
-		B([0, 2.7, z1 - 0.26], [8, 2.6, 0.1], "hq_trim"),
-		B([0, 1.3, z1 - 0.3], [8, 0.06, 0.1], "gold"),
+		B([5.9, 0.35, 9.0], [1.4, 0.7, 3.4], "hq_sofa", true),
+		B([6.5, 0.9, 9.0], [0.3, 0.8, 3.4], "hq_sofa"),
+		B([4.4, 0.25, 9.0], [1.0, 0.5, 1.8], "marble", true),
+		# Pared del fondo (de frente a la puerta): el ascensor al medio y el logo encima; pizarra y pantalla de la bolsa
+		B([0, 2.3, z1 - 0.26], [5.2, 4.6, 0.1], "hq_trim"),
+		B([0, 3.15, z1 - 0.3], [5.2, 0.05, 0.1], "gold"),
 		B([-w / 2 + 0.25, 2.4, 11], [0.08, 1.9, 3.4], "hq_trim"),
 		B([-w / 2 + 0.3, 2.4, 11], [0.05, 1.7, 3.2], "white"),
 		B([-w / 2 + 0.36, 1.48, 11], [0.16, 0.05, 1.2], "dark"),
 		B([w / 2 - 0.25, 2.6, 11], [0.08, 1.9, 3.4], "hq_trim"),
 		B([w / 2 - 0.3, 2.6, 11], [0.05, 1.7, 3.2], "dark"),
 	]
-	boxes += _office_pc(tier)
-	for pp in [[-7, 3], [7, 3], [-7, 14.8], [7, 14.8]]:
+	# Ascensor a la presidencia: al fondo, de frente a la puerta, al final de la alfombra (ver Tower)
+	# La cabina (de 0,8 m de fondo, hasta la pared) y su marco; las puertas que se abren las pone Tower.
+	var lz := LIFT_Z
+	boxes += [B([-0.95, 1.4, 15.35], [0.06, 2.8, 0.82], Color8(196, 186, 166)),
+			B([0.95, 1.4, 15.35], [0.06, 2.8, 0.82], Color8(196, 186, 166)),
+			B([0, 1.4, 15.66], [1.86, 2.8, 0.04], Color8(150, 128, 96)),             # fondo de la cabina
+			B([0, 1.0, 15.62], [1.7, 0.05, 0.05], "gold"),                           # pasamanos
+			B([0, 0.02, 15.35], [1.9, 0.04, 0.8], Color8(60, 60, 66)),
+			B([0, 2.8, 15.35], [1.96, 0.06, 0.82], Color8(70, 70, 76)),
+			B([0, 2.76, 15.35], [1.0, 0.03, 0.4], "lamp"),
+			B([0, 2.92, lz - 0.04], [2.3, 0.22, 0.1], "gold"),
+			B([-1.05, 1.45, lz - 0.04], [0.2, 2.9, 0.1], "gold"), B([1.05, 1.45, lz - 0.04], [0.2, 2.9, 0.1], "gold"),
+			B([1.4, 1.2, lz - 0.02], [0.16, 0.3, 0.04], "dark"),
+			B([1.4, 1.25, lz - 0.05], [0.08, 0.08, 0.02], ["glow", Color8(255, 210, 90)])]
+	# Armario a la izquierda al entrar y la vitrina de trofeos al frente, a la derecha (cada uno contra su pared)
+	boxes += _on_wall(_wardrobe(), WARDROBE_AT.x, WARDROBE_AT.y, 1) + _on_wall(_trophy_case(), TROPHY_AT.x, TROPHY_AT.y, -1)
+	boxes += [B([7.76, 1.25, 6.4], [0.04, 2.3, 1.0], "gold"),           # espejo junto al armario
+			B([7.74, 1.25, 6.4], [0.02, 2.14, 0.86], Color8(196, 214, 226))]
+	boxes += _reception()
+	for pp in [[7.0, 15.0], [3.2, 15.2]]:
 		boxes.append(B([pp[0], 0.4, pp[1]], [0.7, 0.8, 0.7], "hq_trim", true))
 		boxes.append(B([pp[0], 1.4, pp[1]], [1.0, 1.3, 1.0], "plant"))
 	# Fachada de vidrio: vidrio en planta baja, franjas por piso y parteluces dorados (de noche se prenden)
@@ -140,65 +147,128 @@ static func hq(tier := 2) -> Array:
 				b[2] = swap[key]
 	var texts := [[Vector3(0, h + 2.45, z0 + 0.43), "CAPITAL", 46, "gold"],
 			[Vector3(0, 4.12, z0 - 3.02), "OFICINA CENTRAL", 13, "white"],
-			[Vector3(0, 2.95, z1 - 0.33), "CAPITAL", 30, "gold"],
-			[Vector3(0, 2.15, z1 - 0.33), "Vende · Invierte · Crece", 9, "white"],
-			[Vector3(5.4, 2.55, 14.05), "ARMARIO", 6, "gold"]]
-	var spots := {"front": [0, -1.5], "door": [0, 1.8], "texts": texts, "computer": PC_STAND,
-			"pc_seat": PC_SEAT, "pc_screen": [PC_SCREEN_X[tier], PC_Z], "pc_screen_y": PC_SCREEN_Y[tier],
-			"pc_screen_w": PC_SCREEN_SIZE[tier][0], "pc_screen_h": PC_SCREEN_SIZE[tier][1],
-			"ceiling": [-w / 2, w / 2, z0, z1, lobby - 0.1], "wardrobe": [5.4, 12.7], "trophies": [-5.4, 12.8],
+			[Vector3(0, 4.0, z1 - 0.33), "CAPITAL", 26, "gold"],
+			[Vector3(0, 3.48, z1 - 0.33), "Vende · Invierte · Crece", 8, "white"],
+			[Vector3(0, 3.0, z1 - 0.33), "▲ PRESIDENCIA", 6, "gold"],
+			[Vector3(-5.5, 3.3, z1 - 0.25), "RECEPCIÓN", 9, "white"]]
+	var spots := {"front": [0, -1.5], "door": [0, 1.8], "texts": texts,
+			"ceiling": [-w / 2, w / 2, z0, z1, lobby - 0.1], "wardrobe": [6.3, WARDROBE_AT.y], "trophies": [-6.3, TROPHY_AT.y],
 			"indoor_lights": [[-4, 4.0, 5, 6.5], [4, 4.0, 5, 6.5], [-4, 4.0, 9.5, 6.5], [4, 4.0, 9.5, 6.5],
 					[-4, 4.0, 13.5, 6.5], [4, 4.0, 13.5, 6.5]],   # debajo de cada panel del techo
-			"board": [-6.5, 11], "ticker": [6.5, 11], "assistant": [-2.9, 7.6]}
+			"board": [-6.5, 10.6], "ticker": [6.5, 11], "assistant": [-5.3, 12.1]}
 	return [boxes, spots]
+
+
+# Muebles del vestíbulo. Se arman en coordenadas propias (x a lo ancho, centrados; el fondo hacia +z) y _on_wall los
+# pone contra una pared de los costados: el armario a la izquierda al entrar (x positivo) y la vitrina de trofeos al
+# frente, a la derecha (x negativo). [x, z] del centro de cada mueble en el vestíbulo:
+const WARDROBE_AT := Vector2(7.48, 3.9)
+const TROPHY_AT := Vector2(-7.45, 3.9)
+const TROPHY_SHELVES := [0.78, 1.48, 2.18]   # alto de cada repisa de la vitrina (de abajo hacia arriba)
+const RECEPTION := Vector2(-5.5, 13.2)       # centro del mesón de la recepción
+const LIFT_Z := 14.95                        # las puertas del ascensor del vestíbulo (la cabina sigue hasta la pared)
+
+
+## Pone un mueble armado en sus coordenadas contra la pared de x positivo (side 1) o negativo (side −1): su fondo
+## queda contra la pared y el frente mirando al medio del vestíbulo.
+static func _on_wall(boxes: Array, cx: float, cz: float, side: int) -> Array:
+	var out := []
+	for b in boxes:
+		var c: Vector3 = b[0]
+		var s: Vector3 = b[1]
+		out.append([Vector3(cx + side * c.z, c.y, cz + c.x * side), Vector3(s.z, s.y, s.x), b[2], b[3]])
+	return out
+
+
+## La recepción (como la de una oficina de verdad): mesón de madera clara con el frente blanco, la repisa de arriba con
+## vidrio esmerilado, una silla negra atrás, una mampara de vidrio con marco negro y el aire acondicionado en la pared.
+static func _reception() -> Array:
+	var x := RECEPTION.x
+	var z := RECEPTION.y
+	var oak := Color8(198, 172, 134)
+	var b := [B([x, 0.55, z], [3.2, 1.1, 0.8], oak, true),
+			B([x + 0.15, 0.55, z - 0.42], [2.3, 0.86, 0.04], "white"),               # frente blanco
+			B([x, 0.05, z - 0.41], [3.0, 0.1, 0.03], Color8(150, 150, 156)),         # zócalo de acero
+			B([x, 1.14, z - 0.1], [3.3, 0.06, 0.62], oak),                           # repisa de arriba
+			B([x, 1.18, z - 0.1], [3.2, 0.03, 0.56], Color8(196, 228, 214)),         # vidrio esmerilado
+			B([x - 1.25, 0.55, z - 0.42], [0.5, 0.95, 0.05], oak),
+			B([x, 0.78, z + 0.55], [3.0, 0.04, 0.5], "white"),                        # mesa de trabajo de atrás
+			B([x + 0.6, 1.0, z + 0.62], [0.5, 0.32, 0.04], "dark"),                   # pantalla
+			B([x + 0.6, 0.86, z + 0.66], [0.08, 0.12, 0.08], "dark"),
+			# Silla negra
+			B([x - 0.7, 0.47, z + 1.25], [0.58, 0.08, 0.58], Color8(30, 30, 34)),
+			B([x - 0.7, 0.9, z + 1.52], [0.56, 0.7, 0.08], Color8(30, 30, 34)),
+			B([x - 0.7, 0.24, z + 1.25], [0.08, 0.44, 0.08], "dark"),
+			B([x - 0.7, 0.03, z + 1.25], [0.6, 0.04, 0.6], "dark"),
+			# Mampara de vidrio con marco negro, entre la recepción y el ascensor
+			B([-2.6, 1.55, 14.6], [0.06, 3.1, 0.06], "dark"), B([-2.6, 1.55, 12.4], [0.06, 3.1, 0.06], "dark"),
+			B([-2.6, 3.1, 13.5], [0.06, 0.06, 2.3], "dark"), B([-2.6, 0.04, 13.5], [0.06, 0.08, 2.3], "dark"),
+			B([-2.6, 1.55, 13.5], [0.02, 3.0, 2.14], Color8(196, 220, 230), true),
+			# Aire acondicionado en la pared de la derecha, arriba
+			B([-7.68, 3.75, 13.4], [0.22, 0.32, 1.1], "white"),
+			B([-7.56, 3.64, 13.4], [0.02, 0.03, 0.9], Color8(170, 170, 176))]
+	return b
+
+
+## Vitrina de trofeos: mueble alto con base cerrada, tres repisas con luz detrás de cada una y filos dorados.
+## Los trofeos los pone City.build_trophies, centrados en cada repisa.
+static func _trophy_case() -> Array:
+	var x := 0.0
+	var z := 0.0
+	var b := [B([x, 0.06, z], [3.2, 0.12, 0.7], "hq_wood", 2.9),        # choca hasta arriba
+			B([x, 0.38, z], [3.2, 0.76, 0.7], "hq_wood"),
+			B([x, 0.62, z - 0.36], [3.0, 0.03, 0.02], "gold"),
+			B([x, 1.5, 0.31], [3.2, 2.9, 0.06], "hq_trim"),               # fondo
+			B([x, 2.92, z], [3.36, 0.1, 0.8], "gold")]
+	for sx in [-1, 1]:
+		b.append(B([x + sx * 1.56, 1.5, z], [0.1, 2.9, 0.7], "hq_wood"))
+	for y in TROPHY_SHELVES:
+		b.append(B([x, y - 0.02, z], [3.0, 0.04, 0.66], "white"))
+		b.append(B([x, y + 0.6, 0.26], [2.9, 0.03, 0.03], ["glow", Color8(255, 232, 186)]))    # luz de la repisa
+	return b
+
+
+## Armario abierto y ordenado: de un lado la ropa colgada (con los zapatos abajo), del otro repisas con ropa doblada.
+## El espejo de cuerpo entero va en la pared, al lado (ver hq).
+static func _wardrobe() -> Array:
+	var x := 0.0
+	var z := 0.0
+	var b := [B([x, 0.06, z], [3.2, 0.12, 0.65], "hq_wood", 2.9),
+			B([x, 1.5, 0.28], [3.2, 2.9, 0.06], Color8(96, 66, 46)),      # fondo
+			B([x, 2.92, z], [3.36, 0.1, 0.75], "gold"),
+			B([x, 0.15, z], [3.0, 0.06, 0.6], "hq_wood"),
+			B([x + 0.1, 1.5, z], [0.06, 2.8, 0.6], "hq_wood")]           # división del medio
+	for sx in [-1, 1]:
+		b.append(B([x + sx * 1.56, 1.5, z], [0.1, 2.9, 0.65], "hq_wood"))
+	# Izquierda: barra dorada con ropa colgada (camisas y chaquetas)
+	b.append(B([x - 0.72, 2.45, z], [1.3, 0.04, 0.04], "gold"))
+	var clothes := [Color8(245, 245, 245), Color8(40, 60, 110), Color8(227, 179, 65), Color8(40, 40, 45),
+			Color8(200, 80, 80), Color8(120, 130, 140)]
+	for i in clothes.size():
+		var cx := x - 1.3 + i * 0.22
+		var h := 1.05 if i % 2 == 0 else 0.85
+		b.append(B([cx, 2.38, z], [0.03, 0.1, 0.3], "gold"))            # gancho
+		b.append(B([cx, 2.33 - h / 2, z], [0.1, h, 0.46], clothes[i]))
+	for i in 3:   # zapatos abajo
+		for k in 2:
+			b.append(B([x - 1.2 + i * 0.4 + k * 0.13, 0.24, z - 0.05], [0.1, 0.1, 0.3], [Color8(30, 30, 35), Color8(110, 70, 40), Color8(240, 240, 240)][i]))
+	# Derecha: repisas con ropa doblada en pilas
+	var folded := [[Color8(70, 120, 200), Color8(245, 245, 245), Color8(80, 160, 100)],
+			[Color8(40, 50, 80), Color8(50, 50, 55), Color8(120, 90, 60)],
+			[Color8(200, 80, 80), Color8(250, 210, 70), Color8(170, 110, 220)],
+			[Color8(30, 30, 35), Color8(240, 240, 240), Color8(90, 60, 40)]]
+	for row in 4:
+		var y := 0.55 + row * 0.6
+		b.append(B([x + 0.84, y - 0.02, z], [1.3, 0.04, 0.6], "hq_wood"))
+		for col in 2:
+			for k in 3:
+				b.append(B([x + 0.52 + col * 0.62, y + 0.05 + k * 0.08, z], [0.5, 0.07, 0.42], folded[row][(k + col) % 3]))
+	return b
 
 
 # La alfombra persa del vestíbulo: [centro x, centro z, ancho, largo]. Dibujo: assets/imagenes/oficina/alfombra.png
 # (hecho con tools/alfombra_oficina.py, pixel art de 62×125 agrandado ×6).
 const OFFICE_RUG := [0.0, 8.0, 5.0, 10.0]
-
-# El escritorio de la computadora, a la derecha al entrar a la oficina (x negativo), contra la pared: te sientas
-# mirando hacia la pared y la pantalla queda de frente (ver City.sit_at_computer y Ventanas).
-const PC_Z := 6.5
-const PC_SEAT := [-5.6, PC_Z]          # donde queda tu personaje sentado
-const PC_STAND := [-4.6, PC_Z]         # donde aprietas E para sentarte
-const PC_SCREEN_X := [-6.93, -7.13, -7.13, -7.13]   # la cara de la pantalla según el aspecto de la oficina
-const PC_SCREEN_Y := [1.12, 1.3, 1.3, 1.34]
-const PC_SCREEN_SIZE := [[0.704, 0.44], [0.864, 0.54], [0.864, 0.54], [0.96, 0.6]]   # ancho × alto (16:10, como Ventanas)
-
-
-## Escritorio, silla y computadora según el aspecto de la oficina: monitor gordo en el garaje, pantalla plana en el
-## barrio y el corporativo, y pantalla grande con una segunda al lado en la torre de lujo.
-static func _office_pc(tier: int) -> Array:
-	var z := PC_Z
-	var wood = "hq_wood" if tier < 3 else Color8(30, 32, 38)
-	var glow := ["glow", Color8(70, 140, 215)]
-	var b := [
-		B([-6.9, 0.76, z], [1.2, 0.06, 2.3], wood, true),                      # tablero
-		B([-7.38, 0.37, z - 1.0], [0.08, 0.74, 0.08], "dark"), B([-7.38, 0.37, z + 1.0], [0.08, 0.74, 0.08], "dark"),
-		B([-6.42, 0.37, z - 1.0], [0.08, 0.74, 0.08], "dark"), B([-6.42, 0.37, z + 1.0], [0.08, 0.74, 0.08], "dark"),
-		B([-6.55, 0.805, z], [0.22, 0.03, 0.62], "dark"),                       # teclado
-		B([-6.55, 0.805, z + 0.52], [0.13, 0.03, 0.09], "dark"),                # mouse
-		# Silla de escritorio (respaldo detrás de ti, que miras hacia la pared)
-		B([-5.6, 0.47, z], [0.6, 0.08, 0.6], Color8(38, 40, 48)),
-		B([-5.27, 0.88, z], [0.08, 0.72, 0.58], Color8(38, 40, 48)),
-		B([-5.6, 0.24, z], [0.08, 0.44, 0.08], "dark"),
-		B([-5.6, 0.03, z], [0.62, 0.04, 0.62], "dark"),
-		B([-7.32, 0.93, z + 0.95], [0.22, 0.28, 0.22], "plant"),                # matita
-	]
-	match tier:
-		0:   # monitor gordo de los de antes
-			b += [B([-7.2, 1.1, z], [0.52, 0.6, 0.84], Color8(205, 198, 182)),
-					B([PC_SCREEN_X[0], 1.12, z], [0.02, 0.44, 0.704], glow)]
-		3:   # pantalla grande y otra chica al lado
-			b += [B([-7.25, 0.95, z], [0.14, 0.32, 0.14], "dark"), B([-7.18, 1.34, z], [0.06, 0.68, 1.04], "dark"),
-					B([PC_SCREEN_X[3], 1.34, z], [0.02, 0.6, 0.96], glow),
-					B([-7.18, 1.25, z - 1.0], [0.06, 0.45, 0.62], "dark"), B([-7.14, 1.25, z - 1.0], [0.02, 0.38, 0.55], glow)]
-		_:
-			b += [B([-7.25, 0.95, z], [0.14, 0.32, 0.14], "dark"), B([-7.18, PC_SCREEN_Y[tier], z], [0.06, 0.62, 0.94], "dark"),
-					B([PC_SCREEN_X[tier], PC_SCREEN_Y[tier], z], [0.02, 0.54, 0.864], glow)]
-	return b
-
 
 ## Centro comercial (ver Mall): fachada de vidrio con el nombre de tu empresa, un pasillo alto con fuente y bancas, y
 ## las divisiones de las 16 vitrinas (lo de adentro de cada una lo pone Mall según tus sucursales).
