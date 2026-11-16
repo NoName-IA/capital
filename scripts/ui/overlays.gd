@@ -681,6 +681,7 @@ func draw_settings(area: Rect2) -> void:
 	y = row_toggle(area, y, "Invertir el mouse vertical", "invert_y", "Mover el mouse hacia arriba mira hacia abajo, como en los simuladores de vuelo.")
 	y = group_title(area, y, "PANTALLA")
 	y = row_toggle(area, y, "Desenfocar menús", "blur", "La ciudad se ve borrosa detrás de los menús.")
+	y = row_toggle(area, y, "Emojis de los clientes", "emojis", "Sobre la cabeza de los clientes sale un emoji con lo que piensan de tu precio: feliz si es barato, molesto si es caro.")
 	end_scroll(y)
 
 

@@ -38,6 +38,7 @@ const DEFAULT_SETTINGS := {"music": 0.7, "effects": 0.8, "sensitivity": 1.0, "fo
 		"g_shadow_dist": 1, "g_shadow_soft": 0, "g_glow_amt": 1.0, "g_bright": 1.0, "g_contrast": 1.0, "g_sat": 1.0,
 		"g_tonemap": 0, "g_fog": true, "g_rain": true, "g_night_lights": true, "g_fps_limit": 1, "g_vsync": true,
 		"g_view": 3, "g_crowd": 1, "g_show_fps": false,
+		"emojis": true,   # los clientes reaccionan con emojis a tus precios (ver emote)
 		# Sonido y pantalla (Opciones): volumen general, sonidos de los menús, latido de peligro, silenciar sin foco,
 		# resolución 3D (0.5 a 1: la ciudad se dibuja más chica y se agranda; los menús siguen nítidos) y pantalla
 		# completa exclusiva (toma la pantalla para el juego solo: en algunas tarjetas va un poco más rápido)
@@ -70,6 +71,8 @@ var comps := {}      # "c3" (local fijo de los extremos) o "p5" (terreno que com
 var customers := []
 var pops := []
 var bubbles := []        # globos de diálogo de los NPC (ver say)
+var emotes := []         # emojis sobre la cabeza de los clientes: [Label3D, segundos, vida] (ver emote)
+static var emoji_font: SystemFont
 var cars_frozen := false  # en pausa los autos se quedan quietos y chocan como obstáculos
 var cars := []
 var tesla_t := 40.0   # segundos para que pase el próximo Tesla
@@ -1066,6 +1069,68 @@ func pop(pos: Vector3, text: String, kind: String, size := 16.0, life := 1.2) ->
 
 ## Globo de diálogo sobre la cabeza de alguien (lo sigue mientras camina). Uno por persona: el nuevo reemplaza al
 ## anterior. `kind` es el color: white, green, orange, red o gold.
+## Emojis de lo que piensa un cliente de tu precio: `ratio` es tu precio sobre el del mercado (ver Game.ref_price).
+## Barato: ojos de estrella o enamorado; justo: contento; un poco caro: pensativo; caro: mueca o billetes volando;
+## carísimo: enojado. Con apagón algunos sacan la linterna.
+static func price_emoji(ratio: float, dark := false) -> String:
+	if dark and randf() < 0.3:
+		return ["🔦", "😩", "🕯️"].pick_random()
+	if ratio < 0.85:
+		return ["🤩", "😍", "🤑"].pick_random()
+	if ratio < 1.05:
+		return ["😊", "🙂", "👍"].pick_random()
+	if ratio < 1.25:
+		return ["🤔", "😐"].pick_random()
+	if ratio < 1.5:
+		return ["😬", "😒", "💸"].pick_random()
+	return ["😠", "🤬"].pick_random()
+
+
+## Un emoji que salta sobre la cabeza de alguien (sube, crece de golpe y se desvanece). No reemplaza al globo de
+## texto: va más arriba. Se apaga con «Emojis de los clientes» en Opciones > Juego.
+func emote(person: Node3D, emoji: String, life := 2.0) -> void:
+	if not is_instance_valid(person) or not settings.get("emojis", true) or person.camera_far():
+		return
+	var old = person.get_meta("emote") if person.has_meta("emote") else null
+	if old != null and is_instance_valid(old):
+		old.queue_free()
+	if emoji_font == null:
+		emoji_font = SystemFont.new()
+		emoji_font.font_names = PackedStringArray(["Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol"])
+	var l := Label3D.new()
+	l.text = emoji
+	l.font = emoji_font
+	l.font_size = 64
+	l.pixel_size = 0.0075
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.outline_size = 0
+	l.position = Vector3(0, 2.55, 0)
+	l.scale = Vector3.ONE * 0.01
+	l.alpha_cut = Label3D.ALPHA_CUT_DISABLED
+	person.add_child(l)
+	person.set_meta("emote", l)
+	emotes.append([l, 0.0, life])
+
+
+func _update_emotes(dt: float) -> void:
+	for e in emotes.duplicate():
+		var l = e[0]
+		if not is_instance_valid(l):
+			emotes.erase(e)
+			continue
+		e[1] += dt
+		var t: float = e[1]
+		var life: float = e[2]
+		# salta: crece hasta 1.25 y vuelve a 1; sube despacio; se desvanece al final
+		var pop := 1.25 * sin(clampf(t / 0.3, 0, 1) * PI * 0.5) if t < 0.3 else lerpf(1.25, 1.0, clampf((t - 0.3) / 0.15, 0, 1))
+		l.scale = Vector3.ONE * maxf(0.01, pop)
+		l.position.y = 2.55 + 0.18 * minf(1.0, t / life)
+		l.modulate.a = clampf((life - t) / 0.4, 0, 1)
+		if t >= life:
+			l.queue_free()
+			emotes.erase(e)
+
+
 func say(person: Node3D, text: String, kind := "white", life := 2.4) -> void:
 	if not is_instance_valid(person) or not settings.comments:
 		return
@@ -1137,6 +1202,14 @@ func buy_chance(store) -> float:
 	var chance: float = 0.55 + 0.1 * (Game.stars_of(store.loc) - 3.0) + 0.5 * (1.0 - ratio) + 0.06 * (p.quality - 1)
 	chance += 0.15 * (p.reputation - 50.0) / 50.0
 	return clampf(chance, 0.08, 0.95)
+
+
+## Lo que piensa un cliente de tu precio en este local: su emoji.
+func react_price(person: Node3D, store) -> void:
+	if store == null or game == null:
+		return
+	var p: Dictionary = game.products[store.loc.product]
+	emote(person, City.price_emoji(p.price / game.ref_price(p), game.blackout), 2.2)
 
 
 func complain(pos: Vector3, store) -> void:
@@ -2305,6 +2378,7 @@ func update(dt: float) -> void:
 	update_lights()
 	if not frozen:
 		life.update(dt)
+		_update_emotes(dt)
 	diario_t -= dt
 	if diario_t <= 0.0:
 		diario_t = 0.5

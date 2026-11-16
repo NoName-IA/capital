@@ -130,6 +130,8 @@ func update(dt: float) -> void:
 			if wait > 0.4 and body.item:
 				body.hold("")
 				store.put_back(body.position)
+				var pp: Dictionary = city.game.products[store.loc.product]
+				city.emote(body, "💸" if pp.price / city.game.ref_price(pp) > 1.15 else ["😒", "🤷"].pick_random(), 1.8)
 			if wait > 0.8:
 				leave(_exit_path())
 			return
@@ -142,6 +144,7 @@ func update(dt: float) -> void:
 			_queue_chatter(idx, dt)
 			if angry and wait > 4.0:
 				city.complain(body.position, store)
+				city.emote(body, ["😡", "😤"].pick_random(), 2.0)
 				leave(line.exit)
 			elif idx == 0 and not angry:
 				var server: Person = store.server_for(line)
@@ -174,6 +177,8 @@ func update(dt: float) -> void:
 			body.hold(store.loc.product)
 			last_pick = pick_at
 			pick_at = null
+			if randf() < 0.6:   # mira el precio y reacciona con un emoji
+				city.react_price(body, store)
 			if not _maybe_doubt():
 				_go_to_line()
 		return
@@ -244,6 +249,8 @@ func _eat(dt: float) -> void:
 	body.sit(clampf(wait / 0.5, 0, 1) * clampf((sit_time - wait) / 0.5, 0, 1))
 	if wait > 1.2 and wait - dt <= 1.2 and randf() < 0.3 and not body.camera_far():
 		city.say(body, ["¡Qué rico!", "Justo lo que necesitaba.", "Mmm...", "Aquí se está bien."].pick_random(), "white", 1.8)
+	elif wait > 2.0 and wait - dt <= 2.0 and randf() < 0.4:
+		city.emote(body, ["😋", "😌", "❤️"].pick_random(), 1.8)
 	if wait >= sit_time:
 		body.sit(0.0)
 		store.seated.erase(chair)
@@ -644,6 +651,8 @@ func join_line() -> void:
 	line = best
 	state = "queue"
 	wait = 0.0
+	if not store.has_shelves() and randf() < 0.6:   # en el puesto mira el precio en la pizarra al llegar
+		city.react_price(body, store)
 	# En los puestos (sin repisa) a veces piden consejo al llegar
 	if not store.has_shelves() and randf() < 0.25 and not body.camera_far():
 		city.say(body, ["¿Qué me recomienda?", "¡Lo de siempre!", "¿Qué hay de nuevo hoy?"].pick_random(), "white", 1.8)
