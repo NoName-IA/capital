@@ -26,19 +26,12 @@ func run(m) -> void:
 	c.teleport(Blueprints.to_world(City.HQ, Tower.LOBBY_LIFT.x, Tower.LOBBY_LIFT.z), 0.0, "")
 	await m.frames(5)
 	print("aviso junto al ascensor: ", c.hud.prompt)
-	c.tower.go_up()
-	await m.get_tree().create_timer(1.6).timeout
-	await m.shot(ProjectSettings.globalize_path(OUT + "torre_viaje1.png"))
-	await m.get_tree().create_timer(1.6).timeout
-	await m.shot(ProjectSettings.globalize_path(OUT + "torre_viaje2.png"))
-	while c.tower.phase != "reveal":
-		await m.frames(1)
-	await m.get_tree().create_timer(1.2).timeout
-	await m.shot(ProjectSettings.globalize_path(OUT + "torre_llegada.png"))
+	c.tower.go_up()   # en la partida: un fundido y apareces arriba (el viaje por los pisos es solo del final)
+	var t0 := Time.get_ticks_msec()
 	while c.tower.busy():
 		await m.frames(1)
 	await m.frames(30)
-	print("en la presidencia: ", c.tower.inside(c.player.position), " · aviso: ", c.hud.prompt)
+	print("subió en ", (Time.get_ticks_msec() - t0) / 1000.0, " s · en la presidencia: ", c.tower.inside(c.player.position), " · aviso: ", c.hud.prompt)
 	await m.shot(ProjectSettings.globalize_path(OUT + "torre_presidencia.png"))
 	c.camera.global_position = c.tower.w(Vector3(-6, 3.2, -6))
 	m.set_process(false)

@@ -1,9 +1,9 @@
 class_name Tower
 extends RefCounted
 ## El último piso de la oficina central (la presidencia) y los pisos de ejecutivos que hay debajo. En el vestíbulo, al
-## fondo y de frente a la puerta, está el ascensor: con E subes directo a la presidencia con una animación (un ascensor de vidrio
-## que sube pasando por los pisos llenos de ejecutivos tecleando, las puertas se abren y la cámara recorre la oficina
-## del CEO). En la presidencia, con E en el ascensor vuelves al vestíbulo.
+## fondo y de frente a la puerta, está el ascensor: con E subes directo a la presidencia (un fundido y listo). En la
+## presidencia, con E en el ascensor vuelves al vestíbulo. El viaje en la cabina de vidrio pasando por los pisos de
+## ejecutivos se ve solo en el final (go_up_finale).
 ##
 ## Como el suelo de la ciudad es plano (City.floor_at y City.blocked solo saben de alturas de cajas, no de pisos
 ## apilados), la presidencia está armada aparte, lejos de la ciudad (ORIGIN), a la altura del suelo; los pisos de
@@ -23,7 +23,6 @@ const PC_SCREEN_Z := 0.38        # la cara de la pantalla (relativa al escritori
 const PC_SEAT_Z := 1.25          # el sillón, detrás del escritorio
 const FADE := 0.35
 const DOORS := 0.8
-const REVEAL := 2.8
 
 var city
 var root: Node3D
@@ -39,7 +38,7 @@ var floors := 1            # pisos de ejecutivos debajo de la presidencia
 var company_label: Label3D
 var worth_label: Label3D
 
-var phase := ""            # "", "out" (se oscurece), "ride", "doors", "reveal", "down"
+var phase := ""            # "", "out" (se oscurece) / "in" (se aclara arriba), "down"; en el final "ride", "doors"
 var t := 0.0
 var ride_time := 3.0
 var fade := 0.0
@@ -638,16 +637,17 @@ func update(dt: float) -> void:
 		return
 	t += dt
 	match phase:
-		"out":
-			fade = clampf(t / FADE, 0, 1)
+		"out":   # en la partida el ascensor solo te lleva: se oscurece, apareces arriba y se aclara (el viaje
+			fade = clampf(t / FADE, 0, 1)   # con los pisos de ejecutivos se ve solo en el final)
 			if t >= FADE:
-				phase = "ride"
+				_arrive()
+				phase = "in"
 				t = 0.0
-				ride_time = 1.4 + floors * 1.05
-				offices.visible = true
-				cab.visible = true
-				for d in doors:
-					d.position.x = signf(d.position.x) * 0.5
+		"in":
+			fade = 1.0 - clampf(t / FADE, 0, 1)
+			if t >= FADE:
+				phase = ""
+				fade = 0.0
 		"ride":
 			fade = 1.0 - clampf(t / FADE, 0, 1)
 			var k := smoothstep(0.0, 1.0, t / ride_time)
@@ -655,27 +655,16 @@ func update(dt: float) -> void:
 			if t >= ride_time:
 				phase = "doors"
 				t = 0.0
-				if finale_mode:   # el final tiene sus propios sonidos
-					city.sfx.play("fin_campana", 0.5)
-					city.sfx.play("fin_puertas", 0.45)
-				else:
-					city.sfx.play("select", 0.6, 1.9)
+				city.sfx.play("fin_campana", 0.5)
+				city.sfx.play("fin_puertas", 0.45)
 		"doors":
 			var o := smoothstep(0.0, 1.0, t / DOORS)
 			for d in doors:
 				d.position.x = signf(d.position.x) * (0.5 + o * 1.0)
-			if t >= DOORS and finale_mode:
+			if t >= DOORS:
 				phase = ""
 				offices.visible = false
 				city.finale.after_ride()
-			elif t >= DOORS:
-				phase = "reveal"
-				t = 0.0
-				offices.visible = false
-				city.sfx.play("fanfare", 0.35, 1.0)
-		"reveal":
-			if t >= REVEAL:
-				_arrive()
 		"down":
 			fade = clampf(t / FADE, 0, 1) if t < FADE else 1.0 - clampf((t - FADE) / FADE, 0, 1)
 			if t >= FADE and city.player.position.distance_to(_lobby_world()) > 0.5:
@@ -710,22 +699,12 @@ func place_camera(cam: Camera3D) -> bool:
 			cam.global_position = eye
 			cam.look_at(eye + Vector3(0, -0.12, 1.0))
 			return true
-		"reveal":
-			var k := smoothstep(0.0, 1.0, t / REVEAL)
-			var from := w(Vector3(0, 1.65, CAB_Z - 0.55))
-			var to := w(Vector3(3.4, 2.7, -3.4))
-			var eye := from.lerp(to, k) + Vector3(0, sin(k * PI) * 0.4, 0)
-			cam.global_position = eye
-			var look_from := w(Vector3(0, 1.5, 1.0))
-			var look_to := w(DESK + Vector3(0, 1.1, 0.4))
-			cam.look_at(look_from.lerp(look_to, k))
-			return true
 	return false
 
 
 ## Fundido, franjas de cine, el visor del ascensor y el título al llegar.
 func draw(ui: ImUI) -> void:
-	if phase in ["ride", "doors", "reveal"]:
+	if phase in ["ride", "doors"]:
 		var bar := 64.0
 		ui.rect(Rect2(-3000, -3000, ui.W + 6000, 3000 + bar), Color(0, 0, 0, 0.92))
 		ui.rect(Rect2(-3000, ui.H - bar, ui.W + 6000, 3000 + bar), Color(0, 0, 0, 0.92))
@@ -750,17 +729,5 @@ func draw(ui: ImUI) -> void:
 		ui.text(str(n), box.position + Vector2(86, 32), 32, Color8(255, 200, 90), true, "center")
 		ui.text("PRESIDENCIA" if level == 0 else Lang.t("Ejecutivos trabajando"), Vector2(ui.W / 2, box.end.y + 18), 13,
 				Color(1, 1, 1, 0.8), true, "center")
-	if phase == "reveal":
-		var a := clampf(t / 0.5, 0, 1) * clampf((REVEAL - t) / 0.5, 0, 1)
-		var gold := Color8(240, 195, 80)
-		gold.a = a
-		var white := Color(1, 1, 1, a)
-		var line_w := 260.0 * clampf(t / 0.8, 0, 1)
-		var cy := ui.H - 150.0
-		ui.text(Lang.f("PISO %d · PRESIDENCIA", floors + 2), Vector2(ui.W / 2, cy - 44), 14, gold, true, "center")
-		ui.rect(Rect2(ui.W / 2 - line_w / 2, cy - 28, line_w, 2), gold)
-		ui.text(str(city.game.company).to_upper() if city.game else "", Vector2(ui.W / 2 + 2, cy + 2), 40, Color(0, 0, 0, a * 0.6), true, "center")
-		ui.text(str(city.game.company).to_upper() if city.game else "", Vector2(ui.W / 2, cy), 40, white, true, "center")
-		ui.text("Bienvenido a tu oficina, jefe", Vector2(ui.W / 2, cy + 38), 15, Color(1, 1, 1, a * 0.8), false, "center")
 	if fade > 0.0:
 		ui.rect(Rect2(-3000, -3000, ui.W + 6000, ui.H + 6000), Color(0, 0, 0, fade))
