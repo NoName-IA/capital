@@ -3,7 +3,9 @@ extends RefCounted
 ## El mapa de la ciudad visto desde arriba: el minimapa de abajo a la izquierda y el mapa grande que se abre con la
 ## tecla M. Cada edificio es un rectángulo con su tamaño real: tus locales en dorado, los de la competencia en rojo,
 ## los terrenos en venta punteados y los lugares de la ciudad (oficina, parque, playa...) con su ícono. En el mapa
-## grande, al pasar el mouse un edificio se agranda y muestra sus datos; con un clic te lleva hasta él.
+## grande, al pasar el mouse un edificio se agranda y muestra sus datos; con un clic te lleva hasta él. El mapa grande
+## además nombra todo: cada local con su número («Café #1»), los rivales con su logo y su marca, los terrenos «En
+## venta», los lugares y las zonas de la ciudad (Distrito Financiero, Parque industrial, el mar...).
 ##
 ## El norte del mapa es el lado de la calle con z positivo (donde está tu oficina): y en pantalla = −z.
 
@@ -17,6 +19,7 @@ const RIVAL := Color8(235, 70, 60)
 const LOT := Color8(150, 160, 175)
 const PLACE := Color8(90, 170, 230)
 const FACTORY := Color8(120, 200, 140)
+const HOUSE := Color8(90, 200, 190)
 
 
 ## Medidas de cada tamaño de local [ancho, fondo] (ver Blueprints).
@@ -57,6 +60,7 @@ static func items(city) -> Array:
 				"name": Lang.f("Tu %s de %s", [Lang.noun(D.SIZES[loc.size].name), Lang.noun(D.PRODUCTS[loc.product].name)]),
 				"sub": Lang.f("%s clientes al día · %s estrellas · demanda %s", [Fmt.num(loc.sold), Fmt.num(Game.stars_of(loc), 1), Fmt.num(loc.demand)]),
 				"color": Blueprints.PRODUCT_COLORS[loc.product], "icon": "", "target": t[0], "yaw": t[1],
+				"label": Lang.f("%s #%d", [Lang.t(Hud.SHORT[loc.product]), g.locs(loc.product).find(loc) + 1]),
 				"clients": float(loc.sold), "lost": max(0.0, float(loc.demand) - float(loc.sold)), "price": p.price})
 	# Locales de la competencia
 	for slot in city.comps:
@@ -70,7 +74,8 @@ static func items(city) -> Array:
 		out.append({"id": "c" + slot, "kind": "rival", "rect": plot_rect(plot, 1),
 				"name": Lang.f("%s · %s", [c.rival.company, d.name]),
 				"sub": Lang.f("Competencia · unos %s clientes al día · cómpralo por %s", [Fmt.num(clients), Fmt.short(g.acquire_cost(c.key))]),
-				"color": c.rival.color, "icon": "", "target": t[0], "yaw": t[1], "clients": clients, "lost": 0.0})
+				"color": c.rival.color, "icon": "", "target": t[0], "yaw": t[1], "clients": clients, "lost": 0.0,
+				"label": c.rival.get("short", c.rival.company), "rival": c.rival})
 	# Terrenos en venta
 	for i in city.lots:
 		var plot: Array = City.plot_pos(i)
@@ -79,7 +84,7 @@ static func items(city) -> Array:
 		out.append({"id": "l%d" % i, "kind": "lot", "rect": plot_rect(plot, 1),
 				"name": Lang.f("Terreno %d en venta%s", [i + 1, " · playa" if beach else ""]),
 				"sub": Lang.f("Desde %s. Ve y apreta E para construir.", Fmt.short(g.location_cost(0))),
-				"color": LOT, "icon": "", "target": t[0], "yaw": t[1], "clients": 0.0, "lost": 0.0})
+				"color": LOT, "icon": "", "target": t[0], "yaw": t[1], "clients": 0.0, "lost": 0.0, "label": "En venta"})
 	# Centros comerciales (o sus terrenos en obra)
 	for mi in D.MALLS.size():
 		var mall_t := Mall.entrance(mi)
@@ -95,16 +100,17 @@ static func items(city) -> Array:
 					riv += 1
 			out.append({"id": id, "kind": "place", "rect": Mall.world_rect(mi), "name": Lang.f("Tu %s", Lang.noun(mname)),
 					"sub": Lang.f("%d vitrinas tuyas · %d de rivales · %d libres", [used, riv, n - used - riv]),
-					"color": GOLD, "icon": "box", "target": mall_t, "yaw": yaw, "clients": 0.0, "lost": 0.0})
+					"color": GOLD, "icon": "box", "target": mall_t, "yaw": yaw, "clients": 0.0, "lost": 0.0, "label": mname})
 		else:
 			out.append({"id": id, "kind": "lot", "rect": Mall.world_rect(mi), "name": Lang.f("Terreno: %s", Lang.noun(mname)),
 					"sub": Lang.f("%d vitrinas · cómpralo por %s", [int(D.MALL.slots), Fmt.short(g.mall_cost(mi))]),
-					"color": LOT, "icon": "", "target": mall_t, "yaw": yaw, "clients": 0.0, "lost": 0.0})
+					"color": LOT, "icon": "box", "target": mall_t, "yaw": yaw, "clients": 0.0, "lost": 0.0,
+					"label": Lang.f("%s · en venta", Lang.t(mname))})
 	# Tu oficina central
 	var hq_t := Blueprints.to_world(City.HQ, 0, -2.5)
 	out.append({"id": "hq", "kind": "place", "rect": Rect2(City.HQ[0] - 9, 11, 18, 16), "name": "Tu oficina central",
 			"sub": "Computadora, pizarra de estrategia, bolsa, trofeos y armario." if g.investing() else "Computadora, pizarra de estrategia, trofeos y armario.", "color": GOLD, "icon": "building",
-			"target": hq_t, "yaw": 0.0, "clients": 0.0, "lost": 0.0})
+			"target": hq_t, "yaw": 0.0, "clients": 0.0, "lost": 0.0, "label": "Tu oficina"})
 	# Fábricas (parque industrial)
 	for k in D.PRODUCT_ORDER:
 		var p: Dictionary = g.products[k]
@@ -115,17 +121,31 @@ static func items(city) -> Array:
 						"name": Lang.f("Tu fábrica de %s", Lang.noun(D.PRODUCTS[k].name)),
 						"sub": "Con paneles solares en el techo." if p.get("solar", false) else "Sin paneles solares (los puedes poner en Negocios).",
 						"color": FACTORY, "icon": "bolt" if p.get("solar", false) else "box",
-						"target": Vector3(fr.get_center().x, 0, fr.end.y + 3.0), "yaw": 180.0, "clients": 0.0, "lost": 0.0})
+						"target": Vector3(fr.get_center().x, 0, fr.end.y + 3.0), "yaw": 180.0, "clients": 0.0, "lost": 0.0,
+						"label": Lang.f("Fábrica de %s", Lang.t(Hud.SHORT[k]).to_lower())})
+	# Casas del barrio para alquilar
+	for i in city.builder.sale_houses.size():
+		var h: Dictionary = city.builder.sale_houses[i]
+		var hr := Rect2(h.pos.x - h.w / 2, h.pos.z - h.d / 2, h.w, h.d)
+		var owned: bool = g.houses.has(str(i))
+		var front: Vector3 = h.pos + Vector3(0, 0, h.face * (h.d / 2 + 3.2))
+		out.append({"id": "h%d" % i, "kind": "house", "rect": hr, "owned": owned,
+				"name": "Tu casa alquilada" if owned else "Casa en venta para alquilar",
+				"sub": Lang.f("Te paga %s al mes", Fmt.money(g.house_rent_of(float(g.houses[str(i)])))) if owned
+						else Lang.f("Cuesta %s · te pagaría %s al mes", [Fmt.short(g.house_cost()), Fmt.money(g.house_rent_of(g.house_cost()))]),
+				"color": HOUSE, "icon": "", "target": front, "yaw": 0.0 if h.face == -1 else 180.0, "clients": 0.0, "lost": 0.0,
+				"label": "Tu casa" if owned else "$"})
 	# Lugares de la ciudad
 	var places := [
 		["park", "Parque Central", "La fuente, la laguna, los juegos y el stand de muestras.", Rect2(-21, -55, 42, 42), Vector3(0, 0, -11), 180.0, "heart"],
 		["beach", "Paseo de la Playa", "Terrenos frente al mar y la cancha de vóley.", Rect2(110, -58, 50, 116), Vector3(140, 0, -8), 180.0, "sun"],
 		["pier", "Muelle", "Pesca en la punta del muelle.", Rect2(150, 22.8, 55, 2.4), Vector3(153, 0.42, 24), 90.0, "umbrella"],
-		["barrio", "Barrio Las Lomas", "Donde viven tus clientes. Tablón de vecinos para encuestas.", Rect2(-40, 30, 148, 28), Vector3(-44, 0, 43), 0.0, "person"],
+		["barrio", "Barrio Las Lomas", "Donde viven tus clientes. Casas en venta para alquilar y tablón de vecinos.", Rect2(-40, 30, 148, 28), Vector3(-44, 0, 43), 0.0, "person"],
 	]
 	for pl in places:
 		out.append({"id": pl[0], "kind": "place", "rect": pl[3], "name": pl[1], "sub": pl[2], "color": PLACE, "icon": pl[6],
-				"target": pl[4], "yaw": pl[5], "clients": 0.0, "lost": 0.0})
+				"target": pl[4], "yaw": pl[5], "clients": 0.0, "lost": 0.0, "label": pl[1],
+				"go": pl[0] != "beach"})   # a la playa se va con sus locales y terrenos, no con la zona entera
 	return out
 
 
@@ -174,7 +194,7 @@ static func draw_ground(ui: ImUI, view: Rect2, center: Vector2, scale: float) ->
 
 
 ## Un edificio del mapa. `k` (0 a 1) es cuánto se agranda (mouse encima).
-static func draw_item(ui: ImUI, it: Dictionary, r: Rect2, k: float, scale: float) -> void:
+static func draw_item(ui: ImUI, it: Dictionary, r: Rect2, k: float, scale: float, logo := 0.0) -> void:
 	if k > 0:
 		r = r.grow_individual(r.size.x * 0.22 * k, r.size.y * 0.22 * k, r.size.x * 0.22 * k, r.size.y * 0.22 * k)
 	var kind: String = it.kind
@@ -193,13 +213,113 @@ static func draw_item(ui: ImUI, it: Dictionary, r: Rect2, k: float, scale: float
 		"factory":
 			ui.rect(r, Color8(110, 120, 130), 3)
 			ui.rect(r, FACTORY.lerp(Color.WHITE, k * 0.6), 3, 2.0 + k)
+		"house":
+			if it.owned:
+				ui.rect(r, HOUSE.darkened(0.1), 2)
+				ui.rect(r, HOUSE.lerp(Color.WHITE, 0.3 + k * 0.5), 2, 1.5 + k)
+			else:
+				ui.rect(r, Color(HOUSE, 0.25 + 0.2 * k), 2)
+				ui.rect(r, Color(HOUSE, 0.9), 2, 1.5 + k)
 		"place":
 			ui.rect(r, Color(it.color, 0.08 + 0.18 * k), 4)
 			ui.rect(r, Color(it.color, 0.45 + 0.5 * k), 4, 1.0 + k)
+	if it.has("rival") and r.size.x > 12:   # el logo del rival en su local
+		var lr := logo if logo > 0 else clampf(min(r.size.x, r.size.y) * 0.3, 5.0, 14.0)   # `logo`: radio fijo (minimapa)
+		Admin.rival_badge(ui, it.rival, r.get_center(), lr * (1.0 + 0.3 * k))
 	if it.icon:
 		var s: float = clampf(min(r.size.x, r.size.y) * 0.6, 10.0, 26.0) * (1.0 + 0.3 * k)
 		ui.circle(r.get_center(), s * 0.62, Color(0.05, 0.07, 0.1, 0.75))
 		Icons.draw(ui, it.icon, r.get_center(), s, it.color.lerp(Color.WHITE, 0.3))
+
+
+## Zonas de la ciudad sin un edificio que las nombre: [nombre, x, z].
+const ZONES := [
+	["DISTRITO FINANCIERO", -100.0, 34.0],
+	["ENTRADA DE LA CIUDAD", -146.0, -34.0],
+	["PARQUE INDUSTRIAL", -72.0, -51.0],
+	["MAR", 190.0, -30.0],
+	["TÚNEL", -165.0, 14.0],
+]
+
+
+## Nombres de las zonas en letras grandes y tenues, y el nombre de la avenida sobre la calle.
+static func draw_zone_names(ui: ImUI, view: Rect2, center: Vector2, scale: float) -> void:
+	for z in ZONES:
+		var at := to_screen(view, center, scale, z[1], z[2])
+		var t: String = Lang.t(z[0])
+		ui.text(t, at + Vector2(1, 1), 13, Color(0, 0, 0, 0.55), true, "center")
+		ui.text(t, at, 13, Color(1, 1, 1, 0.62), true, "center")
+	for x in [-20.0, 85.0]:
+		var at := to_screen(view, center, scale, x, 0)
+		var t := Lang.t("AVENIDA COMERCIAL")
+		var w := ui.text_size(t, 10, true).x + 14
+		ui.rect(Rect2(at.x - w / 2, at.y - 8, w, 16), Color8(62, 64, 70))
+		ui.text(t, at, 10, Color(1, 1, 1, 0.7), true, "center")
+
+
+## Etiqueta chica con fondo oscuro, centrada en `at`. Devuelve su rectángulo.
+static func pill(ui: ImUI, text: String, at: Vector2, dot = null, size := 11) -> Rect2:
+	var tw := ui.text_size(text, size, true).x
+	var w := tw + (24.0 if dot != null else 12.0)
+	var r := Rect2(at.x - w / 2, at.y - 8, w, 16)
+	ui.rect(r, Color(0.03, 0.04, 0.06, 0.82), 8)
+	var x := r.position.x + 6
+	if dot != null:
+		ui.circle(Vector2(x + 4, r.get_center().y), 4, dot)
+		x += 12
+	ui.text(text, Vector2(x, r.get_center().y), size, Color.WHITE, true, "midleft")
+	return r
+
+
+## El nombre de cada edificio, debajo (o adentro) de su rectángulo. Si dos se pisan, gana el más importante (tus
+## locales, después los rivales, los lugares, las fábricas y los terrenos).
+static func draw_item_labels(ui: ImUI, view: Rect2, center: Vector2, scale: float, its: Array, skip := "") -> void:
+	var taken := []
+	for kind in ["mine", "rival", "place", "factory", "house", "lot"]:
+		for it in its:
+			if it.kind != kind or it.id == skip or str(it.get("label", "")) == "":
+				continue
+			var r := rect_to_screen(view, center, scale, it.rect)
+			var text: String = Lang.t(it.label)
+			var at := Vector2(r.get_center().x, r.end.y + 10)
+			var inside: bool = kind == "place" or str(it.icon) != ""
+			if inside:   # debajo del ícono, adentro del lugar
+				at = r.get_center() + Vector2(0, clampf(min(r.size.x, r.size.y) * 0.36, 12.0, 26.0) + 4)
+			if kind == "house" and not it.owned:
+				pass
+			elif kind == "lot" and not inside and r.size.x < ui.text_size(text, 10, true).x + 14:
+				text = "$"
+			var tw := ui.text_size(text, 10 if kind == "lot" and not inside else 11, true).x + (24.0 if kind in ["mine", "rival"] else 12.0)
+			if kind == "house" and not it.owned:
+				at = r.get_center()
+			var box := Rect2(at.x - tw / 2, at.y - 8, tw, 16)
+			if not view.encloses(box):
+				continue
+			var clash := false
+			for b in taken:
+				if b.grow(1).intersects(box):
+					clash = true
+					break
+			if clash:
+				continue
+			taken.append(box)
+			match kind:
+				"mine":
+					pill(ui, text, at, it.color)
+				"rival":
+					pill(ui, text, at, RIVAL)
+				"house":
+					if it.owned:
+						pill(ui, text, at, HOUSE)
+					else:
+						ui.text(text, r.get_center(), 11, Color.WHITE, true, "center")
+				"lot":
+					if inside:
+						pill(ui, text, at)
+					else:
+						ui.text(text, r.get_center(), 10, Color(1, 1, 1, 0.55), true, "center")
+				_:
+					pill(ui, text, at)
 
 
 ## La flecha del jugador mirando hacia donde mira la cámara.
@@ -214,7 +334,7 @@ static func draw_player(ui: ImUI, at: Vector2, yaw_deg: float, size := 9.0) -> v
 	ui.polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[3], pts[0]]), Color8(30, 120, 220), 2)
 
 
-## Minimapa de la HUD, centrado en el jugador. Devuelve su rectángulo.
+## Minimapa de la HUD, centrado en el jugador, con el logo de cada rival en su local. Devuelve su rectángulo.
 static func draw_mini(ui: ImUI, city, pos: Vector2) -> Rect2:
 	var view := Rect2(pos, MINI_SIZE)
 	var me := Vector2(city.player.position.x, city.player.position.z)
@@ -224,7 +344,7 @@ static func draw_mini(ui: ImUI, city, pos: Vector2) -> Rect2:
 	for it in items(city):
 		var r := rect_to_screen(view, me, MINI_SCALE, it.rect)
 		if r.intersects(view):
-			draw_item(ui, it, r, 0.0, MINI_SCALE)
+			draw_item(ui, it, r, 0.0, MINI_SCALE, 9.0)
 	draw_player(ui, view.get_center(), city.yaw, 7.0)
 	ui.set_clip(null)
 	ui.rect(view.grow(3), Color(1, 1, 1, 0.14), 14, 1.5)

@@ -19,6 +19,8 @@ var lamp_spots := []             # dónde cuelga la luz de cada farol
 var small_lights := []           # otras luces de noche: [posición, nivel] (focos de las casas, muelle, fuente, faro...)
 const VOLLEY := Vector3(146.0, 0.0, -44.0)   # centro de la cancha de vóley de la playa
 var activity_spots := {}         # actividad de la ciudad (D.ACTIVITIES) -> dónde se hace (ver _activities)
+var houses := []        # todas las casas del barrio: {pos, face (hacia el pasaje), w, d, door}
+var sale_houses := []   # las que se venden para alquilar (Game.houses usa su índice en esta lista)
 var park_spots := []             # (x, z) de bancas, faroles y adornos del parque: los árboles no se ponen encima
 var diario := {}                 # textos de la pantalla del clima del kiosco ELDIARIO
 var diario_seller: Person
@@ -308,6 +310,7 @@ func tree(pos: Vector3) -> void:
 func _zones() -> void:
 	rng.seed = 21
 	_barrio()
+	_pick_sale_houses()
 	_park()
 	_beach()
 	_activities()
@@ -411,6 +414,14 @@ func _barrio() -> void:
 		tree(Vector3(rng.randf_range(-38, -28), 0, rng.randf_range(-56, -30)))
 
 
+## Las casas que se venden para alquilar (D.HOUSE.count), repartidas por todo el barrio.
+func _pick_sale_houses() -> void:
+	sale_houses = []
+	var n := mini(int(D.HOUSE.count), houses.size())
+	for k in n:
+		sale_houses.append(houses[roundi(k * (houses.size() - 1) / maxf(1.0, n - 1.0))])
+
+
 ## Farol de calle: poste, brazo hacia la calzada (dir en z: ±1) y la lámpara, que de noche alumbra (lamp_spots).
 func _street_lamp(pos: Vector3, dir: int, h: float) -> void:
 	var dark: Color = Blueprints.PALETTE.dark
@@ -436,6 +447,7 @@ func house(pos: Vector3, face: int, pastel: Array, roofs: Array) -> void:
 	props.box(pos + Vector3(w * 0.25, h + d * 0.35, 0.8), Vector3(0.7, 1.6, 0.7), Color8(150, 80, 60))
 	var front := pos.z + face * (d / 2 + 0.02)
 	var dx := (1 if rng.randf() < 0.5 else -1) * w * 0.22
+	houses.append({"pos": pos, "face": face, "w": w, "d": d, "door": dx})
 	props.box(Vector3(pos.x + dx, 1.05, front), Vector3(1.1, 2.1, 0.08), Color8(120, 75, 45))
 	props.box(Vector3(pos.x + dx, 0.1, front + face * 0.6), Vector3(1.6, 0.2, 1.2), Color8(185, 180, 170))
 	# Foco de la entrada: de noche alumbra la puerta y el antejardín
