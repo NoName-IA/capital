@@ -99,6 +99,21 @@ func get_office_thumb(tier: int, key: String):
 	return null
 
 
+## La foto del edificio entero de la oficina central con el aspecto `tier` (D.OFFICE_LOOKS), para el antes y el
+## después de «Mejorar oficina». null si todavía se está sacando.
+func get_hq_thumb(tier: int, company := ""):
+	var k := "hq:%d:%s" % [tier, company]
+	if cache.has(k):
+		return cache[k]
+	var queued := false
+	for q in queue:
+		if q[0] == k:
+			queued = true
+	if not queued and (pending == null or pending[0] != k):
+		queue.append([k, {"hq": tier, "company": company, "key": ""}, "decor"])
+	return null
+
+
 ## Pone en el estudio solo el artículo (sin el local), y para el letrero luminoso también el letrero que rodea.
 ## Devuelve [centro, radio] de lo que hay que encuadrar.
 func _stage_shop(spec: Dictionary) -> Array:
@@ -107,7 +122,11 @@ func _stage_shop(spec: Dictionary) -> Array:
 	shop_decor = Node3D.new()
 	vp.add_child(shop_decor)
 	var kind: int = spec.get("size", 0)
-	if spec.has("office"):   # lo de la oficina: solo el artículo (el neón con su letrero detrás)
+	if spec.has("hq"):   # el edificio entero de la oficina, con tu nombre en el letrero
+		var bld := Building.new(shop_decor, City.HQ, "hq", Blueprints.PALETTE.gold, "", "", 0.0, int(spec.hq))
+		if spec.company != "":
+			bld.set_brand(spec.company)
+	elif spec.has("office"):   # lo de la oficina: solo el artículo (el neón con su letrero detrás)
 		if spec.key == "neon":
 			var nb := Boxes.new()
 			nb.box(Vector3(0, OfficeDecor.height(spec.office) + 2.4, 2.6), Vector3(11, 2.2, 0.3), Color8(60, 64, 80))
@@ -122,7 +141,7 @@ func _stage_shop(spec: Dictionary) -> Array:
 		b.box(Vector3(0, sy, sz + 0.1), Vector3(sw, sh, 0.15), Blueprints.PRODUCT_COLORS[spec.product].darkened(0.3))
 		b.node(shop_decor, Mats.standard)
 		Building.label(shop_decor, D.PRODUCTS[spec.product].name.to_upper(), Vector3(0, sy, sz - 0.01), sh * 20.0, Color.WHITE)
-	if not spec.has("office"):
+	if not spec.has("office") and not spec.has("hq"):
 		Store.build_decor(shop_decor, kind, spec.product, [spec.key], false)
 	# Qué encuadrar: si el artículo va a los dos lados de la puerta, solo uno (se ve más grande)
 	var pts := PackedVector3Array()

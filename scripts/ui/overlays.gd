@@ -108,7 +108,8 @@ func _draw_mode() -> void:
 			if question == null:
 				hide()
 			else:
-				match Admin.confirm_box(ui, question.title, question.detail, question.yes, app.game.cash):
+				var answer := draw_office_upgrade() if question.has("office") else Admin.confirm_box(ui, question.title, question.detail, question.yes, app.game.cash)
+				match answer:
 					1:
 						var action: Callable = question.action
 						question = null
@@ -380,6 +381,53 @@ func draw_map() -> void:
 		gy += 22
 	if ui.clicked and not view.has_point(ui.mouse) and ui.mouse.y < view.position.y - 40:
 		pass
+
+
+# ---------- mejorar oficina ----------
+## «Mejorar oficina» con el antes y el después: la foto de tu oficina como está y como queda (Thumbs.get_hq_thumb),
+## con una flecha al medio, el costo y los botones. Devuelve 1 (sí), 2 (no) o 0.
+func draw_office_upgrade() -> int:
+	var g: Game = app.game
+	var tiers: Array = question.office
+	var bw := 900.0
+	var bh := 560.0
+	var box := Rect2(W / 2 - bw / 2, H / 2 - bh / 2, bw, bh)
+	ui.rect(box.grow(8), Color(0, 0, 0, 0.35), 24)
+	ui.rect(box, Color8(18, 22, 30), 18)
+	ui.rect(box, Color(ImUI.COL.accent, 0.6), 18, 1.5)
+	ui.text("MEJORAR OFICINA", box.position + Vector2(36, 26), 13, "accent", true)
+	ui.text(D.OFFICE_LOOKS[tiers[1]][0], box.position + Vector2(36, 44), 28, "text", true)
+	ui.text(question.detail, box.position + Vector2(36, 84), 15, "muted", false, "topleft", bw - 72)
+	var iw := 370.0
+	var ih := 300.0
+	var iy := box.position.y + 120
+	var shots := [[box.position.x + 36, tiers[0], "AHORA", ImUI.COL.muted], [box.end.x - 36 - iw, tiers[1], "DESPUÉS", ImUI.COL.accent]]
+	for sh in shots:
+		var r := Rect2(sh[0], iy, iw, ih)
+		var after: bool = sh[2] == "DESPUÉS"
+		ui.rect(r, Color8(30, 36, 48), 14)
+		var img = city.thumbs.get_hq_thumb(sh[1], g.company)
+		if img != null:
+			ui.image(img, r.grow(-4))
+		else:
+			ui.text("…", r.get_center(), 30, "muted", false, "center")
+		ui.rect(r, Color(sh[3], 0.9 if after else 0.35), 14, 3.0 if after else 1.5)
+		var tag := Rect2(r.position.x + 14, r.position.y + 14, ui.text_size(sh[2], 13, true).x + 26, 28)
+		ui.rect(tag, sh[3] if after else Color(0, 0, 0, 0.6), 14)
+		ui.text(sh[2], tag.get_center(), 13, Color8(16, 20, 30) if after else Color.WHITE, true, "center")
+		ui.text(D.OFFICE_LOOKS[sh[1]][0], Vector2(r.get_center().x, r.end.y + 12), 17, "text" if after else "muted", after, "midtop")
+	# flecha entre las dos fotos (late un poco)
+	var mid := Vector2(box.get_center().x, iy + ih / 2)
+	var pulse := 1.0 + 0.08 * sin(Time.get_ticks_msec() / 200.0)
+	ui.circle(mid, 30 * pulse, ImUI.COL.accent)
+	Icons.draw(ui, "arrow_right", mid, 30, Color8(16, 20, 30))
+	ui.text(Lang.f("Caja: %s", Fmt.money(g.cash)), Vector2(box.get_center().x, box.end.y - 84), 14, Admin.sc(g.cash), true, "center")
+	var res := 0
+	if ui.button(Rect2(box.position.x + 36, box.end.y - 62, 300, 44), question.yes, true, "primary", 17):
+		res = 1
+	if ui.button(Rect2(box.end.x - 336, box.end.y - 62, 300, 44), "Ahora no", true, "normal", 16):
+		res = 2
+	return res
 
 
 # ---------- menú de pausa ----------

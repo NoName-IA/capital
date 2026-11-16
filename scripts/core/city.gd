@@ -476,6 +476,9 @@ func remodel_office() -> void:
 					sync_office(g)
 					sfx.play("fanfare", 0.7)
 				toast(res[1], "good" if res[0] else "bad"))
+	overlays.question["office"] = [int(g.office_look), nl]   # la ventana muestra el antes y el después
+	thumbs.get_hq_thumb(int(g.office_look), g.company)
+	thumbs.get_hq_thumb(nl, g.company)
 
 
 func open_growth() -> void:
@@ -2361,7 +2364,7 @@ func update(dt: float) -> void:
 		b.rotation.z = deg_to_rad(sin(t * 0.9 + ph) * 4)
 	hud.update(dt)
 	hud.update_danger(g, dt)
-	if overlays.mode in ["personaje", "decorar", "pc"] or tutorial.active or power_scene.active():   # el mentor también es una foto
+	if overlays.mode in ["personaje", "decorar", "pc", "confirmar"] or tutorial.active or power_scene.active():   # el mentor también es una foto
 		thumbs.step()
 	advance_sky(dt)
 	sky.moon_phase = fmod(game.day + 15.0, 29.5) / 29.5 if game != null else 0.5  # una fase por mes de juego
