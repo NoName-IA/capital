@@ -14,7 +14,7 @@ func _ready() -> void:
 			"test_weather_moves_demand", "test_stars", "test_city_activities", "test_decor", "test_solar",
 			"test_labor", "test_every_micro_is_booked", "test_rivals_alive", "test_buy_that_building", "test_old_saves",
 			"test_mall_and_franchises", "test_homeless_become_franchises", "test_beach_mall_and_rival_shops",
-			"test_new_game_without_stall", "test_normal_mode_has_no_investments", "test_key_decisions", "test_every_blueprint_is_whole", "test_office_looks", "test_barrio_houses", "test_buy_all_decor", "test_power_plant"]:
+			"test_new_game_without_stall", "test_normal_mode_has_no_investments", "test_key_decisions", "test_every_blueprint_is_whole", "test_office_looks", "test_barrio_houses", "test_buy_all_decor", "test_power_plant", "test_strike"]:
 		var before := failures
 		call(t)
 		print(("OK    " if failures == before else "FALLA ") + t)
@@ -828,3 +828,52 @@ func test_barrio_houses() -> void:
 	var h := Game.from_json(g.to_json())
 	check(h.houses.has("0"), "las casas se guardan")
 	check(not g.buy_house(int(D.HOUSE.count))[0], "no hay más casas que las del barrio")
+
+## La huelga: hacen falta muchos batazos; los avisos; sin gente no se vende ni se pagan sueldos; las tres salidas.
+func test_strike() -> void:
+	var g := Game.new(21)
+	g.tutorial_step = -1
+	g.cash = 100000.0
+	var loc: Dictionary = g.locations[0]
+	g.hire(loc)
+	for i in 15:
+		g.bat_hit()
+	g.step_day()
+	check(not g.strike and g.strike_warn == 0, "unos pocos batazos no hacen nada")
+	for i in 40:   # el rencor baja con los días
+		g.step_day()
+	check(g.grudge < 15.0, "el rencor baja con el tiempo (%.1f)" % g.grudge)
+	g.grudge = 0.0
+	for i in 30:
+		g.bat_hit()
+	g.step_day()
+	check(g.strike_warn == 1 and not g.strike, "con bastantes golpes murmuran, pero no paran")
+	for i in 22:
+		g.bat_hit()
+	g.step_day()
+	check(g.strike and g.strike_scene and g.staff_out(), "con muchos golpes hay huelga")
+	check(g.capacity(loc) == 0.0, "en huelga nadie atiende")
+	var sal: float = g.ledger.salarios
+	g.step_day()
+	near(g.ledger.salarios, sal, 0.001, "en huelga no se pagan sueldos")
+	check(g.grudge >= float(D.STRIKE.at), "en huelga los batazos no cuentan ni baja el rencor")
+	check(g.strike_resolve("ignorar")[0] and g.strike, "ignorarlos: la huelga sigue")
+	var w0 := g.wage_daily()
+	check(g.strike_resolve("subir")[0] and not g.strike, "subir sueldos termina la huelga")
+	near(g.wage_daily(), w0 * (1.0 + float(D.STRIKE.raise)), 0.001, "el sueldo sube 15 %")
+	check(g.capacity(loc) > 0.0 and g.grudge == 0.0, "vuelven a atender y se les pasa el rencor")
+	var back := Game.from_json(g.to_json())
+	near(back.wage_daily(), g.wage_daily(), 0.001, "el aumento queda guardado")
+	# Otra huelga: despedir a todos
+	for i in 51:
+		g.bat_hit()
+	g.step_day()
+	check(g.strike, "segunda huelga")
+	var cash0 := g.cash
+	var cost := g.strike_fire_cost()
+	check(g.strike_resolve("despedir")[0] and not g.strike, "despedir a todos termina la huelga")
+	near(cash0 - g.cash, cost, 0.01, "cuesta indemnizar y contratar")
+	check(g.staff_out() and g.capacity(loc) == 0.0, "los locales quedan sin gente unos días")
+	for i in int(D.STRIKE.rehire_days):
+		g.step_day()
+	check(not g.staff_out() and g.capacity(loc) > 0.0, "llega el personal nuevo")

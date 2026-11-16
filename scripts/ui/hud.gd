@@ -83,7 +83,7 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 	ui.place_fill(size)
 	ui.begin(mouse_window, clicked, 0, false)
 	var g = city.game
-	var visible: bool = g != null and not city.overlays.mode in ["personaje", "decorar"] and city.pc_phase == "" 			and not city.tower.busy() and not city.finale.active() 			and not city.power_scene.active()
+	var visible: bool = g != null and not city.overlays.mode in ["personaje", "decorar"] and city.pc_phase == "" 			and not city.tower.busy() and not city.finale.active() 			and not city.power_scene.active() and not city.strike_scene.active()
 	if visible:
 		if city.weather.flash > 0.01 and not city.camera_indoors():  # relámpago de la tormenta
 			ui.rect(Rect2(0, 0, ui.W, ui.H), Color(0.9, 0.93, 1.0, city.weather.flash * 0.35))
@@ -104,6 +104,7 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 		city.tower.draw(ui)
 		city.finale.draw(ui)
 		city.power_scene.draw(ui)
+		city.strike_scene.draw(ui)
 	city.finale.draw_menu_in(ui)   # el menú aparece desde el negro al terminar el final
 	var fade: float = city.pc_fade()   # la pantalla de la computadora "se prende" (ver City._pc_camera)
 	if fade > 0.0:
@@ -163,6 +164,8 @@ func _draw_panel(g) -> void:
 	var chips := [[wd.name, "weather"]]
 	if g.power_failing():   # la planta eléctrica falla: hay que ir a pagar
 		chips.append(["Apagón" if g.blackout else "Planta fallando", "power"])
+	if g.staff_out():   # en huelga, o esperando al personal nuevo
+		chips.append(["Huelga" if g.strike else "Sin personal", "strike"])
 	if g.locations:
 		var total := 0.0
 		for l in g.locations:
@@ -235,6 +238,10 @@ func _draw_panel(g) -> void:
 				cx = _chip(Vector2(cx, y), ch[0], Color(1.0, 0.3, 0.25) if g.blackout else Color(1.0, 0.6, 0.25),
 						Lang.f("Se fue la luz y no vuelve hasta que pagues: tus locales venden %s menos. Paga el arreglo en la planta, junto al túnel (%s).",
 						[Fmt.pct(1.0 - float(D.POWER.demand), 0), Fmt.money(g.power_cost())]), "bolt")
+			elif ch[1] == "strike":
+				cx = _chip(Vector2(cx, y), ch[0], Color(1.0, 0.3, 0.25),
+						"Tus empleados están en huelga: nadie atiende tus locales. Habla con el delegado frente a tu oficina." if g.strike
+						else Lang.f("Despediste a todos: el personal nuevo llega en %d días.", maxi(1, g.rehire_until - g.day)), "person")
 			elif ch[1] == "weather":
 				cx = _chip(Vector2(cx, y), ch[0], Color8(255, 140, 70) if g.weather == 4 else Color8(120, 185, 240), _weather_tip(g),
 						Icons.weather(g.weather, night))
@@ -264,7 +271,7 @@ func _weather_tip(g) -> String:
 
 
 func _chip_width(ch: Array) -> float:
-	if ch[1] in [null, "weather", "stars", "power"]:
+	if ch[1] in [null, "weather", "stars", "power", "strike"]:
 		return ui.text_size(ch[0], 12, true).x + 18 + 17
 	return ui.text_size(ch[0], 12).x + 48
 

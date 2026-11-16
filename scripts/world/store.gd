@@ -247,7 +247,7 @@ func star_burst(up: bool) -> void:
 
 
 func sync_staff() -> void:
-	var want: int = min(loc.employees, spots.staff.size())
+	var want: int = 0 if city.game != null and city.game.staff_out() else min(loc.employees, spots.staff.size())   # en huelga no hay nadie
 	while staff.size() < want:
 		var p := Person.new(Blueprints.PRODUCT_COLORS[loc.product], null, true)
 		city.add_child(p)

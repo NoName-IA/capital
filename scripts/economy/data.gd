@@ -117,6 +117,11 @@ const ACTIVITIES := [
 # arreglo se paga en la caseta de la planta y da luz por `days` días (unos 3 meses y medio); después se corta otra vez.
 # Cuesta siempre `cash_k` (el 5 %) de la caja que tengas al pagar.
 const POWER := {"start": 0.25, "min_day": 20, "days": 105, "cash_k": 0.05, "demand": 0.55}
+## La huelga: cada batazo a un empleado suma 1 de rencor; el rencor baja `decay` por día (un día de juego dura ~1 s),
+## así que solo llega a `at` si les pegas mucho y seguido. Avisos al pasar `warn`. Al terminarla:
+## subir sueldos (`raise`, para siempre, y el ánimo sube `morale`) o despedir a todos (indemnización + contratar de
+## nuevo; los locales quedan sin gente `rehire_days` días y la fama baja `rep`).
+const STRIKE := {"at": 50.0, "decay": 0.08, "warn": [25.0, 40.0], "raise": 0.15, "morale": 25.0, "rehire_days": 5, "rep": 4.0}
 const HOUSE := {"count": 8, "cost": 40000.0, "step": 0.15, "rent": 0.02}
 # Fondo de inversión en bolsa: rendimiento anual esperado según la fase del ciclo (con mucha volatilidad diaria).
 const FUND_RETURN := {"expansion": 0.10, "auge": 0.18, "recesion": -0.20, "recuperacion": 0.22}

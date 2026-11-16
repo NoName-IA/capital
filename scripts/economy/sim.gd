@@ -100,6 +100,15 @@ var power_paid := 0       # cuántas veces pagaste el arreglo
 var power_intro := false  # ya viste la cinemática de cuando falló
 var blackout := false     # hoy hay apagón
 var blackout_days := 0    # días de apagón en toda la partida
+# La huelga (ver D.STRIKE y City.strike_scene)
+var grudge := 0.0          # rencor de tus empleados por los batazos (baja de a poco con los días)
+var strike := false        # están en huelga: nadie atiende tus locales hasta que decidas
+var strike_scene := false  # falta ver la cinemática de la huelga
+var strike_warn := 0       # avisos que ya salieron (1: murmuran, 2: hablan de huelga)
+var strikes := 0           # huelgas en toda la partida
+var strike_days := 0       # días de huelga en toda la partida
+var wage_raise := 1.0      # los aumentos que diste para terminar huelgas (multiplica el sueldo)
+var rehire_until := 0      # despediste a todos: hasta este día los locales no tienen gente
 var franchises := []      # franquicias en otras ciudades: {id, product, city, day, quality, month_royalty, last_royalty}
 
 # Lo que se guarda en el archivo de partida (todo lo anterior menos el generador aleatorio)
@@ -112,7 +121,8 @@ const SAVED := ["day", "cash", "bonds", "products", "locations", "loans", "asset
 		"weather", "weather_next", "weather_days", "activity_day", "beach_boost_days",
 		"labor", "morale", "micro", "next_micro_day", "rivals", "plot_owner", "passed", "mall", "franchises", "mall2", "rival_mall", "path", "office_look", "office_offered", "office_decor", "tutorial_step", "houses",
 		"finale_seen", "best_month", "worst_choice",
-		"power_fail", "power_until", "power_paid", "power_intro", "blackout", "blackout_days"]
+		"power_fail", "power_until", "power_paid", "power_intro", "blackout", "blackout_days",
+		"grudge", "strike", "strike_scene", "strike_warn", "strikes", "strike_days", "wage_raise", "rehire_until"]
 
 
 static func new_ledger() -> Dictionary:
@@ -321,7 +331,7 @@ func locs(key: String) -> Array:
 
 
 func wage_daily() -> float:
-	return D.BASE_WAGE * price_index * min_wage_mult / 30.0 * D.LABOR[labor].wage
+	return D.BASE_WAGE * price_index * min_wage_mult / 30.0 * D.LABOR[labor].wage * wage_raise
 
 
 ## Cuánto rinde cada empleado por el trato y el ánimo: con ánimo 60 rinde lo normal; muy bajo atiende peor.
@@ -368,7 +378,7 @@ func rent_daily(loc: Dictionary) -> float:
 
 func capacity(loc: Dictionary) -> float:
 	# `owner` lo activa la ciudad 3D cuando el jugador atiende el mostrador en persona.
-	var staff: int = int(loc.employees) + (1 if loc.get("owner", false) else 0)
+	var staff: int = (0 if staff_out() else int(loc.employees)) + (1 if loc.get("owner", false) else 0)
 	var p: Dictionary = products[loc.product]
 	return (staff * D.PRODUCTS[loc.product].productivity * staff_factor() * (1.0 + upgrade_bonus(loc, "capacity"))
 			* float(p.get("cap_boost", 1.0)))
@@ -1303,6 +1313,84 @@ func _power_day() -> void:
 			add_news("Se fue la luz en toda la ciudad: tus locales venden mucho menos. No vuelve hasta que pagues el arreglo en la planta, junto al túnel.", "bad", "blackout")
 
 
+# ---------- huelga ----------
+## Tus empleados no están en los locales: en huelga, o recién despediste a todos y todavía no llega la gente nueva.
+func staff_out() -> bool:
+	return strike or day < rehire_until
+
+
+## Le pegaste con el bate a un empleado: suma rencor.
+func bat_hit() -> void:
+	if not strike:
+		grudge += 1.0
+
+
+## Una vez al día: el rencor baja de a poco; avisos cuando sube; con mucho rencor empieza la huelga.
+func _strike_day() -> void:
+	if strike:
+		strike_days += 1
+		return
+	if day == rehire_until and rehire_until > 0:
+		add_news("Llegó el personal nuevo: tus locales vuelven a atender.", "good")
+	grudge = maxf(0.0, grudge - float(D.STRIKE.decay))
+	var warn: Array = D.STRIKE.warn
+	if strike_warn > 0 and grudge < float(warn[0]) * 0.6:
+		strike_warn = 0   # se les pasó
+	if strike_warn < 1 and grudge >= float(warn[0]):
+		strike_warn = 1
+		add_news("Tus empleados murmuran contra ti: no les gusta nada el bate.", "warn", "grudge", 1)
+	elif strike_warn < 2 and grudge >= float(warn[1]):
+		strike_warn = 2
+		add_news("Tus empleados hablan de hacer huelga: el sindicato ya está organizando a la gente.", "bad", "grudge", 2)
+	if grudge >= float(D.STRIKE.at) and not locations.is_empty() and tutorial_step < 0:
+		strike = true
+		strike_scene = true
+		strikes += 1
+		add_news("¡HUELGA! Tus empleados dejaron de trabajar y protestan frente a tu oficina: nadie atiende tus locales.", "bad", "strike")
+
+
+## Cuánto cuesta despedir a todos: la indemnización de cada uno más contratar a la gente nueva.
+func strike_fire_cost() -> float:
+	var n := staff_count()
+	return n * (D.SEVERANCE_DAYS * wage_daily() + D.HIRING_COST * price_index)
+
+
+## Terminar la huelga: "subir" (sueldos +15 % para siempre), "despedir" (a todos) o "ignorar" (sigue la huelga).
+func strike_resolve(choice: String) -> Array:
+	if not strike:
+		return [false, "No hay ninguna huelga."]
+	match choice:
+		"subir":
+			wage_raise *= 1.0 + float(D.STRIKE.raise)
+			morale = clampf(morale + float(D.STRIKE.morale), 0.0, 100.0)
+			_end_strike()
+			add_news(Lang.f("Terminó la huelga: les subiste el sueldo %d %% a todos tus empleados.", roundi(float(D.STRIKE.raise) * 100)), "good", "strike_end", "subir")
+			return [true, "Terminó la huelga: tus empleados vuelven contentos."]
+		"despedir":
+			var n := staff_count()
+			var cost := strike_fire_cost()
+			_spend(n * D.SEVERANCE_DAYS * wage_daily(), "indemnizaciones")
+			_spend(n * D.HIRING_COST * price_index, "contratacion")
+			rehire_until = day + int(D.STRIKE.rehire_days)
+			morale = 55.0
+			for p in _active_products():
+				_rep(p.key, -float(D.STRIKE.rep))
+			_end_strike()
+			add_news(Lang.f("Despediste a los %d huelguistas (%s). El personal nuevo llega en %d días.", [n, Fmt.money(cost), int(D.STRIKE.rehire_days)]), "warn", "strike_end", "despedir")
+			return [true, Lang.f("Despediste a todos. Los nuevos llegan en %d días.", int(D.STRIKE.rehire_days))]
+		"ignorar":
+			add_news("Ignoraste a los huelguistas: siguen protestando y tus locales siguen cerrados.", "bad", "quiet")
+			return [true, "La huelga sigue. Puedes hablar con el delegado frente a tu oficina."]
+	return [false, ""]
+
+
+func _end_strike() -> void:
+	strike = false
+	strike_scene = false
+	grudge = 0.0
+	strike_warn = 0
+
+
 ## El modo normal termina en Imperio; el inversionista sigue hasta Mil millonario.
 func ranks() -> Array:
 	return D.RANKS.slice(0, D.MODES[mode].ranks)
@@ -1374,6 +1462,7 @@ func step_day() -> void:
 	_macro()
 	_weather_day()
 	_power_day()
+	_strike_day()
 	beach_boost_days = max(0, beach_boost_days - 1)
 	_events()
 	_maybe_dilemma()
@@ -1470,9 +1559,9 @@ func _run_product(p: Dictionary) -> void:
 	var q: Dictionary = D.QUALITIES[p.quality]
 	var ls := locs(p.key)
 	var pl := _pl(p.key)
-	var wage := wage_daily()
+	var wage := 0.0 if staff_out() else wage_daily()   # en huelga (o sin gente) no se pagan sueldos
 
-	if p.manager and ls:
+	if p.manager and ls and not staff_out():
 		# Con margen de tolerancia para no contratar y despedir por el ruido diario.
 		for loc in ls:
 			var max_emp: int = D.SIZES[loc.size].max_emp
@@ -3066,7 +3155,8 @@ static func from_json(text: String) -> Game:
 
 const INT_KEYS := ["day", "next_id", "phase_months_left", "overdraft_days", "rank", "next_choice_day",
 		"profit_streak", "last_record_day", "hq_level", "strategy_ready_day", "weather", "weather_next", "weather_days",
-		"beach_boost_days", "labor", "next_micro_day"]
+		"beach_boost_days", "labor", "next_micro_day",
+		"strike_warn", "strikes", "strike_days", "rehire_until"]
 
 
 ## JSON guarda todos los números como decimales: los que son índices o contadores vuelven a ser enteros.

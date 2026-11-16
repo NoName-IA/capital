@@ -123,6 +123,7 @@ var tower: Tower          # la presidencia (último piso) y los pisos de ejecuti
 var finale: Finale        # «La última reunión»: el final del juego (ver Finale)
 var plant: PowerPlant     # la planta eléctrica junto al túnel (ver PowerPlant y Game.power_fail)
 var power_scene: PowerScene   # la cinemática de cuando falla por primera vez
+var strike_scene: StrikeScene   # la huelga: la protesta frente a la oficina y su cinemática
 var grid: PowerGrid       # la red eléctrica: torres, postes y cables (ver PowerGrid)
 var board_text: Label3D
 var ticker_text: Label3D
@@ -348,6 +349,7 @@ func _build_office() -> void:
 	tower.build(office_tier)
 	finale = Finale.new(self)
 	power_scene = PowerScene.new(self)
+	strike_scene = StrikeScene.new(self)
 
 
 var office_tier := 2   # el aspecto con el que está armada la oficina ahora
@@ -685,6 +687,15 @@ func _want_finale(g: Game) -> bool:
 
 
 ## ¿Toca la cinemática de la planta? Falló por primera vez y no la viste; espera lo mismo que el final.
+func _want_strike_scene(g: Game) -> bool:
+	return g.strike and g.strike_scene and not strike_scene.active() and not power_scene.active() and not finale.active() 			and not g.game_over and not tutorial.active and app.modal == null and not tower.busy() 			and not overlays.mode in ["personaje", "decorar"]
+
+
+## Ya no hay más escenas que esta: ¿hay alguna cinemática en pantalla?
+func in_cutscene() -> bool:
+	return finale.active() or power_scene.active() or strike_scene.active()
+
+
 func _want_power_scene(g: Game) -> bool:
 	return g.power_fail and not g.power_intro and not power_scene.active() and not finale.active() and not g.game_over 			and not tutorial.active and app.modal == null and not tower.busy() and not overlays.mode in ["personaje", "decorar"]
 
@@ -1327,6 +1338,12 @@ func react(n: Dictionary) -> void:
 			sfx.play("fin_golpe", 0.7, 0.55)   # el «clac» del corte
 		"power_back":
 			notes.push("alerta", "Volvió la luz", n.text, {"col": orange, "sound": "good", "icon": "bolt"})
+		"grudge":   # los empleados están molestos por el bate
+			notes.push("oficina", "Tus empleados están molestos" if v == 1 else "¡Amenazan con huelga!", n.text, {"col": orange if v == 1 else red, "sound": "bad", "icon": "person"})
+		"strike":
+			notes.push("alerta", "¡Huelga!", n.text, {"col": red, "sound": "bad", "icon": "person"})
+		"strike_end":
+			notes.push("oficina", "Terminó la huelga", n.text, {"col": green if v == "subir" else orange, "sound": "good" if v == "subir" else "bad", "icon": "person"})
 		"power":   # se acabó el arreglo pagado: la planta volvió a fallar
 			notes.push("alerta", "La planta volvió a fallar", n.text, {"col": red, "sound": "bad", "icon": "bolt"})
 		"quiet":
@@ -1415,6 +1432,7 @@ func set_sky_lock(t: float) -> void:
 func reset_world(g) -> void:
 	rank_wait = null
 	sky.blackout = 0.0   # la otra partida puede no tener apagón
+	strike_scene.clear()
 	for i in house_signs:
 		house_signs[i].root.queue_free()
 	house_signs.clear()
@@ -1662,6 +1680,8 @@ func set_hand(slot: int) -> void:
 func swing_bat() -> void:
 	if game == null or not (game.look is Dictionary and game.look.get("bat", false)) or player.swing_t >= 0.0:
 		return
+	if overlays.open() or pc_phase != "" or tower.busy() or in_cutscene():
+		return
 	player.swing()
 	sfx.play("hover", 0.5, 0.6)   # el zumbido del bate
 	var fwd := Vector3(sin(player.rotation.y), 0, cos(player.rotation.y))
@@ -1680,9 +1700,15 @@ func swing_bat() -> void:
 		return
 	best_store.rush = BAT_RUSH
 	bat_hits.append([best, 0.0])
+	game.bat_hit()   # suma rencor: si les pegas mucho, hacen huelga (Game._strike_day)
 	sfx.play("fin_golpe", 0.6, 1.7)
-	say(best, ["¡Ay!", "¡Ya voy, jefe!", "¡Auch! ¡Más rápido!", "¡Está bien, está bien!", "¡Ay, mi cabeza!"].pick_random(), "orange", 1.4)
-	emote(best, ["😵", "💫", "😖"].pick_random(), 1.2)
+	if game.strike_warn > 0:   # ya están molestos: se nota
+		say(best, ["¡Abusador! Esto no se va a quedar así.", "Un golpe más y paramos todos, matón.", "¡Ya vas a ver, cobarde!",
+				"Voy a hablar con el sindicato, desgraciado.", "¡Vuelve a tocarme y te denuncio!"].pick_random(), "red", 1.8)
+		emote(best, ["😠", "😡", "😤"].pick_random(), 1.4)
+	else:
+		say(best, ["¡Ay!", "¡Ya voy, jefe!", "¡Auch! ¡Más rápido!", "¡Está bien, está bien!", "¡Ay, mi cabeza!"].pick_random(), "orange", 1.4)
+		emote(best, ["😵", "💫", "😖"].pick_random(), 1.2)
 
 
 func _update_bat_hits(dt: float) -> void:
@@ -2139,6 +2165,8 @@ func update_camera(dt: float) -> void:
 		return
 	if power_scene != null and power_scene.place_camera(camera):   # la planta eléctrica falló
 		return
+	if strike_scene != null and strike_scene.place_camera(camera):   # la huelga
+		return
 	if tower != null and tower.place_camera(camera):   # el viaje en el ascensor
 		return
 	if pc_phase != "" and overlays.mode != "decorar":
@@ -2292,6 +2320,7 @@ func interactables() -> Array:
 	for m in malls:
 		items += m.interactables(g)
 	items += plant.interactables(g, pay_power)
+	items += strike_scene.interactables(g)
 	for slot in comps:
 		var c: Dictionary = comps[slot]
 		var name: String = Lang.noun(D.PRODUCTS[c.key].name)
@@ -2344,6 +2373,9 @@ func update(dt: float) -> void:
 		finale.update(dt)
 		if _want_power_scene(g):
 			power_scene.start()
+		if not power_scene.active() and _want_strike_scene(g):
+			strike_scene.start()
+		strike_scene.update(dt)
 		if power_scene.active():
 			power_scene.update(dt)
 		else:
@@ -2366,7 +2398,7 @@ func update(dt: float) -> void:
 			sync_timer = 0.2
 			sync(g)
 		spawn(dt)
-		if not overlays.open() and not tower.busy() and not finale.active():
+		if not overlays.open() and not tower.busy() and not in_cutscene():
 			move_player(dt)
 		var best = null
 		var best_d := 2.4
@@ -2376,7 +2408,7 @@ func update(dt: float) -> void:
 			if dd < best_d:
 				best = it
 				best_d = dd
-		if tower.busy() or finale.active():
+		if tower.busy() or in_cutscene():
 			best = null
 		prompt_action = best
 		hud.prompt = Lang.f("[%s] %s", [Keys.label("interact"), best[1]]) if best != null else ""
@@ -2431,7 +2463,7 @@ func update(dt: float) -> void:
 		b.rotation.z = deg_to_rad(sin(t * 0.9 + ph) * 4)
 	hud.update(dt)
 	hud.update_danger(g, dt)
-	if overlays.mode in ["personaje", "decorar", "pc", "confirmar"] or tutorial.active or power_scene.active():   # el mentor también es una foto
+	if overlays.mode in ["personaje", "decorar", "pc", "confirmar"] or tutorial.active or power_scene.active() or strike_scene.active():   # el mentor también es una foto
 		thumbs.step()
 	advance_sky(dt)
 	sky.moon_phase = fmod(game.day + 15.0, 29.5) / 29.5 if game != null else 0.5  # una fase por mes de juego
@@ -2548,6 +2580,12 @@ func _key(e: InputEventKey) -> void:
 			toggle_fullscreen()
 			return
 		power_scene.key(e)
+		return
+	if strike_scene != null and strike_scene.active():   # la huelga: Enter pasa, 1/2/3 eligen
+		if Keys.is_event(e, "fullscreen"):
+			toggle_fullscreen()
+			return
+		strike_scene.key(e)
 		return
 	# En la computadora: durante la transición nada; en el escritorio, Esc cierra lo de arriba o te levanta
 	if pc_phase != "" and (pc_phase != "os" or overlays.mode == "pc"):
@@ -2669,7 +2707,7 @@ func _mouse_button(e: InputEventMouseButton) -> void:
 		elif e.pressed and e.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN] and not overlays.over_custom_ui():
 			zoom_custom(-0.6 if e.button_index == MOUSE_BUTTON_WHEEL_UP else 0.6)
 		return
-	if overlays.open() or game == null or not e.pressed:
+	if overlays.open() or game == null or not e.pressed or in_cutscene():   # en una cinemática el clic es de la escena
 		return
 	if e.button_index == MOUSE_BUTTON_WHEEL_UP:  # acercarse; muy cerca pasa a primera persona
 		if not first_person:
