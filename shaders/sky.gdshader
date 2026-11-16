@@ -15,7 +15,8 @@ uniform float overcast = 0.0;                 // cielo gris de nublado o lluvia:
 
 const vec3 POLE = vec3(0.0, 0.8, 0.6);  // eje de giro del cielo (el polo, inclinado como en una latitud media)
 
-float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+// Hash sin sin(): el sin() de números grandes sale en bloques en gráficas AMD (cuadrados en el agua)
+float hash(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 float noise(vec2 p) {
 	vec2 i = floor(p), f = fract(p);
 	f = f * f * (3.0 - 2.0 * f);
@@ -27,7 +28,7 @@ float fbm(vec2 p) {
 	return v;
 }
 
-float hash3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+float hash3(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
 
 vec3 rotate_axis(vec3 v, vec3 axis, float a) {
 	return v * cos(a) + cross(axis, v) * sin(a) + axis * dot(axis, v) * (1.0 - cos(a));
