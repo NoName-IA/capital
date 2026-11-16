@@ -11,6 +11,7 @@ var bld: Building
 var rects: Array
 var spots: Dictionary
 var staff := []
+var rush := 0.0   # segundos que le quedan al apuro después de un batazo: atienden 3 veces más rápido (sin mostrarlo)
 var acc := randf()
 var rep: Node3D                   # estrellas del local, grandes sobre el letrero (Icons.star_row)
 var rep_stars: MeshInstance3D = null
@@ -304,6 +305,7 @@ func serve(server: Person, customer_pos: Vector3, progress: float, dt: float) ->
 ## Cada cuadro: los cajeros solo se mueven al cobrar; los demás hacen tareas (con su camino por el local, sin
 ## atravesar paredes, repisas, mesones ni a otros empleados) y de vez en cuando se sientan a descansar.
 func update(dt: float) -> void:
+	rush = maxf(0.0, rush - dt)
 	if bounce > 0.0:
 		bounce = max(0.0, bounce - dt * 1.4)
 		var k := sin(bounce * PI * 3.0) * bounce
@@ -900,7 +902,7 @@ func pick_spot() -> Array:
 
 func service_time() -> float:
 	var helpers := staff.size() + (1 if loc.get("owner", false) else 0)
-	return 3.0 / helpers if helpers else 999.0
+	return (3.0 / helpers if helpers else 999.0) / (3.0 if rush > 0.0 else 1.0)
 
 
 func destroy() -> void:

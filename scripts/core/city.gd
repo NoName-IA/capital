@@ -1634,6 +1634,73 @@ func buy_house(i: int, confirmed := false) -> void:
 	toast(r[1], "good" if r[0] else "bad")
 
 
+## Batazo: con el bate puesto, tu personaje lo sacude; si hay un empleado de tus locales al alcance (adelante, a
+## menos de 2,2 m) se lleva el golpe, reacciona y ese local atiende 3 veces más rápido por 3 segundos. Cada batazo
+## vuelve a empezar los 3 segundos. No se muestra ningún tiempo en pantalla.
+const BAT_REACH := 2.2
+const BAT_RUSH := 3.0
+var bat_hits := []   # [Person, segundos]: el empleado golpeado se tambalea
+
+
+## La barra de abajo: 0 = manos libres, 1 = el bate en la mano. Solo si compraste el bate (en el Armario).
+func has_bat() -> bool:
+	return game != null and Wardrobe.owns(game, "bat", true)
+
+
+func hand() -> int:
+	return 1 if game != null and game.look is Dictionary and game.look.get("bat", false) else 0
+
+
+func set_hand(slot: int) -> void:
+	if not has_bat() or slot == hand() or overlays.open() or pc_phase != "":
+		return
+	game.look["bat"] = slot == 1
+	apply_look()
+	sfx.play("select", 0.4, 1.2 if slot == 1 else 0.9)
+
+
+func swing_bat() -> void:
+	if game == null or not (game.look is Dictionary and game.look.get("bat", false)) or player.swing_t >= 0.0:
+		return
+	player.swing()
+	sfx.play("hover", 0.5, 0.6)   # el zumbido del bate
+	var fwd := Vector3(sin(player.rotation.y), 0, cos(player.rotation.y))
+	var best = null
+	var best_store = null
+	var best_d := BAT_REACH
+	for st in stores.values():
+		for w in st.staff:
+			var d: Vector3 = w.global_position - player.position
+			d.y = 0
+			if d.length() < best_d and (d.length() < 0.6 or d.normalized().dot(fwd) > 0.2):
+				best = w
+				best_store = st
+				best_d = d.length()
+	if best == null:
+		return
+	best_store.rush = BAT_RUSH
+	bat_hits.append([best, 0.0])
+	sfx.play("fin_golpe", 0.6, 1.7)
+	say(best, ["¡Ay!", "¡Ya voy, jefe!", "¡Auch! ¡Más rápido!", "¡Está bien, está bien!", "¡Ay, mi cabeza!"].pick_random(), "orange", 1.4)
+	emote(best, ["😵", "💫", "😖"].pick_random(), 1.2)
+
+
+func _update_bat_hits(dt: float) -> void:
+	player.swing_update(dt)
+	for h in bat_hits.duplicate():
+		var w = h[0]
+		h[1] += dt
+		if not is_instance_valid(w) or h[1] > 0.6:
+			if is_instance_valid(w):
+				w.rotation.x = 0.0
+				w.rotation.z = 0.0
+			bat_hits.erase(h)
+			continue
+		var k: float = h[1] / 0.6
+		w.rotation.z = sin(k * PI * 4.0) * 0.25 * (1.0 - k)   # se tambalea
+		w.rotation.x = -0.2 * (1.0 - k)
+
+
 ## Pagar el arreglo de la planta eléctrica en su caseta (pide confirmar).
 func pay_power(confirmed := false) -> void:
 	var g: Game = game
@@ -2382,6 +2449,7 @@ func update(dt: float) -> void:
 	if not frozen:
 		life.update(dt)
 		_update_emotes(dt)
+	_update_bat_hits(dt)
 	diario_t -= dt
 	if diario_t <= 0.0:
 		diario_t = 0.5
@@ -2556,6 +2624,8 @@ func _key(e: InputEventKey) -> void:
 	elif Keys.is_event(e, "interact"):
 		if prompt_action != null:
 			prompt_action[2].call()
+	elif Keys.is_event(e, "bat"):
+		swing_bat()
 	elif Keys.is_event(e, "camera"):
 		first_person = not first_person
 		if not first_person:
@@ -2615,8 +2685,12 @@ func _mouse_button(e: InputEventMouseButton) -> void:
 			zoom_target = 1.5
 		else:
 			zoom_target = min(12.0, zoom_target + 0.75)
+	elif e.button_index == MOUSE_BUTTON_LEFT and mouse_captured() and game.look is Dictionary and game.look.get("bat", false):
+		swing_bat()   # con el bate puesto, el clic es un batazo
 	elif e.button_index == MOUSE_BUTTON_LEFT and not mouse_captured():
-		if hud.ui.hover(hud.hq_button_rect()):
+		if hud.hotbar_at() >= 0:
+			set_hand(1 if hand() == 0 else 0)
+		elif hud.ui.hover(hud.hq_button_rect()):
 			go_to_office()
 		elif hud.micro_at() >= 0:
 			answer_micro(hud.micro_at())

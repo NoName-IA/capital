@@ -97,6 +97,7 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 			mini_rect = Rect2()
 			micro_rects = []
 		_draw_center()
+		_draw_hotbar()
 		city.tutorial.draw(ui)
 		notes.draw(ui)
 	if g != null:
@@ -108,6 +109,49 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 	if fade > 0.0:
 		ui.rect(Rect2(-3000, -3000, ui.W + 6000, ui.H + 6000), Color(0, 0, 0, fade))
 	ui.end()
+
+
+## Barra de abajo (como en los juegos de mundo abierto): casillas numeradas; la 1 es el bate (tecla 1 o clic: lo
+## sacas, otra vez: lo guardas). Sale solo si compraste el bate.
+const HOTBAR_SLOT := 58.0
+var hotbar_rects := []
+
+
+func _draw_hotbar() -> void:
+	hotbar_rects = []
+	if not city.has_bat() or city.overlays.open() or city.tutorial.active or city.tower.inside(city.player.position):
+		return
+	var n := 1
+	var gap := 8.0
+	var w := n * HOTBAR_SLOT + (n - 1) * gap
+	var x0 := ui.W / 2 - w / 2
+	var y := ui.H - HOTBAR_SLOT - 18
+	ui.rect(Rect2(x0 - 8, y - 8, w + 16, HOTBAR_SLOT + 16), Color(0.03, 0.04, 0.06, 0.6), 14)
+	var sel: int = city.hand()
+	for i in n:
+		var r := Rect2(x0 + i * (HOTBAR_SLOT + gap), y, HOTBAR_SLOT, HOTBAR_SLOT)
+		hotbar_rects.append(r)
+		var on := sel == 1
+		var hot: bool = ui.hover(r) and not city.mouse_captured()
+		ui.rect(r, Color(1, 1, 1, 0.16 if hot else 0.08), 10)
+		if on:
+			ui.rect(r, ImUI.COL.accent, 10, 3)
+		var c := r.get_center() + Vector2(0, -6)
+		# el bate, cruzado
+		ui.line(c + Vector2(-14, 14), c + Vector2(-5, 5), Color8(30, 30, 34), 5)
+		ui.line(c + Vector2(-6, 6), c + Vector2(14, -14), Color8(206, 160, 104), 9)
+		ui.circle(c + Vector2(14, -14), 4.5, Color8(206, 160, 104))
+		ui.text("Bate", Vector2(r.get_center().x, r.end.y - 9), 11, "accent" if on else "muted", true, "center")
+	if sel == 1:
+		ui.text(Lang.f("%s: batazo", Keys.label("bat")), Vector2(x0 - 16, y + HOTBAR_SLOT / 2), 12, "muted", true, "midright")
+
+
+## El casillero de la barra de abajo bajo el mouse, o -1.
+func hotbar_at() -> int:
+	for i in hotbar_rects.size():
+		if ui.hover(hotbar_rects[i]):
+			return i
+	return -1
 
 
 ## Tarjeta de la empresa (como el panel de estado de los juegos de gestión): fecha y hora, la caja en grande, el

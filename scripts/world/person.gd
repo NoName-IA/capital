@@ -234,6 +234,7 @@ func restyle(new_look = null) -> void:
 		b.box(Vector3(0, 1.1, -0.38), Vector3(0.34, 0.2, 0.04), Color8(50, 75, 120))
 		for sx in [-0.215, 0.215]:  # correas por fuera de la corbata
 			b.box(Vector3(sx, 1.38, 0.19), Vector3(0.06, 0.42, 0.02), Color8(40, 60, 100))
+	_bat(L.get("bat", false))
 	if L.scarf:
 		b.box(Vector3(0, 1.64, 0), Vector3(0.48, 0.12, 0.4), Color8(200, 60, 60))
 		b.box(Vector3(0.1, 1.43, 0.215), Vector3(0.12, 0.34, 0.04), Color8(200, 60, 60))
@@ -280,6 +281,54 @@ func hold(key: String, variant := -1) -> void:
 		item.visibility_range_end = 35.0
 		arms[1].add_child(item)
 	item.mesh = Actors.product_item(key, variant if variant >= 0 else randi() % Actors.variants(key))
+
+
+## El bate de béisbol en la mano izquierda (la derecha es para lo que compran o atienden): mango con cinta negra y
+## el barril de madera, apoyado hacia abajo. Al dar un batazo (swing) el brazo sube y baja de golpe.
+var bat: MeshInstance3D
+var swing_t := -1.0   # segundos desde que empezó el batazo (-1: nada)
+const SWING := 0.32
+
+
+func _bat(on: bool) -> void:
+	if not on:
+		if bat:
+			bat.queue_free()
+			bat = null
+		return
+	if bat:
+		return
+	var b := Boxes.new()
+	b.box(Vector3(0, -0.12, 0), Vector3(0.05, 0.3, 0.05), Color8(25, 25, 28))      # mango
+	b.box(Vector3(0, -0.3, 0), Vector3(0.08, 0.04, 0.08), Color8(25, 25, 28))      # perilla
+	b.box(Vector3(0, 0.18, 0), Vector3(0.07, 0.35, 0.07), Color8(196, 150, 96))     # cuello
+	b.box(Vector3(0, 0.55, 0), Vector3(0.1, 0.45, 0.1), Color8(206, 160, 104))      # barril
+	b.box(Vector3(0, 0.79, 0), Vector3(0.09, 0.04, 0.09), Color8(186, 140, 86))
+	bat = MeshInstance3D.new()
+	bat.mesh = b.build()
+	bat.material_override = Mats.smooth
+	bat.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	bat.position = Vector3(0, -0.66, 0.05)
+	bat.rotation.x = deg_to_rad(110.0)   # la punta hacia adelante y abajo
+	arms[0].add_child(bat)
+
+
+## Empieza un batazo (lo anima swing_update).
+func swing() -> void:
+	swing_t = 0.0
+
+
+## Cada cuadro, después de animate(): el brazo del bate sube atrás y baja de golpe adelante.
+func swing_update(dt: float) -> void:
+	if swing_t < 0.0:
+		return
+	swing_t += dt
+	var k := swing_t / SWING
+	var ang := -150.0 * sin(clampf(k / 0.45, 0, 1) * PI / 2) if k < 0.45 else lerpf(-150.0, -20.0, clampf((k - 0.45) / 0.25, 0, 1))
+	if k >= 1.0:
+		swing_t = -1.0
+		return
+	arms[0].rotation.x = deg_to_rad(ang)
 
 
 ## Brazo derecho estirado hacia adelante: 0 colgando, 1 casi horizontal. Lo que lleva en la mano queda derecho.
