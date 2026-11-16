@@ -85,7 +85,7 @@ func run(m) -> void:
 	print("paso: ", _step(c))
 	await _listen(m, c)
 	await _shot(m, "tut_09_oficina")
-	c.player.position = c.hq_spots.computer + Vector3(1, 0, 0)
+	c.player.position = c.tower.pc_spots.computer + Vector3(1, 0, 0)
 	await m.frames(30)
 	print("paso: ", _step(c))
 	await _listen(m, c)

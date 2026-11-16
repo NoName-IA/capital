@@ -27,7 +27,7 @@ func run(m) -> void:
 	g.open_location("pan", 0) if g.products.pan.unlocked else null
 	c.sync(g)
 	c.go_to_office()
-	c.player.position = c.hq_spots.computer + Vector3(1.0, 0, -1.2)
+	c.player.position = c.tower.pc_spots.computer + Vector3(1.0, 0, -1.2)
 	c.yaw = -70.0
 	await m.frames(20)
 	var prompts := c.interactables().filter(func(it): return "computadora" in str(it[1]))
@@ -43,7 +43,10 @@ func run(m) -> void:
 	await m.frames(30)
 	print("fase: ", c.pc_phase, " · ventana: ", c.overlays.mode)
 	await _shot(m, "3_arranque")
-	c.pc_os.t = Ventanas.BOOT + 0.1
+	c.pc_os.t = Ventanas.BOOT + 0.5
+	await m.frames(10)
+	await _shot(m, "3b_bloqueo")
+	c.pc_os.unlocked = true
 	await m.frames(10)
 	await _shot(m, "4_escritorio")
 	c.pc_os._open("remodelar")
@@ -58,6 +61,11 @@ func run(m) -> void:
 	c.pc_os._open("web")
 	c.pc_os._open("papelera")
 	c.pc_os._open("docs")
+	await m.frames(5)
+	await _shot(m, "5b_explorador")
+	c.pc_os._open("web")
+	await m.frames(5)
+	await _shot(m, "5c_navegador")
 	c.pc_os.start_open = true
 	await m.frames(10)
 	await _shot(m, "6_ventanas_inicio")

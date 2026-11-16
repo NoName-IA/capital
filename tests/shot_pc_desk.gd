@@ -23,4 +23,4 @@ func run(m) -> void:
 		c.player.rotation.y = deg_to_rad(-62.0)
 		await m.frames(20)
 		await m.shot(ProjectSettings.globalize_path(OUT + "pc_desk_%d.png" % tier))
-	print("computadora: ", c.hq_spots.computer, " · asiento: ", c.hq_spots.pc_seat, " · pantalla: ", c.hq_spots.pc_screen, " y ", c.hq_spots.pc_screen_y)
+	print("computadora: ", c.tower.pc_spots.computer, " · asiento: ", c.tower.pc_spots.pc_seat, " · pantalla: ", c.tower.pc_spots.pc_screen, " y ", c.tower.pc_spots.pc_screen.y)

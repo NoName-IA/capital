@@ -1,30 +1,41 @@
 class_name Ventanas
 extends RefCounted
-## «Ventanas 98 · Edición Millonario»: el sistema (de broma) de la computadora de tu oficina. Te sientas, la cámara
-## entra a la pantalla (City.sit_at_computer) y aparece esto: pantalla de inicio, escritorio con iconos, ventanas que
-## se arrastran, barra de tareas con el menú Inicio, y los programas. El importante es Remodelar.exe (decorar cada
-## puesto, local o megatienda); el resto son chistes. Se dibuja en el overlay "pc" (Overlays._draw_mode).
+## «Ventanas 11 · Edición Millonario»: el sistema (de broma) de la computadora de tu escritorio de CEO, en la
+## presidencia (Tower), hecho a la manera de los sistemas de hoy: pantalla de inicio con puntitos que giran, pantalla de
+## bloqueo con la hora grande, escritorio, barra de tareas centrada (Inicio, buscador, apps ancladas, y a los lados el
+## clima, la bandeja y la hora), menú Inicio flotante con «Anclados» y «Recomendado», ventanas redondeadas con
+## minimizar, maximizar y cerrar, un explorador de archivos y un navegador con pestañas. Te sientas, la cámara entra a
+## la pantalla (City.sit_at_computer) y aparece esto. El programa importante es Remodelar.exe (decorar cada puesto,
+## local o megatienda); el resto son chistes. Se dibuja en el overlay "pc" (Overlays._draw_mode).
 
-const NAME := "Ventanas 98"
+const NAME := "Ventanas 11"
 const EDITION := "Edición Millonario"
 const BOOT := 2.8              # segundos de la pantalla de inicio
-const BAR := 40.0              # alto de la barra de tareas
-const GRAY := Color8(192, 192, 192)
-const SHADE := Color8(128, 128, 128)
+const LOCK := 2.2              # segundos de la pantalla de bloqueo (o un clic)
+const BAR := 48.0              # alto de la barra de tareas
+const GRAY := Color8(243, 243, 243)    # fondo de ventanas
+const SHADE := Color8(96, 96, 102)     # texto secundario
 const LIGHT := Color8(255, 255, 255)
-const NAVY := Color8(0, 0, 128)
-const BLUE := Color8(16, 132, 208)
-const TEAL := Color8(0, 128, 128)
-const INK := Color8(0, 0, 0)
+const NAVY := Color8(0, 95, 184)       # el color de acento (selección, botones principales)
+const BLUE := Color8(76, 160, 236)
+const LINE := Color(0, 0, 0, 0.09)     # bordes finos
+const INK := Color8(26, 26, 28)
 const ICONS := [["remodelar", "Remodelar.exe"], ["empresa", "Mi Empresa"], ["oficina", "Personalizar oficina"],
-		["docs", "Mis Documentos"], ["web", "Internet Explorador"], ["papelera", "Papelera"]]
+		["docs", "Explorador de archivos"], ["web", "Navegador"], ["papelera", "Papelera de reciclaje"]]
+const PINNED := ["docs", "web", "remodelar", "empresa"]   # anclados en la barra de tareas
+const MORE_APPS := [["config", "Configuración"], ["calc", "Calculadora"], ["fotos", "Fotos"], ["tienda", "Tienda"],
+		["correo", "Correo"], ["reloj", "Reloj"]]           # en el menú Inicio, de adorno (abren un chiste)
+const RECENT := [["plan_de_expansion_2027.docx", "Hace 12 min"], ["sueldos_ejecutivos.xlsx", "Hace 1 h"],
+		["presentacion_inversionistas.pptx", "Ayer a las 18:40"], ["logo_nuevo_FINAL_v7.png", "Hace 3 días"]]
 const TRASH := ["plan_vender_hielo_en_el_polo.doc", "cafe_sin_cafe (idea).txt", "NFT_de_panes.ppt",
 		"abrir_10_megatiendas_el_dia_1.xls", "contratar_a_mi_primo.doc", "precio_de_todo_a_1_peso.xls"]
+const WEEKDAYS := ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 
 var city
 var t := 0.0                   # segundos desde que se prendió
 var chimed := false
-var wins: Array = []           # ventanas abiertas (la última va arriba): {id, title, r, min}
+var unlocked := false
+var wins: Array = []           # ventanas abiertas (la última va arriba): {id, title, r, min, max, prev}
 var start_open := false
 var drag = null                # {w, off}: la ventana que estás arrastrando
 var prev_down := false
@@ -37,7 +48,6 @@ var msg = null                 # cuadro de mensaje encima de todo: {title, text,
 var nag_done := false
 var web_tries := 0
 var leaving := -1.0            # «Apagar»: segundos que quedan del mensaje de cierre
-var wallpaper: Texture2D
 var ui_ref: ImUI
 var vis := Rect2(0, 0, 1280, 760)   # la pantalla del monitor (casi toda tu pantalla, con el borde del monitor alrededor)
 const FILL := 0.88             # cuánto de tu pantalla ocupa la del monitor (alto o ancho)
@@ -51,17 +61,20 @@ func _init(owner_city) -> void:
 func start() -> void:
 	t = 0.0
 	chimed = false
+	unlocked = false
 	wins = []
 	start_open = false
 	drag = null
 	msg = null
 	leaving = -1.0
-	if wallpaper == null and ResourceLoader.exists("res://assets/imagenes/tutorial/meta.png"):
-		wallpaper = load("res://assets/imagenes/tutorial/meta.png")
 
 
 func booted() -> bool:
 	return t >= BOOT
+
+
+func locked() -> bool:
+	return booted() and not unlocked and t < BOOT + LOCK
 
 
 ## Esc: cierra el mensaje o el menú Inicio; si no hay nada, te levantas de la computadora.
@@ -83,39 +96,68 @@ func update(dt: float) -> void:
 			city.leave_computer()
 	if booted() and not chimed:
 		chimed = true
-		city.sfx.play("record", 0.6, 0.75)   # el sonido de inicio
+		city.sfx.play("record", 0.6, 0.9)   # el sonido de inicio
 	# La actualización obligatoria de siempre (una vez cada vez que te sientas)
-	if booted() and not nag_done and t > BOOT + 35.0 and msg == null:
+	if booted() and not nag_done and t > BOOT + LOCK + 35.0 and msg == null:
 		nag_done = true
 		_message("Ventanas Update", "Hay 1 actualización obligatoria (4,7 TB). Tu computadora se reiniciará en 10 minutos.", true)
 
 
+# ---------- la hora y la fecha del juego ----------
+func _clock() -> String:
+	var hour: float = SkyLight.hour_of(city.day_fraction())
+	return "%02d:%02d" % [int(hour), int(fmod(hour, 1.0) * 60)]
+
+
+func _date_short() -> String:
+	var g = city.game
+	if g == null:
+		return ""
+	var dp: Array = g.date_parts()
+	return "%02d/%02d/%d" % [dp[0], D.MONTHS.find(dp[1]) + 1, 2025 + int(dp[2])]
+
+
+func _date_long() -> String:
+	var g = city.game
+	if g == null:
+		return ""
+	var dp: Array = g.date_parts()
+	return Lang.f("%s, %d de %s", [Lang.t(WEEKDAYS[int(g.day) % 7]), dp[0], Lang.t(dp[1]).to_lower()])
+
+
 # ---------- dibujo ----------
 func draw(ui: ImUI) -> void:
-	var W := ui.W
-	var H := ui.H
 	# Justo encima de la pantalla del monitor, del mismo tamaño (alrededor se ve el monitor de verdad y tu oficina)
 	var sr: Rect2 = city.pc_screen_rect()
 	var tl: Vector2 = ui.to_virtual(sr.position)
 	vis = Rect2(tl, ui.to_virtual(sr.end) - tl)
+	ui_ref = ui
 	ui.set_clip(vis)
-	ui.rect(vis, INK)
+	ui.rect(vis, Color8(0, 0, 0))
 	if not booted():
 		_draw_boot(ui)
 		prev_down = ui.down
 		ui.set_clip(null)
 		return
+	if locked():
+		_draw_lock(ui)
+		if ui.clicked and vis.has_point(ui.mouse):
+			unlocked = true
+			city.sfx.play("select", 0.4)
+		prev_down = ui.down
+		ui.set_clip(null)
+		return
 	if leaving >= 0:
-		ui.text("Cerrando sesión...", vis.get_center(), 22, Color8(255, 170, 40), true, "center")
+		_wallpaper(ui)
+		ui.rect(vis, Color(0, 0, 0, 0.55))
+		_spinner(ui, vis.get_center() - Vector2(0, 20), 14.0)
+		ui.text("Cerrando sesión...", vis.get_center() + Vector2(0, 24), 20, LIGHT, false, "center")
 		prev_down = ui.down
 		ui.set_clip(null)
 		return
 	var click := ui.clicked and vis.has_point(ui.mouse)
 	var press: bool = ui.down and not prev_down and vis.has_point(ui.mouse)
-	# Fondo: la foto de tu ciudad (y verde agua alrededor, como siempre)
-	ui.rect(vis, TEAL)
-	if wallpaper:
-		ui.image(wallpaper, Rect2(vis.position, Vector2(vis.size.x, vis.size.y - BAR)))
+	_wallpaper(ui)
 	# Qué recibe el clic: el mensaje, el menú Inicio, la ventana de más arriba bajo el mouse, la barra o el escritorio
 	var menu_r := _start_rect(ui)
 	var top := -1
@@ -169,26 +211,100 @@ func _clip(r) -> void:
 	ui_ref.set_clip(vis if r == null else (r as Rect2).intersection(vis))
 
 
-## Pantalla de inicio: el logo, el nombre y la barrita que se mueve.
+## Fondo de pantalla: tu foto (WALL_IMAGE) o, si no hay, azul profundo con una flor de luz al medio (pétalos que se abren desde el centro, en capas).
+func _wallpaper(ui: ImUI) -> void:
+	var tex = _image(WALL_IMAGE)
+	if tex != null:   # tu foto
+		_cover(ui, tex)
+		return
+	ui.gradient(vis, Color8(8, 26, 74), Color8(56, 120, 210), false)
+	var c := vis.get_center() + Vector2(0, vis.size.y * 0.05)
+	var s := minf(vis.size.x, vis.size.y)
+	for i in 8:   # halo suave
+		ui.circle(c, s * (0.62 - i * 0.06), Color(0.5, 0.72, 1.0, 0.035))
+	for k in 3:   # tres capas de pétalos curvos, cada una girada y más chica
+		var n := 6
+		for i in n:
+			var a := TAU * (i + 0.5 * (k % 2)) / n - PI / 2 + k * 0.08
+			var len := s * (0.36 - k * 0.08)
+			var wdt := s * (0.11 - k * 0.025)
+			var dir := Vector2(cos(a), sin(a))
+			var side := Vector2(-dir.y, dir.x)
+			var pts := PackedVector2Array()
+			for j in 13:   # borde curvo: ida por un lado, vuelta por el otro
+				var u := j / 12.0
+				pts.append(c + dir * len * u + side * wdt * sin(u * PI) * (1.0 - u * 0.25))
+			for j in range(11, 0, -1):
+				var u := j / 12.0
+				pts.append(c + dir * len * u - side * wdt * sin(u * PI) * (1.0 - u * 0.25) * 0.55)
+			ui.polygon(pts, Color(0.55 + k * 0.12, 0.76 + k * 0.07, 1.0, 0.2 + k * 0.1))
+	ui.circle(c, s * 0.025, Color(0.88, 0.95, 1.0, 0.75))
+
+
+## Los puntitos que giran (cargando).
+func _spinner(ui: ImUI, c: Vector2, r: float) -> void:
+	for i in 5:
+		var a := t * 5.0 - i * 0.45
+		ui.circle(c + Vector2(cos(a), sin(a)) * r, 2.6 - i * 0.3, Color(1, 1, 1, 1.0 - i * 0.16))
+
+
+const BOOT_IMAGE := "res://assets/imagenes/pc/arranque.jpg"   # opcional: tu imagen para la pantalla de carga
+const WALL_IMAGE := "res://assets/imagenes/pc/fondo.jpg"       # opcional: tu fondo de pantalla (escritorio y bloqueo)
+var images := {}   # ruta -> textura, o false si no está (se busca una sola vez)
+
+
+## Una imagen tuya de assets/imagenes/pc (null si no está).
+func _image(path: String):
+	if not images.has(path):
+		images[path] = false
+		if ResourceLoader.exists(path):
+			images[path] = load(path)
+		elif FileAccess.file_exists(path):
+			var img := Image.load_from_file(ProjectSettings.globalize_path(path))
+			if img != null and not img.is_empty():
+				images[path] = ImageTexture.create_from_image(img)
+	return images[path] if images[path] is Texture2D else null
+
+
+## Dibuja `tex` llenando la pantalla del monitor sin deformarla (recorta lo que sobra).
+func _cover(ui: ImUI, tex: Texture2D, alpha := 1.0) -> void:
+	var k := maxf(vis.size.x / tex.get_width(), vis.size.y / tex.get_height())
+	var sz := Vector2(tex.get_width(), tex.get_height()) * k
+	ui.image(tex, Rect2(vis.get_center() - sz / 2, sz), Color(1, 1, 1, alpha))
+
+
+## Pantalla de inicio: tu imagen (si pusiste una en BOOT_IMAGE) o el logo al medio, y los puntitos que giran abajo.
 func _draw_boot(ui: ImUI) -> void:
-	var c := vis.get_center() - Vector2(0, 40)
+	var c := vis.get_center() - Vector2(0, 30)
 	var a := clampf(t / 0.5, 0, 1)
-	logo(ui, Rect2(c.x - 170, c.y - 60, 92, 120), a)
-	ui.text("Ventanas", Vector2(c.x - 60, c.y - 34), 54, Color(1, 1, 1, a), true, "midleft")
-	ui.text("98", Vector2(c.x + 190, c.y - 50), 30, Color(1.0, 0.6, 0.15, a), true, "midleft")
-	ui.text(EDITION, Vector2(c.x - 56, c.y + 20), 20, Color(0.75, 0.75, 0.8, a), false, "midleft")
-	var bar := Rect2(c.x - 140, c.y + 110, 280, 18)
-	ui.rect(bar, Color8(30, 30, 30))
-	ui.rect(bar, Color8(90, 90, 90), 0, 1)
-	var k := fmod(t * 0.9, 1.4) - 0.2
-	ui_ref = ui
-	_clip(bar.grow(-2))
-	for i in 3:
-		ui.rect(Rect2(bar.position.x + k * bar.size.x + i * 16, bar.position.y + 3, 12, 12), Color8(40, 90, 230))
-	_clip(null)
-	ui.text("Cargando tu imperio...", Vector2(c.x, bar.end.y + 22), 14, Color(0.7, 0.7, 0.75, a), false, "center")
-	ui.text("Copyright © 1998 Capital Corp. Todos los derechos reservados (y algunos más).", Vector2(c.x, vis.end.y - 30), 12,
-			Color(0.5, 0.5, 0.55, a), false, "center")
+	var tex = _image(BOOT_IMAGE)
+	if tex != null:
+		_cover(ui, tex, a)
+		if t > 0.6:   # sobre un círculo oscuro, para que se vea encima de cualquier foto
+			var sc := Vector2(vis.get_center().x, vis.end.y - vis.size.y * 0.2)
+			ui.circle(sc, 26, Color(0, 0, 0, 0.45))
+			_spinner(ui, sc, 14.0)
+		return
+	logo(ui, Rect2(c.x - 46, c.y - 46, 92, 92), a)
+	if t > 0.6:
+		_spinner(ui, Vector2(c.x, c.y + 120), 14.0)
+
+
+## Pantalla de bloqueo: el fondo oscurecido, la hora grande y la fecha; un clic (o un ratito) y entras.
+func _draw_lock(ui: ImUI) -> void:
+	_wallpaper(ui)
+	ui.rect(vis, Color(0, 0, 0, 0.25))
+	var k := clampf((t - BOOT) / 0.4, 0, 1)
+	var cx := vis.get_center().x
+	var y := vis.position.y + vis.size.y * 0.2 + (1.0 - k) * 20
+	ui.text(_clock(), Vector2(cx, y), 84, Color(1, 1, 1, k), true, "center")
+	ui.text(_date_long(), Vector2(cx, y + 64), 20, Color(1, 1, 1, k * 0.95), false, "center")
+	var g = city.game
+	var name: String = str(g.company) if g != null else "CEO"
+	ui.circle(Vector2(cx, vis.end.y - 120), 26, Color(1, 1, 1, 0.25 * k))
+	ui.text(name.substr(0, 1).to_upper(), Vector2(cx, vis.end.y - 120), 22, Color(1, 1, 1, k), true, "center")
+	ui.text(name, Vector2(cx, vis.end.y - 80), 15, Color(1, 1, 1, k), true, "center")
+	ui.text("Haz clic para entrar", Vector2(cx, vis.end.y - 54), 12, Color(1, 1, 1, 0.7 * k), false, "center")
 
 
 ## El logo: un rascacielos de cuadritos de colores.
@@ -202,29 +318,36 @@ static func logo(ui: ImUI, r: Rect2, alpha := 1.0) -> void:
 			if row == 0 and col == 1:
 				continue   # el escalón de arriba del edificio
 			var cell := Rect2(r.position.x + col * cw + 2, r.position.y + row * ch + 2, cw - 4, ch - 4)
-			ui.rect(cell, Color(cols[(row * 2 + col) % 4], alpha), 2)
+			ui.rect(cell, Color(cols[(row * 2 + col) % 4], alpha), 3)
 
 
-# ---------- piezas al estilo de los 90 ----------
-## Borde en relieve: claro arriba a la izquierda y oscuro abajo a la derecha (`sunken` al revés).
+## El botón de Inicio: un cuadrado azul redondeado con el rascacielos blanco adentro.
+static func start_glyph(ui: ImUI, r: Rect2) -> void:
+	ui.gradient(r, Color8(0, 120, 215), Color8(0, 84, 166), false)
+	ui.rect(r, Color(0, 0, 0, 0), 4)
+	var u := r.size.x / 22.0
+	ui.rect(Rect2(r.position + Vector2(6, 8) * u, Vector2(5, 10) * u), LIGHT, 1)
+	ui.rect(Rect2(r.position + Vector2(11, 4) * u, Vector2(5, 14) * u), LIGHT, 1)
+	for k in 3:
+		ui.rect(Rect2(r.position + Vector2(12.5, 6 + k * 3.5) * u, Vector2(2, 1.5) * u), Color8(0, 100, 190))
+
+
+# ---------- piezas modernas ----------
+## Panel plano con esquinas redondeadas y un borde finito (`sunken`: un campo blanco, como una lista o un buscador).
 static func bevel(ui: ImUI, r: Rect2, sunken := false, fill = null) -> void:
-	if fill != null:
-		ui.rect(r, fill)
-	var hi := LIGHT if not sunken else SHADE
-	var lo := SHADE if not sunken else LIGHT
-	ui.rect(Rect2(r.position.x, r.position.y, r.size.x, 2), hi)
-	ui.rect(Rect2(r.position.x, r.position.y, 2, r.size.y), hi)
-	ui.rect(Rect2(r.position.x, r.end.y - 2, r.size.x, 2), lo)
-	ui.rect(Rect2(r.end.x - 2, r.position.y, 2, r.size.y), lo)
+	var f = fill if fill != null else (LIGHT if sunken else GRAY)
+	ui.rect(r, f, 6)
+	ui.rect(r, LINE if not sunken else Color(0, 0, 0, 0.14), 6, 1)
 
 
-## Botón gris de los de antes. Devuelve true con el clic.
+## Botón redondeado. Devuelve true con el clic.
 static func btn(ui: ImUI, r: Rect2, label: String, enabled := true, size := 14) -> bool:
 	var hot := enabled and ui.hover(r)
 	var pressed: bool = hot and ui.down
-	bevel(ui, r, pressed, GRAY)
-	ui.text(label, r.get_center() + (Vector2(1, 1) if pressed else Vector2.ZERO), size,
-			INK if enabled else SHADE, false, "center", r.size.x - 8)
+	ui.rect(r, Color8(234, 234, 236) if pressed else (Color8(246, 246, 248) if hot else Color8(253, 253, 253)), 5)
+	ui.rect(r, Color(0, 0, 0, 0.13), 5, 1)
+	ui.rect(Rect2(r.position.x + 3, r.end.y - 1, r.size.x - 6, 1), Color(0, 0, 0, 0.1))
+	ui.text(label, r.get_center(), size, INK if enabled else Color(0, 0, 0, 0.35), false, "center", r.size.x - 8)
 	return hot and ui.clicked
 
 
@@ -238,19 +361,37 @@ func _open(id: String) -> void:
 		"oficina":
 			city.open_office_decor()
 			return
+		"config":
+			_message("Configuración", "Para cambiar esta configuración necesitas permisos de administrador. Eres el CEO, pero igual no.")
+			return
+		"calc":
+			_message("Calculadora", "Resultado: mucha plata. Para más detalle, abre Mi Empresa.")
+			return
+		"fotos":
+			_message("Fotos", "No hay fotos: estuviste trabajando todo el año.")
+			return
+		"tienda":
+			_message("Tienda", "Todo está agotado. Bueno, todo menos tus productos, ojalá.")
+			return
+		"correo":
+			_message("Correo", "Tienes 4.812 correos sin leer. Mejor no.", true)
+			return
+		"reloj":
+			_message("Reloj", Lang.f("Son las %s. Hora de vender.", _clock()))
+			return
 	for w in wins:
 		if w.id == id:   # ya estaba abierta: al frente
 			w.min = false
 			wins.erase(w)
 			wins.append(w)
 			return
-	var sizes := {"remodelar": Vector2(860, 540), "docs": Vector2(520, 320), "web": Vector2(660, 420), "papelera": Vector2(540, 380)}
-	var titles := {"remodelar": "Remodelar.exe", "docs": "Mis Documentos", "web": "Internet Explorador", "papelera": "Papelera"}
+	var sizes := {"remodelar": Vector2(860, 540), "docs": Vector2(700, 420), "web": Vector2(720, 440), "papelera": Vector2(640, 400)}
+	var titles := {"remodelar": "Remodelar.exe", "docs": "Documentos", "web": "Navegador", "papelera": "Papelera de reciclaje"}
 	var sz: Vector2 = sizes[id]
 	var n := wins.size()
 	sz = sz.min(vis.size - Vector2(40, BAR + 30))
 	var r := Rect2(vis.position + Vector2((vis.size.x - sz.x) / 2 + n * 24, max(12.0, (vis.size.y - BAR - sz.y) / 2 + n * 24)), sz)
-	wins.append({"id": id, "title": titles[id], "r": r, "min": false})
+	wins.append({"id": id, "title": titles[id], "r": r, "min": false, "max": false, "prev": r})
 
 
 func _close(w: Dictionary) -> void:
@@ -261,25 +402,24 @@ func _close(w: Dictionary) -> void:
 
 func _message(title: String, text: String, warn := false) -> void:
 	msg = {"title": title, "text": text, "warn": warn}
-	city.sfx.play("bad", 0.5, 1.3)
+	city.sfx.play("bad" if warn else "select", 0.5, 1.3)
 
 
 func _draw_icons(ui: ImUI, press: bool) -> void:
 	for i in ICONS.size():
 		var id: String = ICONS[i][0]
-		var r := Rect2(vis.position.x + 18, vis.position.y + 18 + i * 96, 92, 86)
-		var ir := Rect2(r.get_center().x - 22, r.position.y + 4, 44, 44)
+		var r := Rect2(vis.position.x + 10, vis.position.y + 10 + i * 92, 84, 86)
+		var ir := Rect2(r.get_center().x - 20, r.position.y + 6, 40, 40)
 		var sel := sel_icon == id
+		if sel or ui.hover(r):
+			ui.rect(r, Color(1, 1, 1, 0.24 if sel else 0.12), 4)
+			if sel:
+				ui.rect(r, Color(1, 1, 1, 0.3), 4, 1)
 		draw_icon(ui, id, ir)
-		if sel:
-			ui.rect(ir, Color(0, 0, 0.5, 0.35))
 		var label: String = Lang.t(ICONS[i][1])
-		var lr := Rect2(r.position.x, r.position.y + 54, r.size.x, 30)
-		if sel:
-			ui.rect(Rect2(lr.get_center().x - ui.text_size(label, 13).x / 2 - 3, lr.position.y, ui.text_size(label, 13).x + 6, 18), NAVY)
-		else:
-			ui.text(label, lr.position + Vector2(r.size.x / 2 + 1, 1), 13, Color(0, 0, 0, 0.7), false, "midtop", r.size.x)
-		ui.text(label, lr.position + Vector2(r.size.x / 2, 0), 13, LIGHT, false, "midtop", r.size.x)
+		var lr := Rect2(r.position.x, r.position.y + 52, r.size.x, 30)
+		ui.text(label, lr.position + Vector2(r.size.x / 2 + 1, 1), 12, Color(0, 0, 0, 0.6), false, "midtop", r.size.x - 4)
+		ui.text(label, lr.position + Vector2(r.size.x / 2, 0), 12, LIGHT, false, "midtop", r.size.x - 4)
 		if press and r.has_point(ui.mouse):
 			var now := Time.get_ticks_msec()
 			if last_click[0] == id and now - int(last_click[1]) < 450:   # doble clic: se abre
@@ -288,145 +428,303 @@ func _draw_icons(ui: ImUI, press: bool) -> void:
 			else:
 				last_click = [id, now]
 			sel_icon = id
-	if press and not Rect2(vis.position + Vector2(18, 18), Vector2(92, ICONS.size() * 96)).has_point(ui.mouse):
+	if press and not Rect2(vis.position + Vector2(10, 10), Vector2(84, ICONS.size() * 92)).has_point(ui.mouse):
 		sel_icon = ""
 
 
 func _draw_window(ui: ImUI, w: Dictionary, active: bool, press: bool) -> void:
 	var r: Rect2 = w.r
-	bevel(ui, r, false, GRAY)
-	ui.rect(Rect2(r.position.x + 1, r.position.y + 1, r.size.x - 2, r.size.y - 2), INK, 0, 1)
-	bevel(ui, r.grow(-1), false)
-	var tb := Rect2(r.position.x + 4, r.position.y + 4, r.size.x - 8, 26)
-	ui.gradient(tb, NAVY if active else SHADE, BLUE if active else Color8(180, 180, 180))
-	draw_icon(ui, w.id, Rect2(tb.position.x + 4, tb.position.y + 4, 18, 18))
-	ui.text(Lang.t(w.title), Vector2(tb.position.x + 28, tb.get_center().y), 14, LIGHT if active else GRAY.lightened(0.4), true, "midleft", tb.size.x - 90)
-	var xr := Rect2(tb.end.x - 24, tb.position.y + 3, 21, 19)
-	var mr := Rect2(xr.position.x - 25, xr.position.y, 21, 19)
-	if btn(ui, xr, "×", true, 16):
+	var rad := 0.0 if w.max else 8.0
+	if not w.max:
+		ui.rect(r.grow(8), Color(0, 0, 0, 0.06), 16)   # sombra suave
+		ui.rect(r.grow(3), Color(0, 0, 0, 0.1), 11)
+	ui.rect(r, GRAY if active else Color8(236, 236, 238), rad)
+	ui.rect(r, Color(0, 0, 0, 0.2) if active else LINE, rad, 1)
+	var tb := Rect2(r.position.x, r.position.y, r.size.x, 32)
+	draw_icon(ui, w.id, Rect2(tb.position.x + 12, tb.position.y + 8, 16, 16))
+	ui.text(Lang.t(w.title), Vector2(tb.position.x + 38, tb.get_center().y), 12, INK if active else SHADE, false, "midleft", tb.size.x - 180)
+	# Minimizar, maximizar y cerrar (46 de ancho cada uno, la X roja al pasar el mouse)
+	var xr := Rect2(tb.end.x - 46, tb.position.y, 46, 32)
+	var xr2 := Rect2(xr.position.x - 46, xr.position.y, 46, 32)
+	var mr := Rect2(xr2.position.x - 46, xr.position.y, 46, 32)
+	var hx := ui.hover(xr)
+	if hx:
+		ui.rect(xr, Color8(196, 43, 28), rad)
+		ui.rect(Rect2(xr.position.x, xr.position.y + 8, 30, 24), Color8(196, 43, 28))
+		ui.rect(Rect2(xr.position.x, xr.end.y - 8, 46, 8), Color8(196, 43, 28))
+	var xc := xr.get_center()
+	var xcol := LIGHT if hx else INK
+	ui.line(xc + Vector2(-5, -5), xc + Vector2(5, 5), xcol, 1.2)
+	ui.line(xc + Vector2(-5, 5), xc + Vector2(5, -5), xcol, 1.2)
+	for b in [xr2, mr]:
+		if ui.hover(b):
+			ui.rect(b, Color(0, 0, 0, 0.06))
+	var c2 := xr2.get_center()
+	if w.max:   # restaurar: dos cuadritos
+		ui.rect(Rect2(c2 + Vector2(-3, -6), Vector2(8, 8)), INK, 1.5, 1)
+		ui.rect(Rect2(c2 + Vector2(-6, -3), Vector2(8, 8)), GRAY, 1.5)
+		ui.rect(Rect2(c2 + Vector2(-6, -3), Vector2(8, 8)), INK, 1.5, 1)
+	else:
+		ui.rect(Rect2(c2 - Vector2(5, 5), Vector2(10, 10)), INK, 1.5, 1)
+	ui.rect(Rect2(mr.get_center().x - 5, mr.get_center().y, 10, 1), INK)
+	if hx and ui.clicked:
 		_close(w)
 		city.sfx.play("select", 0.3)
 		return
-	if btn(ui, mr, "_", true, 14):
+	if ui.hover(mr) and ui.clicked:
 		w.min = true
+		return
+	if ui.hover(xr2) and ui.clicked:
+		w.max = not w.max
+		if w.max:
+			w.prev = w.r
+			w.r = Rect2(vis.position, Vector2(vis.size.x, vis.size.y - BAR))
+		else:
+			w.r = w.prev
 		return
 	if press:
 		wins.erase(w)   # al frente
 		wins.append(w)
-		if tb.has_point(ui.mouse) and not xr.has_point(ui.mouse) and not mr.has_point(ui.mouse):
+		if tb.has_point(ui.mouse) and not xr.has_point(ui.mouse) and not xr2.has_point(ui.mouse) and not mr.has_point(ui.mouse) and not w.max:
 			drag = {"w": w, "off": ui.mouse - r.position}
-	var body := Rect2(r.position.x + 8, tb.end.y + 6, r.size.x - 16, r.end.y - tb.end.y - 14)
+	var body := Rect2(r.position.x + 12, tb.end.y + 4, r.size.x - 24, r.end.y - tb.end.y - 16)
 	match w.id:
 		"remodelar":
 			_app_remodel(ui, body)
 		"docs":
-			_app_docs(ui, body)
+			_app_docs(ui, Rect2(r.position.x + 1, tb.end.y, r.size.x - 2, r.end.y - tb.end.y - 1))
 		"web":
-			_app_web(ui, body)
+			_app_web(ui, Rect2(r.position.x + 1, tb.position.y + 1, r.size.x - 2, r.size.y - 2))
 		"papelera":
-			_app_trash(ui, body)
+			_app_trash(ui, Rect2(r.position.x + 1, tb.end.y, r.size.x - 2, r.end.y - tb.end.y - 1))
 
 
+## El menú Inicio: flotante y centrado encima de la barra.
 func _start_rect(ui: ImUI) -> Rect2:
-	var h := 6 * 40 + 14 + 46
-	return Rect2(vis.position.x + 2, vis.end.y - BAR - h, 270, h)
+	var sz := Vector2(minf(600.0, vis.size.x - 40), minf(560.0, vis.size.y - BAR - 24))
+	return Rect2(vis.get_center().x - sz.x / 2, vis.end.y - BAR - 12 - sz.y, sz.x, sz.y)
+
+
+## Un icono de la barra de tareas (cuadrado redondeado que se aclara al pasar el mouse). Devuelve true con el clic.
+func _bar_button(ui: ImUI, r: Rect2, on := false) -> bool:
+	var hot := ui.hover(r)
+	if hot or on:
+		ui.rect(r, Color(1, 1, 1, 0.8 if on else 0.55), 5)
+		ui.rect(r, LINE, 5, 1)
+	return hot and ui.clicked
 
 
 func _draw_taskbar(ui: ImUI) -> void:
 	var H := vis.end.y
 	var bar := Rect2(vis.position.x, H - BAR, vis.size.x, BAR)
-	ui.rect(bar, GRAY)
-	ui.rect(Rect2(vis.position.x, H - BAR, vis.size.x, 2), LIGHT)
-	# Inicio
-	var sr := Rect2(vis.position.x + 4, H - BAR + 5, 96, 30)
-	var hot := ui.hover(sr)
-	bevel(ui, sr, start_open or (hot and ui.down), GRAY)
-	logo(ui, Rect2(sr.position.x + 8, sr.position.y + 5, 16, 20))
-	ui.text("Inicio", Vector2(sr.position.x + 32, sr.get_center().y), 15, INK, true, "midleft")
-	if hot and ui.clicked:
+	ui.rect(bar, Color(0.93, 0.94, 0.965, 0.94))
+	ui.rect(Rect2(bar.position, Vector2(bar.size.x, 1)), Color(0, 0, 0, 0.08))
+	var cy := bar.get_center().y
+	# Izquierda: el clima (y tu plata, que para eso es la compu del CEO)
+	var w = city.weather
+	var hour: float = SkyLight.hour_of(city.day_fraction())
+	var wr := Rect2(bar.position.x + 8, bar.position.y + 4, 150, 40)
+	_bar_button(ui, wr)
+	var sun := Vector2(wr.position.x + 20, cy)
+	ui.circle(sun, 9, Color8(255, 196, 40))
+	ui.circle(sun + Vector2(6, 5), 7, Color(1, 1, 1, 0.95))
+	ui.circle(sun + Vector2(11, 5), 5, Color(1, 1, 1, 0.95))
+	ui.text("%d °C" % w.temperature(hour), Vector2(wr.position.x + 40, cy - 7), 12, INK, false, "midleft")
+	ui.text(Lang.t(w.name_of(w.today)), Vector2(wr.position.x + 40, cy + 8), 11, SHADE, false, "midleft", 105)
+	var g = city.game
+	if g != null:
+		ui.text(Fmt.money(g.cash), Vector2(wr.end.x + 10, cy), 12, Color8(16, 124, 16) if g.cash >= 0 else Color8(196, 43, 28), true, "midleft")
+	# Al medio: Inicio, el buscador, las apps ancladas y las ventanas abiertas (con la rayita si están abiertas)
+	var extra := []
+	for wn in wins:
+		if not wn.id in PINNED:
+			extra.append(wn.id)
+	var ids: Array = PINNED + extra
+	var search_w := 150.0
+	var total := 44.0 + 6 + search_w + 6 + ids.size() * 44.0
+	var x := vis.get_center().x - total / 2
+	var sr := Rect2(x, bar.position.y + 4, 40, 40)
+	if _bar_button(ui, sr, start_open):
 		start_open = not start_open
 		city.sfx.play("select", 0.3)
-	# Una pestaña por ventana abierta
-	var x := vis.position.x + 110.0
-	for w in wins.duplicate():
-		var r := Rect2(x, H - BAR + 5, 170, 30)
-		var on: bool = not w.min and w == wins[-1]
-		var h2 := ui.hover(r)
-		bevel(ui, r, on, Color8(210, 210, 210) if on else GRAY)
-		draw_icon(ui, w.id, Rect2(r.position.x + 6, r.position.y + 6, 18, 18))
-		ui.text(Lang.t(w.title), Vector2(r.position.x + 30, r.get_center().y), 13, INK, on, "midleft", r.size.x - 36)
-		if h2 and ui.clicked:
-			if w.min:
-				w.min = false
-				wins.erase(w)
-				wins.append(w)
+	start_glyph(ui, Rect2(sr.get_center().x - 11, sr.get_center().y - 11, 22, 22))
+	x += 46
+	var sb := Rect2(x, bar.position.y + 8, search_w, 32)
+	ui.rect(sb, LIGHT if ui.hover(sb) else Color8(248, 248, 250), 16)
+	ui.rect(sb, Color(0, 0, 0, 0.1), 16, 1)
+	ui.ring(sb.position + Vector2(18, 15), 5, INK, 1.4)
+	ui.line(sb.position + Vector2(22, 19), sb.position + Vector2(26, 23), INK, 1.4)
+	ui.text("Buscar", sb.position + Vector2(34, 16), 12, SHADE, false, "midleft")
+	if ui.hover(sb) and ui.clicked:
+		start_open = true
+	x += search_w + 6
+	for id in ids:
+		var r := Rect2(x + 2, bar.position.y + 4, 40, 40)
+		var win = null
+		for wn in wins:
+			if wn.id == id:
+				win = wn
+		var on: bool = win != null and not win.min and win == wins[-1]
+		if _bar_button(ui, r, on):
+			if win == null:
+				_open(id)
+			elif win.min:
+				win.min = false
+				wins.erase(win)
+				wins.append(win)
 			elif on:
-				w.min = true
+				win.min = true
 			else:
-				wins.erase(w)
-				wins.append(w)
-		x += 176
-	# Bandeja: tu plata y la hora del juego
-	var g = city.game
-	var tr := Rect2(vis.end.x - 230, H - BAR + 5, 226, 30)
-	bevel(ui, tr, true, GRAY)
-	if g != null:
-		var hour: float = SkyLight.hour_of(city.day_fraction())
-		ui.text(Fmt.money(g.cash), Vector2(tr.position.x + 12, tr.get_center().y), 14, Color8(0, 110, 0) if g.cash >= 0 else Color8(170, 0, 0), true, "midleft")
-		ui.text("%02d:%02d" % [int(hour), int(fmod(hour, 1.0) * 60)], Vector2(tr.end.x - 12, tr.get_center().y), 14, INK, false, "midright")
+				wins.erase(win)
+				wins.append(win)
+		draw_icon(ui, id, Rect2(r.get_center().x - 12, r.get_center().y - 13, 24, 24))
+		if win != null:
+			ui.rect(Rect2(r.get_center().x - (8 if on else 3), r.end.y - 3, 16 if on else 6, 3), NAVY if on else SHADE, 1.5)
+		x += 44
+	# Derecha: la bandeja (flechita, wifi, volumen, batería), la hora y la fecha, y la campanita
+	var tx := vis.end.x - 10
+	var dr := Rect2(tx - 108, bar.position.y + 4, 84, 40)
+	_bar_button(ui, dr)
+	ui.text(_clock(), Vector2(dr.end.x - 8, cy - 8), 12, INK, false, "midright")
+	ui.text(_date_short(), Vector2(dr.end.x - 8, cy + 8), 12, INK, false, "midright")
+	var bell := Vector2(tx - 12, cy)
+	ui.circle(bell + Vector2(0, -1), 5, Color(0, 0, 0, 0))
+	ui.ring(bell + Vector2(0, -1), 5, INK, 1.2)
+	ui.rect(Rect2(bell.x - 6, bell.y + 3, 12, 1.2), INK)
+	var tray := Rect2(dr.position.x - 92, bar.position.y + 4, 88, 40)
+	_bar_button(ui, tray)
+	var p := Vector2(tray.position.x + 16, cy)
+	ui.line(p + Vector2(-4, 2), p + Vector2(0, -2), INK, 1.3)    # la flechita para arriba
+	ui.line(p + Vector2(0, -2), p + Vector2(4, 2), INK, 1.3)
+	p.x += 22   # wifi: arcos
+	for k in 3:
+		var rr := 3.0 + k * 3.5
+		var pts := PackedVector2Array()
+		for j in 9:
+			var a := -PI * 0.75 + j / 8.0 * PI * 0.5
+			pts.append(p + Vector2(cos(a), sin(a)) * rr + Vector2(0, 5))
+		ui.polyline(pts, INK, 1.3)
+	ui.circle(p + Vector2(0, 5), 1.4, INK)
+	p.x += 22   # volumen
+	ui.polygon(PackedVector2Array([p + Vector2(-5, -2), p + Vector2(-2, -2), p + Vector2(2, -6), p + Vector2(2, 6), p + Vector2(-2, 2), p + Vector2(-5, 2)]), INK)
+	ui.line(p + Vector2(5, -3), p + Vector2(5, 3), INK, 1.2)
+	p.x += 22   # batería
+	ui.rect(Rect2(p + Vector2(-8, -4), Vector2(15, 8)), INK, 2, 1.2)
+	ui.rect(Rect2(p + Vector2(-6, -2), Vector2(9, 4)), INK, 1)
+	ui.rect(Rect2(p + Vector2(7, -2), Vector2(2, 4)), INK)
 
 
 func _draw_start(ui: ImUI, r: Rect2) -> void:
-	bevel(ui, r, false, GRAY)
-	var band := Rect2(r.position.x + 3, r.position.y + 3, 30, r.size.y - 6)
-	ui.gradient(band, NAVY, BLUE, false)
-	ui.text("98", Vector2(band.get_center().x, band.end.y - 14), 16, LIGHT, true, "center")
-	var items := [["remodelar", "Remodelar.exe"], ["empresa", "Mi Empresa"], ["oficina", "Personalizar oficina"],
-			["docs", "Mis Documentos"], ["web", "Internet Explorador"], ["papelera", "Papelera"]]
-	var y := r.position.y + 6
-	for it in items:
-		var ir := Rect2(band.end.x + 3, y, r.end.x - band.end.x - 8, 38)
-		var hot := ui.hover(ir)
+	ui.rect(r.grow(8), Color(0, 0, 0, 0.08), 16)
+	ui.rect(r, Color(0.95, 0.955, 0.97, 0.98), 8)
+	ui.rect(r, LINE, 8, 1)
+	# Buscador
+	var sb := Rect2(r.position.x + 32, r.position.y + 24, r.size.x - 64, 34)
+	ui.rect(sb, LIGHT, 17)
+	ui.rect(sb, Color(0, 0, 0, 0.1), 17, 1)
+	ui.rect(Rect2(sb.position.x + 20, sb.end.y - 2, sb.size.x - 40, 2), NAVY, 1)
+	ui.ring(sb.position + Vector2(22, 16), 6, SHADE, 1.5)
+	ui.line(sb.position + Vector2(26, 20), sb.position + Vector2(30, 24), SHADE, 1.5)
+	ui.text("Escribe aquí para buscar", sb.position + Vector2(40, 17), 13, SHADE, false, "midleft")
+	# Anclados: 6 por fila
+	var y := r.position.y + 84
+	ui.text("Anclados", Vector2(r.position.x + 48, y), 14, INK, true, "midleft")
+	var all := Rect2(r.end.x - 196, y - 13, 150, 26)
+	ui.rect(all, LIGHT if ui.hover(all) else Color8(250, 250, 250), 5)
+	ui.rect(all, Color(0, 0, 0, 0.1), 5, 1)
+	ui.text("Todas las aplicaciones  ›", all.get_center(), 12, INK, false, "center")
+	var apps: Array = ICONS + MORE_APPS
+	var cols := 6
+	var cw := (r.size.x - 64) / cols
+	for i in apps.size():
+		var it: Array = apps[i]
+		var cr := Rect2(r.position.x + 32 + (i % cols) * cw, y + 22 + (i / cols) * 84, cw, 80)
+		var hot := ui.hover(cr)
 		if hot:
-			ui.rect(ir, NAVY)
-		draw_icon(ui, it[0], Rect2(ir.position.x + 6, ir.position.y + 5, 28, 28))
-		ui.text(Lang.t(it[1]), Vector2(ir.position.x + 44, ir.get_center().y), 15, LIGHT if hot else INK, false, "midleft")
+			ui.rect(cr.grow(-3), Color(1, 1, 1, 0.9), 5)
+			ui.rect(cr.grow(-3), LINE, 5, 1)
+		draw_icon(ui, it[0], Rect2(cr.get_center().x - 16, cr.position.y + 12, 32, 32))
+		ui.text(Lang.t(it[1]), Vector2(cr.get_center().x, cr.position.y + 52), 11, INK, false, "midtop", cr.size.x - 8)
 		if hot and ui.clicked:
 			_open(it[0])
-		y += 40
-	ui.rect(Rect2(band.end.x + 6, y + 4, r.end.x - band.end.x - 14, 1), SHADE)
-	ui.rect(Rect2(band.end.x + 6, y + 5, r.end.x - band.end.x - 14, 1), LIGHT)
-	var off := Rect2(band.end.x + 3, y + 10, r.end.x - band.end.x - 8, 38)
+	# Recomendado: tus archivos de hace poco
+	y += 22 + ((apps.size() + cols - 1) / cols) * 84 + 18
+	ui.text("Recomendado", Vector2(r.position.x + 48, y), 14, INK, true, "midleft")
+	for i in RECENT.size():
+		var fr := Rect2(r.position.x + 32 + (i % 2) * (r.size.x - 64) / 2, y + 18 + (i / 2) * 56, (r.size.x - 64) / 2 - 6, 50)
+		var hot := ui.hover(fr)
+		if hot:
+			ui.rect(fr, Color(1, 1, 1, 0.9), 5)
+		_file_icon(ui, RECENT[i][0], Rect2(fr.position.x + 10, fr.position.y + 10, 28, 30))
+		ui.text(RECENT[i][0], Vector2(fr.position.x + 48, fr.position.y + 17), 12, INK, false, "midleft", fr.size.x - 56)
+		ui.text(Lang.t(RECENT[i][1]), Vector2(fr.position.x + 48, fr.position.y + 34), 11, SHADE, false, "midleft")
+		if hot and ui.clicked:
+			_message(RECENT[i][0], "Este archivo está bloqueado: lo tiene abierto el piso de ejecutivos.")
+	# Abajo: tu empresa y el botón de apagar
+	var foot := Rect2(r.position.x, r.end.y - 62, r.size.x, 62)
+	ui.rect(foot, Color(0.91, 0.915, 0.93, 1.0), 8)
+	ui.rect(Rect2(foot.position.x, foot.position.y, foot.size.x, 10), Color(0.91, 0.915, 0.93, 1.0))
+	ui.rect(Rect2(foot.position, Vector2(foot.size.x, 1)), LINE)
+	var g = city.game
+	var name: String = str(g.company) if g != null else "CEO"
+	ui.circle(Vector2(foot.position.x + 62, foot.get_center().y), 15, NAVY)
+	ui.text(name.substr(0, 1).to_upper(), Vector2(foot.position.x + 62, foot.get_center().y), 14, LIGHT, true, "center")
+	ui.text(name, Vector2(foot.position.x + 86, foot.get_center().y), 13, INK, false, "midleft")
+	var off := Rect2(foot.end.x - 84, foot.position.y + 13, 36, 36)
 	var hot2 := ui.hover(off)
 	if hot2:
-		ui.rect(off, NAVY)
-	draw_icon(ui, "apagar", Rect2(off.position.x + 6, off.position.y + 5, 28, 28))
-	ui.text("Apagar...", Vector2(off.position.x + 44, off.get_center().y), 15, LIGHT if hot2 else INK, false, "midleft")
+		ui.rect(off, Color(1, 1, 1, 0.9), 5)
+	var pc := off.get_center()
+	var arc := PackedVector2Array()
+	for j in 17:
+		var a := -PI / 2 + 0.6 + j / 16.0 * (TAU - 1.2)
+		arc.append(pc + Vector2(cos(a), sin(a)) * 7)
+	ui.polyline(arc, INK, 1.5)
+	ui.rect(Rect2(pc.x - 0.75, pc.y - 9, 1.5, 8), INK)
+	if hot2:
+		ui.text("Apagar", Vector2(off.position.x - 8, off.get_center().y), 12, SHADE, false, "midright")
 	if hot2 and ui.clicked:
 		start_open = false
-		leaving = 0.6
+		leaving = 0.8
 
 
 func _draw_message(ui: ImUI) -> void:
-	var r := Rect2(vis.get_center() - Vector2(230, 100), Vector2(460, 170))
-	ui.rect(vis, Color(0, 0, 0, 0.15))
-	bevel(ui, r, false, GRAY)
-	var tb := Rect2(r.position.x + 4, r.position.y + 4, r.size.x - 8, 26)
-	ui.gradient(tb, NAVY, BLUE)
-	ui.text(Lang.t(msg.title), Vector2(tb.position.x + 8, tb.get_center().y), 14, LIGHT, true, "midleft")
-	var ic := Vector2(r.position.x + 44, r.position.y + 72)
-	if msg.warn:
-		ui.polygon(PackedVector2Array([ic + Vector2(0, -20), ic + Vector2(20, 16), ic + Vector2(-20, 16)]), Color8(250, 210, 40))
-		ui.text("!", ic + Vector2(0, 3), 22, INK, true, "center")
-	else:
-		ui.circle(ic, 18, Color8(30, 60, 200))
-		ui.text("i", ic, 22, LIGHT, true, "center")
-	ui.wrap_text(Lang.t(msg.text), Rect2(r.position.x + 80, r.position.y + 46, r.size.x - 100, 70), 14, INK)
+	var r := Rect2(vis.get_center() - Vector2(240, 100), Vector2(480, 184))
+	ui.rect(vis, Color(0, 0, 0, 0.3))
+	ui.rect(r.grow(8), Color(0, 0, 0, 0.1), 16)
+	ui.rect(r, LIGHT, 8)
+	ui.rect(r, Color(0, 0, 0, 0.18), 8, 1)
+	ui.text(Lang.t(msg.title), Vector2(r.position.x + 24, r.position.y + 30), 18, INK, true, "midleft")
+	ui.wrap_text(Lang.t(msg.text), Rect2(r.position.x + 24, r.position.y + 52, r.size.x - 48, 70), 14, INK)
+	var foot := Rect2(r.position.x, r.end.y - 60, r.size.x, 60)
+	ui.rect(foot.grow_side(SIDE_TOP, -8), Color8(243, 243, 243), 8)
+	ui.rect(Rect2(foot.position.x + 1, foot.position.y, foot.size.x - 2, 12), Color8(243, 243, 243))
+	ui.rect(Rect2(foot.position, Vector2(foot.size.x, 1)), LINE)
 	var label := "Recordarme en 10 años" if msg.warn else "Aceptar"
-	var bw := ui.text_size(label, 14).x + 40
-	if btn(ui, Rect2(r.get_center().x - bw / 2, r.end.y - 44, bw, 30), label):
+	var bw := (r.size.x - 60) / 2
+	var br := Rect2(foot.position.x + 24, foot.position.y + 14, bw, 32)
+	var hot := ui.hover(br)
+	ui.rect(br, NAVY.lightened(0.1) if hot else NAVY, 5)
+	ui.text(label, br.get_center(), 13, LIGHT, false, "center")
+	var cr := Rect2(br.end.x + 12, br.position.y, bw, 32)
+	var done := (hot and ui.clicked) or btn(ui, cr, "Cerrar", true, 13)
+	if done:
 		msg = null
 		city.sfx.play("select", 0.3)
+
+
+## Icono chico de un archivo según su extensión (como los de Office: una hoja con una banda de color).
+static func _file_icon(ui: ImUI, file: String, r: Rect2) -> void:
+	var ext := file.get_extension()
+	var col := {"docx": Color8(43, 87, 154), "doc": Color8(43, 87, 154), "xlsx": Color8(33, 115, 70), "xls": Color8(33, 115, 70),
+			"pptx": Color8(210, 71, 38), "ppt": Color8(210, 71, 38), "png": Color8(0, 120, 212)}.get(ext, Color8(120, 120, 128))
+	ui.rect(Rect2(r.position.x + r.size.x * 0.2, r.position.y, r.size.x * 0.8, r.size.y), LIGHT, 2)
+	ui.rect(Rect2(r.position.x + r.size.x * 0.2, r.position.y, r.size.x * 0.8, r.size.y), Color(0, 0, 0, 0.2), 2, 1)
+	for k in 3:
+		ui.rect(Rect2(r.position.x + r.size.x * 0.55, r.position.y + r.size.y * (0.3 + k * 0.18), r.size.x * 0.35, 1.5), Color(0, 0, 0, 0.25))
+	var tag := Rect2(r.position.x, r.position.y + r.size.y * 0.25, r.size.x * 0.55, r.size.y * 0.5)
+	ui.rect(tag, col, 2)
+	ui.text(ext.substr(0, 1).to_upper(), tag.get_center(), int(r.size.y * 0.32), LIGHT, true, "center")
 
 
 # ---------- programas ----------
@@ -491,6 +789,19 @@ func _app_remodel(ui: ImUI, body: Rect2) -> void:
 	if btn(ui, Rect2(body.end.x - 130, body.position.y + 2, 130, 30), "Ver en vivo"):
 		city.open_decor(int(sel_loc.id))
 		return
+	var missing := g.missing_decor(sel_loc)
+	if missing.size() > 1:   # todo lo que falta de una vez
+		var total := g.missing_decor_cost(sel_loc)
+		if btn(ui, Rect2(body.end.x - 330, body.position.y + 2, 190, 30), Lang.f("Comprar todo (%s)", Fmt.short(total)), g.cash >= total):
+			var res: Array = g.buy_all_decor(sel_loc)
+			if res[0]:
+				city.sfx.play("coin", 0.6)
+				for s2 in city.stores.values():
+					if s2.loc.id == sel_loc.id:
+						s2.sync_decor()
+				item_sel = ""
+			else:
+				_message("Remodelar.exe", res[1], true)
 	var items: Array = D.upgrades_for(int(sel_loc.size))
 	var owned: Array = sel_loc.get("upgrades", [])
 	var store = null
@@ -554,49 +865,123 @@ func _app_remodel(ui: ImUI, body: Rect2) -> void:
 			_message("Remodelar.exe", res[1], true)
 
 
+## La barra de un explorador: flechas, la ruta y el buscador; abajo, el panel de la izquierda con las carpetas.
+## Devuelve el rectángulo del contenido (a la derecha del panel).
+func _explorer(ui: ImUI, body: Rect2, path: Array, here: String) -> Rect2:
+	var top := Rect2(body.position.x, body.position.y, body.size.x, 44)
+	var arrows := [[Vector2(4, -5), Vector2(4, 5)], [Vector2(-4, -5), Vector2(-4, 5)], [Vector2(-5, 4), Vector2(5, 4)]]   # atrás, adelante, arriba
+	for i in 3:
+		var c := Vector2(top.position.x + 22 + i * 30, top.get_center().y)
+		ui.line(c + arrows[i][0], c, INK if i == 0 else SHADE, 1.3)
+		ui.line(c, c + arrows[i][1], INK if i == 0 else SHADE, 1.3)
+	var pr := Rect2(top.position.x + 104, top.position.y + 7, top.size.x - 330, 30)
+	ui.rect(pr, LIGHT, 4)
+	ui.rect(pr, Color(0, 0, 0, 0.1), 4, 1)
+	var px := pr.position.x + 12
+	for i in path.size():
+		var tw := ui.text(Lang.t(path[i]), Vector2(px, pr.get_center().y), 12, INK, false, "midleft").size.x
+		px += tw + 6
+		if i < path.size() - 1:
+			ui.text("›", Vector2(px, pr.get_center().y), 12, SHADE, false, "midleft")
+			px += 12
+	var sr := Rect2(pr.end.x + 8, pr.position.y, top.end.x - pr.end.x - 20, 30)
+	ui.rect(sr, LIGHT, 4)
+	ui.rect(sr, Color(0, 0, 0, 0.1), 4, 1)
+	ui.text(Lang.f("Buscar en %s", Lang.t(here)), Vector2(sr.position.x + 10, sr.get_center().y), 12, SHADE, false, "midleft", sr.size.x - 20)
+	# Panel de la izquierda
+	var nav := Rect2(body.position.x, top.end.y, 170, body.end.y - top.end.y)
+	ui.rect(Rect2(nav.position.x, nav.position.y, body.size.x, 1), LINE)
+	var items := [["Inicio", "casa"], ["Escritorio", "escritorio"], ["Documentos", "docs"], ["Descargas", "descargas"],
+			["Imágenes", "fotos"], ["Papelera de reciclaje", "papelera"], ["Este equipo", "equipo"]]
+	var y := nav.position.y + 8
+	for it in items:
+		var ir := Rect2(nav.position.x + 6, y, nav.size.x - 12, 28)
+		if it[0] == here or (here == "Papelera de reciclaje" and it[1] == "papelera"):
+			ui.rect(ir, Color(0, 0, 0, 0.06), 4)
+			ui.rect(Rect2(ir.position.x, ir.position.y + 8, 3, 12), NAVY, 1.5)
+		draw_icon(ui, "docs" if it[1] in ["casa", "escritorio", "descargas", "fotos", "equipo"] else it[1],
+				Rect2(ir.position.x + 10, ir.position.y + 6, 16, 16))
+		ui.text(Lang.t(it[0]), Vector2(ir.position.x + 34, ir.get_center().y), 12, INK, false, "midleft", ir.size.x - 40)
+		y += 30
+	ui.rect(Rect2(nav.end.x, nav.position.y, 1, nav.size.y), LINE)
+	var content := Rect2(nav.end.x + 1, nav.position.y + 1, body.end.x - nav.end.x - 1, nav.size.y - 1)
+	ui.rect(content, LIGHT)
+	return content
+
+
 func _app_docs(ui: ImUI, body: Rect2) -> void:
-	ui.text("Archivo   Edición   Ver   Ayuda", body.position + Vector2(4, 2), 13, INK)
-	var r := Rect2(body.position.x, body.position.y + 24, body.size.x, body.size.y - 24)
-	bevel(ui, r, true, LIGHT)
-	draw_icon(ui, "docs", Rect2(r.get_center().x - 32, r.position.y + 40, 64, 64))
-	ui.text("Esta carpeta está vacía.", Vector2(r.get_center().x, r.position.y + 124), 16, INK, true, "midtop")
-	ui.text("Aquí iban tus impuestos.", Vector2(r.get_center().x, r.position.y + 150), 14, SHADE, false, "midtop")
+	var r := _explorer(ui, body, ["Este equipo", "Documentos"], "Documentos")
+	draw_icon(ui, "docs", Rect2(r.get_center().x - 32, r.position.y + 50, 64, 64))
+	ui.text("Esta carpeta está vacía.", Vector2(r.get_center().x, r.position.y + 132), 15, INK, false, "midtop")
+	ui.text("Aquí iban tus impuestos.", Vector2(r.get_center().x, r.position.y + 156), 13, SHADE, false, "midtop")
+	ui.text("0 elementos", Vector2(r.position.x + 10, r.end.y - 14), 11, SHADE, false, "midleft")
 
 
 func _app_web(ui: ImUI, body: Rect2) -> void:
-	ui.text("Dirección", Vector2(body.position.x + 2, body.position.y + 13), 13, INK, false, "midleft")
-	var ar := Rect2(body.position.x + 72, body.position.y + 1, body.size.x - 72, 24)
-	bevel(ui, ar, true, LIGHT)
-	ui.text("http://www.comovolverserico.com", Vector2(ar.position.x + 8, ar.get_center().y), 13, INK, false, "midleft")
-	var r := Rect2(body.position.x, body.position.y + 32, body.size.x, body.size.y - 32)
-	bevel(ui, r, true, LIGHT)
-	var x := r.position.x + 24
-	var y := r.position.y + 22
-	draw_icon(ui, "web", Rect2(x, y, 48, 48))
-	ui.text("No se puede mostrar la página", Vector2(x + 64, y + 12), 20, INK, true)
-	y += 70
-	ui.wrap_text("El módem está ocupado: alguien levantó el teléfono de la casa.", Rect2(x, y, r.size.x - 48, 40), 14, INK)
-	y += 40
-	ui.text("Pruebe lo siguiente:", Vector2(x, y), 14, INK, true)
-	ui.text("•  Desenchufar el módem y volver a enchufarlo.", Vector2(x + 10, y + 24), 14, INK)
-	ui.text("•  Gritar «¡CUELGA EL TELÉFONO!».", Vector2(x + 10, y + 46), 14, INK)
+	# Pestañas arriba (en la barra de título), la barra de dirección y la página
+	var tab := Rect2(body.position.x + 10, body.position.y + 5, 220, 27)
+	ui.rect(tab, LIGHT, 6)
+	draw_icon(ui, "web", Rect2(tab.position.x + 10, tab.position.y + 6, 15, 15))
+	ui.text("Sin conexión", Vector2(tab.position.x + 32, tab.get_center().y), 12, INK, false, "midleft")
+	ui.text("✕", Vector2(tab.end.x - 14, tab.get_center().y), 10, SHADE, false, "center")
+	ui.text("+", Vector2(tab.end.x + 18, tab.get_center().y), 18, SHADE, false, "center")
+	var nav := Rect2(body.position.x, body.position.y + 32, body.size.x, 40)
+	ui.rect(nav, LIGHT)
+	for i in 3:
+		var c := Vector2(nav.position.x + 22 + i * 32, nav.get_center().y)
+		if i < 2:
+			ui.line(c + Vector2(4 - i * 8, -5), c, SHADE, 1.3)
+			ui.line(c, c + Vector2(4 - i * 8, 5), SHADE, 1.3)
+		else:
+			ui.ring(c, 6, INK, 1.3)
+	var ar := Rect2(nav.position.x + 110, nav.position.y + 6, nav.size.x - 160, 28)
+	ui.rect(ar, Color8(240, 240, 242), 14)
+	ui.text("https://www.comovolverserico.com", Vector2(ar.position.x + 16, ar.get_center().y), 12, INK, false, "midleft")
+	ui.text("…", Vector2(nav.end.x - 24, nav.get_center().y), 16, INK, true, "center")
+	ui.rect(Rect2(nav.position.x, nav.end.y, nav.size.x, 1), LINE)
+	var r := Rect2(body.position.x, nav.end.y + 1, body.size.x, body.end.y - nav.end.y - 1)
+	ui.rect(r, LIGHT)
+	var x := r.position.x + 60
+	var y := r.position.y + 50
+	# Un dibujo de un cable desenchufado
+	ui.rect(Rect2(x, y + 18, 30, 12), SHADE, 3)
+	ui.rect(Rect2(x + 30, y + 21, 10, 2), SHADE)
+	ui.rect(Rect2(x + 30, y + 25, 10, 2), SHADE)
+	ui.rect(Rect2(x + 58, y + 18, 22, 12), SHADE, 3)
+	ui.line(Vector2(x + 80, y + 24), Vector2(x + 110, y + 34), SHADE, 2)
+	ui.text("No estás conectado", Vector2(x, y + 64), 24, INK, true)
+	ui.wrap_text("No hay Internet: todo el piso de ejecutivos está viendo videos de gatitos.", Rect2(x, y + 100, r.size.x - 120, 40), 14, INK)
+	ui.text("Pruebe lo siguiente:", Vector2(x, y + 146), 14, INK, true)
+	ui.text("•  Apagar el router y volver a prenderlo.", Vector2(x + 10, y + 170), 14, INK)
+	ui.text("•  Gritar «¡A TRABAJAR!» por el ascensor.", Vector2(x + 10, y + 192), 14, INK)
 	if web_tries > 0:
-		ui.text(Lang.f("Intento %d: sigue ocupado.", web_tries), Vector2(x, y + 80), 13, Color8(170, 0, 0))
-	if btn(ui, Rect2(r.end.x - 130, r.end.y - 46, 110, 30), "Reintentar"):
+		ui.text(Lang.f("Intento %d: sigue sin conexión.", web_tries), Vector2(x, y + 224), 13, Color8(196, 43, 28))
+	var br := Rect2(x, r.end.y - 60, 120, 32)
+	var hot := ui.hover(br)
+	ui.rect(br, NAVY.lightened(0.1) if hot else NAVY, 5)
+	ui.text("Reintentar", br.get_center(), 13, LIGHT, false, "center")
+	if hot and ui.clicked:
 		web_tries += 1
 		city.sfx.play("bad", 0.4, 1.4)
 
 
 func _app_trash(ui: ImUI, body: Rect2) -> void:
-	var r := Rect2(body.position.x, body.position.y, body.size.x, body.size.y - 44)
-	bevel(ui, r, true, LIGHT)
-	var y := r.position.y + 10
-	for f in TRASH:
-		draw_icon(ui, "archivo", Rect2(r.position.x + 12, y, 20, 22))
-		ui.text(f, Vector2(r.position.x + 42, y + 11), 14, INK, false, "midleft")
-		y += 32
-	if btn(ui, Rect2(body.end.x - 170, body.end.y - 36, 170, 32), "Vaciar papelera"):
-		_message("Papelera", "No se puede vaciar la papelera: los malos planes siempre vuelven.")
+	var r := _explorer(ui, body, ["Papelera de reciclaje"], "Papelera de reciclaje")
+	ui.text("Nombre", Vector2(r.position.x + 44, r.position.y + 16), 11, SHADE, false, "midleft")
+	ui.text("Eliminado", Vector2(r.end.x - 110, r.position.y + 16), 11, SHADE, false, "midleft")
+	ui.rect(Rect2(r.position.x + 8, r.position.y + 30, r.size.x - 16, 1), LINE)
+	var y := r.position.y + 36
+	for i in TRASH.size():
+		var f: String = TRASH[i]
+		var row := Rect2(r.position.x + 6, y, r.size.x - 12, 30)
+		if ui.hover(row):
+			ui.rect(row, Color8(229, 241, 251), 4)
+		_file_icon(ui, f, Rect2(row.position.x + 10, row.position.y + 5, 18, 20))
+		ui.text(f, Vector2(row.position.x + 38, row.get_center().y), 12, INK, false, "midleft", row.size.x - 170)
+		ui.text(Lang.f("Hace %d días", i * 3 + 2), Vector2(r.end.x - 110, row.get_center().y), 12, SHADE, false, "midleft")
+		y += 30
+	if btn(ui, Rect2(r.end.x - 170, r.end.y - 42, 156, 30), "Vaciar papelera"):
+		_message("Papelera de reciclaje", "No se puede vaciar la papelera: los malos planes siempre vuelven.")
 
 
 # ---------- iconos dibujados ----------
@@ -642,6 +1027,40 @@ static func draw_icon(ui: ImUI, id: String, r: Rect2) -> void:
 			ui.rect(Rect2(p.call(22, 3), Vector2(8, 9) * s), Color8(240, 240, 220))
 			for x in [16, 22, 28]:
 				ui.line(p.call(x, 16), p.call(x, 36), Color8(120, 125, 135), 2 * s)
+		"config":   # engranaje
+			var c3: Vector2 = p.call(22, 22)
+			for k in 8:
+				var a := TAU * k / 8.0
+				ui.rect(Rect2(c3 + Vector2(cos(a), sin(a)) * 13 * s - Vector2(3.5, 3.5) * s, Vector2(7, 7) * s), Color8(110, 116, 128), 1.5 * s)
+			ui.circle(c3, 12 * s, Color8(110, 116, 128))
+			ui.circle(c3, 5 * s, LIGHT)
+		"calc":
+			ui.rect(Rect2(p.call(9, 4), Vector2(26, 36) * s), Color8(60, 64, 72), 4 * s)
+			ui.rect(Rect2(p.call(12, 8), Vector2(20, 8) * s), Color8(200, 230, 210), 2 * s)
+			for row in 3:
+				for col in 3:
+					ui.rect(Rect2(p.call(12 + col * 7, 19 + row * 7), Vector2(5, 5) * s), Color8(250, 160, 60) if col == 2 else LIGHT, 1 * s)
+		"fotos":
+			ui.rect(Rect2(p.call(5, 8), Vector2(34, 28) * s), Color8(0, 120, 212), 4 * s)
+			ui.polygon(PackedVector2Array([p.call(8, 33), p.call(18, 20), p.call(26, 30), p.call(30, 25), p.call(36, 33)]), Color8(160, 220, 255))
+			ui.circle(p.call(30, 15), 3 * s, Color8(255, 220, 90))
+		"tienda":   # bolsa de compras
+			ui.rect(Rect2(p.call(8, 14), Vector2(28, 26) * s), Color8(0, 103, 192), 3 * s)
+			ui.ring(p.call(22, 14), 7 * s, Color8(0, 103, 192), 2.5 * s)
+			ui.rect(Rect2(p.call(15, 22), Vector2(6, 6) * s), Color8(242, 80, 34))
+			ui.rect(Rect2(p.call(23, 22), Vector2(6, 6) * s), Color8(127, 186, 0))
+			ui.rect(Rect2(p.call(15, 30), Vector2(6, 6) * s), Color8(0, 164, 239))
+			ui.rect(Rect2(p.call(23, 30), Vector2(6, 6) * s), Color8(255, 185, 0))
+		"correo":   # sobre
+			ui.rect(Rect2(p.call(5, 10), Vector2(34, 24) * s), Color8(0, 120, 212), 3 * s)
+			ui.line(p.call(6, 11), p.call(22, 24), LIGHT, 2 * s)
+			ui.line(p.call(38, 11), p.call(22, 24), LIGHT, 2 * s)
+		"reloj":
+			var c4: Vector2 = p.call(22, 22)
+			ui.circle(c4, 17 * s, Color8(40, 44, 52))
+			ui.circle(c4, 14 * s, LIGHT)
+			ui.line(c4, c4 + Vector2(0, -10) * s, INK, 2 * s)
+			ui.line(c4, c4 + Vector2(7, 3) * s, NAVY, 2 * s)
 		"archivo":
 			ui.rect(Rect2(o, r.size), LIGHT)
 			ui.rect(Rect2(o, r.size), SHADE, 0, 1)

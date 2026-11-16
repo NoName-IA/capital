@@ -26,7 +26,7 @@ func run(m) -> void:
 		await m.frames(6)
 		await m.shot(ProjectSettings.globalize_path("res://tests/shots/oficina_%d.png" % t))
 		m.set_process(true)
-	print("choques de la oficina: ", c.hq.rects.size(), " · computadora ", c.hq_spots.computer)
+	print("choques de la oficina: ", c.hq.rects.size(), " · computadora ", c.tower.pc_spots.computer)
 	var old := Game.from_json(g.to_json().replace('"office_look":3', '"x":3'))
 	print("partida vieja sin el dato: oficina ", old.office_look)
 	m.ui.set_visible(true)

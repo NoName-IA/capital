@@ -173,7 +173,7 @@ func lines(id: String) -> Array:
 		"salir":
 			return [Lang.f("Para salir de la tablet, aprieta Esc o %s.", k.call("phone"))]
 		"oficina":
-			return ["Ahora, tu oficina. Ahí están tu computadora y tu armario.", Lang.f("Aprieta %s para ir.", k.call("office"))]
+			return ["Ahora, tu oficina: abajo tu armario, arriba tu computadora.", Lang.f("Aprieta %s para ir.", k.call("office"))]
 		"valor":
 			return ["Lo último y más importante: cómo se gana."]
 	return []
@@ -269,7 +269,7 @@ func target():
 	var p: Vector3 = city.player.position
 	match STEPS[step]:
 		"oficina":
-			return city.hq_spots.computer
+			return Blueprints.to_world(City.HQ, 0, 4.5)
 		"terreno", "comprar":
 			if not city.game.locations.is_empty():
 				return null
@@ -302,7 +302,7 @@ func _done(id: String) -> bool:
 		"salir":
 			return city.overlays.mode != "admin"
 		"oficina":
-			var c: Vector3 = city.hq_spots.computer
+			var c: Vector3 = Blueprints.to_world(City.HQ, 0, 4.5)
 			return Vector2(p.x - c.x, p.z - c.z).length() < 4.0
 		"terreno":
 			return city.overlays.mode == "lote" or city.lots.is_empty() or not city.game.locations.is_empty()

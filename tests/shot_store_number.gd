@@ -46,7 +46,7 @@ func run(m) -> void:
 	print("hablando: ", c.tutorial.talking(), " · bloquea: ", c.tutorial.blocking())
 	_key(c, "office")
 	await m.frames(30)
-	var comp: Vector3 = c.hq_spots.computer
+	var comp: Vector3 = c.tower.pc_spots.computer
 	print("después de la O: hablando ", c.tutorial.talking(), " · distancia a la computadora ",
 			snappedf(Vector2(c.player.position.x - comp.x, c.player.position.z - comp.z).length(), 0.1),
 			" · paso ", Tutorial.STEPS[c.tutorial.step] if c.tutorial.active else "-")
