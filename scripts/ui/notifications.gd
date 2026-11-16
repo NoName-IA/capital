@@ -3,16 +3,19 @@ extends RefCounted
 ## Los avisos llegan como notificaciones del celular de la empresa: tarjetas apiladas arriba a la derecha, cada una
 ## con el ícono de su "app" (Banco, Noticias, Mensajes de los rivales...). Se ven hasta 3 a la vez, la más nueva
 ## arriba, y se van solas; mientras hay peligro de quiebra una alerta roja queda fija encima de todas.
-## Los hitos grandes (rango, récord, racha, imperio) salen como un cartel al centro de la pantalla, y las respuestas
+## Los hitos grandes (rango, récord, racha, imperio) salen como una cinta de bolsa arriba al centro, con un gráfico
+## que sube, sin tapar el juego; esperan si hay una decisión urgente cerca (Admin.GAP_MS). Las respuestas
 ## a lo que haces (música, llegaste a la oficina...) como un aviso chico abajo. Todo queda en Noticias del celular.
 
 const LIFE := 6.0          # segundos que dura una tarjeta (el reloj se detiene con un menú abierto)
 const MAX_CARDS := 3
-const SOUND_VOL := {"record": 0.45, "coin": 0.45}   # los avisos de plata suenan más bajito
+const SOUND_VOL := {"record": 0.45, "coin": 0.45, "fanfare": 0.45}   # los avisos suenan más bajito
 const CARD_W := 372.0
 const TOP := 92.0          # debajo de la velocidad y los botones Día / Tarde / Noche
 const GAP := 8.0
-const HERO_LIFE := 3.2
+const HERO_LIFE := 4.2
+const HERO_W := 450.0
+const HERO_H := 84.0
 const HINT_LIFE := 3.0
 const BG := Color(0.05, 0.067, 0.09, 0.9)
 const TEXT := Color8(232, 236, 244)
@@ -69,10 +72,14 @@ func push(app: String, title: String, body := "", opts := {}) -> void:
 
 ## Cartel grande al centro para los hitos: arriba una línea corta en mayúsculas y abajo el título grande.
 func push_hero(kicker: String, title: String, sub: String, col: Color, sound = null, confetti := 0, count = null,
-		icon := "star") -> void:
+		icon := "star", extra := {}) -> void:
 	city.app.unread += 1
+	for old in heroes.duplicate():   # si ya esperaba uno igual (otro récord), queda solo el más nuevo
+		if old.kicker == kicker:
+			heroes.erase(old)
 	heroes.append({"kicker": kicker, "title": title, "sub": sub, "col": col, "sound": sound, "confetti": confetti,
 			"count": count, "t": 0.0, "icon": icon})
+	heroes[-1].merge(extra)
 
 
 ## Respuesta inmediata a algo que hiciste: un aviso chico abajo al centro (reemplaza al anterior).
@@ -113,12 +120,13 @@ func update(dt: float, frozen: bool) -> void:
 		c.alpha = clampf(c.alpha + (-dt * 4.0 if leaving else dt * 5.0), 0, 1)
 		if leaving and c.alpha <= 0:
 			cards.erase(c)
-	if hero == null and heroes:
+	# Entre una decisión urgente y un hito pasan al menos Admin.GAP_MS: el hito espera su turno
+	if hero == null and heroes and not city.rank_must_wait():
 		hero = heroes.pop_front()
+		hero.seed = randi()
+		city.app.last_rank_ms = city.app.now_ms()   # y la próxima decisión espera a este hito
 		if hero.sound != null:
 			city.sfx.play(hero.sound, SOUND_VOL.get(hero.sound, 1.0))
-		if hero.confetti:
-			city.hud.confetti.burst(hero.confetti, Vector2(city.hud.ui.W / 2, 300))
 	if hero != null:
 		hero.t += dt  # sigue aunque haya un menú abierto: es una celebración corta
 		if hero.t >= HERO_LIFE:
@@ -223,31 +231,162 @@ func draw(ui: ImUI) -> void:
 	ui.canvas_alpha(1.0)
 
 
+## Cinta arriba al centro, como el aviso de una acción que sube en la bolsa: ícono, el hito y a la derecha un
+## gráfico que se dibuja subiendo con su flecha verde. Baja desde arriba y se va sola; no tapa el juego.
 func _draw_hero(ui: ImUI) -> void:
 	if hero == null:
 		return
+	if hero.has("rank"):
+		_draw_rank_hero(ui)
+		return
 	var t: float = hero.t
-	var a := clampf(min(t / 0.25, (HERO_LIFE - t) / 0.5), 0, 1)
-	var pop := 1.0 + 0.18 * (1.0 - ease_out(t / 0.35))   # entra un poco más grande y se asienta
-	var cx := ui.W / 2
-	var cy := 300.0
+	var a := clampf(min(t / 0.3, (HERO_LIFE - t) / 0.45), 0, 1)
+	var slide := (1.0 - ease_out(min(t / 0.45, (HERO_LIFE - t) / 0.45))) * -(HERO_H + 20)
+	var col: Color = hero.col
+	var r := Rect2(ui.W / 2 - HERO_W / 2, 14 + slide, HERO_W, HERO_H)
 	ui.canvas_alpha(a)
-	var w := 560.0 * pop
-	var h := 150.0 * pop
-	var r := Rect2(cx - w / 2, cy - h / 2, w, h)
-	ui.rect(r, Color(0.04, 0.05, 0.07, 0.94), 22)
-	ui.rect(r, Color(hero.col, 0.8), 22, 2)
-	var kw := ui.text_size(hero.kicker, 15, true).x + 72
-	var kr := Rect2(cx - kw / 2, r.position.y - 14, kw, 28)
-	ui.rect(kr, hero.col, 14)
-	ui.text(hero.kicker, kr.get_center(), 15, Color8(16, 20, 30), true, "center")
-	for side in [-1, 1]:  # el ícono del hito a cada lado
-		Icons.draw(ui, hero.icon, Vector2(cx + side * (kw / 2 - 18), kr.get_center().y), 18, Color8(16, 20, 30))
-	var title: String = hero.title
+	ui.rect(r, Color(0.035, 0.045, 0.065, 0.9), 16)
+	ui.rect(r, Color(col, 0.35), 16, 1.0)
+	ui.rect(Rect2(r.position.x + 10, r.position.y + 14, 3, HERO_H - 28), col, 2)   # raya del color del hito
+	var ic := Rect2(r.position.x + 24, r.get_center().y - 25, 50, 50)
+	ui.rect(ic, Color(col, 0.16), 13)
+	ui.rect(ic, Color(col, 0.45), 13, 1.0)
+	Icons.draw(ui, hero.icon, ic.get_center(), 30, light(col, 0.2))
+	var chart := Rect2(r.end.x - 136, r.position.y + 16, 118, HERO_H - 32)
+	var tx := ic.end.x + 14
+	var tw := chart.position.x - 14 - tx
+	ui.text(hero.kicker, Vector2(tx, r.position.y + 13), 11, light(col, 0.15), true)
+	var title: String = Lang.t(hero.title)
 	if hero.count != null:
-		title = Lang.t(title).format([Fmt.money(hero.count * ease_out(t / 1.0))], "{}")
-	ui.text(title, Vector2(cx, cy - 8), int(44 * pop), light(hero.col, 0.35), true, "center", w - 40)
-	ui.text(hero.sub, Vector2(cx, cy + 40 * pop), 16, TEXT, false, "center", w - 40)
+		title = title.format([Fmt.money(hero.count * ease_out(t / 1.0))], "{}")
+	ui.text(_lines_max(ui, title, tw, 22, true, 1)[0], Vector2(tx, r.position.y + 28), 22, Color.WHITE, true)
+	ui.text(_lines_max(ui, Lang.t(hero.sub), tw, 12, false, 1)[0], Vector2(tx, r.position.y + 57), 12, MUTED.lerp(TEXT, 0.3))
+	_draw_rise(ui, chart, t, hero.seed)
+
+
+## Nuevo rango: la misma cinta, pero dorada y con la escalera de rangos a la derecha. Los peldaños que ya subiste
+## quedan dorados, el nuevo crece y brilla, y un punto salta del peldaño anterior al nuevo. Un brillo cruza la
+## cinta una vez. A la izquierda, galones de rango en vez de un ícono.
+func _draw_rank_hero(ui: ImUI) -> void:
+	var t: float = hero.t
+	var a := clampf(min(t / 0.3, (HERO_LIFE - t) / 0.45), 0, 1)
+	var slide := (1.0 - ease_out(min(t / 0.45, (HERO_LIFE - t) / 0.45))) * -(HERO_H + 20)
+	var gold: Color = hero.col
+	var r := Rect2(ui.W / 2 - HERO_W / 2, 14 + slide, HERO_W, HERO_H)
+	ui.canvas_alpha(a)
+	ui.gradient(Rect2(r.position.x + 8, r.position.y, r.size.x - 16, r.size.y), Color(0.09, 0.07, 0.03, 0.92), Color(0.035, 0.045, 0.065, 0.92))
+	ui.rect(Rect2(r.position.x, r.position.y, 16, r.size.y), Color(0.09, 0.07, 0.03, 0.92), 16)
+	ui.rect(Rect2(r.end.x - 16, r.position.y, 16, r.size.y), Color(0.035, 0.045, 0.065, 0.92), 16)
+	# brillo que cruza una vez
+	var sk := clampf((t - 0.35) / 0.9, 0, 1)
+	if sk > 0 and sk < 1:
+		var bx := lerpf(r.position.x - 40, r.end.x + 10, ease_out(sk))
+		var x0 := clampf(bx, r.position.x + 6, r.end.x - 6)
+		var x1 := clampf(bx + 30, r.position.x + 6, r.end.x - 6)
+		var x2 := clampf(bx + 30 - 18, r.position.x + 6, r.end.x - 6)
+		var x3 := clampf(bx - 18, r.position.x + 6, r.end.x - 6)
+		ui.polygon(PackedVector2Array([Vector2(x0, r.position.y + 1), Vector2(x1, r.position.y + 1),
+				Vector2(x2, r.end.y - 1), Vector2(x3, r.end.y - 1)]), Color(gold, 0.10 * sin(sk * PI)))
+	ui.rect(r, Color(gold, 0.7), 16, 1.5)
+	# galones
+	var ic := Rect2(r.position.x + 20, r.get_center().y - 26, 52, 52)
+	ui.rect(ic, Color(gold, 0.18), 13)
+	ui.rect(ic, Color(gold, 0.6), 13, 1.0)
+	var idx: int = hero.rank
+	var n_chev := clampi(idx, 1, 3)
+	for i in n_chev:
+		var ck := ease_out(clampf((t - 0.3 - 0.15 * i) / 0.3, 0, 1))
+		var cy := ic.get_center().y + (n_chev - 1) * 5.5 - i * 11 + (1.0 - ck) * 6
+		var cx := ic.get_center().x
+		ui.polyline(PackedVector2Array([Vector2(cx - 13, cy - 1), Vector2(cx, cy - 10), Vector2(cx + 13, cy - 1)]),
+				Color(light(gold, 0.25), ck), 4.0)
+	# textos
+	var chart := Rect2(r.end.x - 134, r.position.y + 14, 116, HERO_H - 28)
+	var tx := ic.end.x + 14
+	var tw := chart.position.x - 14 - tx
+	ui.text(Lang.f("%s · %d/%d", [Lang.t(hero.kicker), idx + 1, D.RANKS.size()]), Vector2(tx, r.position.y + 13), 11, light(gold, 0.2), true)
+	ui.text(_lines_max(ui, Lang.t(hero.title), tw, 22, true, 1)[0], Vector2(tx, r.position.y + 28), 22, light(gold, 0.55), true)
+	ui.text(_lines_max(ui, Lang.t(hero.sub), tw, 12, false, 1)[0], Vector2(tx, r.position.y + 57), 12, MUTED.lerp(TEXT, 0.3))
+	# escalera de rangos (6 peldaños alrededor del actual)
+	var steps := 6
+	var first := clampi(idx - 3, 0, maxi(0, D.RANKS.size() - steps))
+	var gap := 4.0
+	var sw := (chart.size.x - gap * (steps - 1)) / steps
+	var grow := ease_out(clampf((t - 0.5) / 0.6, 0, 1))
+	var tops := []
+	for i in steps:
+		var ri := first + i
+		var h := chart.size.y * (0.3 + 0.7 * float(i) / (steps - 1))
+		var x := chart.position.x + i * (sw + gap)
+		var full := Rect2(x, chart.end.y - h, sw, h)
+		tops.append(Vector2(x + sw / 2, full.position.y))
+		if ri < idx:
+			ui.rect(full, Color(gold, 0.45), 3)
+		elif ri == idx:
+			var gh := h * grow
+			ui.rect(full, Color(gold, 0.12), 3)
+			ui.rect(Rect2(x, chart.end.y - gh, sw, gh), gold, 3)
+			if grow >= 1.0:
+				var pulse := 0.5 + 0.5 * sin(t * 6.0)
+				ui.rect(full.grow(2 + pulse * 2), Color(gold, 0.25 * (1.0 - pulse * 0.5)), 5, 1.5)
+		else:
+			ui.rect(full, Color(1, 1, 1, 0.12), 3, 1.0)
+	# el punto salta del peldaño anterior al nuevo
+	var cur := idx - first
+	if cur > 0:
+		var jk := ease_out(clampf((t - 0.95) / 0.45, 0, 1))
+		var p0: Vector2 = tops[cur - 1] + Vector2(0, -6)
+		var p1: Vector2 = tops[cur] + Vector2(0, -6)
+		var p := p0.lerp(p1, jk) + Vector2(0, -14 * sin(jk * PI))
+		ui.circle(p, 4.5, Color.WHITE)
+		ui.circle(p, 2.5, gold)
+
+
+## Gráfico chico que se dibuja de izquierda a derecha y siempre termina arriba: área bajo la línea, cuadrícula de
+## fondo, un punto que late al final y una flecha verde.
+func _draw_rise(ui: ImUI, r: Rect2, t: float, seed: int) -> void:
+	var up := Color8(60, 200, 120)
+	for i in 3:   # cuadrícula
+		var gy := r.position.y + r.size.y * (0.15 + 0.35 * i)
+		ui.line(Vector2(r.position.x, gy), Vector2(r.end.x, gy), Color(1, 1, 1, 0.06), 1.0)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
+	var n := 14
+	var vals := []
+	var v := 0.0
+	for i in n:   # camina al azar, pero con tendencia a subir
+		v += rng.randf_range(-0.5, 1.0) + (0.4 if i > n - 4 else 0.0)
+		vals.append(v)
+	var lo: float = vals.min()
+	var hi: float = maxf(vals.max(), lo + 0.01)
+	var at := func(i: int) -> Vector2:
+		return Vector2(r.position.x + r.size.x * i / (n - 1.0), r.end.y - r.size.y * (vals[i] - lo) / (hi - lo))
+	var k := ease_out(clampf((t - 0.25) / 1.3, 0, 1))
+	var shown := k * (n - 1)
+	var pts := PackedVector2Array()
+	var i0 := int(shown)
+	for i in i0 + 1:
+		pts.append(at.call(i))
+	if i0 < n - 1 and shown > i0:   # tramo a medio dibujar
+		pts.append(pts[-1].lerp(at.call(i0 + 1), shown - i0))
+	if pts.size() < 2:
+		return
+	var fill := PackedVector2Array(pts)
+	fill.append(Vector2(pts[-1].x, r.end.y))
+	fill.append(Vector2(pts[0].x, r.end.y))
+	var cols := PackedColorArray()
+	for p in fill:
+		cols.append(Color(up, 0.28 * (1.0 - (p.y - r.position.y) / r.size.y)))
+	RenderingServer.canvas_item_add_polygon(ui.canvas, fill, cols)
+	ui.polyline(pts, up, 2.2)
+	var tip := pts[-1]
+	var pulse := 0.5 + 0.5 * sin(t * 7.0)
+	ui.circle(tip, 6.0 + 3.0 * pulse, Color(up, 0.18))
+	ui.circle(tip, 3.5, light(up, 0.3))
+	if k >= 0.999:   # flecha verde al terminar de subir
+		var ak := ease_out(clampf((t - 1.55) / 0.3, 0, 1))
+		var ac := Vector2(r.end.x - 4, r.position.y + 2 - 4 * ak)
+		ui.polygon(PackedVector2Array([ac + Vector2(0, -6), ac + Vector2(6, 3), ac + Vector2(-6, 3)]), Color(up, ak))
 
 
 func _draw_hint(ui: ImUI) -> void:

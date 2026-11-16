@@ -1,5 +1,5 @@
 extends RefCounted
-## Entre una decisión urgente y el aviso de nuevo rango pasa al menos un minuto (en los dos sentidos).
+## Entre una decisión urgente y el aviso de nuevo rango pasan al menos 45 s (en los dos sentidos).
 ## Godot --path . -- --scenario=res://tests/shot_rank_gap.gd
 func run(m) -> void:
 	var c: City = m.city
@@ -17,7 +17,7 @@ func run(m) -> void:
 	print("rango con decisión recién cerrada -> en espera: ", c.rank_wait != null, " · en pantalla: ", c.hud.notes.hero != null)
 	app.last_dilemma_ms = app.now_ms() - Admin.GAP_MS - 10
 	await m.frames(5)
-	print("pasó un minuto -> en espera: ", c.rank_wait != null, " · en pantalla: ", c.hud.notes.hero != null or not c.hud.notes.heroes.is_empty())
+	print("pasaron 45 s -> en espera: ", c.rank_wait != null, " · en pantalla: ", c.hud.notes.hero != null or not c.hud.notes.heroes.is_empty())
 	# 2) Recién subiste de rango: la decisión no sale
 	app.last_rank_ms = app.now_ms()
 	await m.frames(3)
@@ -27,6 +27,6 @@ func run(m) -> void:
 	app.last_rank_ms = app.now_ms() - Admin.GAP_MS - 10
 	await m.frames(3)
 	g._maybe_dilemma()
-	print("pasó un minuto -> pendiente: ", g.pending_choice != null)
+	print("pasaron 45 s -> pendiente: ", g.pending_choice != null)
 	g.pending_choice = null
 	app.modal = null
