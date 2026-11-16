@@ -98,19 +98,22 @@ var custom_drag = null     # [última posición del mouse, "left" o "right"]
 var weather: Weather
 var life: CityLife
 var diario_t := 0.0
-# La computadora de la oficina: te sientas, la cámara entra a la pantalla y se prende «Ventanas 98» (Ventanas)
+# La computadora del escritorio del CEO (en la presidencia): te sientas, la cámara entra a la pantalla y se prende
+# «Ventanas 11» (Ventanas)
 var pc_phase := ""     # "", "walk" (vas a la silla), "sit", "zoom" (la cámara entra), "os", "out" (sale), "stand"
 var pc_t := 0.0
 var pc_pos_from := Vector3.ZERO
 var pc_rot_from := 0.0
 var pc_cam_from := Transform3D()
 var pc_os := Ventanas.new(self)
-var rank_wait = null   # aviso de nuevo rango guardado hasta que pase un minuto desde la última decisión
+var rank_wait = null   # aviso de nuevo rango guardado hasta que pasen 45 s desde la última decisión
 var tutorial_pending := false
 var tutorial_prev := false
 var tutorial := Tutorial.new(self)   # los pasos guiados después de la bienvenida
 var spot_rig: Node3D       # reflectores del armario: alumbran al personaje de abajo hacia arriba, de día y de noche
 var assistant: Person
+var tower: Tower          # la presidencia (último piso) y los pisos de ejecutivos: ver Tower
+var finale: Finale        # «La última reunión»: el final del juego (ver Finale)
 var board_text: Label3D
 var ticker_text: Label3D
 var trophies_node: Node3D
@@ -294,9 +297,12 @@ func mouse_captured() -> bool:
 func _build_office() -> void:
 	assistant = Person.new(Color8(40, 60, 110), Color8(40, 40, 45))
 	add_child(assistant)
-	assistant.position = Blueprints.to_world(HQ, -2.9, 9.0)
+	assistant.position = Blueprints.to_world(HQ, -4.9, 14.4)   # atiende la recepción
 	assistant.rotation.y = PI
 	_office_props()
+	tower = Tower.new(self)
+	tower.build(office_tier)
+	finale = Finale.new(self)
 
 
 var office_tier := 2   # el aspecto con el que está armada la oficina ahora
@@ -314,6 +320,7 @@ func set_office_look(tier: int) -> void:
 	trophies_node = null
 	trophy_count = -1
 	_office_props()
+	tower.build(tier)
 	office_decor_sig = ["-"]
 	if game != null:
 		hq.set_brand(game.company)
@@ -325,6 +332,10 @@ func _office_props() -> void:
 	board_text.rotation.y = PI / 2
 	ticker_text = Building.label(hq.root, "", Vector3(7.64, 2.6, 11), 9, Color8(120, 255, 120), true, false)
 	ticker_text.rotation.y = -PI / 2
+	var wl := Building.label(hq.root, Lang.t("ARMARIO"), Vector3(7.12, 2.72, Blueprints.WARDROBE_AT.y), 6, Color8(240, 200, 90), true, false)
+	wl.rotation.y = -PI / 2
+	var tl := Building.label(hq.root, Lang.t("MIS TROFEOS"), Vector3(-7.04, 0.42, Blueprints.TROPHY_AT.y), 6, Color8(240, 200, 90), true, false)
+	tl.rotation.y = PI / 2
 	# Alfombra persa del vestíbulo (pixel art sobre su base, ver Blueprints.OFFICE_RUG)
 	var r: Array = Blueprints.OFFICE_RUG
 	var pm := PlaneMesh.new()
@@ -353,6 +364,7 @@ func sync_office(g: Game) -> void:
 		ticker_text.modulate = Color8(120, 255, 120)
 	if g.rank != trophy_count:
 		build_trophies(g.rank)
+	tower.set_company(g.company, Fmt.short(g.valuation()))
 
 
 ## Un trofeo por cada título conseguido: bronce, plata, oro y diamante para los más altos.
@@ -366,15 +378,23 @@ func build_trophies(count: int) -> void:
 			Color8(240, 190, 60), Color8(240, 190, 60), Color8(120, 220, 240), Color8(120, 220, 240),
 			Color8(120, 220, 240), Color8(255, 255, 255)]
 	var b := Boxes.new()
-	for i in min(count, 10):
-		var x: float = -6.4 + (i % 5) * 0.5
-		var y0: float = [1.15, 1.79][i / 5]
-		var c: Color = tiers[i]
-		b.box(Vector3(x, y0 + 0.03, 14.5), Vector3(0.2, 0.06, 0.2), Color8(60, 45, 30))
-		b.box(Vector3(x, y0 + 0.12, 14.5), Vector3(0.05, 0.12, 0.05), c)
-		b.box(Vector3(x, y0 + 0.26, 14.5), Vector3(0.2, 0.17, 0.2), c)
-		for hx in [-0.13, 0.13]:
-			b.box(Vector3(x + hx, y0 + 0.27, 14.5), Vector3(0.05, 0.1, 0.03), c)
+	var n := mini(count, 10)
+	var per := [4, 3, 3]   # trofeos por repisa, de abajo hacia arriba
+	var i := 0
+	for shelf in 3:
+		var on_shelf := clampi(n - i, 0, per[shelf])
+		var y0: float = Blueprints.TROPHY_SHELVES[shelf]
+		for j in on_shelf:
+			var along: float = (j - (on_shelf - 1) / 2.0) * 0.68   # a lo largo de la vitrina (que va contra la pared)
+			var at := Vector2(Blueprints.TROPHY_AT.x + 0.03, Blueprints.TROPHY_AT.y - along)
+			var c: Color = tiers[i]
+			var big := 1.0 + shelf * 0.12   # los de más arriba (los mejores) un poco más grandes
+			b.box(Vector3(at.x, y0 + 0.04, at.y), Vector3(0.26, 0.08, 0.26) * big, Color8(40, 30, 22))
+			b.box(Vector3(at.x, y0 + 0.16 * big, at.y), Vector3(0.06, 0.16, 0.06) * big, c)
+			b.box(Vector3(at.x, y0 + 0.34 * big, at.y), Vector3(0.26, 0.22, 0.26) * big, c)
+			for hz in [-0.17, 0.17]:
+				b.box(Vector3(at.x, y0 + 0.36 * big, at.y + hz * big), Vector3(0.04, 0.12, 0.06) * big, c)
+			i += 1
 	if not b.is_empty():
 		var m := Mats.textured(null, 0.25, Color.WHITE, Vector3.ONE, 0.8)
 		b.node(trophies_node, m, false)
@@ -604,12 +624,11 @@ func leave_computer() -> void:
 
 
 func _pc_seat() -> Vector3:
-	return hq_spots.pc_seat
+	return tower.pc_spots.pc_seat
 
 
 func _pc_screen() -> Vector3:
-	var sc: Vector3 = hq_spots.pc_screen
-	return Vector3(sc.x, hq_spots.pc_screen_y, sc.z)
+	return tower.pc_spots.pc_screen
 
 
 ## Hacia dónde miras sentado (de frente a la pantalla).
@@ -699,7 +718,7 @@ func _pc_close() -> Transform3D:
 	var vs := get_viewport().get_visible_rect().size
 	var tv := tan(deg_to_rad(camera.fov) / 2.0)
 	var th := tv * vs.x / maxf(vs.y, 1.0)
-	var dist := maxf(float(hq_spots.pc_screen_h) / 2.0 / tv, float(hq_spots.pc_screen_w) / 2.0 / th) / Ventanas.FILL
+	var dist := maxf(float(tower.pc_spots.pc_screen_h) / 2.0 / tv, float(tower.pc_spots.pc_screen_w) / 2.0 / th) / Ventanas.FILL
 	var eye := scr - d * dist
 	return Transform3D(Basis.looking_at(scr - eye, Vector3.UP), eye)
 
@@ -744,8 +763,8 @@ func pc_screen_rect() -> Rect2:
 	var seat := _pc_seat()
 	var d := Vector3(scr.x - seat.x, 0, scr.z - seat.z).normalized()
 	var face := scr - d * 0.011   # la cara de adelante de la pantalla
-	var side := Vector3(-d.z, 0, d.x) * float(hq_spots.pc_screen_w) / 2.0
-	var up := Vector3(0, float(hq_spots.pc_screen_h) / 2.0, 0)
+	var side := Vector3(-d.z, 0, d.x) * float(tower.pc_spots.pc_screen_w) / 2.0
+	var up := Vector3(0, float(tower.pc_spots.pc_screen_h) / 2.0, 0)
 	var r := Rect2(camera.unproject_position(face - side - up), Vector2.ZERO)
 	for p in [face + side - up, face - side + up, face + side + up]:
 		r = r.expand(camera.unproject_position(p))
@@ -769,7 +788,7 @@ func go_to_office() -> void:
 	stop_serving()
 	knock = null
 	player.rotation.x = 0
-	player.position = hq_spots.computer + Vector3(0, 0, -1.5)
+	player.position = Blueprints.to_world(HQ, 0, 4.5)
 	player.rotation.y = 0.0
 	yaw = 0.0
 	pitch = 12.0
@@ -1063,7 +1082,7 @@ func watch_news(g: Game) -> void:
 		react(n)
 
 
-## El aviso de nuevo rango espera si hay una decisión urgente abierta o se cerró hace menos de un minuto.
+## Los avisos grandes esperan si hay una decisión urgente abierta o se cerró hace menos de Admin.GAP_MS.
 func rank_must_wait() -> bool:
 	return game.pending_choice != null or app.modal == "dilema" or app.now_ms() - app.last_dilemma_ms < Admin.GAP_MS
 
@@ -1081,12 +1100,19 @@ func react(n: Dictionary) -> void:
 	match fx:
 		"rank":
 			if rank_must_wait():
-				rank_wait = n   # sale cuando pase un minuto desde la última decisión urgente
+				rank_wait = n   # sale cuando pasen 45 s desde la última decisión urgente
 			else:
 				app.last_rank_ms = app.now_ms()
-				notes.push_hero("NUEVO RANGO", v, Lang.f("Tu empresa vale %s. ¡Sigue así!", Fmt.money(game.valuation())), gold, "fanfare", 140)
+				var ri := 0
+				for i in D.RANKS.size():
+					if D.RANKS[i][1] == v:
+						ri = i
+				notes.push_hero("NUEVO RANGO", v, Lang.f("Tu empresa vale %s", Fmt.money(game.valuation())), gold, "fanfare", 0, null,
+						"star", {"rank": ri})
 		"win":
-			if game.mode == "normal":
+			if not game.finale_seen:   # la primera vez: el final completo
+				finale.start()
+			elif game.mode == "normal":
 				notes.push_hero("IMPERIO", "¡Construiste un imperio!", Lang.f("En %d minutos de juego", roundi(game.win_seconds / 60.0)), gold, "fanfare", 180, null, "crown")
 			else:
 				notes.push_hero("MIL MILLONARIO", "¡Llegaste a la cima!", "El título más alto del juego", gold, "fanfare", 180, null, "crown")
@@ -1219,6 +1245,9 @@ func set_sky_lock(t: float) -> void:
 # ---------- sincronización con la simulación ----------
 func reset_world(g) -> void:
 	rank_wait = null
+	for i in house_signs:
+		house_signs[i].root.queue_free()
+	house_signs.clear()
 	if pc_phase != "":
 		pc_phase = ""
 		player.visible = true
@@ -1296,6 +1325,7 @@ func sync(g: Game) -> void:
 		s.sync_decor()
 	sync_competitors(g)
 	sync_factories(g)
+	sync_houses(g)
 	sync_office(g)
 	for m in malls:
 		m.sync(g)
@@ -1377,6 +1407,63 @@ func sync_factories(g) -> void:
 			factories[k] = builder.build_factory(k, want[1])
 
 
+## Letrero en el jardín de cada casa del barrio que se vende: verde «SE VENDE» o, si es tuya, dorado «ALQUILADA».
+var house_signs := {}
+
+
+func sync_houses(g) -> void:
+	for i in builder.sale_houses.size():
+		var owned: bool = g != null and g.houses.has(str(i))
+		var want = null if g == null else [owned, Fmt.short(g.house_cost())]
+		var have = house_signs.get(i)
+		if have != null and have.sig != want:
+			have.root.queue_free()
+			house_signs.erase(i)
+			have = null
+		if want != null and have == null:
+			house_signs[i] = _house_sign(builder.sale_houses[i], owned, g)
+			house_signs[i].sig = want
+
+
+func _house_sign(h: Dictionary, owned: bool, g) -> Dictionary:
+	var face: int = h.face
+	var side := -1.0 if h.door > 0 else 1.0   # del lado contrario a la puerta
+	var at: Vector3 = h.pos + Vector3(side * (h.w / 2 - 0.9), 0, face * (h.d / 2 + 1.8))
+	var root := Node3D.new()
+	root.position = at
+	root.rotation.y = PI if face == 1 else 0.0   # el cartel mira al pasaje
+	add_child(root)
+	var b := Boxes.new()
+	b.box(Vector3(0, 0.75, 0.05), Vector3(0.12, 1.5, 0.12), Blueprints.PALETTE.wood)
+	b.box(Vector3(0, 1.65, 0), Vector3(2.0, 0.95, 0.1), Color8(225, 175, 40) if owned else Blueprints.PALETTE.green)
+	b.node(root, Mats.standard)
+	if owned:
+		Building.label(root, "ALQUILADA", Vector3(0, 1.82, -0.07), 11, Color8(30, 25, 10))
+		Building.label(root, Lang.f("Tuya · %s al mes", Fmt.short(g.house_rent_of(float(g.houses[str(house_index(h))])))), Vector3(0, 1.45, -0.07), 7, Color8(30, 25, 10), false)
+	else:
+		Building.label(root, "SE VENDE", Vector3(0, 1.82, -0.07), 11, Color.WHITE)
+		Building.label(root, Lang.f("Casa para alquilar · %s", Fmt.short(g.house_cost())), Vector3(0, 1.45, -0.07), 7, Color.WHITE, false)
+	return {"root": root, "manage": at + Vector3(0, 0, face * 1.3), "sig": null}
+
+
+func house_index(h: Dictionary) -> int:
+	return builder.sale_houses.find(h)
+
+
+func buy_house(i: int, confirmed := false) -> void:
+	if not confirmed:
+		var cost: float = game.house_cost()
+		confirm("¿Comprar esta casa para alquilar?",
+				Lang.f("Te paga %s al mes de arriendo y suma su precio al valor de tu empresa.", Fmt.money(game.house_rent_of(cost))),
+				Lang.f("Comprar (%s)", Fmt.short(cost)), buy_house.bind(i, true))
+		return
+	var r: Array = game.buy_house(i)
+	if r[0]:
+		sfx.play("coin", 0.5)
+		sync_houses(game)
+	toast(r[1], "good" if r[0] else "bad")
+
+
 func drop_store(i: int) -> void:
 	var store: Store = stores[i]
 	stores.erase(i)
@@ -1412,7 +1499,7 @@ func spawn(dt: float) -> void:
 
 # ---------- choques ----------
 func all_rects() -> Array:
-	var out := [static_rects, hq.rects, office_decor_rects]
+	var out := [static_rects, hq.rects, office_decor_rects, tower.rects]
 	for s in stores.values():
 		out.append(s.rects)
 	for c in comps.values():
@@ -1461,7 +1548,7 @@ func blocked(x: float, z: float, r := 0.38, feet := 0.0) -> bool:
 		return false
 	if x > Terrain.COAST and Terrain.height(x, z) < Terrain.SEA_LEVEL - WADE_DEPTH:
 		return true  # más adentro el mar ya es hondo
-	if not (BOUNDS[0] < x and x < BOUNDS[1] and BOUNDS[2] < z and z < BOUNDS[3]):
+	if not (BOUNDS[0] < x and x < BOUNDS[1] and BOUNDS[2] < z and z < BOUNDS[3]) and not tower.inside(Vector3(x, 0, z)):
 		# Hacia los cerros se puede seguir un poco más por la calle y las veredas
 		var valley := -153.0 < x and x < -100.0 and absf(z) < 27.0   # los terrenos del valle, camino al túnel
 		if not valley and not (ROAD_WEST_LIMIT < x and x < BOUNDS[1] and absf(z) < SIDEWALK + 1.5):
@@ -1556,7 +1643,7 @@ func update_lights() -> void:
 
 ## El techo del edificio donde está `pos` (oficina o local), o [] si está al aire libre.
 func ceiling_over(pos: Vector3) -> Array:
-	var spot_sets := [hq_spots]
+	var spot_sets := [hq_spots, tower.spots]
 	for s in stores.values():
 		spot_sets.append(s.spots)
 	for c in comps.values():
@@ -1791,6 +1878,10 @@ func look_dir(yaw_deg: float, pitch_deg: float) -> Vector3:
 
 
 func update_camera(dt: float) -> void:
+	if finale != null and finale.place_camera(camera):   # el final del juego
+		return
+	if tower != null and tower.place_camera(camera):   # el viaje en el ascensor
+		return
 	if pc_phase != "" and overlays.mode != "decorar":
 		_pc_camera()
 		return
@@ -1873,6 +1964,8 @@ func _custom_camera(dt: float) -> void:
 
 func update_zone() -> void:
 	var p := player.position
+	if tower.inside(p) or tower.busy() or finale.active():
+		return
 	var z := ["Avenida Comercial", "Tus locales y la competencia"]
 	if p.z < -38 and p.x < -40 and p.x > -104:
 		z = ["Parque industrial", "Tus fábricas"]
@@ -1889,7 +1982,7 @@ func update_zone() -> void:
 	elif absf(p.x) < 22 and p.z < -9:
 		z = ["Parque Central", "La fuente, la laguna y los juegos"]
 	elif absf(p.z) > 27:
-		z = ["Barrio Las Lomas", "Donde viven tus clientes"]
+		z = ["Barrio Las Lomas", "Casas en venta para alquilar"]
 	hud.set_zone(z)
 
 
@@ -1897,7 +1990,10 @@ func update_zone() -> void:
 func interactables() -> Array:
 	var items := []
 	var g: Game = game
-	items.append([hq_spots.computer, "Sentarte en la computadora", sit_at_computer])
+	if tower.inside(player.position):   # en la presidencia
+		return [[tower.w(Vector3(0, 0, -6.3)), "Ascensor: bajar al vestíbulo", tower.go_down],
+				[tower.pc_spots.computer, "Sentarte en la computadora", sit_at_computer]]
+	items.append([Blueprints.to_world(HQ, Tower.LOBBY_LIFT.x, Tower.LOBBY_LIFT.z), "Ascensor: subir a la presidencia", tower.go_up])
 	items.append([hq_spots.board, "Pizarra: reunión de estrategia del mes", func(): overlays.show("estrategia")])
 	if g.investing():
 		items.append([hq_spots.ticker, "Pantalla de la bolsa: ver tu fondo de inversión", open_growth])
@@ -1928,6 +2024,12 @@ func interactables() -> Array:
 		elif cost > 0:
 			text += Lang.f(" (%s)", Fmt.money(cost))
 		items.append([builder.activity_spots[key], text, do_activity.bind(key)])
+	for i in house_signs:   # casas del barrio para alquilar
+		if g.houses.has(str(i)):
+			items.append([house_signs[i].manage, Lang.f("Tu casa alquilada: te paga %s al mes", Fmt.money(g.house_rent_of(float(g.houses[str(i)])))),
+					func(): toast(Lang.f("Tus %d casas te pagan %s al mes.", [g.houses.size(), Fmt.money(g.house_rent_monthly())]), "good")])
+		else:
+			items.append([house_signs[i].manage, Lang.f("Comprar esta casa para alquilar (%s)", Fmt.money(g.house_cost())), buy_house.bind(i)])
 	for m in malls:
 		items += m.interactables(g)
 	for slot in comps:
@@ -1975,6 +2077,8 @@ func update(dt: float) -> void:
 		app.in_pc = pc_phase != ""
 		if pc_phase != "":
 			_pc_update(dt)
+		tower.update(dt)
+		finale.update(dt)
 		if rank_wait != null and not rank_must_wait():
 			var waiting: Dictionary = rank_wait
 			rank_wait = null
@@ -1990,7 +2094,7 @@ func update(dt: float) -> void:
 			sync_timer = 0.2
 			sync(g)
 		spawn(dt)
-		if not overlays.open():
+		if not overlays.open() and not tower.busy() and not finale.active():
 			move_player(dt)
 		var best = null
 		var best_d := 2.4
@@ -2000,6 +2104,8 @@ func update(dt: float) -> void:
 			if dd < best_d:
 				best = it
 				best_d = dd
+		if tower.busy() or finale.active():
+			best = null
 		prompt_action = best
 		hud.prompt = Lang.f("[%s] %s", [Keys.label("interact"), best[1]]) if best != null else ""
 		update_zone()
@@ -2079,7 +2185,7 @@ func update(dt: float) -> void:
 ## ¿La cámara está bajo techo? (oficina o un local): ahí no llueve.
 func camera_indoors() -> bool:
 	var p := camera.global_position
-	var roofs := [hq_spots.ceiling]
+	var roofs := [hq_spots.ceiling, tower.spots.ceiling]
 	for s in stores.values():
 		if s.spots.get("ceiling") != null:
 			roofs.append(s.spots.ceiling)
@@ -2157,6 +2263,12 @@ func _key(e: InputEventKey) -> void:
 		alt_combo = true
 		return
 	var key := e.keycode
+	if finale != null and finale.active():   # el final del juego: Esc salta a la parte que sigue
+		if Keys.is_event(e, "fullscreen"):   # F11 sigue funcionando
+			toggle_fullscreen()
+			return
+		finale.key(e)
+		return
 	# En la computadora: durante la transición nada; en el escritorio, Esc cierra lo de arriba o te levanta
 	if pc_phase != "" and (pc_phase != "os" or overlays.mode == "pc"):
 		if pc_phase == "os" and key == KEY_ESCAPE:
@@ -2223,7 +2335,7 @@ func _key(e: InputEventKey) -> void:
 		if (key == KEY_ESCAPE or Keys.is_event(e, "phone") or Keys.is_event(e, "interact")) and app.view == "game" and app.modal == null:
 			overlays.hide()
 		return
-	if game == null:
+	if game == null or tower.busy():
 		return
 	if key == KEY_ESCAPE:
 		open_pause()
@@ -2319,7 +2431,9 @@ var office_decor_sig := []
 ## Arma lo comprado para la oficina (y lo que se está mirando en la ventana de personalizar).
 func sync_office_decor(g: Game) -> void:
 	var keys: Array = g.office_decor.duplicate()
-	if office_preview != "" and not office_preview in keys:
+	if office_preview == "*":   # «Seleccionar todo»: se ve todo puesto
+		keys += g.missing_office_decor()
+	elif office_preview != "" and not office_preview in keys:
 		keys.append(office_preview)
 	var sig := [office_tier] + keys
 	if sig == office_decor_sig:

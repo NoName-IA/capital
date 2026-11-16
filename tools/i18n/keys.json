@@ -2631,7 +2631,7 @@
 ],
 [
 526,
-"El club del barrio busca auspiciador",
+"El club del barrio busca patrocinador",
 "scripts/economy/sim.gd"
 ],
 [
@@ -2641,7 +2641,7 @@
 ],
 [
 528,
-"Auspicio chico (%s)",
+"Patrocinio chico (%s)",
 "scripts/economy/sim.gd"
 ],
 [
@@ -2651,7 +2651,7 @@
 ],
 [
 530,
-"Auspicio grande (%s)",
+"Patrocinio grande (%s)",
 "scripts/economy/sim.gd"
 ],
 [
@@ -2661,7 +2661,7 @@
 ],
 [
 532,
-"No auspiciar",
+"No patrocinar",
 "scripts/economy/sim.gd"
 ],
 [
@@ -2676,7 +2676,7 @@
 ],
 [
 535,
-"El club consiguió otro auspiciador. En el barrio comentan que no ayudaste (−2 reputación).",
+"El club consiguió otro patrocinador. En el barrio comentan que no ayudaste (−2 reputación).",
 "scripts/economy/sim.gd"
 ],
 [

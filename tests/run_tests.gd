@@ -14,7 +14,7 @@ func _ready() -> void:
 			"test_weather_moves_demand", "test_stars", "test_city_activities", "test_decor", "test_solar",
 			"test_labor", "test_every_micro_is_booked", "test_rivals_alive", "test_buy_that_building", "test_old_saves",
 			"test_mall_and_franchises", "test_homeless_become_franchises", "test_beach_mall_and_rival_shops",
-			"test_new_game_without_stall", "test_normal_mode_has_no_investments", "test_key_decisions", "test_every_blueprint_is_whole", "test_office_looks"]:
+			"test_new_game_without_stall", "test_normal_mode_has_no_investments", "test_key_decisions", "test_every_blueprint_is_whole", "test_office_looks", "test_barrio_houses", "test_buy_all_decor"]:
 		var before := failures
 		call(t)
 		print(("OK    " if failures == before else "FALLA ") + t)
@@ -733,3 +733,41 @@ func test_office_looks() -> void:
 	check(h.office_look == 1, "se guarda")
 	var old := Game.from_json(g.to_json().replace('"office_look":1', '"otra_cosa":1'))
 	check(old.office_look == 2, "las partidas de antes quedan con la oficina de siempre (la penúltima)")
+
+
+func test_buy_all_decor() -> void:
+	var g := Game.new(12)
+	g.cash = 100000
+	check(g.open_location("cafe", 1)[0], "se abre un local para decorar")
+	var loc: Dictionary = g.locations[-1]
+	var n := g.missing_decor(loc).size()
+	check(n > 1, "un local nuevo no tiene decoración")
+	var total := g.missing_decor_cost(loc)
+	g.cash = total - 1
+	check(not g.buy_all_decor(loc)[0], "sin plata para todo no se compra nada")
+	check(g.missing_decor(loc).size() == n, "y no queda nada a medias")
+	g.cash = total + 10
+	check(g.buy_all_decor(loc)[0], "con plata se compra todo de una vez")
+	check(g.missing_decor(loc).is_empty() and absf(g.cash - 10) < 0.01, "queda todo puesto y se cobra el total")
+	g.cash = g.missing_office_decor_cost() + 5
+	check(g.buy_all_office_decor()[0] and g.missing_office_decor().is_empty(), "la oficina también se decora entera de una vez")
+
+
+func test_barrio_houses() -> void:
+	var g := Game.new(11)
+	g.cash = 0
+	check(not g.buy_house(0)[0], "sin plata no se compra la casa")
+	g.cash = 1000000
+	var before := g.valuation()
+	var c0 := g.house_cost()
+	check(g.buy_house(0)[0], "se compra una casa del barrio")
+	check(not g.buy_house(0)[0], "la misma casa no se compra dos veces")
+	check(g.house_cost() > c0, "la siguiente casa cuesta más")
+	check(absf(g.valuation() - before) < c0 * 0.05 + 1.0, "comprar una casa no baja el valor de la empresa (la casa vale lo que pagaste)")
+	var cash := g.cash
+	for d in 30:
+		g.step_day()
+	check(g.house_rent_monthly() > 0, "la casa paga renta")
+	var h := Game.from_json(g.to_json())
+	check(h.houses.has("0"), "las casas se guardan")
+	check(not g.buy_house(int(D.HOUSE.count))[0], "no hay más casas que las del barrio")

@@ -57,6 +57,10 @@ var hq_level := 0
 var fund := 0.0
 var play_seconds := 0.0
 var win_seconds = null
+# El final del juego (Finale): si ya lo viste, tu mejor mes de ventas y la decisión urgente que más plata te costó
+var finale_seen := false
+var best_month := 0.0
+var worst_choice := {}     # {title, loss}
 var mode := "normal"
 var strategy_ready_day := 0
 var market_today := 0.0
@@ -82,6 +86,7 @@ var passed := []          # rivales que ya superaste en valor
 var mall := false         # ¿compraste el centro comercial frente a la oficina? (ver D.MALLS)
 var mall2 := false        # ¿y el de la playa?
 var office_offered := 0   # hasta qué aspecto ya se ofreció con la ventana «Mejorar oficina»
+var houses := {}          # casas del barrio que compraste para alquilar: "índice" -> lo que pagaste
 var office_decor := []    # lo que compraste para la fachada de la oficina (D.OFFICE_DECOR)
 var hold_dilemma := false   # la tablet pide esperar (hace poco salió el aviso de nuevo rango); no se guarda
 var tutorial_step := -1  # paso del tutorial guiado en el que vas (-1: terminado o saltado)
@@ -98,7 +103,8 @@ const SAVED := ["day", "cash", "bonds", "products", "locations", "loans", "asset
 		"wardrobe", "owned_items", "look", "hq_level", "fund", "play_seconds", "win_seconds", "mode",
 		"strategy_ready_day", "market_today", "rank_log", "rival_plots", "company",
 		"weather", "weather_next", "weather_days", "activity_day", "beach_boost_days",
-		"labor", "morale", "micro", "next_micro_day", "rivals", "plot_owner", "passed", "mall", "franchises", "mall2", "rival_mall", "path", "office_look", "office_offered", "office_decor", "tutorial_step"]
+		"labor", "morale", "micro", "next_micro_day", "rivals", "plot_owner", "passed", "mall", "franchises", "mall2", "rival_mall", "path", "office_look", "office_offered", "office_decor", "tutorial_step", "houses",
+		"finale_seen", "best_month", "worst_choice"]
 
 
 static func new_ledger() -> Dictionary:
@@ -506,7 +512,7 @@ func balance() -> Dictionary:
 	var c: float = max(0.0, cash)
 	var overdraft: float = max(0.0, -cash)
 	var inv := inventory_value()
-	var fixed := fixed_assets()
+	var fixed := fixed_assets() + houses_value()
 	var total := c + bonds + fund + inv + fixed
 	var liabilities := debt() + overdraft
 	return {"caja": c, "bonos": bonds, "fondo": fund, "inventario": inv, "activos_fijos": fixed, "activos": total,
@@ -532,7 +538,7 @@ func valuation_multiple() -> float:
 func valuation() -> float:
 	var b := balance()
 	var ev: float = max(0.0, recent_ebitda() * 12.0 * valuation_multiple())
-	var market: float = ev + cash + bonds + fund + b.inventario - b.deuda
+	var market: float = ev + cash + bonds + fund + b.inventario + houses_value() - b.deuda
 	return max(b.patrimonio, market)
 
 
@@ -1220,6 +1226,14 @@ func market_share(key: String) -> float:
 	return p.last_sold / (p.last_sold + rival) if p.last_sold + rival > 0 else 0.0
 
 
+## Tu mejor mes de ventas (para el final; en partidas viejas sale del historial).
+func best_month_sales() -> float:
+	var best := best_month
+	for L in history:
+		best = maxf(best, float(L.get("ingresos", 0.0)))
+	return best
+
+
 ## El modo normal termina en Imperio; el inversionista sigue hasta Mil millonario.
 func ranks() -> Array:
 	return D.RANKS.slice(0, D.MODES[mode].ranks)
@@ -1303,6 +1317,10 @@ func step_day() -> void:
 	if mall or mall2:
 		_spend(mall_upkeep_monthly() / 30.0, "alquiler")
 		_rival_mall_rent()
+	if houses:   # la renta de tus casas del barrio
+		var rent := house_rent_monthly() / 30.0
+		cash += rent
+		ledger.ingresos += rent
 
 	if locations.size() > 5:
 		_spend(corporate_cost_monthly() / 30.0, "corporativo")
@@ -1623,6 +1641,7 @@ func _end_month() -> void:
 
 	L["mes"] = month_index() - 1
 	history.append(L)
+	best_month = maxf(best_month, float(L.get("ingresos", 0.0)))
 	if history.size() > 36:
 		history = history.slice(history.size() - 36)
 	for loc in locations:
@@ -2185,10 +2204,10 @@ func _r_ciberataque(opt: int, d: Dictionary) -> Array:
 
 func _d_patrocinio() -> Dictionary:
 	var k := _scale()
-	return {"id": "patrocinio", "title": "El club del barrio busca auspiciador",
-			"text": "El equipo de fútbol del barrio juega la final y busca auspiciador.",
-			"options": [_opt(Lang.f("Auspicio chico (%s)", Fmt.money(0.12 * k)), "+5 de reputación."),
-					_opt(Lang.f("Auspicio grande (%s)", Fmt.money(0.3 * k)), "Si ganan (55%): +12 de reputación y +15% de ventas por 10 días.",
+	return {"id": "patrocinio", "title": "El club del barrio busca patrocinador",
+			"text": "El equipo de fútbol del barrio juega la final y busca patrocinador.",
+			"options": [_opt(Lang.f("Patrocinio chico (%s)", Fmt.money(0.12 * k)), "+5 de reputación."),
+					_opt(Lang.f("Patrocinio grande (%s)", Fmt.money(0.3 * k)), "Si ganan (55%): +12 de reputación y +15% de ventas por 10 días.",
 					"Si pierden: solo +3 de reputación."),
 					_opt("No", "No gastas nada.", "−2 de reputación.")],
 			"data": {"small": 0.12 * k, "big": 0.3 * k}}
@@ -2204,7 +2223,7 @@ func _r_patrocinio(opt: int, d: Dictionary) -> Array:
 	if opt == 2:
 		for p in active:
 			_rep(p.key, -2)
-		return ["El club consiguió otro auspiciador. En el barrio comentan que no ayudaste (−2 reputación).", "warn"]
+		return ["El club consiguió otro patrocinador. En el barrio comentan que no ayudaste (−2 reputación).", "warn"]
 	_spend(d.big, "marketing")
 	if rng.randf() < 0.55:
 		for p in active:
@@ -2266,6 +2285,32 @@ func buy_decor(loc: Dictionary, key: String) -> Array:
 		loc["upgrades"] = []
 	loc.upgrades.append(key)
 	return [true, Lang.f("Instalaste %s.", Lang.noun(u.name))]
+
+
+## Lo que le falta a una sucursal (en el orden de la ventana de decorar) y cuánto cuesta todo junto.
+func missing_decor(loc: Dictionary) -> Array:
+	var owned: Array = loc.get("upgrades", [])
+	return D.upgrades_for(int(loc.size)).map(func(u): return u.key).filter(func(k): return not k in owned)
+
+
+func missing_decor_cost(loc: Dictionary) -> float:
+	var total := 0.0
+	for k in missing_decor(loc):
+		total += decor_cost(loc, k)
+	return total
+
+
+## Compra de una vez todo lo que le falta a la sucursal (solo si alcanza la caja para todo).
+func buy_all_decor(loc: Dictionary) -> Array:
+	var keys := missing_decor(loc)
+	if keys.is_empty():
+		return [false, "Ese local ya lo tiene todo."]
+	var total := missing_decor_cost(loc)
+	if cash < total:
+		return [false, Lang.f("Necesitas %s en caja.", Fmt.money(total))]
+	for k in keys:
+		buy_decor(loc, k)
+	return [true, Lang.f("Instalaste %d cosas por %s.", [keys.size(), Fmt.money(total)])]
 
 
 # ---------- paneles solares de la fábrica ----------
@@ -2912,7 +2957,10 @@ func resolve_choice(option: int) -> Array:
 	if c == null:
 		return [false, ""]
 	pending_choice = null
+	var cash_before := cash
 	var res: Array = call("_r_" + c.id, option, c.data)
+	if cash_before - cash > float(worst_choice.get("loss", 0.0)):   # la que más te costó (para el final)
+		worst_choice = {"title": str(c.get("title", c.id)), "loss": cash_before - cash}
 	add_news(res[0], res[1], "outcome", res[1])
 	return [res[1] in ["good", "info"], res[0]]
 
@@ -3103,12 +3151,74 @@ func buy_office_look(i: int) -> Array:
 	return [true, Lang.f("¡Tu oficina ahora es: %s!", D.OFFICE_LOOKS[i][0])]
 
 
+# ---------- casas del barrio para alquilar ----------
+## Precio de la próxima casa: cada una que ya tienes la encarece un poco (quedan menos en venta).
+func house_cost() -> float:
+	return float(D.HOUSE.cost) * price_index * (1.0 + float(D.HOUSE.step) * houses.size())
+
+
+func house_rent_of(paid: float) -> float:
+	return paid * float(D.HOUSE.rent)
+
+
+func house_rent_monthly() -> float:
+	var v := 0.0
+	for k in houses:
+		v += house_rent_of(float(houses[k]))
+	return v
+
+
+func houses_value() -> float:
+	var v := 0.0
+	for k in houses:
+		v += float(houses[k])
+	return v
+
+
+func buy_house(i: int) -> Array:
+	if houses.has(str(i)):
+		return [false, "Esta casa ya es tuya."]
+	if i < 0 or i >= int(D.HOUSE.count):
+		return [false, ""]
+	var cost := house_cost()
+	if cash < cost:
+		return [false, Lang.f("Necesitas %s en caja.", Fmt.money(cost))]
+	cash -= cost
+	houses[str(i)] = cost
+	add_news(Lang.f("Compraste una casa en el Barrio Las Lomas: te paga %s al mes de arriendo.", Fmt.money(house_rent_of(cost))), "good", "coin")
+	return [true, Lang.f("¡Casa comprada! Ya está alquilada: %s al mes.", Fmt.money(house_rent_of(cost)))]
+
+
 # ---------- personalizar la oficina ----------
 func office_decor_cost(key: String) -> float:
 	for u in D.OFFICE_DECOR:
 		if u.key == key:
 			return float(u.cost) * price_index
 	return 0.0
+
+
+## Lo que le falta a la oficina, cuánto cuesta todo junto, y comprarlo de una vez (si alcanza para todo).
+func missing_office_decor() -> Array:
+	return D.OFFICE_DECOR.map(func(u): return u.key).filter(func(k): return not k in office_decor)
+
+
+func missing_office_decor_cost() -> float:
+	var total := 0.0
+	for k in missing_office_decor():
+		total += office_decor_cost(k)
+	return total
+
+
+func buy_all_office_decor() -> Array:
+	var keys := missing_office_decor()
+	if keys.is_empty():
+		return [false, "Tu oficina ya lo tiene todo."]
+	var total := missing_office_decor_cost()
+	if cash < total:
+		return [false, Lang.f("Necesitas %s en caja.", Fmt.money(total))]
+	for k in keys:
+		buy_office_decor(k)
+	return [true, Lang.f("Instalaste %d cosas por %s.", [keys.size(), Fmt.money(total)])]
 
 
 func buy_office_decor(key: String) -> Array:

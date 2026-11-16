@@ -1,13 +1,12 @@
 class_name Hud
 extends RefCounted
 ## Lo que se ve encima de la ciudad mientras juegas: datos de la empresa, botón a la oficina, velocidad, el aviso
-## de [E], la ayuda, el nombre de la zona, los avisos, la alarma de quiebra y el confeti.
+## de [E], la ayuda, el nombre de la zona, los avisos y la alarma de quiebra.
 ## Usa una pantalla virtual de 760 px de alto y el ancho de la ventana (pegada a los bordes).
 
 var city
 var ui: ImUI
 var notes: Notifications
-var confetti := Confetti.new()
 var help_timer := 0.0   # > 0: se ve la tarjeta de controles (tecla de Ayuda)
 var tut_controls_hidden := false   # en el tutorial la ocultaste con la tecla de Ayuda
 var zone := ["", ""]
@@ -28,34 +27,6 @@ var panel := Rect2(12, 12, PANEL_W, 196)
 const SKY_BUTTONS := [["Día", 0.24], ["Tarde", 0.6], ["Noche", 0.81]]   # punto del ciclo que fija cada botón
 
 
-class Confetti:
-	const COLORS := [Color8(255, 196, 60), Color8(80, 200, 120), Color8(90, 170, 255), Color8(255, 110, 110),
-			Color8(180, 130, 255), Color8(255, 255, 255)]
-	var bits := []
-
-	func burst(n: int, at: Vector2) -> void:
-		for i in min(n, 180 - bits.size()):
-			bits.append({"p": at + Vector2(randf_range(-200, 200), randf_range(-10, 10)),
-					"v": Vector2(randf_range(-600, 600), -randf_range(230, 760)), "r": randf_range(0, TAU),
-					"spin": randf_range(-9, 9), "life": randf_range(2.0, 3.2), "c": COLORS.pick_random()})
-
-	func update(dt: float, h: float) -> void:
-		for b in bits.duplicate():
-			b.v.y += 1060 * dt
-			b.v.x *= 1 - 0.9 * dt
-			b.p += b.v * dt
-			b.r += b.spin * dt
-			b.life -= dt
-			if b.life <= 0 or b.p.y > h + 20:
-				bits.erase(b)
-
-	func draw(ui: ImUI) -> void:
-		for b in bits:
-			var xf := Transform2D(b.r, b.p)
-			var pts := PackedVector2Array([xf * Vector2(-4, -7), xf * Vector2(4, -7), xf * Vector2(4, 7), xf * Vector2(-4, 7)])
-			ui.polygon(pts, b.c)
-
-
 func _init(owner_city, parent_item: RID) -> void:
 	city = owner_city
 	ui = ImUI.new(parent_item, 1280, 760)
@@ -65,7 +36,6 @@ func _init(owner_city, parent_item: RID) -> void:
 func update(dt: float) -> void:
 	help_timer -= dt
 	zone_t += dt
-	confetti.update(dt, ui.H)
 	notes.update(dt, city.overlays.open())
 
 
@@ -113,14 +83,14 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 	ui.place_fill(size)
 	ui.begin(mouse_window, clicked, 0, false)
 	var g = city.game
-	var visible: bool = g != null and not city.overlays.mode in ["personaje", "decorar"] and city.pc_phase == ""
+	var visible: bool = g != null and not city.overlays.mode in ["personaje", "decorar"] and city.pc_phase == "" 			and not city.tower.busy() and not city.finale.active()
 	if visible:
 		if city.weather.flash > 0.01 and not city.camera_indoors():  # relámpago de la tormenta
 			ui.rect(Rect2(0, 0, ui.W, ui.H), Color(0.9, 0.93, 1.0, city.weather.flash * 0.35))
 		_draw_danger(g)
 		_draw_panel(g)
 		_draw_panel_buttons(g)
-		if not city.overlays.open() and not city.tutorial.active:
+		if not city.overlays.open() and not city.tutorial.active and not city.tower.inside(city.player.position):
 			mini_rect = CityMap.draw_mini(ui, city, Vector2(15, ui.H - CityMap.MINI_SIZE.y - 15))
 			_draw_micro(g)
 		else:
@@ -129,7 +99,10 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 		_draw_center()
 		city.tutorial.draw(ui)
 		notes.draw(ui)
-	confetti.draw(ui)
+	if g != null:
+		city.tower.draw(ui)
+		city.finale.draw(ui)
+	city.finale.draw_menu_in(ui)   # el menú aparece desde el negro al terminar el final
 	var fade: float = city.pc_fade()   # la pantalla de la computadora "se prende" (ver City._pc_camera)
 	if fade > 0.0:
 		ui.rect(Rect2(-3000, -3000, ui.W + 6000, ui.H + 6000), Color(0, 0, 0, fade))

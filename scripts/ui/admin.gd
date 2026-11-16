@@ -117,18 +117,19 @@ func now_ms() -> int:
 
 
 # ---------- partida ----------
-const GAP_MS := 60000          # al menos 1 minuto real entre una decisión urgente y el aviso de nuevo rango
-var last_rank_ms := -GAP_MS    # cuándo salió el último aviso de rango
+const GAP_MS := 45000          # al menos 45 s reales entre una decisión urgente y un aviso grande (rango, récord...)
+var last_rank_ms := -GAP_MS    # cuándo salió el último aviso grande (rango, récord, racha...)
 var last_dilemma_ms := -GAP_MS # cuándo se cerró la última decisión (mientras está abierta, cuenta como ahora)
+var in_finale := false         # se está viendo el final del juego (Finale): nada lo interrumpe
 
 
 func update(dt: float) -> void:
 	var g := game
 	if modal == "dilema":
 		last_dilemma_ms = now_ms()
-	# recién subiste de rango, o estás en la computadora: la decisión espera
-	g.hold_dilemma = now_ms() - last_rank_ms < GAP_MS or in_pc
-	if g.pending_choice != null and modal == null and not g.game_over and not in_pc:
+	# recién salió un aviso grande, o estás en la computadora: la decisión espera
+	g.hold_dilemma = now_ms() - last_rank_ms < GAP_MS or in_pc or in_finale
+	if g.pending_choice != null and modal == null and not g.game_over and not in_pc and not in_finale:
 		modal = "dilema"
 	if paused or modal != null or g.game_over:
 		return
@@ -145,7 +146,8 @@ func update(dt: float) -> void:
 			break
 		if g.won and not win_shown:
 			win_shown = true
-			modal = "win"
+			if g.finale_seen:   # la primera vez sale el final completo (Finale) en vez de esta ventana
+				modal = "win"
 			break
 		if g.pending_choice != null:
 			modal = "dilema"

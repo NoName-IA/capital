@@ -2423,16 +2423,16 @@
  "La otra mitad pierdes 40% del inventario y vendes menos 3 días.": [
   "The other half you lose 40% of your stock and sell less for 3 days."
  ],
- "El equipo de fútbol del barrio juega la final y busca auspiciador.": [
+ "El equipo de fútbol del barrio juega la final y busca patrocinador.": [
   "The neighborhood soccer team is playing the final and needs a sponsor."
  ],
- "Auspicio chico (%s)": [
+ "Patrocinio chico (%s)": [
   "Small sponsorship (%s)"
  ],
  "+5 de reputación.": [
   "+5 reputation."
  ],
- "Auspicio grande (%s)": [
+ "Patrocinio grande (%s)": [
   "Big sponsorship (%s)"
  ],
  "Si ganan (55%): +12 de reputación y +15% de ventas por 10 días.": [
@@ -2644,5 +2644,533 @@
  ],
  "Mostrar / ocultar controles": [
   "Show / hide controls"
+ ],
+ "Tú": [
+  "You"
+ ],
+ "En venta": [
+  "For sale"
+ ],
+ "AVENIDA COMERCIAL": [
+  "COMMERCIAL AVENUE"
+ ],
+ "DISTRITO FINANCIERO": [
+  "FINANCIAL DISTRICT"
+ ],
+ "ENTRADA DE LA CIUDAD": [
+  "CITY ENTRANCE"
+ ],
+ "PARQUE INDUSTRIAL": [
+  "INDUSTRIAL PARK"
+ ],
+ "MAR": [
+  "SEA"
+ ],
+ "TÚNEL": [
+  "TUNNEL"
+ ],
+ "Fábrica de %s": [
+  "%s factory"
+ ],
+ "%s · en venta": [
+  "%s · for sale"
+ ],
+ "%s · %d/%d": [
+  "%s · %d/%d"
+ ],
+ "Tu empresa vale %s": [
+  "Your company is worth %s"
+ ],
+ "Compraste una casa en el Barrio Las Lomas: te paga %s al mes de arriendo.": [
+  "You bought a house in Las Lomas: it pays you %s a month in rent."
+ ],
+ "¡Casa comprada! Ya está alquilada: %s al mes.": [
+  "House bought! It's already rented: %s a month."
+ ],
+ "Esta casa ya es tuya.": [
+  "This house is already yours."
+ ],
+ "ALQUILADA": [
+  "RENTED"
+ ],
+ "Tuya · %s al mes": [
+  "Yours · %s a month"
+ ],
+ "Casa para alquilar · %s": [
+  "House to rent out · %s"
+ ],
+ "¿Comprar esta casa para alquilar?": [
+  "Buy this house to rent out?"
+ ],
+ "Te paga %s al mes de arriendo y suma su precio al valor de tu empresa.": [
+  "It pays you %s a month in rent and adds its price to your company's value."
+ ],
+ "Tu casa alquilada: te paga %s al mes": [
+  "Your rented house: it pays you %s a month"
+ ],
+ "Tus %d casas te pagan %s al mes.": [
+  "Your %d houses pay you %s a month."
+ ],
+ "Comprar esta casa para alquilar (%s)": [
+  "Buy this house to rent out (%s)"
+ ],
+ "Tu casa alquilada": [
+  "Your rented house"
+ ],
+ "Casa en venta para alquilar": [
+  "House for sale to rent out"
+ ],
+ "Te paga %s al mes": [
+  "It pays you %s a month"
+ ],
+ "Cuesta %s · te pagaría %s al mes": [
+  "Costs %s · it would pay you %s a month"
+ ],
+ "Tu casa": [
+  "Your house"
+ ],
+ "Casas para alquilar": [
+  "Houses to rent out"
+ ],
+ "Donde viven tus clientes. Casas en venta para alquilar y tablón de vecinos.": [
+  "Where your customers live. Houses for sale to rent out and the neighbors' board."
+ ],
+ "Casas en venta para alquilar": [
+  "Houses for sale to rent out"
+ ],
+ "Guardia de seguridad": [
+  "Security guard"
+ ],
+ "Ascensor: bajar al vestíbulo": [
+  "Elevator: go down to the lobby"
+ ],
+ "Tu escritorio de CEO: abrir la tablet": [
+  "Your CEO desk: open the tablet"
+ ],
+ "Ascensor: subir a la presidencia": [
+  "Elevator: go up to the executive suite"
+ ],
+ "▲ PRESIDENCIA": [
+  "▲ EXECUTIVE SUITE"
+ ],
+ "PISO %d": [
+  "FLOOR %d"
+ ],
+ "Ejecutivos trabajando": [
+  "Executives at work"
+ ],
+ "PRESIDENCIA": [
+  "EXECUTIVE SUITE"
+ ],
+ "PISO %d · PRESIDENCIA": [
+  "FLOOR %d · EXECUTIVE SUITE"
+ ],
+ "Bienvenido a tu oficina, jefe": [
+  "Welcome to your office, boss"
+ ],
+ "Ahora, tu oficina: abajo tu armario, arriba tu computadora.": [
+  "Now, your office: your wardrobe downstairs, your computer upstairs."
+ ],
+ "MIS TROFEOS": [
+  "MY TROPHIES"
+ ],
+ "Navegador": [
+  "Browser"
+ ],
+ "Escribe aquí para buscar": [
+  "Type here to search"
+ ],
+ "Anclados": [
+  "Pinned"
+ ],
+ "Apagar": [
+  "Shut down"
+ ],
+ "No hay Internet: todo el piso de ejecutivos está viendo videos de gatitos.": [
+  "No Internet: the whole executive floor is watching kitten videos."
+ ],
+ "•  Apagar el router y volver a prenderlo.": [
+  "•  Turn the router off and on again."
+ ],
+ "•  Gritar «¡A TRABAJAR!» por el ascensor.": [
+  "•  Yell \"BACK TO WORK!\" down the elevator."
+ ],
+ "Día %d": [
+  "Day %d"
+ ],
+ "Explorador de archivos": [
+  "File Explorer"
+ ],
+ "Papelera de reciclaje": [
+  "Recycle Bin"
+ ],
+ "Configuración": [
+  "Settings"
+ ],
+ "Calculadora": [
+  "Calculator"
+ ],
+ "Fotos": [
+  "Photos"
+ ],
+ "Tienda": [
+  "Store"
+ ],
+ "Correo": [
+  "Mail"
+ ],
+ "Reloj": [
+  "Clock"
+ ],
+ "Hace 12 min": [
+  "12 min ago"
+ ],
+ "Hace 1 h": [
+  "1 h ago"
+ ],
+ "Ayer a las 18:40": [
+  "Yesterday at 18:40"
+ ],
+ "Hace 3 días": [
+  "3 days ago"
+ ],
+ "Hace %d días": [
+  "%d days ago"
+ ],
+ "lunes": [
+  "Monday"
+ ],
+ "martes": [
+  "Tuesday"
+ ],
+ "miércoles": [
+  "Wednesday"
+ ],
+ "jueves": [
+  "Thursday"
+ ],
+ "viernes": [
+  "Friday"
+ ],
+ "sábado": [
+  "Saturday"
+ ],
+ "domingo": [
+  "Sunday"
+ ],
+ "%s, %d de %s": [
+  "%s, %d %s"
+ ],
+ "Haz clic para entrar": [
+  "Click to sign in"
+ ],
+ "Buscar": [
+  "Search"
+ ],
+ "Todas las aplicaciones  ›": [
+  "All apps  ›"
+ ],
+ "Recomendado": [
+  "Recommended"
+ ],
+ "Este archivo está bloqueado: lo tiene abierto el piso de ejecutivos.": [
+  "This file is locked: the executive floor has it open."
+ ],
+ "Para cambiar esta configuración necesitas permisos de administrador. Eres el CEO, pero igual no.": [
+  "You need administrator rights to change this setting. You're the CEO, but still no."
+ ],
+ "Resultado: mucha plata. Para más detalle, abre Mi Empresa.": [
+  "Result: a lot of money. For details, open My Company."
+ ],
+ "No hay fotos: estuviste trabajando todo el año.": [
+  "No photos: you were working all year."
+ ],
+ "Todo está agotado. Bueno, todo menos tus productos, ojalá.": [
+  "Everything is sold out. Well, except your products, hopefully."
+ ],
+ "Tienes 4.812 correos sin leer. Mejor no.": [
+  "You have 4,812 unread emails. Better not."
+ ],
+ "Son las %s. Hora de vender.": [
+  "It's %s. Time to sell."
+ ],
+ "Documentos": [
+  "Documents"
+ ],
+ "Este equipo": [
+  "This PC"
+ ],
+ "Escritorio": [
+  "Desktop"
+ ],
+ "Descargas": [
+  "Downloads"
+ ],
+ "Imágenes": [
+  "Pictures"
+ ],
+ "Buscar en %s": [
+  "Search %s"
+ ],
+ "0 elementos": [
+  "0 items"
+ ],
+ "Sin conexión": [
+  "No connection"
+ ],
+ "No estás conectado": [
+  "You're not connected"
+ ],
+ "Intento %d: sigue sin conexión.": [
+  "Attempt %d: still offline."
+ ],
+ "Nombre": [
+  "Name"
+ ],
+ "Eliminado": [
+  "Deleted"
+ ],
+ "Instalaste %d cosas por %s.": [
+  "You installed %d things for %s."
+ ],
+ "Ese local ya lo tiene todo.": [
+  "That store already has everything."
+ ],
+ "Tu oficina ya lo tiene todo.": [
+  "Your office already has everything."
+ ],
+ "Quitar la selección": [
+  "Clear selection"
+ ],
+ "Seleccionar todo (%d)": [
+  "Select all (%d)"
+ ],
+ "Todo lo que falta: %d cosas": [
+  "Everything missing: %d items"
+ ],
+ "Total: %s": [
+  "Total: %s"
+ ],
+ "Comprar todo (%s)": [
+  "Buy all (%s)"
+ ],
+ "Jefe, lo esperan arriba.": [
+  "Boss, they're waiting for you upstairs."
+ ],
+ "AÑO %d": [
+  "YEAR %d"
+ ],
+ "Desde aquí se ve todo lo que construiste": [
+  "From here you can see everything you built"
+ ],
+ "¡Foto para la portada!": [
+  "Cover photo!"
+ ],
+ "EDICIÓN ESPECIAL": [
+  "SPECIAL EDITION"
+ ],
+ "%s ES LA CIUDAD": [
+  "%s IS THE CITY"
+ ],
+ "El fundador, en su oficina del último piso.": [
+  "The founder, in the top-floor office."
+ ],
+ "De un puesto en la calle a %d locales en %d años.": [
+  "From a street stall to %d stores in %d years."
+ ],
+ "Gracias por jugar": [
+  "Thanks for playing"
+ ],
+ "AUTORES": [
+  "AUTHORS"
+ ],
+ "MÚSICA": [
+  "MUSIC"
+ ],
+ "Hecho en Godot %s": [
+  "Made with Godot %s"
+ ],
+ "LA ÚLTIMA REUNIÓN": [
+  "THE LAST MEETING"
+ ],
+ "%s es la ciudad": [
+  "%s is the city"
+ ],
+ "Días jugados": [
+  "Days played"
+ ],
+ "%d (%d min de juego)": [
+  "%d (%d min of play)"
+ ],
+ "Locales": [
+  "Stores"
+ ],
+ "Empleados": [
+  "Employees"
+ ],
+ "Fábricas": [
+  "Factories"
+ ],
+ "Tu mejor mes de ventas": [
+  "Your best sales month"
+ ],
+ "La decisión que más te costó": [
+  "The decision that cost you most"
+ ],
+ "Seguir jugando": [
+  "Keep playing"
+ ],
+ "Nueva partida +": [
+  "New game +"
+ ],
+ "Empiezas de cero con tu ropa del armario y la placa de leyenda en la vitrina": [
+  "Start over with your wardrobe clothes and the legend plaque in the trophy case"
+ ],
+ "Ver el final otra vez": [
+  "Watch the ending again"
+ ],
+ "Esc o clic: saltar": [
+  "Esc or click: skip"
+ ],
+ "TU ASISTENTE · LLAMADA": [
+  "YOUR ASSISTANT · CALLING"
+ ],
+ "RECEPCIÓN": [
+  "RECEPTION"
+ ],
+ "ARMARIO": [
+  "WARDROBE"
+ ],
+ "La fortuna detrás de una mente emprendedora": [
+  "The fortune behind an entrepreneurial mind"
+ ],
+ "Un empresario visionario convirtió una pequeña idea en una compañía millonaria.": [
+  "A visionary entrepreneur turned a small idea into a million-dollar company."
+ ],
+ "Su éxito nació de la innovación, la disciplina y decisiones estratégicas.": [
+  "Their success was born from innovation, discipline and strategic decisions."
+ ],
+ "Hoy es un referente de emprendimiento y crecimiento empresarial.": [
+  "Today they are a benchmark of entrepreneurship and business growth."
+ ],
+ "%s, en su oficina del último piso.": [
+  "%s, in the top-floor office."
+ ],
+ "Al día siguiente...": [
+  "The next day..."
+ ],
+ "Capítulo final": [
+  "Final chapter"
+ ],
+ "TU ASISTENTE": [
+  "YOUR ASSISTANT"
+ ],
+ "Llamando...": [
+  "Calling..."
+ ],
+ "%s · Año %d": [
+  "%s · Year %d"
+ ],
+ "Volver al menú": [
+  "Back to menu"
+ ],
+ "¡Construiste un imperio!": [
+  "You built an empire!"
+ ],
+ "Mejor mes de ventas": [
+  "Best sales month"
+ ],
+ "Valor de la empresa": [
+  "Company value"
+ ],
+ "%d min de juego": [
+  "%d min of play"
+ ],
+ "La decisión que más te costó: %s (%s)": [
+  "The decision that cost you most: %s (%s)"
+ ],
+ "LOCALES": [
+  "STORES"
+ ],
+ "EMPLEADOS": [
+  "EMPLOYEES"
+ ],
+ "FÁBRICAS": [
+  "FACTORIES"
+ ],
+ "CAJA": [
+  "CASH"
+ ],
+ "MEJOR MES": [
+  "BEST MONTH"
+ ],
+ "INFORME FINAL · AÑO %d": [
+  "FINAL REPORT · YEAR %d"
+ ],
+ "VALOR DE LA EMPRESA": [
+  "COMPANY VALUE"
+ ],
+ "▲ %sx desde el primer día": [
+  "▲ %sx since day one"
+ ],
+ "BALANCE": [
+  "BALANCE"
+ ],
+ "Tiempo de juego": [
+  "Play time"
+ ],
+ "%d min": [
+  "%d min"
+ ],
+ "LA DECISIÓN QUE MÁS TE COSTÓ": [
+  "THE DECISION THAT COST YOU MOST"
+ ],
+ "Capital · %s": [
+  "Capital · %s"
+ ],
+ "TU CAMINO": [
+  "YOUR PATH"
+ ],
+ "Día 1": [
+  "Day 1"
+ ],
+ "Hoy": [
+  "Today"
+ ],
+ "Haz clic para continuar": [
+  "Click to continue"
+ ],
+ "DIRECCIÓN Y DISEÑO DEL JUEGO": [
+  "GAME DIRECTION AND DESIGN"
+ ],
+ "DESARROLLO Y PROGRAMACIÓN": [
+  "DEVELOPMENT AND PROGRAMMING"
+ ],
+ "ESTILO ARTÍSTICO": [
+  "ART STYLE"
+ ],
+ "DISEÑO DE PERSONAJES": [
+  "CHARACTER DESIGN"
+ ],
+ "DISEÑO DE LA CIUDAD Y LOS LOCALES": [
+  "CITY AND STORE DESIGN"
+ ],
+ "DISEÑO DE INTERFAZ": [
+  "INTERFACE DESIGN"
+ ],
+ "ECONOMÍA Y BALANCE": [
+  "ECONOMY AND BALANCE"
+ ],
+ "GUION Y NARRATIVA": [
+  "STORY AND WRITING"
+ ],
+ "CINEMÁTICAS": [
+  "CINEMATICS"
+ ],
+ "EFECTOS DE SONIDO": [
+  "SOUND EFFECTS"
+ ],
+ "PRUEBAS Y CONTROL DE CALIDAD": [
+  "TESTING AND QUALITY ASSURANCE"
  ]
 }

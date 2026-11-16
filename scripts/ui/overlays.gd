@@ -289,19 +289,22 @@ func draw_map() -> void:
 	var best := INF
 	for it in its:
 		var r := CityMap.rect_to_screen(view, center, scale, it.rect).grow(3)
-		if r.has_point(ui.mouse) and view.has_point(ui.mouse) and r.get_area() < best:
+		if it.get("go", true) and r.has_point(ui.mouse) and view.has_point(ui.mouse) and r.get_area() < best:
 			best = r.get_area()
 			hot = it
 	map_hover = hot.id if hot != null else ""
-	var order := ["place", "lot", "factory", "rival", "mine"]
+	var order := ["place", "lot", "house", "factory", "rival", "mine"]
 	for kind in order:
 		for it in its:
 			if it.kind != kind or (hot != null and it.id == hot.id):
 				continue
 			var k := ui.tween("map" + it.id, 0.0, 0.3)
 			CityMap.draw_item(ui, it, CityMap.rect_to_screen(view, center, scale, it.rect), k, scale)
+	CityMap.draw_zone_names(ui, view, center, scale)
+	CityMap.draw_item_labels(ui, view, center, scale, its, hot.id if hot != null else "")
 	var me := CityMap.to_screen(view, center, scale, city.player.position.x, city.player.position.z)
 	CityMap.draw_player(ui, me, city.yaw, 10.0)
+	CityMap.pill(ui, Lang.t("Tú"), me + Vector2(0, 22), Color8(30, 120, 220))
 	if hot != null:   # el elegido va encima de todo y se agranda
 		var k := ui.tween("map" + hot.id, 1.0, 0.3)
 		CityMap.draw_item(ui, hot, CityMap.rect_to_screen(view, center, scale, hot.rect), k, scale)
@@ -371,7 +374,7 @@ func draw_map() -> void:
 		ui.text("Todavía no tienes locales en la avenida.", Vector2(rp.position.x + 18, ty), 14, "muted")
 	var lg := ui.panel(Rect2(984, y, W - 1004, H - y - 16), "Leyenda")
 	var gy := lg.position.y + 44
-	for e in [[CityMap.GOLD, "Tus locales"], [CityMap.RIVAL, "Competencia"], [CityMap.LOT, "Terreno en venta"], [CityMap.FACTORY, "Tus fábricas"], [CityMap.PLACE, "Lugares"]]:
+	for e in [[CityMap.GOLD, "Tus locales"], [CityMap.RIVAL, "Competencia"], [CityMap.LOT, "Terreno en venta"], [CityMap.FACTORY, "Tus fábricas"], [CityMap.HOUSE, "Casas para alquilar"], [CityMap.PLACE, "Lugares"]]:
 		ui.rect(Rect2(lg.position.x + 16, gy + 2, 14, 14), e[0], 3)
 		ui.text(e[1], Vector2(lg.position.x + 40, gy), 13, "text")
 		gy += 22
@@ -1161,6 +1164,11 @@ func draw_trophies() -> void:
 	for i in ranks.size():
 		var r := Rect2(box.position.x + 40 + (i % 5) * 214, box.position.y + 122 + (i / 5) * 262, 200, 248)
 		draw_trophy_card(r, i, ranks[i], i < got, i == got, info)
+	if g.won and g.finale_seen:
+		if ui.button(Rect2(box.position.x + 40, box.end.y - 54, 240, 40), "Ver el final otra vez", true, "normal", 15):
+			hide()
+			city.finale.start()
+			return
 	if ui.button(Rect2(box.get_center().x - 130, box.end.y - 54, 260, 40), "Cerrar (E)", true, "normal", 16):
 		hide()
 
@@ -1312,8 +1320,12 @@ func draw_decor() -> void:
 	var w := (inner - gap * (cols - 1)) / cols
 	var h := 136.0
 	var rows := ceili(items.size() / float(cols))
+	var missing := g.missing_decor(loc)
+	var all_h := 44.0 if missing.size() > 1 else 0.0
+	if decor_pick == "*" and missing.size() <= 1:
+		decor_pick = ""
 	var bar_h := 90.0 if decor_pick != "" else 0.0
-	var ph := 70 + rows * (h + gap) + bar_h + 62
+	var ph := 70 + rows * (h + gap) + all_h + bar_h + 62
 	var box := Rect2(24, 24, pw, ph)
 	glass_box(box)
 	ui.text("Decorar", box.position + Vector2(20, 16), 24, "accent", true)
@@ -1347,6 +1359,8 @@ func draw_decor() -> void:
 			ui.rect(r, "green", 12, 3)
 		elif hot:
 			ui.rect(r, "text", 12, 1)
+		if decor_pick == "*" and not owned:
+			ui.rect(r, "blue", 12, 3)
 		var cost := g.decor_cost(loc, u.key)
 		if owned:
 			var c := Vector2(r.get_center().x, r.end.y - 15)   # visto verde: ya lo tienes
@@ -1363,10 +1377,43 @@ func draw_decor() -> void:
 		decor_hover = show
 		city.set_decor_preview(show if show != "" and not show in owned_list else "")
 	var by := box.end.y - 54
-	if decor_pick != "":
+	if all_h > 0:
+		_select_all_button(Rect2(x, by - bar_h - all_h, inner, 34), missing.size())
+	if decor_pick == "*":
+		_buy_all_bar(x, by - bar_h, inner, missing.size(), g.missing_decor_cost(loc), g.cash, func(): return g.buy_all_decor(loc))
+	elif decor_pick != "":
 		_decor_buy_bar(g, loc, x, by - bar_h, inner)
 	if ui.button(Rect2(x, by, inner, 38), "Listo (Esc)", true, "primary", 15):
 		city.close_decor()
+
+
+## «Seleccionar todo (n)»: marca de una vez todo lo que falta (y lo muestra puesto); otro clic lo desmarca.
+func _select_all_button(r: Rect2, n: int) -> void:
+	var on := decor_pick == "*"
+	if ui.button(r, "Quitar la selección" if on else Lang.f("Seleccionar todo (%d)", n), true, "normal", 13, null, on):
+		decor_pick = "" if on else "*"
+		decor_hover = "?"
+
+
+## Barra de «Seleccionar todo»: cuántas cosas, el total y comprar todo junto.
+func _buy_all_bar(x: float, y: float, w: float, n: int, total: float, cash: float, buy: Callable) -> void:
+	var r := Rect2(x, y, w, 82)
+	ui.rect(r, Color8(36, 30, 14), 12)
+	ui.rect(r, ImUI.COL.accent, 12, 2)
+	ui.text(Lang.f("Todo lo que falta: %d cosas", n), r.position + Vector2(12, 8), 15, "text", true, "topleft", w - 24)
+	ui.text(Lang.f("Total: %s", Fmt.money(total)), r.position + Vector2(12, 28), 12, "accent" if cash >= total else "red")
+	var bw := (w - 34) / 2
+	if ui.button(Rect2(x + 12, y + 46, bw, 28), Lang.f("Comprar todo (%s)", Fmt.short(total)), cash >= total, "primary", 13):
+		var res: Array = buy.call()
+		city.sfx.play("coin" if res[0] else "angry", 0.7)
+		city.toast(res[1], "good" if res[0] else "bad")
+		decor_pick = ""
+		decor_hover = "?"
+		if city.decor_office:
+			city.sync_office_decor(app.game)
+	if ui.button(Rect2(x + 22 + bw, y + 46, bw, 28), "Quitar", true, "normal", 13):
+		decor_pick = ""
+		decor_hover = "?"
 
 
 ## Barra para comprar lo que elegiste (como «Te estás probando» del armario).
@@ -1420,8 +1467,12 @@ func _draw_office_decor() -> void:
 	var w := (inner - gap * (cols - 1)) / cols
 	var h := 136.0
 	var rows := ceili(items.size() / float(cols))
+	var missing := g.missing_office_decor()
+	var all_h := 44.0 if missing.size() > 1 else 0.0
+	if decor_pick == "*" and missing.size() <= 1:
+		decor_pick = ""
 	var bar_h := 90.0 if decor_pick != "" else 0.0
-	var box := Rect2(24, 24, pw, 70 + rows * (h + gap) + bar_h + 62)
+	var box := Rect2(24, 24, pw, 70 + rows * (h + gap) + all_h + bar_h + 62)
 	glass_box(box)
 	ui.text("Tu oficina", box.position + Vector2(20, 16), 24, "accent", true)
 	ui.text(Fmt.money(g.cash), Vector2(box.end.x - 20, box.position.y + 22), 15, Admin.sc(g.cash), true, "topright")
@@ -1453,6 +1504,8 @@ func _draw_office_decor() -> void:
 			ui.rect(r, "green", 12, 3)
 		elif hot:
 			ui.rect(r, "text", 12, 1)
+		if decor_pick == "*" and not owned:
+			ui.rect(r, "blue", 12, 3)
 		var cost := g.office_decor_cost(u.key)
 		if owned:
 			var c := Vector2(r.get_center().x, r.end.y - 15)
@@ -1468,7 +1521,11 @@ func _draw_office_decor() -> void:
 		decor_hover = show
 		city.set_decor_preview(show if show != "" and not show in owned_list else "")
 	var by := box.end.y - 54
-	if decor_pick != "":
+	if all_h > 0:
+		_select_all_button(Rect2(x, by - bar_h - all_h, inner, 34), missing.size())
+	if decor_pick == "*":
+		_buy_all_bar(x, by - bar_h, inner, missing.size(), g.missing_office_decor_cost(), g.cash, func(): return g.buy_all_office_decor())
+	elif decor_pick != "":
 		var u: Dictionary = {}
 		for it in items:
 			if it.key == decor_pick:
