@@ -140,6 +140,7 @@ static func items(city) -> Array:
 		["park", "Parque Central", "La fuente, la laguna, los juegos y el stand de muestras.", Rect2(-21, -55, 42, 42), Vector3(0, 0, -11), 180.0, "heart"],
 		["beach", "Paseo de la Playa", "Terrenos frente al mar y la cancha de vóley.", Rect2(110, -58, 50, 116), Vector3(140, 0, -8), 180.0, "sun"],
 		["pier", "Muelle", "Pesca en la punta del muelle.", Rect2(150, 22.8, 55, 2.4), Vector3(153, 0.42, 24), 90.0, "umbrella"],
+		["plant", "Planta eléctrica", "Le da luz a la ciudad. Cuando falla, el arreglo se paga en su caseta.", PowerPlant.rects2d()[0], PowerPlant.PAY_SPOT, 0.0, "bolt"],
 		["barrio", "Barrio Las Lomas", "Donde viven tus clientes. Casas en venta para alquilar y tablón de vecinos.", Rect2(-40, 30, 148, 28), Vector3(-44, 0, 43), 0.0, "person"],
 	]
 	for pl in places:

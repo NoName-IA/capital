@@ -174,6 +174,10 @@ func _terrain() -> void:
 	_tunnel()
 
 
+## El techo del túnel para la cámara (como City.ceiling_over): [x0, x1, z0, z1, alto]
+const TUNNEL_CEILING := [-207.0, -165.5, -9.3, 9.3, 7.0]
+
+
 ## Al oeste la avenida entra a un túnel que atraviesa la montaña (ver Terrain.mountain_height). Desde la ciudad se
 ## ve la boca con su muro de concreto y las luces de adentro; los autos entran y salen por ahí.
 func _tunnel() -> void:
@@ -205,6 +209,10 @@ func _tunnel() -> void:
 	t.box(Vector3(x - deep / 2 + 0.2, top + 0.25, 0), Vector3(deep + 0.4, 0.5, wing * 2 + 0.4), trim)         # remate de arriba
 	t.box(Vector3(x - deep - tube / 2 + 1.0, high + 0.2, 0), Vector3(tube + 2.0, 0.4, half * 2 + 0.8), inside)  # techo
 	t.box(Vector3(x - deep - tube, high / 2, 0), Vector3(0.4, high, half * 2), Color8(12, 12, 14))           # al fondo, oscuro
+	# Se puede caminar adentro: las paredes y la boca chocan
+	for side in [-1, 1]:
+		rects.append([x - deep - tube, x, side * (half + 0.2) - 0.3, side * (half + 0.2) + 0.3, high])
+		rects.append([x - deep, x + 0.4, minf(side * half, side * wing), maxf(side * half, side * wing), top])
 	t.node(city, Mats.standard)
 	var glow := Boxes.new()   # luces del techo del túnel: prendidas de día y de noche
 	for i in 9:

@@ -218,6 +218,16 @@ func draw(ui: ImUI) -> void:
 		var grow := 3.0 * pulse
 		_draw_card(ui, d, Rect2(x - grow, y - grow, CARD_W + grow * 2, h + grow * 2), true)
 		y += h + GAP
+	# Alerta fija del apagón: no se va hasta que pagues el arreglo de la planta
+	var g = city.game
+	if g != null and g.blackout and g.power_failing():
+		var d := {"app": "ALERTA", "col": Color8(225, 85, 75), "icon": "bolt", "title": "¡Se fue la luz!",
+				"body": Lang.f("No vuelve hasta que pagues el arreglo en la planta, junto al túnel (%s).", Fmt.money(g.power_cost())),
+				"count": null, "when": "", "repeat": 1, "t": 0.0}
+		var h := _card_height(ui, d)
+		ui.canvas_alpha(1.0)
+		_draw_card(ui, d, Rect2(x, y, CARD_W, h), true)
+		y += h + GAP
 	for c in cards:
 		var h := _card_height(ui, c)
 		c.y = y if c.y < 0 else lerpf(c.y, y, 0.25)  # las de abajo se corren suave cuando entra una nueva

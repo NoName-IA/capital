@@ -7,6 +7,7 @@ extends RefCounted
 var user_exposure := 1.0     # brillo elegido en Gráficos → Imagen
 var user_saturation := 1.0   # saturación elegida en Gráficos → Imagen
 var night_lights := true     # faroles y locales iluminados de noche
+var blackout := 0.0          # 0 a 1: apagón (la planta eléctrica falló): faroles, ventanas y locales a oscuras
 var env: Environment
 var sun: DirectionalLight3D
 var sky_mat: ShaderMaterial
@@ -155,9 +156,10 @@ func set_time(t: float) -> void:
 		m.set_shader_parameter("horizon", Vector3(horizon.r, horizon.g, horizon.b))
 		m.set_shader_parameter("daylight", day)
 	night = elev < 0.3
-	Mats.set_night(night_amount)
+	Mats.set_night(night_amount * (1.0 - blackout))
 	Mats.emissive.albedo_color = Color(1, 1, 1) * (0.7 + 0.8 * night_amount)
-	Mats.lamps_on = smoothstep(0.0, 1.0, (0.42 - elev) / 0.2) * (1.0 if night_lights else 0.0)  # se prenden al atardecer
+	Mats.lamps_on = smoothstep(0.0, 1.0, (0.42 - elev) / 0.2) * (1.0 if night_lights else 0.0) * (1.0 - blackout)  # se prenden al atardecer
+	RenderingServer.global_shader_parameter_set("city_block_light", CityLights.STRENGTH * (1.0 - blackout))   # adentro de los locales
 	RenderingServer.global_shader_parameter_set("city_daylight", day)
 
 

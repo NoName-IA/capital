@@ -8,6 +8,7 @@ const FLAT_WEST := -118.0   # al oeste de esto empiezan los cerros
 const COAST := 160.0        # al este de esto el suelo baja hacia el mar
 const BEACH_START := 110.0  # desde aquí el suelo es arena (terrenos de la playa)
 const FLAT_Z := 64.0        # más allá de |z| empiezan las lomas
+const PLANT_FLAT := Vector4(-151.5, 29.0, 13.0, 18.5)   # centro x, centro z, medio ancho, medio largo
 const TUNNEL_X := -165.0    # al oeste la avenida entra a un túnel que atraviesa la montaña
 
 static var soft: FastNoiseLite
@@ -54,6 +55,10 @@ static func height(x: float, z: float) -> float:
 	# La avenida sigue hacia el oeste por un valle entre los cerros (y se pierde de vista detrás de ellos)
 	if x < FLAT_WEST:
 		h *= lerpf(sstep(26, 46, absf(z)), 1.0, sstep(-230, -280, x))   # ancho para los locales de la entrada
+	# El patio de la planta eléctrica (ver PowerPlant) es plano y el cerro baja suave hasta él
+	var pdx := maxf(0.0, absf(x - PLANT_FLAT.x) - PLANT_FLAT.z)
+	var pdz := maxf(0.0, absf(z - PLANT_FLAT.y) - PLANT_FLAT.w)
+	h *= sstep(0.0, 12.0, sqrt(pdx * pdx + pdz * pdz))
 	var sea := sstep(COAST, COAST + 46, x)
 	return h * (1 - sea) - 9.0 * sea
 

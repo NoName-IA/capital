@@ -23,7 +23,7 @@ static func plot_pos(i: int) -> Array:
 
 static func plot_count() -> int:
 	return PLOTS.size() + COMP_PLOTS.size()
-const ROAD_WEST_LIMIT := -150.0   # hasta dónde se puede caminar por la calle hacia los cerros
+const ROAD_WEST_LIMIT := -202.0   # hasta dónde se puede caminar por la calle hacia los cerros: hasta el fondo del túnel
 const BOUNDS := [-100.0, 200.0, -58.0, 58.0]  # incluye el barrio, el parque, la playa y la orilla del mar
 const WADE_DEPTH := 0.75   # hasta dónde se puede entrar al mar (metros bajo el agua)
 const MAX_CUSTOMERS := 30
@@ -118,6 +118,8 @@ var spot_rig: Node3D       # reflectores del armario: alumbran al personaje de a
 var assistant: Person
 var tower: Tower          # la presidencia (último piso) y los pisos de ejecutivos: ver Tower
 var finale: Finale        # «La última reunión»: el final del juego (ver Finale)
+var plant: PowerPlant     # la planta eléctrica junto al túnel (ver PowerPlant y Game.power_fail)
+var power_scene: PowerScene   # la cinemática de cuando falla por primera vez
 var board_text: Label3D
 var ticker_text: Label3D
 var trophies_node: Node3D
@@ -150,6 +152,7 @@ func _ready() -> void:
 	builder = WorldBuilder.new(self)
 	builder.build()
 	static_rects = builder.rects
+	plant = PowerPlant.new(self)
 	mall = Mall.new(self, 0)
 	malls = [mall, Mall.new(self, 1)]
 	hq = builder.hq
@@ -338,6 +341,7 @@ func _build_office() -> void:
 	tower = Tower.new(self)
 	tower.build(office_tier)
 	finale = Finale.new(self)
+	power_scene = PowerScene.new(self)
 
 
 var office_tier := 2   # el aspecto con el que está armada la oficina ahora
@@ -669,6 +673,11 @@ func _update_luxury(g: Game) -> void:
 ## que no haya tutorial, ventana encima, ni viaje en el ascensor; si estás en la computadora, te saca (Finale.start).
 func _want_finale(g: Game) -> bool:
 	return g.won and not g.finale_seen and not finale.active() and not g.game_over and not tutorial.active 			and app.modal == null and not tower.busy() and not overlays.mode in ["personaje", "decorar"]
+
+
+## ¿Toca la cinemática de la planta? Falló por primera vez y no la viste; espera lo mismo que el final.
+func _want_power_scene(g: Game) -> bool:
+	return g.power_fail and not g.power_intro and not power_scene.active() and not finale.active() and not g.game_over 			and not tutorial.active and app.modal == null and not tower.busy() and not overlays.mode in ["personaje", "decorar"]
 
 
 ## Te para de la computadora al instante (el final empieza aunque estés sentado en ella).
@@ -1234,6 +1243,13 @@ func react(n: Dictionary) -> void:
 			notes.push("oficina", "Renunció un empleado", n.text, {"col": red, "sound": "bad", "icon": "person"})
 		"danger_soft":
 			notes.push("alerta", "Inspección del trabajo", n.text, {"sound": "bad"})
+		"blackout":   # se cortó la luz: el aviso queda fijo arriba a la derecha hasta que pagues (Notifications.draw)
+			sfx.play("bad")
+			sfx.play("fin_golpe", 0.7, 0.55)   # el «clac» del corte
+		"power_back":
+			notes.push("alerta", "Volvió la luz", n.text, {"col": orange, "sound": "good", "icon": "bolt"})
+		"power":   # se acabó el arreglo pagado: la planta volvió a fallar
+			notes.push("alerta", "La planta volvió a fallar", n.text, {"col": red, "sound": "bad", "icon": "bolt"})
 		"quiet":
 			pass
 		"gameover":
@@ -1319,6 +1335,7 @@ func set_sky_lock(t: float) -> void:
 # ---------- sincronización con la simulación ----------
 func reset_world(g) -> void:
 	rank_wait = null
+	sky.blackout = 0.0   # la otra partida puede no tener apagón
 	for i in house_signs:
 		house_signs[i].root.queue_free()
 	house_signs.clear()
@@ -1538,6 +1555,24 @@ func buy_house(i: int, confirmed := false) -> void:
 	toast(r[1], "good" if r[0] else "bad")
 
 
+## Pagar el arreglo de la planta eléctrica en su caseta (pide confirmar).
+func pay_power(confirmed := false) -> void:
+	var g: Game = game
+	if not confirmed:
+		var cost: float = g.power_cost()
+		var left := g.power_days_left()
+		var sub := Lang.f("Con el arreglo hay luz asegurada por %d días: sin apagones, tus locales venden normal.", int(D.POWER.days))
+		if left > 0:
+			sub = Lang.f("Todavía te quedan %d días de luz. Si pagas ahora se suman %d días más.", [left, int(D.POWER.days)])
+		confirm("¿Pagar el arreglo de la planta eléctrica?", sub, Lang.f("Pagar (%s)", Fmt.short(cost)), pay_power.bind(true))
+		return
+	var r: Array = g.pay_power()
+	if r[0]:
+		sfx.play("coin", 0.5)
+		sfx.play("good", 0.5)
+	toast(r[1], "good" if r[0] else "bad")
+
+
 func drop_store(i: int) -> void:
 	var store: Store = stores[i]
 	stores.erase(i)
@@ -1573,7 +1608,7 @@ func spawn(dt: float) -> void:
 
 # ---------- choques ----------
 func all_rects() -> Array:
-	var out := [static_rects, hq.rects, office_decor_rects, tower.rects]
+	var out := [static_rects, hq.rects, office_decor_rects, tower.rects, plant.rects]
 	for s in stores.values():
 		out.append(s.rects)
 	for c in comps.values():
@@ -1728,6 +1763,8 @@ func ceiling_over(pos: Vector3) -> Array:
 		var c = sp.get("ceiling")
 		if c != null and c[0] < pos.x and pos.x < c[1] and c[2] < pos.z and pos.z < c[3]:
 			return c
+	if WorldBuilder.TUNNEL_CEILING[0] < pos.x and pos.x < WorldBuilder.TUNNEL_CEILING[1] and absf(pos.z) < WorldBuilder.TUNNEL_CEILING[3]:
+		return WorldBuilder.TUNNEL_CEILING   # adentro del túnel la cámara no se sale por el techo
 	return []
 
 
@@ -1954,6 +1991,8 @@ func look_dir(yaw_deg: float, pitch_deg: float) -> Vector3:
 func update_camera(dt: float) -> void:
 	if finale != null and finale.place_camera(camera):   # el final del juego
 		return
+	if power_scene != null and power_scene.place_camera(camera):   # la planta eléctrica falló
+		return
 	if tower != null and tower.place_camera(camera):   # el viaje en el ascensor
 		return
 	if pc_phase != "" and overlays.mode != "decorar":
@@ -2106,6 +2145,7 @@ func interactables() -> Array:
 			items.append([house_signs[i].manage, Lang.f("Comprar esta casa para alquilar (%s)", Fmt.money(g.house_cost())), buy_house.bind(i)])
 	for m in malls:
 		items += m.interactables(g)
+	items += plant.interactables(g, pay_power)
 	for slot in comps:
 		var c: Dictionary = comps[slot]
 		var name: String = Lang.noun(D.PRODUCTS[c.key].name)
@@ -2156,6 +2196,15 @@ func update(dt: float) -> void:
 		if _want_finale(g):
 			finale.start()
 		finale.update(dt)
+		if _want_power_scene(g):
+			power_scene.start()
+		if power_scene.active():
+			power_scene.update(dt)
+		else:
+			plant.update(dt, g.power_failing())
+			# Apagón: las luces se apagan de a poco (y vuelven al pagar)
+			sky.blackout = 1.0 if g.blackout and g.power_failing() else 0.0   # se corta de golpe, sin titilar
+		builder.lamp_node.material_override = Mats.standard if sky.blackout > 0.5 else Mats.emissive
 		if rank_wait != null and not rank_must_wait():
 			var waiting: Dictionary = rank_wait
 			rank_wait = null
@@ -2236,7 +2285,7 @@ func update(dt: float) -> void:
 		b.rotation.z = deg_to_rad(sin(t * 0.9 + ph) * 4)
 	hud.update(dt)
 	hud.update_danger(g, dt)
-	if overlays.mode in ["personaje", "decorar", "pc"] or tutorial.active:   # el mentor también es una foto
+	if overlays.mode in ["personaje", "decorar", "pc"] or tutorial.active or power_scene.active():   # el mentor también es una foto
 		thumbs.step()
 	advance_sky(dt)
 	sky.moon_phase = fmod(game.day + 15.0, 29.5) / 29.5 if game != null else 0.5  # una fase por mes de juego
@@ -2262,7 +2311,7 @@ func update(dt: float) -> void:
 ## ¿La cámara está bajo techo? (oficina o un local): ahí no llueve.
 func camera_indoors() -> bool:
 	var p := camera.global_position
-	var roofs := [hq_spots.ceiling, tower.spots.ceiling]
+	var roofs := [hq_spots.ceiling, tower.spots.ceiling, WorldBuilder.TUNNEL_CEILING]
 	for s in stores.values():
 		if s.spots.get("ceiling") != null:
 			roofs.append(s.spots.ceiling)
@@ -2345,6 +2394,12 @@ func _key(e: InputEventKey) -> void:
 			toggle_fullscreen()
 			return
 		finale.key(e)
+		return
+	if power_scene != null and power_scene.active():   # la cinemática de la planta: Enter pasa, Esc salta
+		if Keys.is_event(e, "fullscreen"):
+			toggle_fullscreen()
+			return
+		power_scene.key(e)
 		return
 	# En la computadora: durante la transición nada; en el escritorio, Esc cierra lo de arriba o te levanta
 	if pc_phase != "" and (pc_phase != "os" or overlays.mode == "pc"):

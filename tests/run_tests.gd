@@ -14,7 +14,7 @@ func _ready() -> void:
 			"test_weather_moves_demand", "test_stars", "test_city_activities", "test_decor", "test_solar",
 			"test_labor", "test_every_micro_is_booked", "test_rivals_alive", "test_buy_that_building", "test_old_saves",
 			"test_mall_and_franchises", "test_homeless_become_franchises", "test_beach_mall_and_rival_shops",
-			"test_new_game_without_stall", "test_normal_mode_has_no_investments", "test_key_decisions", "test_every_blueprint_is_whole", "test_office_looks", "test_barrio_houses", "test_buy_all_decor"]:
+			"test_new_game_without_stall", "test_normal_mode_has_no_investments", "test_key_decisions", "test_every_blueprint_is_whole", "test_office_looks", "test_barrio_houses", "test_buy_all_decor", "test_power_plant"]:
 		var before := failures
 		call(t)
 		print(("OK    " if failures == before else "FALLA ") + t)
@@ -44,6 +44,8 @@ func net_income(g: Game) -> float:
 ## Hace un poco de todo para tocar todas las cuentas contables.
 func busy_player(g: Game, day: int) -> void:
 	var cafe: Dictionary = g.products.cafe
+	if g.power_failing() and g.cash > 0:   # va a la planta a pagar el arreglo, como haría alguien jugando
+		g.pay_power()
 	if day % 9 == 0:   # las actividades de la ciudad también tienen que cuadrar en la contabilidad
 		for a in D.ACTIVITIES:
 			g.do_activity(a[0], 18.0)
@@ -751,6 +753,61 @@ func test_buy_all_decor() -> void:
 	check(g.missing_decor(loc).is_empty() and absf(g.cash - 10) < 0.01, "queda todo puesto y se cobra el total")
 	g.cash = g.missing_office_decor_cost() + 5
 	check(g.buy_all_office_decor()[0] and g.missing_office_decor().is_empty(), "la oficina también se decora entera de una vez")
+
+
+func test_power_plant() -> void:
+	var g := Game.new(12)
+	g.tutorial_step = -1
+	check(g.progress() < float(D.POWER.start), "al empezar vas en menos del 25 %")
+	g.cash = 1000000.0
+	g.step_day()
+	check(not g.power_fail, "antes del día mínimo la planta no falla aunque vayas bien")
+	g.cash = 1500.0
+	g.day = 30
+	check(not g.pay_power()[0], "si la planta funciona no hay nada que pagar")
+	# Al 25 % de la partida empieza a fallar
+	g.cash = 4000.0 * pow(g.win_value() / 4000.0, 0.3)
+	check(g.progress() >= float(D.POWER.start), "con más valor pasas el 25 %")
+	g.step_day()
+	check(g.power_fail and g.power_failing(), "al 25 % la planta empieza a fallar")
+	check(not g.power_intro, "la cinemática todavía no se vio")
+	# Mientras falla no hay luz ningún día: no vuelve sola
+	var dark := 0
+	for i in 60:
+		g.step_day()
+		if g.blackout:
+			dark += 1
+	check(dark == 60, "sin pagar, el apagón no se acaba (%d de 60)" % dark)
+	var p: Dictionary = g.products["cafe"]
+	var loc: Dictionary = g.locations[0]
+	g.blackout = false
+	var normal := g.demand_at(p, loc, p.price)
+	g.blackout = true
+	near(g.demand_at(p, loc, p.price), normal * float(D.POWER.demand), 0.001, "con apagón la demanda baja")
+	# Pagar en la caseta: luz asegurada
+	g.cash = 0.0
+	check(not g.pay_power()[0], "sin caja no se paga el arreglo")
+	g.cash = 1000000.0
+	var cost := g.power_cost()
+	near(cost, g.cash * 0.05, 1.0, "el arreglo cuesta el 5 % de la caja")
+	var c0 := g.cash
+	check(g.pay_power()[0], "se paga el arreglo")
+	near(c0 - g.cash, cost, 0.01, "se cobra lo que cuesta")
+	check(not g.power_failing() and not g.blackout, "pagado: no falla ni hay apagón")
+	check(g.power_days_left() == int(D.POWER.days), "luz por los días del arreglo")
+	for i in int(D.POWER.days) - 1:
+		g.step_day()
+		check(not g.blackout, "con el arreglo vigente no hay apagones")
+	g.step_day()
+	g.step_day()
+	check(g.power_failing() and g.blackout, "al terminar el arreglo vuelve a fallar y se corta la luz")
+	for i in City.plot_count():   # ninguna megatienda (el edificio más grande) se mete en la planta
+		var mega := CityMap.plot_rect(City.plot_pos(i), 2)
+		for r in PowerPlant.rects2d():
+			check(not mega.intersects(r), "la megatienda del terreno %d no choca con la planta" % i)
+	g.power_intro = true
+	var h := Game.from_json(g.to_json())
+	check(h.power_fail and h.power_intro and h.power_paid == 1, "la planta se guarda")
 
 
 func test_barrio_houses() -> void:

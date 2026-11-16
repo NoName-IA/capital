@@ -112,6 +112,11 @@ const ACTIVITIES := [
 ]
 # Casas del Barrio Las Lomas que se venden para alquilar: precio base, cuánto sube cada casa que ya tienes y la
 # renta mensual (sobre lo que pagaste). Suman su precio al valor de tu empresa y la renta entra como ingreso.
+# Planta eléctrica junto al túnel: al 25 % de la partida (medido en escala logarítmica del valor de la empresa, ver
+# Game.progress) empieza a fallar y se corta la luz: el apagón dura hasta que pagues (los locales venden menos). El
+# arreglo se paga en la caseta de la planta y da luz por `days` días (unos 3 meses y medio); después se corta otra vez.
+# Cuesta siempre `cash_k` (el 5 %) de la caja que tengas al pagar.
+const POWER := {"start": 0.25, "min_day": 20, "days": 105, "cash_k": 0.05, "demand": 0.55}
 const HOUSE := {"count": 8, "cost": 40000.0, "step": 0.15, "rent": 0.02}
 # Fondo de inversión en bolsa: rendimiento anual esperado según la fase del ciclo (con mucha volatilidad diaria).
 const FUND_RETURN := {"expansion": 0.10, "auge": 0.18, "recesion": -0.20, "recuperacion": 0.22}

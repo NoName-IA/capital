@@ -583,7 +583,17 @@ func draw_mentor(ui: ImUI) -> void:
 		return
 	var speaking := talking()
 	var line_i := talk_i if speaking else talk.size() - 1
-	var e := 1.0 - pow(1.0 - talk_in, 3)
+	var full: String = Lang.t(talk[line_i])
+	var n := mini(full.length(), int(talk_t * TYPE_SPEED)) if speaking else full.length()
+	mentor_box(ui, city, full, n, talk_in, speaking and blocking(), talk.size(), talk_i)
+
+
+## El cuadro del mentor (tu personaje ya millonario) abajo al centro: su retrato, su nombre y la frase escribiéndose
+## (`n` letras de `full`). `e_in` de 0 a 1 lo hace entrar desde abajo. Con `hint`, abajo a la derecha dice cómo
+## seguir y los puntitos cuentan las frases (`dots`, la actual es `dot_i`). Lo usa también la cinemática de la planta.
+## `who_name` y `who_look`: otro personaje que habla en el mismo cuadro (sin ellos, el mentor).
+static func mentor_box(ui: ImUI, owner_city, full: String, n: int, e_in: float, hint: bool, dots: int, dot_i: int, who_name := "", who_look = null) -> void:
+	var e := 1.0 - pow(1.0 - clampf(e_in, 0, 1), 3)
 	var w := 780.0
 	var h := 128.0
 	var pw := 200.0    # el retrato
@@ -593,27 +603,25 @@ func draw_mentor(ui: ImUI) -> void:
 	var pr := Rect2(box.position.x - sep - pw, box.end.y - pw, pw, pw)
 	ui.rect(pr, Color(ImUI.COL.accent, 0.95), 16)
 	ui.rect(pr.grow(-4), Color(0.17, 0.2, 0.26), 12)
-	var img = city.thumbs.get_thumb(mentor_look(), "busto")
+	var img = owner_city.thumbs.get_thumb(who_look if who_look != null else owner_city.tutorial.mentor_look(), "busto")
 	if img != null:
 		ui.image(img, pr.grow(-4))
 	ui.rect(box, Color(0.04, 0.05, 0.075, 0.96), 16)
 	ui.rect(box, Color(ImUI.COL.accent, 0.9), 16, 2)
 	# Nombre en una pestaña sobre el cuadro
-	var nw := ui.text_size(MENTOR_NAME, 13, true).x + 28
+	var who := MENTOR_NAME if who_name == "" else who_name
+	var nw := ui.text_size(who, 13, true).x + 28
 	var tab := Rect2(box.position.x + 30, box.position.y - 15, nw, 28)
 	ui.rect(tab, ImUI.COL.accent, 14)
-	ui.text(MENTOR_NAME, tab.get_center(), 13, Color8(16, 20, 30), true, "center")
-	# La frase, escribiéndose (o entera, si ya terminó de hablar)
-	var full: String = Lang.t(talk[line_i])
-	var n := mini(full.length(), int(talk_t * TYPE_SPEED)) if speaking else full.length()
+	ui.text(who, tab.get_center(), 13, Color8(16, 20, 30), true, "center")
 	ui.wrap_text(full.substr(0, n), Rect2(box.position.x + 30, box.position.y + 26, w - 60, h - 50), 20, Color.WHITE)
-	if not speaking or not blocking():
+	if not hint:
 		return
-	# En la ciudad: cómo seguir (titila cuando la frase ya terminó) y cuántas frases quedan
+	# Cómo seguir (titila cuando la frase ya terminó) y cuántas frases quedan
 	var blink := 0.55 + 0.45 * sin(Time.get_ticks_msec() / 180.0) if n >= full.length() else 0.35
 	ui.text(Lang.t("Enter / clic") + "  ▸", Vector2(box.end.x - 22, box.end.y - 18), 13, Color(ImUI.COL.accent, blink), true, "midright")
-	for i in talk.size():
-		var c: Color = ImUI.COL.accent if i == talk_i else Color(1, 1, 1, 0.25 if i > talk_i else 0.5)
+	for i in dots:
+		var c: Color = ImUI.COL.accent if i == dot_i else Color(1, 1, 1, 0.25 if i > dot_i else 0.5)
 		ui.circle(Vector2(box.position.x + 36 + i * 14, box.end.y - 18), 4, c)
 
 

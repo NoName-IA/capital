@@ -93,6 +93,13 @@ var tutorial_step := -1  # paso del tutorial guiado en el que vas (-1: terminado
 var office_look := 0      # aspecto de la oficina (D.OFFICE_LOOKS); las partidas de antes tienen el 2 (el de siempre)
 var path := {}            # decisiones importantes tomadas: {"rumbo": "premium"/"masivo", "rivales": "alianza"/"guerra"}
 var rival_mall := {}      # "vitrina" -> negocio del rival que la arrienda en tu centro comercial (te paga alquiler)
+# La planta eléctrica (ver D.POWER y City.power_scene)
+var power_fail := false   # ya empezó a fallar alguna vez (pasaste el 25 % de la partida)
+var power_until := 0      # día hasta el que hay luz asegurada (lo que pagaste)
+var power_paid := 0       # cuántas veces pagaste el arreglo
+var power_intro := false  # ya viste la cinemática de cuando falló
+var blackout := false     # hoy hay apagón
+var blackout_days := 0    # días de apagón en toda la partida
 var franchises := []      # franquicias en otras ciudades: {id, product, city, day, quality, month_royalty, last_royalty}
 
 # Lo que se guarda en el archivo de partida (todo lo anterior menos el generador aleatorio)
@@ -104,7 +111,8 @@ const SAVED := ["day", "cash", "bonds", "products", "locations", "loans", "asset
 		"strategy_ready_day", "market_today", "rank_log", "rival_plots", "company",
 		"weather", "weather_next", "weather_days", "activity_day", "beach_boost_days",
 		"labor", "morale", "micro", "next_micro_day", "rivals", "plot_owner", "passed", "mall", "franchises", "mall2", "rival_mall", "path", "office_look", "office_offered", "office_decor", "tutorial_step", "houses",
-		"finale_seen", "best_month", "worst_choice"]
+		"finale_seen", "best_month", "worst_choice",
+		"power_fail", "power_until", "power_paid", "power_intro", "blackout", "blackout_days"]
 
 
 static func new_ledger() -> Dictionary:
@@ -395,7 +403,7 @@ func demand_at(p: Dictionary, loc: Dictionary, price: float, n_locs := -1) -> fl
 	var extra := 1.0 + upgrade_bonus(loc, "demand")
 	var war := 0.88 if int(p.get("war_days", 0)) > 0 else 1.0   # un rival te está atacando en este mercado
 	return (base * path_demand() * price_f * econ_f * season(p.key) * rep_f * mkt_f * comp_f * cannibal * p.demand_shock
-			* weather_factor(p.key, loc) * stars_f * extra * war)
+			* weather_factor(p.key, loc) * stars_f * extra * war * (D.POWER.demand if blackout else 1.0))
 
 
 ## Cuánto mueve el clima de hoy la demanda de una sucursal.
@@ -1234,6 +1242,67 @@ func best_month_sales() -> float:
 	return best
 
 
+# ---------- planta eléctrica ----------
+## Cuánto avanzaste en la partida, de 0 a 1: el valor de la empresa entre lo que vale al empezar y el valor para ganar,
+## en escala logarítmica (cada rango es varias veces el anterior: así el 25 % llega a un cuarto del camino).
+func progress() -> float:
+	var start := 4000.0
+	var v := maxf(start, valuation())
+	return clampf(log(v / start) / log(win_value() / start), 0.0, 1.0)
+
+
+## La planta está fallando ahora: ya empezó a fallar y no hay un arreglo pagado vigente.
+func power_failing() -> bool:
+	return power_fail and day >= power_until
+
+
+## Lo que cuesta el arreglo: siempre el 5 % de la caja que tengas en ese momento.
+func power_cost() -> float:
+	return roundf(maxf(0.0, cash) * float(D.POWER.cash_k))
+
+
+## Días de luz asegurada que quedan (0 si está fallando).
+func power_days_left() -> int:
+	return maxi(0, power_until - day) if power_fail else 0
+
+
+## Pagas el arreglo en la caseta de la planta: luz asegurada por D.POWER.days días (se suman a lo que quedaba).
+func pay_power() -> Array:
+	if not power_fail:
+		return [false, "La planta funciona bien: todavía no hay nada que pagar."]
+	var cost := power_cost()
+	if cash <= 0.0:
+		return [false, "No tienes caja para pagar el arreglo de la planta."]
+	_spend(cost, "corporativo")
+	power_until = maxi(power_until, day) + int(D.POWER.days)
+	power_paid += 1
+	blackout = false
+	add_news(Lang.f("Pagaste el arreglo de la planta eléctrica (%s): hay luz asegurada por %d días.", [Fmt.money(cost), int(D.POWER.days)]), "good", "quiet")
+	return [true, Lang.f("¡Volvió la luz! Pagaste %s: tienes luz asegurada por %d días.", [Fmt.money(cost), int(D.POWER.days)])]
+
+
+## Una vez al día: al llegar al 25 % la planta empieza a fallar y se corta la luz; no vuelve hasta que pagues.
+func _power_day() -> void:
+	if not power_fail:
+		if day >= int(D.POWER.min_day) and tutorial_step < 0 and progress() >= float(D.POWER.start):
+			power_fail = true
+			power_until = day
+			add_news("La planta eléctrica de la ciudad falló: no hay luz hasta que pagues el arreglo en la planta, junto al túnel.", "bad", "quiet")
+		blackout = false
+		return
+	if not power_failing():
+		blackout = false
+		return
+	var was := blackout
+	blackout = true   # sin arreglo vigente no hay luz: no vuelve sola
+	blackout_days += 1
+	if not was:   # se corta de golpe: aviso grande
+		if power_paid > 0:
+			add_news("Se acabó el arreglo que pagaste: la planta volvió a fallar y se fue la luz. No vuelve hasta que pagues en la planta, junto al túnel.", "bad", "blackout")
+		else:
+			add_news("Se fue la luz en toda la ciudad: tus locales venden mucho menos. No vuelve hasta que pagues el arreglo en la planta, junto al túnel.", "bad", "blackout")
+
+
 ## El modo normal termina en Imperio; el inversionista sigue hasta Mil millonario.
 func ranks() -> Array:
 	return D.RANKS.slice(0, D.MODES[mode].ranks)
@@ -1304,6 +1373,7 @@ func step_day() -> void:
 	var rev_before: float = ledger.ingresos
 	_macro()
 	_weather_day()
+	_power_day()
 	beach_boost_days = max(0, beach_boost_days - 1)
 	_events()
 	_maybe_dilemma()
