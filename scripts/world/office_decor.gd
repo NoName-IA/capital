@@ -27,8 +27,9 @@ static func build(parent: Node3D, tier: int, keys: Array, lit := true) -> Array:
 		var z0 := CARPET_END
 		var z1 := 1.9
 		var zc := (z0 + z1) / 2
-		b.box(Vector3(0, 0.16, zc), Vector3(2.0, 0.03, z1 - z0), Color8(170, 25, 35))
-		b.box(Vector3(0, 0.17, zc), Vector3(1.6, 0.01, z1 - z0), Color8(200, 40, 50))
+		# capas bien separadas (≥ 2 cm): con caras a la misma altura o casi, parpadean (la HD 4600 tiene poca precisión)
+		b.box(Vector3(0, 0.175, zc), Vector3(2.0, 0.03, z1 - z0), Color8(170, 25, 35))   # de 0,16 a 0,19 (la del escalón llega a 0,14)
+		b.box(Vector3(0, 0.2, zc), Vector3(1.6, 0.02, z1 - z0), Color8(200, 40, 50))     # la franja del medio sobresale: arriba en 0,21
 		var posts := [1.3, 0.4, z0 + 0.25]
 		for sx in [-1.3, 1.3]:
 			for z in posts:
