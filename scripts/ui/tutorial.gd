@@ -169,7 +169,7 @@ func lines(id: String) -> Array:
 		"contratar":
 			return ["Solo no puedes con todo. En tu puesto, aprieta + para contratar a alguien."]
 		"tiempo":
-			return [Lang.f("Los negocios crecen con el tiempo. Acelera el reloj a x2 o x3 (o con %s y %s).", [k.call("speed2"), k.call("speed3")])]
+			return ["Los negocios crecen con el tiempo. Acelera el reloj a x2 o x3."]
 		"salir":
 			return [Lang.f("Para salir de la tablet, aprieta Esc o %s.", k.call("phone"))]
 		"oficina":
@@ -297,7 +297,7 @@ func _done(id: String) -> bool:
 			return absf(city.game.products[_prod_key()].price - start_price) > 0.001
 		"contratar":
 			return _staff() > start_staff or not _can_hire()
-		"tiempo":   # basta con cambiar la velocidad (en la tablet o con las teclas)
+		"tiempo":   # basta con cambiar la velocidad (en la tablet o con clic en el indicador)
 			return city.app.speed != start_speed
 		"salir":
 			return city.overlays.mode != "admin"

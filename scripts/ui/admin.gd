@@ -802,7 +802,7 @@ func draw_top() -> void:
 	marks.velocidad = Rect2(x + 52, 15, 52 * (SPEEDS.size() - 1) + 46, 30)
 	for i in SPEEDS.size():
 		if ui.button(Rect2(x + 52 + i * 52, 15, 46, 30), SPEEDS[i][1], true, "normal", 15,
-				Lang.f("Velocidad %s (tecla %d)", [SPEEDS[i][1], i + 1]), not paused and speed == i):
+				Lang.f("Velocidad %s", SPEEDS[i][1]), not paused and speed == i):
 			speed = i
 			paused = false
 

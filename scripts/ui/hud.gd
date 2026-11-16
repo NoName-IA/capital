@@ -24,7 +24,6 @@ var speed_rect := Rect2()   # indicador de velocidad (arriba a la derecha)
 const PANEL_W := 420.0   # tarjeta de la empresa, arriba a la izquierda (el alto depende de cuántos chips haya)
 const SHORT := {"cafe": "Café", "pan": "Pan", "burger": "Burger", "ropa": "Ropa", "tech": "Tech"}
 var panel := Rect2(12, 12, PANEL_W, 196)
-const SKY_BUTTONS := [["Día", 0.24], ["Tarde", 0.6], ["Noche", 0.81]]   # punto del ciclo que fija cada botón
 
 
 func _init(owner_city, parent_item: RID) -> void:
@@ -143,6 +142,7 @@ func _draw_hotbar() -> void:
 		ui.line(c + Vector2(-6, 6), c + Vector2(14, -14), Color8(206, 160, 104), 9)
 		ui.circle(c + Vector2(14, -14), 4.5, Color8(206, 160, 104))
 		ui.text("Bate", Vector2(r.get_center().x, r.end.y - 9), 11, "accent" if on else "muted", true, "center")
+		ui.text(Keys.label("slot1"), r.position + Vector2(7, 5), 12, "accent" if on else "text", true)   # el número de la casilla
 	if sel == 1:
 		ui.text(Lang.f("%s: batazo", Keys.label("bat")), Vector2(x0 - 16, y + HOTBAR_SLOT / 2), 12, "muted", true, "midright")
 
@@ -328,36 +328,19 @@ func _draw_panel_buttons(g) -> void:
 	speed += Lang.f("  ·  %d min de juego", int(g.play_seconds / 60))
 	var sw := ui.text_size(speed, 18).x + 28
 	speed_rect = Rect2(ui.W - 12 - sw, 12, sw, 34)
-	ui.rect(speed_rect, Color(0.05, 0.067, 0.09, 0.72), 17)
+	# Clic en el indicador: cambia la velocidad (x1 → x2 → x3); se suelta el mouse con Alt
+	var sp_hot: bool = not city.mouse_captured() and not city.overlays.open() and ui.hover(speed_rect)
+	ui.rect(speed_rect, Color(0.05, 0.067, 0.09, 0.9 if sp_hot else 0.72), 17)
+	if sp_hot:
+		ui.rect(speed_rect, Color(ImUI.COL.accent, 0.8), 17, 2)
+		ui.tooltip(speed_rect, "Clic: cambiar la velocidad (x1, x2, x3)")
 	ui.text(speed, Vector2(ui.W - 26, 17), 18, "text", false, "topright")
-	# Luz fija para ver la ciudad de día, al atardecer o de noche (se suelta el mouse con Alt para apretarlos)
-	var free: bool = not city.mouse_captured() and not city.overlays.open()
-	for i in SKY_BUTTONS.size():
-		var sb := sky_button_rect(i)
-		var on: bool = city.sky_lock == SKY_BUTTONS[i][1]
-		var sb_hot := free and ui.hover(sb)
-		ui.rect(sb, Color8(227, 179, 65) if on else Color(0.05, 0.067, 0.09, 0.85 if sb_hot else 0.72), 14)
-		ui.text(SKY_BUTTONS[i][0], sb.get_center(), 15, Color8(25, 25, 30) if on else Color.WHITE, on, "center")
 	var extra := 0
 	for l in g.locations:
 		if Game.plot_of(l) == -1 and l.get("plot") != null:
 			extra += 1
 	if extra:
 		ui.text(Lang.f("+%d sucursales fuera del centro", extra), Vector2(ui.W - 26, 90), 14, "text", false, "topright")
-
-
-func sky_button_rect(i: int) -> Rect2:
-	return Rect2(ui.W - 12 - (SKY_BUTTONS.size() - i) * 80, 52, 74, 28)
-
-
-## La hora del botón Día / Tarde / Noche que está bajo el mouse, o null.
-func sky_button_at():
-	if city.game == null:
-		return null
-	for i in SKY_BUTTONS.size():
-		if ui.hover(sky_button_rect(i)):
-			return SKY_BUTTONS[i][1]
-	return null
 
 
 func hq_button_rect() -> Rect2:
@@ -404,7 +387,6 @@ func _draw_controls() -> void:
 		]],
 		["JUEGO", [
 			[["pause_quick"], "Pausa"],
-			[["speed1", "speed2", "speed3"], "Velocidad"],
 			[["·Esc"], "Menú"],
 		]]],
 		[["ACCIONES", [

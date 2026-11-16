@@ -2664,6 +2664,8 @@ func _key(e: InputEventKey) -> void:
 			prompt_action[2].call()
 	elif Keys.is_event(e, "bat"):
 		swing_bat()
+	elif Keys.is_event(e, "slot1"):   # la casilla 1 de la barra: apretar saca el bate, apretar de nuevo lo guarda
+		set_hand(1 if hand() == 0 else 0)
 	elif Keys.is_event(e, "camera"):
 		first_person = not first_person
 		if not first_person:
@@ -2671,9 +2673,6 @@ func _key(e: InputEventKey) -> void:
 			zoom = zoom_target
 	elif Keys.is_event(e, "pause_quick"):
 		app.paused = not app.paused
-	elif Keys.is_event(e, "speed1") or Keys.is_event(e, "speed2") or Keys.is_event(e, "speed3"):
-		app.speed = 0 if Keys.is_event(e, "speed1") else (1 if Keys.is_event(e, "speed2") else 2)
-		app.paused = false
 	elif Keys.is_event(e, "jump"):
 		if absf(player.position.y - floor_at(player.position.x, player.position.z, player.position.y)) < 0.02 and serving == null:
 			vy = 8.0
@@ -2728,6 +2727,12 @@ func _mouse_button(e: InputEventMouseButton) -> void:
 	elif e.button_index == MOUSE_BUTTON_LEFT and not mouse_captured():
 		if hud.hotbar_at() >= 0:
 			set_hand(1 if hand() == 0 else 0)
+		elif hud.ui.hover(hud.speed_rect):   # clic en la velocidad: x1 → x2 → x3 → x1 (en pausa, la quita)
+			if app.paused:
+				app.paused = false
+			else:
+				app.speed = (app.speed + 1) % Admin.SPEEDS.size()
+			sfx.play("select", 0.4, 1.0 + app.speed * 0.1)
 		elif hud.ui.hover(hud.hq_button_rect()):
 			go_to_office()
 		elif hud.micro_at() >= 0:
@@ -2738,8 +2743,6 @@ func _mouse_button(e: InputEventMouseButton) -> void:
 			if app.unread:
 				app.tab = "noticias"
 			overlays.show("admin")
-		elif hud.sky_button_at() != null:
-			set_sky_lock(hud.sky_button_at())
 		else:
 			capture_mouse()
 
