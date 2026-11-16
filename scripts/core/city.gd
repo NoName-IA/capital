@@ -1609,10 +1609,10 @@ func _house_sign(h: Dictionary, owned: bool, g) -> Dictionary:
 	b.node(root, Mats.standard)
 	if owned:
 		Building.label(root, "ALQUILADA", Vector3(0, 1.82, -0.07), 11, Color8(30, 25, 10))
-		Building.label(root, Lang.f("Tuya · %s al mes", Fmt.short(g.house_rent_of(float(g.houses[str(house_index(h))])))), Vector3(0, 1.45, -0.07), 7, Color8(30, 25, 10), false)
+		Building.label(root, Lang.src("Tuya · %s al mes", Fmt.short(g.house_rent_of(float(g.houses[str(house_index(h))])))), Vector3(0, 1.45, -0.07), 7, Color8(30, 25, 10), false)
 	else:
 		Building.label(root, "SE VENDE", Vector3(0, 1.82, -0.07), 11, Color.WHITE)
-		Building.label(root, Lang.f("Casa para alquilar · %s", Fmt.short(g.house_cost())), Vector3(0, 1.45, -0.07), 7, Color.WHITE, false)
+		Building.label(root, Lang.src("Casa para alquilar · %s", Fmt.short(g.house_cost())), Vector3(0, 1.45, -0.07), 7, Color.WHITE, false)
 	return {"root": root, "manage": at + Vector3(0, 0, face * 1.3), "sig": null}
 
 

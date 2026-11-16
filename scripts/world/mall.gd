@@ -161,7 +161,7 @@ func _build_lot(g: Game) -> void:
 	b.box(Vector3(0, 3.6, Z0 - 0.6), Vector3(7.5, 2.4, 0.15), Color8(25, 45, 85))
 	b.node(root, Mats.standard)
 	Building.label(root, "CENTRO COMERCIAL", Vector3(0, 4.25, Z0 - 0.69), 15, Color8(240, 190, 60))
-	Building.label(root, Lang.f("%d vitrinas · cómpralo por %s", [int(D.MALL.slots), Fmt.short(g.mall_cost(idx))]),
+	Building.label(root, Lang.src("%d vitrinas · cómpralo por %s", [int(D.MALL.slots), Fmt.short(g.mall_cost(idx))]),
 			Vector3(0, 3.55, Z0 - 0.69), 8, Color.WHITE, false)
 	Building.label(root, "Presiona E aquí", Vector3(0, 2.95, Z0 - 0.69), 6, Color8(200, 210, 230), false)
 	lot_spot = Blueprints.to_world(plot, 0, -1.4)
@@ -271,9 +271,9 @@ func _fill_slot(i: int, s: Dictionary, loc) -> void:
 		b.node(n, Mats.standard)
 		var l := Building.label(n, "SE ARRIENDA", Vector3(0, 1.82, 0.03), 6, Color8(200, 50, 40))
 		l.rotation.y = PI
-		var l2 := Building.label(n, Lang.f("Vitrina %d", i + 1), Vector3(0, 1.52, 0.03), 4, Color8(60, 60, 66), false)
+		var l2 := Building.label(n, Lang.src("Vitrina %d", i + 1), Vector3(0, 1.52, 0.03), 4, Color8(60, 60, 66), false)
 		l2.rotation.y = PI
-		var l3 := Building.label(n, Lang.f("VITRINA %d", i + 1), Vector3(0, SHOP_H + 0.35, -0.07), 6, Color(1, 1, 1, 0.8))
+		var l3 := Building.label(n, Lang.src("VITRINA %d", i + 1), Vector3(0, SHOP_H + 0.35, -0.07), 6, Color(1, 1, 1, 0.8))
 		l3.rotation.y = PI
 		s.rects = [_slot_world_rect(s, -width / 2, width / 2, 0.0, 0.25, SHOP_H)]
 		return

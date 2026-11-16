@@ -420,7 +420,7 @@ func _office_floor(k: int) -> void:
 		b.box(Vector3(-W / 2 + i * 2, y0 + FLOOR_H / 2, D / 2 + 0.15), Vector3(0.1, FLOOR_H, 0.2), Color8(40, 44, 50))
 	# Número del piso en la pared del costado y una pizarra con gráficos
 	var n := floors + 2 - k   # el vestíbulo es el piso 1
-	var lbl := Building.label(offices, Lang.f("PISO %d", n), Vector3(W / 2 - 0.02, y0 + 2.6, 4.5), 14, Color8(40, 60, 110), true, false)
+	var lbl := Building.label(offices, Lang.src("PISO %d", n), Vector3(W / 2 - 0.02, y0 + 2.6, 4.5), 14, Color8(40, 60, 110), true, false)
 	lbl.rotation.y = -PI / 2
 	b.box(Vector3(-W / 2 + 0.05, y0 + 1.8, 3.0), Vector3(0.04, 1.2, 2.4), Color8(250, 250, 250))
 	for i in 4:

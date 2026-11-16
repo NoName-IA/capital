@@ -26,12 +26,16 @@ static func fonts() -> void:
 
 
 ## Texto 3D. `ursina_scale` es la escala que tenía en la versión de Python. Por defecto mira hacia la calle (−z local).
-static func label(parent: Node, text: String, pos: Vector3, ursina_scale: float, color: Color, bold := true,
+static func label(parent: Node, text, pos: Vector3, ursina_scale: float, color: Color, bold := true,
 		face_street := true) -> Label3D:
 	fonts()
 	var l := Label3D.new()
-	l.text = Lang.t(text)
-	l.set_meta("src", text)   # para volver a traducirlo si cambias el idioma (Lang.use)
+	if text is Array:   # frase con datos (Lang.src): se vuelve a armar en el idioma nuevo
+		l.text = Lang.f(text[0], text[1])
+		l.set_meta("fmt", text)
+	else:
+		l.text = Lang.t(text)
+		l.set_meta("src", text)   # para volver a traducirlo si cambias el idioma (Lang.use)
 	l.add_to_group("i18n")
 	l.font = title_font if bold else body_font
 	l.font_size = 64
@@ -48,7 +52,7 @@ static func label(parent: Node, text: String, pos: Vector3, ursina_scale: float,
 	return l
 
 
-func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: String, title := "",
+func _init(parent: Node, plot: Array, kind, product_color: Color, sign_label: String, title = "",
 		label_scale := 0.0, variant := -1, product := "") -> void:
 	var bp := Blueprints.blueprint(kind, variant, product)
 	var boxes: Array = bp[0]

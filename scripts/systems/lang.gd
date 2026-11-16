@@ -46,7 +46,10 @@ static func use(new_code: String) -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree:
 		for n in tree.get_nodes_in_group("i18n"):
-			if n is Label3D and n.has_meta("src"):
+			if n is Label3D and n.has_meta("fmt"):
+				var fm: Array = n.get_meta("fmt")
+				n.text = f(fm[0], fm[1])
+			elif n is Label3D and n.has_meta("src"):
 				n.text = t(n.get_meta("src"))
 
 
@@ -89,6 +92,12 @@ static func t(s) -> String:
 
 
 ## Plantilla con valores: traduce la plantilla y los valores que sean textos del juego, y los pone en su lugar.
+## Una frase con datos para un letrero 3D (Building.label): se guarda sin armar para volver a traducirla si cambias
+## el idioma. Antes se armaba con f() y el letrero quedaba en el idioma de cuando se construyó la ciudad.
+static func src(tpl: String, args = []) -> Array:
+	return [tpl, args]
+
+
 static func f(tpl: String, args = []) -> String:
 	var list: Array = args if args is Array else [args]
 	if _dict.is_empty():

@@ -942,7 +942,7 @@ func build_factory(key: String, solar: bool) -> Dictionary:
 	b.node(root, Mats.standard)
 	glow.node(root, Mats.emissive, false)
 	var name: String = D.PRODUCTS[key].name
-	var l := Building.label(root, Lang.f("FÁBRICA · %s", name.to_upper()), Vector3(x, 4.55, front + 0.08), 11, Color.WHITE, true, false)
+	var l := Building.label(root, Lang.src("FÁBRICA · %s", name.to_upper()), Vector3(x, 4.55, front + 0.08), 11, Color.WHITE, true, false)
 	l.rotation.y = 0.0
 	if solar:
 		var s := Building.label(root, "ENERGÍA SOLAR", Vector3(x + 2.6, 3.0, front + 0.08), 5, Color8(120, 230, 140), true, false)

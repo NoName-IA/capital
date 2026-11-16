@@ -30,7 +30,7 @@ static func lot(parent: Node3D, plot: Array, index: int, price: String) -> Dicti
 	b.box(Vector3(0, 1.8, 1.2), Vector3(2.8, 1.3, 0.12), Blueprints.PALETTE.green)
 	b.node(root, Mats.standard)
 	Building.label(root, "SE VENDE", Vector3(0, 2.05, 1.13), 14, Color.WHITE)
-	Building.label(root, Lang.f("Terreno %d%s · desde %s", [index + 1, " · Playa" if beach else "", price]),
+	Building.label(root, Lang.src("Terreno %d%s · desde %s", [index + 1, " · Playa" if beach else "", price]),
 			Vector3(0, 1.6, 1.13), 8, Color.WHITE, false)
 	return {"root": root, "manage": Blueprints.to_world(plot, 0, -0.6)}
 
@@ -45,7 +45,7 @@ static func competitor(parent: Node3D, key: String, plot: Array, owner = null) -
 	# La marca en grande; «competencia» queda chiquito abajo
 	var brand: String = r.get("short", r.company)
 	var bld := Building.new(parent, plot, 1, Blueprints.PRODUCT_COLORS[key], brand.to_upper(),
-			Lang.f("Competencia · %s", D.PRODUCTS[key].name), minf(30.0, 220.0 / maxf(brand.length(), 1)),
+			Lang.src("Competencia · %s", D.PRODUCTS[key].name), minf(30.0, 220.0 / maxf(brand.length(), 1)),
 			absi(int(plot[0] * 13 + plot[1] * 7)) + 500, key)
 	var w := 14.0
 	var h := 4.5

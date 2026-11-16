@@ -820,7 +820,7 @@ static func add_registers(root: Node3D, kind: int, layout := {}) -> void:
 		mi.rotation.y = s[1]
 		root.add_child(mi)
 		if kind == 2:
-			var sign := Building.label(root, Lang.f("CAJA %d", n), s[0] + Vector3(0, 1.75, 0), 9, Color8(255, 220, 120), true, false)
+			var sign := Building.label(root, Lang.src("CAJA %d", n), s[0] + Vector3(0, 1.75, 0), 9, Color8(255, 220, 120), true, false)
 			sign.rotation.y = s[1] + PI   # el letrero mira a los clientes (al revés que la caja)
 			var pole := MeshInstance3D.new()
 			var pm := BoxMesh.new()
