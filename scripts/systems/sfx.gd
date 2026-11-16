@@ -27,6 +27,7 @@ var music_on := true
 var danger := 0.0
 var music_volume := 0.7
 var effects_volume := 0.8
+var heart_on := true    # Opciones: latido de peligro sí / no
 
 
 func _ready() -> void:
@@ -120,7 +121,7 @@ func play(name: String, volume := 1.0, pitch := 1.0) -> void:
 func heartbeat(volume: float, pitch: float) -> void:
 	if volume > 0 and not heart.playing:
 		heart.play()
-	heart.volume_db = linear_to_db(max(0.0001, volume * effects_volume))
+	heart.volume_db = linear_to_db(max(0.0001, volume * effects_volume * (1.0 if heart_on else 0.0)))
 	heart.pitch_scale = pitch
 
 

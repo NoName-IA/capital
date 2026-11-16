@@ -38,6 +38,10 @@ const DEFAULT_SETTINGS := {"music": 0.7, "effects": 0.8, "sensitivity": 1.0, "fo
 		"g_shadow_dist": 1, "g_shadow_soft": 0, "g_glow_amt": 1.0, "g_bright": 1.0, "g_contrast": 1.0, "g_sat": 1.0,
 		"g_tonemap": 0, "g_fog": true, "g_rain": true, "g_night_lights": true, "g_fps_limit": 1, "g_vsync": true,
 		"g_view": 3, "g_crowd": 1, "g_show_fps": false,
+		# Sonido y pantalla (Opciones): volumen general, sonidos de los menús, latido de peligro, silenciar sin foco,
+		# resolución 3D (0.5 a 1: la ciudad se dibuja más chica y se agranda; los menús siguen nítidos) y pantalla
+		# completa exclusiva (toma la pantalla para el juego solo: en algunas tarjetas va un poco más rápido)
+		"master": 1.0, "ui_sound": 0.7, "heart": true, "mute_unfocused": false, "g_scale": 1.0, "exclusive": false,
 		"menu_bg": -1,   # último fondo de la pantalla de inicio (para no repetirlo la vez siguiente)
 		"window": []}   # posición y tamaño de la ventana (modo ventana): [x, y, ancho, alto]
 
@@ -163,7 +167,8 @@ func _ready() -> void:
 	sky.flare_mat = flare.mesh.material
 	sfx = Sfx.new()
 	add_child(sfx)
-	ImUI.menu_sound = func(name: String) -> void: sfx.play(name, 0.3 if name == "hover" else 0.45)
+	ImUI.menu_sound = func(name: String) -> void:
+		sfx.play(name, (0.3 if name == "hover" else 0.45) * float(settings.get("ui_sound", 0.7)) / 0.7)
 	thumbs = Thumbs.new()
 	add_child(thumbs)
 	player = Person.new(null, null, false, Wardrobe.DEFAULT_LOOK)
@@ -220,7 +225,9 @@ func save_settings() -> void:
 func apply_settings() -> void:
 	sfx.music_volume = settings.music
 	sfx.effects_volume = settings.effects
-	AudioServer.set_bus_mute(0, settings.get("mute", false))   # silencia todo el juego
+	sfx.heart_on = settings.get("heart", true)
+	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(0.0001, float(settings.get("master", 1.0)))))
+	AudioServer.set_bus_mute(0, settings.get("mute", false) or (settings.get("mute_unfocused", false) and not focused))
 	camera.fov = settings.fov
 	Graphics.apply(settings, get_viewport(), sky, ao, flare)
 	camera.far = Graphics.VIEW_DIST[int(settings.g_view)]
@@ -242,10 +249,38 @@ func toggle_fullscreen() -> void:
 	var go_full := not is_fullscreen()
 	if go_full:
 		remember_window()
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if go_full else DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_mode(full_mode() if go_full else DisplayServer.WINDOW_MODE_WINDOWED)
 	if not go_full:
 		restore_window()
 	settings.fullscreen = go_full
+
+
+func full_mode() -> DisplayServer.WindowMode:
+	return DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN if settings.get("exclusive", false) else DisplayServer.WINDOW_MODE_FULLSCREEN
+
+
+## Modo de pantalla de Opciones: 0 ventana, 1 pantalla completa, 2 pantalla completa exclusiva.
+func screen_mode() -> int:
+	if not is_fullscreen():
+		return 0
+	return 2 if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN else 1
+
+
+func set_screen_mode(i: int) -> void:
+	settings.exclusive = i == 2
+	if (i > 0) != is_fullscreen():
+		toggle_fullscreen()
+	elif i > 0:
+		DisplayServer.window_set_mode(full_mode())
+
+
+## Si la ventana tiene el foco (para «Silenciar cuando no estás en el juego»). Lo cambia Main.
+var focused := true
+
+
+func set_focused(on: bool) -> void:
+	focused = on
+	AudioServer.set_bus_mute(0, settings.get("mute", false) or (settings.get("mute_unfocused", false) and not focused))
 
 
 ## Guarda dónde estaba la ventana y su tamaño (solo en modo ventana normal, no maximizada).

@@ -82,6 +82,8 @@ static func apply(settings: Dictionary, viewport: Viewport, sky: SkyLight, ao: M
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if settings.get("g_vsync", true) else DisplayServer.VSYNC_DISABLED)
 	ao.visible = g.g_ao
 	flare.visible = false  # la ciudad lo muestra cuando el sol está a la vista (City.update)
+	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+	viewport.scaling_3d_scale = clampf(float(settings.get("g_scale", 1.0)), 0.5, 1.0)
 	viewport.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][int(g.g_aa)]
 
 

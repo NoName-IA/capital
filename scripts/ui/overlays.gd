@@ -383,7 +383,7 @@ func draw_map() -> void:
 
 
 # ---------- menú de pausa ----------
-const PAUSE_PAGES := [["main", "AJUSTES"], ["graficos", "GRÁFICOS"], ["controles", "CONTROLES"]]
+const PAUSE_PAGES := [["main", "JUEGO"], ["sonido", "SONIDO"], ["graficos", "GRÁFICOS"], ["controles", "CONTROLES"]]
 const ROW_H := 46.0
 var lang_pick := -1          # idioma elegido en Ajustes que todavía no se aplicó (-1: el actual)
 var row_desc = null         # descripción de la fila bajo el mouse (se muestra abajo, como en los juegos grandes)
@@ -431,10 +431,20 @@ func draw_pause() -> void:
 	# (para cerrar el juego se va al menú principal: desde la partida no se sale directo)
 	ui.text("Esc: volver al juego", Vector2(x, H - 40), 13, "muted")
 	# Panel derecho: una línea vertical lo separa del menú, sin recuadro
+	_draw_page()
+
+
+## El panel derecho de Opciones (en la pausa y en el menú de inicio): una línea vertical lo separa del menú.
+func _draw_page() -> void:
 	ui.gradient(Rect2(420, 40, 1, H - 80), Color(1, 1, 1, 0.0), Color(1, 1, 1, 0.12), false)
 	var area := Rect2(470, 40, W - 520, H - 80)
 	row_desc = null
+	if pause_page != shown_page:   # al cambiar de página se vuelve arriba
+		shown_page = pause_page
+		settings_scroll = 0.0
 	match pause_page:
+		"sonido":
+			draw_sound(area)
 		"graficos":
 			draw_graphics(area)
 		"controles":
@@ -442,6 +452,43 @@ func draw_pause() -> void:
 		_:
 			draw_settings(area)
 	_draw_row_desc(area)
+
+
+## Desplazamiento del panel: lo de abajo de `top` se mueve con la rueda y se recorta antes de la descripción.
+## Devuelve dónde empezar a dibujar (ya corrido). Al terminar, end_scroll con el `y` final.
+var shown_page := ""
+var scroll_view := Rect2()
+var scroll_max := 0.0
+
+
+func begin_scroll(area: Rect2, top: float) -> float:
+	scroll_view = Rect2(area.position.x - 8, top, area.size.x + 16, area.end.y - 62 - top)
+	ui.set_clip(scroll_view)
+	return top - settings_scroll
+
+
+func end_scroll(y_end: float) -> void:
+	var content := y_end + settings_scroll - scroll_view.position.y
+	scroll_max = maxf(0.0, content - scroll_view.size.y)
+	ui.set_clip(null)
+	if ui.hover(scroll_view) and ui.wheel != 0 and binding == null:
+		settings_scroll -= ui.wheel * 46
+	settings_scroll = clampf(settings_scroll, 0.0, scroll_max)
+	if scroll_max <= 0:
+		return
+	# barra a la derecha y una sombra abajo si queda más
+	var v := scroll_view
+	var bar_h := maxf(30.0, v.size.y * v.size.y / content)
+	var bar_y := v.position.y + (v.size.y - bar_h) * settings_scroll / scroll_max
+	ui.rect(Rect2(v.end.x + 2, v.position.y, 4, v.size.y), Color(1, 1, 1, 0.06), 2)
+	ui.rect(Rect2(v.end.x + 2, bar_y, 4, bar_h), Color(ImUI.COL.accent, 0.8), 2)
+	if settings_scroll < scroll_max - 2:
+		var hint := Lang.t("Rueda del mouse: ver más")
+		var hw := ui.text_size(hint, 12, true).x + 28
+		var pill := Rect2(v.get_center().x - hw / 2, v.end.y - 26, hw, 24)
+		ui.rect(pill, Color8(16, 20, 30, 235), 12)
+		ui.rect(pill, Color(ImUI.COL.accent, 0.5), 12, 1)
+		ui.text(hint, pill.get_center(), 12, "accent", true, "center")
 
 
 ## Ajustes desde el menú de inicio: las mismas secciones que en la pausa.
@@ -459,17 +506,7 @@ func draw_menu_settings() -> void:
 	if ui.menu_item("m:volver", Vector2(x, y + 20), "VOLVER", "Esc", true, 24, 310.0):
 		close_menu_settings()
 		return
-	ui.gradient(Rect2(420, 40, 1, H - 80), Color(1, 1, 1, 0.0), Color(1, 1, 1, 0.12), false)
-	var area := Rect2(470, 40, W - 520, H - 80)
-	row_desc = null
-	match pause_page:
-		"graficos":
-			draw_graphics(area)
-		"controles":
-			draw_controls(area)
-		_:
-			draw_settings(area)
-	_draw_row_desc(area)
+	_draw_page()
 
 
 func close_menu_settings() -> void:
@@ -513,12 +550,13 @@ func row_label(area: Rect2, y: float, label: String) -> void:
 
 
 ## Fila con barra deslizante.
-func row_slider(area: Rect2, y: float, label: String, key: String, lo: float, hi: float, fmt: Callable, desc: String) -> float:
+func row_slider(area: Rect2, y: float, label: String, key: String, lo: float, hi: float, fmt: Callable, desc: String,
+		val_w := 60.0) -> float:
 	var s: Dictionary = city.settings
 	row_bg(area, y, key, desc)
 	row_label(area, y, label)
 	var w: float = min(260.0, area.size.x * 0.4)   # en media columna, la barra es más corta
-	var x := area.end.x - 80 - w
+	var x := area.end.x - 20 - val_w - w
 	var cy := y + (ROW_H - 4) / 2
 	var bar := Rect2(x, cy - 3, w, 6)
 	if ui.hover(Rect2(x - 10, y, w + 20, ROW_H - 4)) and (ui.clicked or ui.down):
@@ -537,7 +575,7 @@ func row_choice(area: Rect2, y: float, label: String, key: String, labels: Array
 	var hot := row_bg(area, y, key, desc)
 	row_label(area, y, label)
 	var cy := y + (ROW_H - 4) / 2
-	var w := 260.0
+	var w: float = minf(260.0, area.size.x - 40 - ui.text_size(Lang.t(label), 17).x - 20)   # en media columna no pisa el nombre
 	var x := area.end.x - 20 - w
 	var left := Rect2(x, cy - 15, 30, 30)
 	var right := Rect2(x + w - 30, cy - 15, 30, 30)
@@ -625,31 +663,42 @@ func _draw_row_desc(area: Rect2) -> void:
 	ui.wrap_text(row_desc, Rect2(r.position.x + 48, r.position.y + 10, r.size.x - 60, 44), 14, "text")
 
 
-## Sonido, cámara y pantalla.
+## Página «Juego»: idioma, velocidad, cámara y mouse, y los menús.
 func draw_settings(area: Rect2) -> void:
-	var y := section_title(area, "Ajustes", "Los cambios se guardan solos.")
-	var pct := func(v): return "%d%%" % roundi(v * 100)
-	y = group_title(area, y, "SONIDO")
-	y = row_slider(area, y, "Música", "music", 0, 1, pct, "Volumen de la música. La música se pone tensa cuando estás cerca de la quiebra.")
-	y = row_slider(area, y, "Efectos de sonido", "effects", 0, 1, pct, "Monedas, clientes enojados, avisos y el latido del peligro.")
-	y = row_toggle(area, y, "Silenciar todo", "mute", "Apaga la música y los efectos sin perder el volumen que elegiste.")
+	var y := section_title(area, "Juego", "Los cambios se guardan solos.")
+	y = begin_scroll(area, y)
+	y = group_title(area, y, "GENERAL")
+	y = row_lang(area, y)
+	if app.view == "game":
+		var speed_labels: Array = Admin.SPEEDS.map(func(sp): return sp[1])
+		y = row_choice(area, y, "Velocidad del tiempo", "speed", speed_labels, app.speed, func(i): app.speed = i,
+			"Qué tan rápido pasan los días. También con un clic en la velocidad, arriba a la derecha.")
 	y = group_title(area, y, "CÁMARA Y MOUSE")
 	y = row_slider(area, y, "Sensibilidad del mouse", "sensitivity", 0.3, 2.5, func(v): return Fmt.num(v, 1) + "x",
 			"Qué tan rápido gira la cámara al mover el mouse.")
 	y = row_slider(area, y, "Campo de visión", "fov", 55, 100, func(v): return "%d°" % roundi(v),
 			"Cuánto se ve a los lados. Más alto se ve más ciudad, pero las cosas se ven más chicas.")
 	y = row_toggle(area, y, "Invertir el mouse vertical", "invert_y", "Mover el mouse hacia arriba mira hacia abajo, como en los simuladores de vuelo.")
-	y = group_title(area, y, "PANTALLA Y JUEGO")
-	var half := Rect2(area.position.x, y, area.size.x / 2 - 8, 0)
-	var half2 := Rect2(area.position.x + area.size.x / 2 + 8, y, area.size.x / 2 - 8, 0)
-	city.settings.fullscreen = city.is_fullscreen()   # lo que muestra el interruptor es lo que hay de verdad
-	row_toggle(half, y, "Pantalla completa", "fullscreen", Lang.f("Ocupa toda la pantalla (también con %s).", Keys.label("fullscreen")), city.toggle_fullscreen)
-	row_toggle(half2, y, "Desenfocar menús", "blur", "La ciudad se ve borrosa detrás de los menús.")
-	var speed_labels: Array = Admin.SPEEDS.map(func(sp): return sp[1])
-	row_lang(area, y + ROW_H)
-	if app.view == "game":
-		row_choice(half, y + 2 * ROW_H, "Velocidad", "speed", speed_labels, app.speed, func(i): app.speed = i,
-			Lang.f("Qué tan rápido pasan los días. También con %s, %s y %s.", [Keys.label("speed1"), Keys.label("speed2"), Keys.label("speed3")]))
+	y = group_title(area, y, "PANTALLA")
+	y = row_toggle(area, y, "Desenfocar menús", "blur", "La ciudad se ve borrosa detrás de los menús.")
+	end_scroll(y)
+
+
+## Página «Sonido»: volumen general y por tipo de sonido.
+func draw_sound(area: Rect2) -> void:
+	var y := section_title(area, "Sonido", "Cada barra se suma al volumen general.")
+	var pct := func(v): return "%d%%" % roundi(v * 100)
+	y = begin_scroll(area, y)
+	y = group_title(area, y, "VOLUMEN")
+	y = row_slider(area, y, "Volumen general", "master", 0, 1, pct, "Sube o baja todo el juego a la vez.")
+	y = row_slider(area, y, "Música", "music", 0, 1, pct, "Volumen de la música. La música se pone tensa cuando estás cerca de la quiebra.")
+	y = row_slider(area, y, "Efectos de sonido", "effects", 0, 1, pct, "Monedas, clientes enojados, avisos y cinemáticas.")
+	y = row_slider(area, y, "Sonidos de los menús", "ui_sound", 0, 1, pct, "El clic y el roce al pasar por las opciones de los menús.")
+	y = group_title(area, y, "OTROS")
+	y = row_toggle(area, y, "Latido de peligro", "heart", "Un corazón que late cuando la caja está por quebrar.")
+	y = row_toggle(area, y, "Silenciar todo", "mute", "Apaga la música y los efectos sin perder el volumen que elegiste.")
+	y = row_toggle(area, y, "Silenciar si cambias de ventana", "mute_unfocused", "El juego se calla cuando usas otro programa (Alt+Tab) y vuelve a sonar al volver.")
+	end_scroll(y)
 
 
 # ---------- tutorial ----------
@@ -805,6 +854,7 @@ func draw_controls(area: Rect2) -> void:
 		return
 	var col_w := area.size.x / 2 - 8
 	var cols := {"MOVERTE": 0, "ACCIONES": 1, "JUEGO": 1}
+	y = begin_scroll(area, y)
 	var ys := [y, y]
 	var last_group := ["", ""]
 	for a in Keys.ACTIONS:
@@ -833,6 +883,7 @@ func draw_controls(area: Rect2) -> void:
 		ui.text(row[1], Vector2(sub.position.x + 20, fy + 12), 14, "muted")
 		ui.text(row[0], Vector2(sub.end.x - 20, fy + 12), 14, "muted", true, "topright")
 		fy += 30
+	end_scroll(maxf(fy, ys[1]) + 8)
 	if binding != null:
 		row_desc = Lang.f("Aprieta la tecla nueva para «%s». Esc cancela.", Keys.name_of(binding))
 
@@ -855,8 +906,9 @@ func finish_binding(e: InputEventKey) -> void:
 
 ## Página «Gráficos», con pestañas como en los juegos grandes: Calidad (el nivel y cada efecto), Imagen (brillo,
 ## contraste, color, niebla, lluvia, luces) y Rendimiento (FPS, sincronía vertical, distancia de visión, gente).
-var gfx_tab := "calidad"
-const GFX_TABS := [["calidad", "Calidad"], ["imagen", "Imagen"], ["rendimiento", "Rendimiento"]]
+var gfx_tab := "pantalla"
+const GFX_TABS := [["pantalla", "Pantalla"], ["calidad", "Calidad"], ["imagen", "Imagen"], ["rendimiento", "Rendimiento"]]
+const SCREEN_MODES := ["Ventana", "Pantalla completa", "Exclusiva"]
 
 
 func draw_graphics(area: Rect2) -> void:
@@ -876,13 +928,26 @@ func draw_graphics(area: Rect2) -> void:
 		var hot := ui.hover(tr)
 		ui.rect(tr, ImUI.COL.accent if on else Color(1, 1, 1, 0.1 if hot else 0.05), 17)
 		ui.text(t[1], tr.get_center(), 15, Color8(16, 20, 30) if on else ImUI.COL.text, true, "center")
-		if hot and ui.clicked:
+		if hot and ui.clicked and gfx_tab != t[0]:
 			gfx_tab = t[0]
+			settings_scroll = 0.0
 		tx += tw + 10
 	y += 46
 	var half := Rect2(area.position.x, 0, area.size.x / 2 - 8, 0)
 	var half2 := Rect2(area.position.x + area.size.x / 2 + 8, 0, area.size.x / 2 - 8, 0)
+	y = begin_scroll(area, y)
 	match gfx_tab:
+		"pantalla":
+			y = group_title(area, y, "VENTANA")
+			city.settings.fullscreen = city.is_fullscreen()   # lo que se muestra es lo que hay de verdad
+			y = row_choice(area, y, "Modo de pantalla", "screen_mode", SCREEN_MODES, city.screen_mode(), city.set_screen_mode,
+					Lang.f("Ventana, pantalla completa o exclusiva (el juego toma la pantalla solo; en algunas tarjetas va más rápido, pero Alt+Tab tarda). %s cambia entre ventana y pantalla completa.", Keys.label("fullscreen")))
+			y = group_title(area, y, "RESOLUCIÓN")
+			var size := Vector2(DisplayServer.window_get_size())
+			y = row_slider(area, y, "Resolución 3D", "g_scale", 0.5, 1.0,
+					func(v): return "%d%% · %d×%d" % [roundi(v * 100), roundi(size.x * v), roundi(size.y * v)],
+					"Dibuja la ciudad más chica y la agranda: menos nítida pero muchos más FPS. Los menús y los textos siguen nítidos.", 150.0)
+			y = row_toggle(area, y, "Mostrar FPS en pantalla", "g_show_fps", "Un contador de cuadros por segundo arriba a la derecha.")
 		"calidad":
 			y = row_choice(area, y, "Nivel de gráficos", "quality", Graphics.LEVELS, s.quality, func(i): s.quality = i,
 					"Bajo va más rápido; Alto se ve mejor. Si cambias Sombras, Bordes, Oclusión, Resplandor o Destello pasa a Personalizado.")
@@ -902,7 +967,7 @@ func draw_graphics(area: Rect2) -> void:
 					func(): set_custom("g_flare", not s.g_flare))
 			row_toggle(half, y, "Resplandor", "g_glow", "Brillo suave alrededor de las luces y el sol.",
 					func(): set_custom("g_glow", not s.g_glow))
-			row_slider(half2, y, "Intensidad", "g_glow_amt", 0.2, 2.0, func(v): return "%d%%" % roundi(v * 100),
+			y = row_slider(half2, y, "Intensidad", "g_glow_amt", 0.2, 2.0, func(v): return "%d%%" % roundi(v * 100),
 					"Cuánto brillan las luces y el sol cuando el resplandor está prendido.")
 		"imagen":
 			y = group_title(area, y, "COLOR Y LUZ")
@@ -915,7 +980,7 @@ func draw_graphics(area: Rect2) -> void:
 			y = group_title(area, y, "AMBIENTE")
 			row_toggle(half, y, "Niebla a lo lejos", "g_fog", "Neblina suave en la distancia, más espesa con lluvia.")
 			y = row_toggle(half2, y, "Lluvia y relámpagos", "g_rain", "Las gotas y los destellos de la tormenta. El clima igual cuenta para tus ventas.")
-			row_toggle(half, y, "Luces de noche", "g_night_lights", "Faroles, vitrinas y locales que iluminan la calle de noche.")
+			y = row_toggle(half, y, "Luces de noche", "g_night_lights", "Faroles, vitrinas y locales que iluminan la calle de noche.")
 		"rendimiento":
 			y = group_title(area, y, "CUADROS POR SEGUNDO")
 			y = row_choice(area, y, "Límite de FPS", "g_fps_limit", Graphics.FPS_LIMITS, int(s.g_fps_limit), func(i): s.g_fps_limit = i,
@@ -926,7 +991,7 @@ func draw_graphics(area: Rect2) -> void:
 					"Hasta dónde se dibuja la ciudad. Más corta va más rápido.")
 			y = row_choice(area, y, "Gente en la ciudad", "g_crowd", Graphics.CROWDS, int(s.g_crowd), func(i): s.g_crowd = i,
 					"Cuántos peatones y clientes hay a la vez. No cambia tus ventas: solo lo que se ve.")
-			y = row_toggle(area, y, "Mostrar FPS en pantalla", "g_show_fps", "Un contador de cuadros por segundo arriba a la derecha.")
+	end_scroll(y)
 
 
 func set_custom(key: String, value) -> void:

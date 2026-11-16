@@ -53,6 +53,8 @@ func _layer(n: int) -> Control:
 
 
 func _notification(what: int) -> void:
+	if what in [NOTIFICATION_APPLICATION_FOCUS_IN, NOTIFICATION_APPLICATION_FOCUS_OUT] and city != null:
+		city.set_focused(what == NOTIFICATION_APPLICATION_FOCUS_IN)
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		city.save_on_exit()
 		get_tree().quit()
