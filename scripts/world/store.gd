@@ -104,7 +104,11 @@ func sync_stars() -> void:
 ## autopago. Se rehace solo cuando cambia la lista.
 func sync_decor() -> void:
 	var ups: Array = loc.get("upgrades", []).duplicate()
-	if preview != "" and not preview in ups:
+	if preview == "*":   # «Seleccionar todo» en la ventana de decorar: se ve todo puesto
+		for u in D.upgrades_for(int(loc.size)):
+			if not u.key in ups:
+				ups.append(u.key)
+	elif preview != "" and not preview in ups:
 		ups.append(preview)
 	if ups == decor_sig:
 		return
