@@ -484,21 +484,20 @@ func draw_slot_card(r: Rect2, n: int, info, is_new: bool, is_last: bool) -> bool
 	var bx := r.position.x + 24
 	var by := r.end.y - 64
 	var bw := r.size.x - 48
-	# Vacío: borde punteado y un "+" en el centro
+	# Vacío: borde punteado; al empezar partida, un "+" en el centro; al cargar, solo el aviso de que no hay nada
 	if info == null:
 		ui.rect(r, Color(ImUI.COL.panel, 0.55 + 0.25 * k), 14)
 		dashed_rect(r.grow(-6), Color(ImUI.COL.muted, 0.35 + 0.4 * k))
 		var c := Vector2(r.get_center().x, r.position.y + 170)
-		ui.ring(c, 34, Color(ImUI.COL.muted, 0.6 + 0.4 * k), 2)
-		ui.line(c - Vector2(13, 0), c + Vector2(13, 0), Color(ImUI.COL.muted, 0.8 + 0.2 * k), 3)
-		ui.line(c - Vector2(0, 13), c + Vector2(0, 13), Color(ImUI.COL.muted, 0.8 + 0.2 * k), 3)
 		ui.text(Lang.f("ESPACIO %d", n), Vector2(c.x, r.position.y + 40), 12, "muted", true, "midtop")
-		ui.text("Espacio libre", Vector2(c.x, c.y + 54), 22, "text", true, "midtop")
 		if is_new:
+			ui.ring(c, 34, Color(ImUI.COL.muted, 0.6 + 0.4 * k), 2)
+			ui.line(c - Vector2(13, 0), c + Vector2(13, 0), Color(ImUI.COL.muted, 0.8 + 0.2 * k), 3)
+			ui.line(c - Vector2(0, 13), c + Vector2(0, 13), Color(ImUI.COL.muted, 0.8 + 0.2 * k), 3)
+			ui.text("Espacio libre", Vector2(c.x, c.y + 54), 22, "text", true, "midtop")
 			ui.text("Aquí puedes empezar una partida nueva.", Vector2(c.x, c.y + 92), 14, "muted", false, "midtop")
 		else:
-			ui.text("Para usarlo, elige este espacio", Vector2(c.x, c.y + 92), 14, "muted", false, "midtop")
-			ui.text("al empezar una partida nueva.", Vector2(c.x, c.y + 112), 14, "muted", false, "midtop")
+			ui.text("No hay partidas para cargar", Vector2(c.x, c.y + 20), 20, "text", true, "midtop", r.size.x - 40)
 		if is_new and ui.button(Rect2(bx, by, bw, 44), "Empezar aquí", true, "primary", 16):
 			start_in_slot(n)
 			return true
