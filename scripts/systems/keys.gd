@@ -19,7 +19,7 @@ const ACTIONS := [
 	["micro1", "Microdecisión: opción 1", KEY_Z, "ACCIONES"],
 	["micro2", "Microdecisión: opción 2", KEY_X, "ACCIONES"],
 	["micro3", "Microdecisión: opción 3", KEY_C, "ACCIONES"],
-	["bat", "Batazo (con el bate puesto)", KEY_F, "ACCIONES"],
+	["bat", "Batazo (con el bate) o linterna (en un apagón)", KEY_F, "ACCIONES"],
 	["slot1", "Barra: casilla 1 (sacar o guardar el bate)", KEY_1, "ACCIONES"],
 	["pause_quick", "Pausa rápida (sin menú)", KEY_P, "JUEGO"],
 	["music", "Música sí / no", KEY_N, "JUEGO"],

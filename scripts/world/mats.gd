@@ -13,6 +13,7 @@ static var emissive: StandardMaterial3D   # rojo de la competencia, faroles: igu
 static var water: ShaderMaterial
 static var lights := []                  # luces de la ciudad: [nodo, nivel, adentro, se mueve] (ver CityLights)
 static var lamps_on := 0.0               # faroles y focos de afuera: 0 de día, 1 de noche
+static var car_lights := 0.0             # focos de los autos: como lamps_on, pero siguen en un apagón (tienen batería)
 static var grain: Texture2D
 static var asphalt: Texture2D
 static var tiles: Texture2D
@@ -107,11 +108,12 @@ static func _tiles_texture() -> Texture2D:
 ## de luz de Minecraft: alumbra hasta `level` metros y a 15 está a toda fuerza. Las de adentro (`indoor`) siempre están
 ## prendidas y alumbran solo el local donde están; las de afuera se prenden al atardecer (ver shaders/world.gdshader).
 ## `moving`: va con algo que se mueve (los focos de un auto). `warm`: luz ámbar de ampolleta (los puestos).
-static func add_light(parent: Node3D, pos: Vector3, level: float, indoor := false, moving := false, warm := false) -> Node3D:
+## `torch`: linterna de una persona (se mueve; alumbra mientras el nodo esté visible, ver Person.set_torch).
+static func add_light(parent: Node3D, pos: Vector3, level: float, indoor := false, moving := false, warm := false, torch := false) -> Node3D:
 	var n := Node3D.new()
 	n.position = pos
 	parent.add_child(n)
-	lights.append([n, level, indoor, moving, warm])
+	lights.append([n, level, indoor, moving or torch, warm, torch])
 	return n
 
 

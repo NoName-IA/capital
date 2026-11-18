@@ -9,7 +9,7 @@
 //  - no atraviesa paredes: las luces de adentro alumbran solo su local y las de afuera solo afuera.
 // Como en Minecraft, la luz está guardada en una grilla (celdas de 2 m, ver CityLights) y cada cara lee la celda de
 // enfrente: r = luz de afuera, g = luz de adentro de los locales. Lo que se mueve (focos de los autos) llega aparte en
-// city_lights: fila 0 posición y nivel; filas 2 y 3 los locales (x0, x1, z0, z1 y altura del techo).
+// city_lights: fila 0 posición y nivel; fila 1 la fuerza de cada una; filas 2 y 3 los locales (x0, x1, z0, z1 y altura del techo).
 shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
 
@@ -73,20 +73,28 @@ void fragment() {
 	// cara: el techo y las paredes de adentro quedan adentro, las de afuera, afuera.
 	int room = cell.g > 0.002 ? room_of(world_pos + world_normal * 0.1) : -1;
 	float level = room < 0 ? cell.r * city_lamps_on : cell.g;
-	if (room < 0 && city_lamps_on > 0.01) {
-		for (int i = 0; i < city_light_count; i++) {   // focos de los autos
-			vec4 l = texelFetch(city_lights, ivec2(i, 0), 0);
-			level = max(level, (l.w - distance(world_pos, l.xyz)) / 15.0 * city_lamps_on);
-		}
-	}
 	level = clamp(level, 0.0, 1.0);
 	float sky = room < 0 ? 1.0 : 0.0;
 	float block = max(level - sky * city_daylight * 0.5, 0.0);
 	block *= block;
-	vec3 tint = mix(vec3(1.0, 0.62, 0.32), vec3(1.0, 0.86, 0.72), sqrt(level));   // menos naranja que en Minecraft: la madera y la arena se ponían rojas
+	// Lo que se mueve (focos de los autos, linternas de la gente en un apagón): cada luz trae su propia fuerza en la
+	// fila 1, así sigue alumbrando aunque se corte la luz de la ciudad (city_block_light en 0).
+	float moving = 0.0;   // la luz más fuerte que llega, ya con su fuerza
+	float moving_level = 0.0;
+	if (room < 0) {
+		for (int i = 0; i < city_light_count; i++) {
+			vec4 l = texelFetch(city_lights, ivec2(i, 0), 0);
+			float strength = texelFetch(city_lights, ivec2(i, 1), 0).x;
+			float lv = clamp((l.w - distance(world_pos, l.xyz)) / 15.0, 0.0, 1.0);
+			float b = max(lv - city_daylight * 0.5, 0.0);
+			moving = max(moving, b * b * strength);
+			moving_level = max(moving_level, lv * step(0.001, strength));
+		}
+	}
+	vec3 tint = mix(vec3(1.0, 0.62, 0.32), vec3(1.0, 0.86, 0.72), sqrt(max(level, moving_level)));   // menos naranja que en Minecraft: la madera y la arena se ponían rojas
 	float warm = room < 0 ? clamp(cell.b / max(cell.r, 0.02) * 1.15, 0.0, 1.0) : 0.0;   // ampolletas de los puestos: amarillo cálido, como una guirnalda de verdad
 	tint = mix(tint, vec3(1.0, 0.74, 0.22), warm);
 	block *= 1.0 - 0.3 * warm;   // un poco menos fuerte: si no, se quema a blanco y no se ve el color
 	float face = 0.75 + 0.25 * world_normal.y;   // como en Minecraft: arriba más claro, abajo más oscuro
-	EMISSION = ALBEDO * tint * block * face * city_block_light + emission * emission_energy;
+	EMISSION = ALBEDO * tint * face * max(block * city_block_light, moving) + emission * emission_energy;
 }

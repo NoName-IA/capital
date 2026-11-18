@@ -158,7 +158,8 @@ func set_time(t: float) -> void:
 	night = elev < 0.3
 	Mats.set_night(night_amount * (1.0 - blackout))
 	Mats.emissive.albedo_color = Color(1, 1, 1) * (0.7 + 0.8 * night_amount)
-	Mats.lamps_on = smoothstep(0.0, 1.0, (0.42 - elev) / 0.2) * (1.0 if night_lights else 0.0) * (1.0 - blackout)  # se prenden al atardecer
+	Mats.car_lights = smoothstep(0.0, 1.0, (0.42 - elev) / 0.2) * (1.0 if night_lights else 0.0)
+	Mats.lamps_on = Mats.car_lights * (1.0 - blackout)  # se prenden al atardecer
 	RenderingServer.global_shader_parameter_set("city_block_light", CityLights.STRENGTH * (1.0 - blackout))   # adentro de los locales
 	RenderingServer.global_shader_parameter_set("city_daylight", day)
 

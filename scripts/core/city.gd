@@ -694,6 +694,46 @@ func _want_strike_scene(g: Game) -> bool:
 	return g.strike and g.strike_scene and not strike_scene.active() and not power_scene.active() and not finale.active() 			and not g.game_over and not tutorial.active and app.modal == null and not tower.busy() 			and not overlays.mode in ["personaje", "decorar"]
 
 
+## Apagón de noche: la gente prende las linternas para ver el camino. Tú prendes o apagas la tuya con la F (la
+## tecla del batazo, sin el bate en la mano); se apaga sola cuando vuelve la luz.
+## Se revisa cada 0,25 s para alcanzar a la gente que aparece mientras dura.
+var torch_t := 0.0
+var torches_lit := false
+var player_torch := false   # tu linterna prendida (solo en un apagón)
+
+
+func blackout_now() -> bool:
+	return sky.blackout > 0.5
+
+
+## F en un apagón: prende o apaga tu linterna. Devuelve false si no hay apagón (la F sigue siendo el batazo).
+func toggle_torch() -> bool:
+	if not blackout_now() or hand() == 1:
+		return false
+	player_torch = not player_torch
+	player.set_torch(player_torch)
+	sfx.play("select", 0.4, 1.4 if player_torch else 1.0)
+	return true
+
+
+func _update_torches(dt: float) -> void:
+	torch_t -= dt
+	if torch_t > 0.0:
+		return
+	torch_t = 0.25
+	if player_torch and (not blackout_now() or hand() == 1):   # volvió la luz o sacaste el bate
+		player_torch = false
+	player.set_torch(player_torch)
+	var on: bool = sky.blackout > 0.5 and sky.night
+	if not on and not torches_lit:
+		return
+	torches_lit = on
+	var vp := get_viewport()
+	for p in get_tree().get_nodes_in_group("people"):
+		if p != player:   # la tuya la manejas tú con la F
+			p.set_torch(on and p.get_viewport() == vp)
+
+
 ## Ya no hay más escenas que esta: ¿hay alguna cinemática en pantalla?
 func in_cutscene() -> bool:
 	return finale.active() or power_scene.active() or strike_scene.active() or (angel_scene != null and angel_scene.active())
@@ -2396,6 +2436,7 @@ func update(dt: float) -> void:
 			# Apagón: las luces se apagan de a poco (y vuelven al pagar)
 			sky.blackout = 1.0 if g.blackout and g.power_failing() else 0.0   # se corta de golpe, sin titilar
 		builder.lamp_node.material_override = Mats.standard if sky.blackout > 0.5 else Mats.emissive
+		_update_torches(dt)
 		if rank_wait != null and not rank_must_wait():
 			var waiting: Dictionary = rank_wait
 			rank_wait = null
@@ -2682,7 +2723,8 @@ func _key(e: InputEventKey) -> void:
 		if prompt_action != null:
 			prompt_action[2].call()
 	elif Keys.is_event(e, "bat"):
-		swing_bat()
+		if not toggle_torch():   # en un apagón, sin el bate en la mano: la linterna
+			swing_bat()
 	elif Keys.is_event(e, "slot1"):   # la casilla 1 de la barra: apretar saca el bate, apretar de nuevo lo guarda
 		set_hand(1 if hand() == 0 else 0)
 	elif Keys.is_event(e, "camera"):

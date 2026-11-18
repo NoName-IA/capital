@@ -12,7 +12,7 @@ const CELL := 2.0
 const NX := 208   # x de -168 a 248
 const NY := 12    # y de -2 a 22
 const NZ := 84    # z de -80 a 88
-const MAX_MOVING := 8
+const MAX_MOVING := 12   # focos de autos y linternas: las más cercanas a la cámara
 const MAX_ROOMS := 40   # locales, megatiendas, la competencia y la oficina (antes 16: con muchos abiertos, algunos quedaban a oscuras)
 const STRENGTH := 3.5   # fuerza de la luz de las lámparas sobre los colores
 
@@ -52,10 +52,11 @@ func update(cam: Vector3, rooms: Array) -> void:
 			continue
 		var n: Node3D = l[0]
 		alive.append(l)
-		if l[3]:   # se mueve: va aparte
-			if Mats.lamps_on > 0.01 and n.is_visible_in_tree():
+		if l[3]:   # se mueve: va aparte (las linternas alumbran mientras estén visibles; los autos, de noche)
+			var on: float = 1.0 if l.size() > 5 and l[5] else Mats.car_lights
+			if on > 0.01 and n.is_visible_in_tree():
 				var p := n.global_position
-				moving.append([p.distance_to(cam) - l[1], p, l[1]])
+				moving.append([p.distance_to(cam) - l[1], p, l[1], on])
 			continue
 		var id := n.get_instance_id()
 		seen[id] = true
@@ -88,6 +89,7 @@ func update(cam: Vector3, rooms: Array) -> void:
 	for i in count:
 		var p: Vector3 = moving[i][1]
 		moving_img.set_pixel(i, 0, Color(p.x, p.y, p.z, moving[i][2]))
+		moving_img.set_pixel(i, 1, Color(STRENGTH * moving[i][3], 0, 0, 0))   # la fuerza (ver shaders/world.gdshader)
 	for i in mini(rooms.size(), MAX_ROOMS):
 		var r: Array = rooms[i]
 		moving_img.set_pixel(i, 2, Color(r[0], r[1], r[2], r[3]))

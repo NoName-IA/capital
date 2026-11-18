@@ -52,6 +52,7 @@ func _init(shirt_color = null, pants_color = null, with_apron := false, person_l
 	body.visibility_range_end = 90.0
 	add_child(body)
 	restyle(person_look)
+	add_to_group("people")   # para prender las linternas en un apagón (City._update_torches)
 
 
 static func lighten(c: Color, k: float) -> Color:
@@ -262,6 +263,8 @@ func animate(speed: float, dt: float) -> void:
 	arms[1].rotation.x = deg_to_rad(a * 0.8)
 	if item:  # con algo en la mano, el brazo va doblado hacia adelante
 		set_reach(0.45)
+	if torch_on:  # la linterna apunta al camino, adelante y abajo
+		arms[0].rotation.x = deg_to_rad(TORCH_ARM)
 
 
 ## Pone `key` (un producto de Actors.product_item) en la mano derecha, o la deja vacía con "". Sin `variant`
@@ -357,3 +360,74 @@ func set_visible_parts(v: bool) -> void:
 	for c in get_children():
 		if c is Node3D:
 			c.visible = v
+	if torch_light:   # la luz en el suelo sigue aunque no se vea el cuerpo (tu linterna en primera persona)
+		torch_light.visible = torch_on
+
+
+## La linterna (en un apagón de noche la prende City._update_torches): en la mano izquierda, apuntando al camino.
+## Se ve el haz de luz y alumbra el suelo de adelante (una luz que se mueve, ver CityLights).
+const TORCH_ARM := -58.0   # el brazo levantado hacia adelante
+var torch_on := false
+var torch: Node3D          # la linterna y el haz (van con el brazo)
+var torch_light: Node3D    # la luz en el suelo, adelante (va con la persona, no se mueve con el paso)
+static var beam_mat: StandardMaterial3D
+
+
+func set_torch(on: bool) -> void:
+	if on == torch_on:
+		return
+	torch_on = on
+	if on and torch == null:
+		_build_torch()
+	if torch:
+		torch.visible = on
+		torch_light.visible = on
+	arms[0].rotation.x = deg_to_rad(TORCH_ARM) if on else 0.0
+
+
+func _build_torch() -> void:
+	torch = Node3D.new()
+	torch.position = Vector3(0, -0.66, 0.04)
+	arms[0].add_child(torch)
+	var b := Boxes.new()
+	b.box(Vector3(0, 0.02, 0), Vector3(0.07, 0.2, 0.07), Color8(35, 38, 45))      # el mango
+	b.box(Vector3(0, -0.1, 0), Vector3(0.1, 0.06, 0.1), Color8(55, 58, 66))       # la cabeza
+	var body_mi := MeshInstance3D.new()
+	body_mi.mesh = b.build()
+	body_mi.material_override = Mats.smooth
+	body_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	body_mi.visibility_range_end = 45.0
+	torch.add_child(body_mi)
+	var lens := MeshInstance3D.new()
+	var lm := BoxMesh.new()
+	lm.size = Vector3(0.08, 0.02, 0.08)
+	lens.mesh = lm
+	lens.position = Vector3(0, -0.135, 0)
+	lens.material_override = Mats.emissive
+	lens.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	torch.add_child(lens)
+	# El haz: dos conos suaves que se abren desde la linterna hacia el suelo
+	if beam_mat == null:
+		beam_mat = StandardMaterial3D.new()
+		beam_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		beam_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		beam_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		beam_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		beam_mat.albedo_color = Color(1.0, 0.9, 0.65, 0.07)
+	for cone in [[3.2, 0.75], [2.0, 0.32]]:
+		var cm := CylinderMesh.new()
+		cm.height = cone[0]
+		cm.top_radius = 0.04
+		cm.bottom_radius = cone[1]
+		cm.radial_segments = 10
+		cm.rings = 1
+		cm.cap_top = false
+		cm.cap_bottom = false
+		var beam := MeshInstance3D.new()
+		beam.mesh = cm
+		beam.position = Vector3(0, -0.14 - cone[0] / 2, 0)
+		beam.material_override = beam_mat
+		beam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		beam.visibility_range_end = 60.0
+		torch.add_child(beam)
+	torch_light = Mats.add_light(self, Vector3(-0.3, 0.2, 2.6), 8.0, false, false, false, true)
