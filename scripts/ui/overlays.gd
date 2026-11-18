@@ -964,10 +964,6 @@ func draw_graphics(area: Rect2) -> void:
 	var s: Dictionary = city.settings
 	Graphics.show_preset(s)
 	var y := section_title(area, "Gráficos", "Alto imita el shader Eclipse: sombras nítidas hasta lejos y rincones oscurecidos.")
-	var fps := Engine.get_frames_per_second()
-	var fr := Rect2(area.end.x - 110, area.position.y + 16, 110, 34)
-	ui.rect(fr, Color(1, 1, 1, 0.06), 17)
-	ui.text(Lang.f("%d FPS", fps), fr.get_center(), 16, "green" if fps >= 40 else ("orange" if fps >= 25 else "red"), true, "center")
 	# pestañas
 	var tx := area.position.x
 	for t in GFX_TABS:
@@ -996,7 +992,6 @@ func draw_graphics(area: Rect2) -> void:
 			y = row_slider(area, y, "Resolución 3D", "g_scale", 0.5, 1.0,
 					func(v): return "%d%% · %d×%d" % [roundi(v * 100), roundi(size.x * v), roundi(size.y * v)],
 					"Dibuja la ciudad más chica y la agranda: menos nítida pero muchos más FPS. Los menús y los textos siguen nítidos.", 150.0)
-			y = row_toggle(area, y, "Mostrar FPS en pantalla", "g_show_fps", "Un contador de cuadros por segundo arriba a la derecha.")
 		"calidad":
 			y = row_choice(area, y, "Nivel de gráficos", "quality", Graphics.LEVELS, s.quality, func(i): s.quality = i,
 					"Bajo va más rápido; Alto se ve mejor. Si cambias Sombras, Bordes, Oclusión, Resplandor o Destello pasa a Personalizado.")

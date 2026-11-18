@@ -20,7 +20,8 @@ var prompt := ""
 var phone_rect := Rect2()   # botón de la tablet (clic para abrirla)
 var mini_rect := Rect2()    # minimapa (clic para abrir el mapa grande)
 var micro_rects := []       # botones de la microdecisión en pantalla
-var speed_rect := Rect2()   # indicador de velocidad (arriba a la derecha)
+var speed_rect := Rect2()   # los botones de velocidad (arriba a la derecha)
+var speed_rects := []       # cada botón: pausa, x1, x2, x3
 const PANEL_W := 420.0   # tarjeta de la empresa, arriba a la izquierda (el alto depende de cuántos chips haya)
 const SHORT := {"cafe": "Café", "pan": "Pan", "burger": "Burger", "ropa": "Ropa", "tech": "Tech"}
 var panel := Rect2(12, 12, PANEL_W, 196)
@@ -91,6 +92,7 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 		_draw_panel_buttons(g)
 		if not city.overlays.open() and not city.tutorial.active and not city.tower.inside(city.player.position):
 			mini_rect = CityMap.draw_mini(ui, city, Vector2(15, ui.H - CityMap.MINI_SIZE.y - 15))
+			_draw_alt_hint(mini_rect)
 			_draw_micro(g)
 		else:
 			mini_rect = Rect2()
@@ -321,27 +323,89 @@ func _draw_panel_buttons(g) -> void:
 		var c := Vector2(lt.end.x + 6 + cr, pr.get_center().y)
 		ui.circle(c, cr, Color8(225, 85, 75))
 		ui.text(n, c, 12, Color.WHITE, true, "center")
-	# Velocidad arriba a la derecha
-	var app = city.app
-	var speed: String = Lang.t("PAUSA") if app.paused else Lang.f("Velocidad %s", Admin.SPEEDS[app.speed][1])   # se arma pegando textos: cada parte se traduce aquí
-	if city.settings.get("g_show_fps", false):
-		speed = Lang.f("%d FPS  ·  ", Engine.get_frames_per_second()) + speed
-	speed += Lang.f("  ·  %d min de juego", int(g.play_seconds / 60))
-	var sw := ui.text_size(speed, 18).x + 28
-	speed_rect = Rect2(ui.W - 12 - sw, 12, sw, 34)
-	# Clic en el indicador: cambia la velocidad (x1 → x2 → x3); se suelta el mouse con Alt
-	var sp_hot: bool = not city.mouse_captured() and not city.overlays.open() and ui.hover(speed_rect)
-	ui.rect(speed_rect, Color(0.05, 0.067, 0.09, 0.9 if sp_hot else 0.72), 17)
-	if sp_hot:
-		ui.rect(speed_rect, Color(ImUI.COL.accent, 0.8), 17, 2)
-		ui.tooltip(speed_rect, "Clic: cambiar la velocidad (x1, x2, x3)")
-	ui.text(speed, Vector2(ui.W - 26, 17), 18, "text", false, "topright")
+	_draw_speed(g)
 	var extra := 0
 	for l in g.locations:
 		if Game.plot_of(l) == -1 and l.get("plot") != null:
 			extra += 1
 	if extra:
 		ui.text(Lang.f("+%d sucursales fuera del centro", extra), Vector2(ui.W - 26, 90), 14, "text", false, "topright")
+
+
+## Arriba a la derecha: el tiempo jugado (con un relojito) y los botones de velocidad: pausa, x1, x2, x3. Se
+## eligen con clic (Alt suelta el mouse); el que está puesto se ve lleno. Sin mensajes al pasar el mouse.
+const SEG_W := 46.0
+const SEG_H := 36.0
+
+
+func _draw_speed(g) -> void:
+	var app = city.app
+	var free: bool = not city.mouse_captured() and not city.overlays.open()
+	var n: int = Admin.SPEEDS.size() + 1   # pausa + velocidades
+	var bar := Rect2(ui.W - 12 - n * SEG_W - 8, 12, n * SEG_W + 8, SEG_H + 8)
+	ui.rect(bar, Color(0.05, 0.067, 0.09, 0.78), 14)
+	speed_rects = []
+	for i in n:
+		var r := Rect2(bar.position.x + 4 + i * SEG_W, bar.position.y + 4, SEG_W, SEG_H)
+		speed_rects.append(r)
+		var on: bool = app.paused if i == 0 else (not app.paused and app.speed == i - 1)
+		var hot: bool = free and ui.hover(r)
+		var accent: Color = Color8(240, 140, 50) if i == 0 else ImUI.COL.accent
+		if on:
+			ui.rect(r, accent, 10)
+		elif hot:
+			ui.rect(r, Color(1, 1, 1, 0.12), 10)
+		var fg: Color = Color8(16, 20, 30) if on else Color(1, 1, 1, 0.9 if hot else 0.6)
+		var c := r.get_center()
+		if i == 0:   # dos barritas de pausa
+			ui.rect(Rect2(c.x - 6, c.y - 7, 4, 14), fg, 1)
+			ui.rect(Rect2(c.x + 2, c.y - 7, 4, 14), fg, 1)
+		else:
+			ui.text(Admin.SPEEDS[i - 1][1], c, 16, fg, true, "center")
+	# El tiempo jugado, a la izquierda de los botones
+	var minutes := int(g.play_seconds / 60)
+	var label := Lang.f("%d min", minutes) if minutes < 60 else Lang.f("%d h %02d min", [floori(minutes / 60.0), minutes % 60])
+	var tw := ui.text_size(label, 17, true).x
+	var tr := Rect2(bar.position.x - 8 - (tw + 52), bar.position.y, tw + 52, bar.size.y)
+	ui.rect(tr, Color(0.05, 0.067, 0.09, 0.78), 14)
+	var cc := Vector2(tr.position.x + 20, tr.get_center().y)
+	ui.ring(cc, 8, Color(1, 1, 1, 0.75), 2)
+	ui.line(cc, cc + Vector2(0, -5), Color(1, 1, 1, 0.75), 2)
+	ui.line(cc, cc + Vector2(4, 0), Color(1, 1, 1, 0.75), 2)
+	ui.text(label, Vector2(tr.position.x + 36, tr.get_center().y), 17, "text", true, "midleft")
+	speed_rect = tr.merge(bar)   # el tutorial lo señala y «Saltar tutorial» se pone a su izquierda
+
+
+## Al lado del minimapa, abajo: la tecla Alt suelta el mouse para hacer clic en los botones (y lo vuelve a atrapar).
+func _draw_alt_hint(beside: Rect2) -> void:
+	if beside.size.x <= 0:
+		return
+	var text := "para desbloquear" if city.mouse_captured() else "para volver a bloquear"
+	var kw := ui.text_size("ALT", 13, true).x + 16
+	var tw := ui.text_size(text, 14).x
+	var r := Rect2(beside.end.x + 10, beside.end.y - 34, kw + tw + 26, 34)
+	ui.rect(r, Color(0.05, 0.067, 0.09, 0.72), 12)
+	var kr := Rect2(r.position.x + 8, r.get_center().y - 11, kw, 22)
+	ui.rect(kr, Color(1, 1, 1, 0.9), 6)
+	ui.text("ALT", kr.get_center(), 13, Color8(16, 20, 30), true, "center")
+	ui.text(text, Vector2(kr.end.x + 9, r.get_center().y), 14, Color(1, 1, 1, 0.85), false, "midleft")
+	# En un apagón, al lado y casi transparente: la tecla de la linterna
+	if city.blackout_now() and city.hand() == 0:
+		var tt := "apagar la linterna" if city.player_torch else "prender la linterna"
+		var key := Keys.label("bat")
+		var fk := ui.text_size(key, 12, true).x + 12
+		var fr := Rect2(r.end.x + 10, r.position.y + 6, fk + ui.text_size(tt, 13).x + 22, 22)
+		ui.rect(Rect2(fr.position.x, fr.position.y, fk, fr.size.y), Color(1, 1, 1, 0.22), 5)
+		ui.text(key, Vector2(fr.position.x + fk / 2, fr.get_center().y), 12, Color(1, 1, 1, 0.45), true, "center")
+		ui.text(tt, Vector2(fr.position.x + fk + 8, fr.get_center().y), 13, Color(1, 1, 1, 0.3), false, "midleft")
+
+
+## El botón de velocidad bajo el mouse: -1 ninguno, 0 pausa, 1 a 3 las velocidades x1 a x3.
+func speed_at() -> int:
+	for i in speed_rects.size():
+		if ui.hover(speed_rects[i]):
+			return i
+	return -1
 
 
 func hq_button_rect() -> Rect2:

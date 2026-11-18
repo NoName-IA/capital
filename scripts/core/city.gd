@@ -37,7 +37,7 @@ const DEFAULT_SETTINGS := {"music": 0.7, "effects": 0.8, "sensitivity": 1.0, "fo
 		# Gráficos extra (no cambian el nivel): ver Graphics.apply
 		"g_shadow_dist": 1, "g_shadow_soft": 0, "g_glow_amt": 1.0, "g_bright": 1.0, "g_contrast": 1.0, "g_sat": 1.0,
 		"g_tonemap": 0, "g_fog": true, "g_rain": true, "g_night_lights": true, "g_fps_limit": 1, "g_vsync": true,
-		"g_view": 3, "g_crowd": 1, "g_show_fps": false,
+		"g_view": 3, "g_crowd": 1,
 		"emojis": true,   # los clientes reaccionan con emojis a tus precios (ver emote)
 		# Sonido y pantalla (Opciones): volumen general, sonidos de los menús, latido de peligro, silenciar sin foco,
 		# resolución 3D (0.5 a 1: la ciudad se dibuja más chica y se agranda; los menús siguen nítidos) y pantalla
@@ -2788,12 +2788,15 @@ func _mouse_button(e: InputEventMouseButton) -> void:
 	elif e.button_index == MOUSE_BUTTON_LEFT and not mouse_captured():
 		if hud.hotbar_at() >= 0:
 			set_hand(1 if hand() == 0 else 0)
-		elif hud.ui.hover(hud.speed_rect):   # clic en la velocidad: x1 → x2 → x3 → x1 (en pausa, la quita)
-			if app.paused:
+		elif hud.ui.hover(hud.speed_rect):   # los botones de velocidad: pausa (pone o quita), x1, x2, x3
+			var i := hud.speed_at()
+			if i == 0:
+				app.paused = not app.paused
+			elif i > 0:
 				app.paused = false
-			else:
-				app.speed = (app.speed + 1) % Admin.SPEEDS.size()
-			sfx.play("select", 0.4, 1.0 + app.speed * 0.1)
+				app.speed = i - 1
+			if i >= 0:
+				sfx.play("select", 0.4, 1.0 + app.speed * 0.1)
 		elif hud.ui.hover(hud.hq_button_rect()):
 			go_to_office()
 		elif hud.micro_at() >= 0:
