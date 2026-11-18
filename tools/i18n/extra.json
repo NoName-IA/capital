@@ -3745,5 +3745,119 @@
  ],
  "ALERTA": [
   "ALERT"
+ ],
+ "Fin de la partida. Si quieres seguir en esta ciudad, vuelve a entrar desde Cargar partida. ¿Quieres más títulos? Prueba el modo inversionista.": [
+  "Game over. To keep going in this city, come back in from Load game. Want more titles? Try investor mode."
+ ],
+ "No hay partidas para cargar": [
+  "No games to load"
+ ],
+ "INVERSIÓN EXTRANJERA": [
+  "FOREIGN INVESTMENT"
+ ],
+ "Ángel": [
+  "Angel"
+ ],
+ "Inversionista de %s": [
+  "Investor from %s"
+ ],
+ "Noruega": [
+  "Norway"
+ ],
+ "«Vi tu empresa y creo en lo que haces. Llevas un tiempo sin crecer y quiero ayudarte a dar el salto.»": [
+  "“I've seen your company and I believe in what you do. You haven't grown in a while and I want to help you take the leap.”"
+ ],
+ "TE DA": [
+  "SHE GIVES YOU"
+ ],
+ "A CAMBIO": [
+  "IN RETURN"
+ ],
+ "El %d %% de tus ganancias de cada mes durante %d meses.": [
+  "%d %% of your profit each month for %d months."
+ ],
+ "No es un préstamo: no hay que devolverlo. Si un mes pierdes plata, ese mes no le pagas nada.": [
+  "It's not a loan: you don't pay it back. If you lose money in a month, you pay him nothing that month."
+ ],
+ "Sí, acepto": [
+  "Yes, I accept"
+ ],
+ "No, gracias": [
+  "No, thanks"
+ ],
+ "Teclas: 1 o S para sí · 2 o N para no": [
+  "Keys: 1 or S for yes · 2 or N for no"
+ ],
+ "%s, inversionista de %s, quiere invertir en tu empresa.": [
+  "%s, an investor from %s, wants to invest in your company."
+ ],
+ "Le dijiste que no a %s.": [
+  "You turned %s down."
+ ],
+ "%s invirtió %s en tu empresa: le darás el %d %% de tus ganancias por %d meses.": [
+  "%s invested %s in your company: you'll give him %d %% of your profit for %d months."
+ ],
+ "Terminó el trato con %s: le pagaste %s en total.": [
+  "Your deal with %s is over: you paid him %s in total."
+ ],
+ "%d h %02d min": [
+  "%d h %02d min"
+ ],
+ "Tiempo jugado en esta partida": [
+  "Time played in this game"
+ ],
+ "Hola. Me llamo %s y vengo de %s.": [
+  "Hi. My name is %s and I'm from %s."
+ ],
+ "Llevo semanas mirando tu empresa. Creo en lo que haces y quiero ayudarte a llegar mucho más lejos.": [
+  "I've been watching your company for weeks. I believe in what you do and I want to help you go much further."
+ ],
+ "Te ofrezco %s de capital. Y con mi respaldo, tu empresa va a valer %s más.": [
+  "I'm offering you %s in capital. And with my backing, your company will be worth %s more."
+ ],
+ "A cambio solo pido el %d %% de tus ganancias de cada mes, durante %d meses. ¿Qué me dices?": [
+  "In return I only ask for %d %% of your profit each month, for %d months. What do you say?"
+ ],
+ "¡Trato hecho! Vas a ver hasta dónde llegamos juntos.": [
+  "Deal! You'll see how far we go together."
+ ],
+ "Entiendo. Si algún día cambias de idea... bueno, ya será tarde. ¡Suerte!": [
+  "I understand. If you ever change your mind... well, it'll be too late. Good luck!"
+ ],
+ "%s · INVERSIONISTA DE %s": [
+  "%s · INVESTOR FROM %s"
+ ],
+ "de capital, a tu caja": [
+  "in capital, into your cash"
+ ],
+ "+%s": [
+  "+%s"
+ ],
+ "al valor de tu empresa, para siempre": [
+  "to your company's value, forever"
+ ],
+ "%s invirtió %s en tu empresa y su respaldo suma %s a su valor: le darás el %d %% de tus ganancias por %d meses.": [
+  "%s invested %s in your company and his backing adds %s to its value: you'll give him %d %% of your profit for %d months."
+ ],
+ "Estados Unidos": [
+  "the United States"
+ ],
+ "para desbloquear": [
+  "to unlock"
+ ],
+ "para volver a bloquear": [
+  "to lock again"
+ ],
+ "ALT": [
+  "ALT"
+ ],
+ "apagar la linterna": [
+  "turn off the flashlight"
+ ],
+ "prender la linterna": [
+  "turn on the flashlight"
+ ],
+ "Batazo (con el bate) o linterna (en un apagón)": [
+  "Bat swing (with the bat) or flashlight (in a blackout)"
  ]
 }
