@@ -889,7 +889,7 @@ func draw_modal() -> void:
 		ui.text("¡Construiste un imperio!" if normal else "¡Eres mil millonario!", Vector2(cx, box.position.y + 46), 32,
 				"accent", true, "center")
 		ui.wrap_text(Lang.f("Tu empresa vale %s. Lo lograste en %d minutos de juego (%s años dentro del juego). ", [Fmt.money(g.valuation()), roundi(minutes), Fmt.num(g.day / 360.0, 1)])
-				+ ("Fin de la partida. ¿Quieres más títulos? Prueba el modo inversionista." if normal
+				+ ("Fin de la partida. Si quieres seguir en esta ciudad, vuelve a entrar desde Cargar partida. ¿Quieres más títulos? Prueba el modo inversionista." if normal
 				else "Llegaste a la cima. Puedes seguir jugando todo lo que quieras."),
 				Rect2(box.position.x + 40, box.position.y + 90, box.size.x - 80, 120), 16, "text")
 		if ui.button(Rect2(box.position.x + 40, box.end.y - 64, 220, 42), "Menú principal", true, "primary"):
@@ -897,7 +897,8 @@ func draw_modal() -> void:
 			game = null
 			view = "menu"
 			modal = null
-		elif ui.button(Rect2(box.end.x - 260, box.end.y - 64, 220, 42), "Seguir jugando"):
+		# En el modo normal la partida termina aquí: para seguir hay que volver a entrar (Cargar partida o Continuar)
+		elif not normal and ui.button(Rect2(box.end.x - 260, box.end.y - 64, 220, 42), "Seguir jugando"):
 			modal = null
 	elif modal == "new":
 		ui.text("¿Empezar de nuevo?", Vector2(cx, box.position.y + 46), 30, "text", true, "center")
