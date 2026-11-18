@@ -124,6 +124,8 @@ var finale: Finale        # «La última reunión»: el final del juego (ver Fin
 var plant: PowerPlant     # la planta eléctrica junto al túnel (ver PowerPlant y Game.power_fail)
 var power_scene: PowerScene   # la cinemática de cuando falla por primera vez
 var strike_scene: StrikeScene   # la huelga: la protesta frente a la oficina y su cinemática
+const AngelOffer := preload("res://scripts/ui/angel.gd")
+var angel_scene   # Ángel: la oferta del inversionista, en la mitad izquierda de la pantalla
 var grid: PowerGrid       # la red eléctrica: torres, postes y cables (ver PowerGrid)
 var board_text: Label3D
 var ticker_text: Label3D
@@ -350,6 +352,7 @@ func _build_office() -> void:
 	finale = Finale.new(self)
 	power_scene = PowerScene.new(self)
 	strike_scene = StrikeScene.new(self)
+	angel_scene = AngelOffer.new(self)
 
 
 var office_tier := 2   # el aspecto con el que está armada la oficina ahora
@@ -693,7 +696,12 @@ func _want_strike_scene(g: Game) -> bool:
 
 ## Ya no hay más escenas que esta: ¿hay alguna cinemática en pantalla?
 func in_cutscene() -> bool:
-	return finale.active() or power_scene.active() or strike_scene.active()
+	return finale.active() or power_scene.active() or strike_scene.active() or (angel_scene != null and angel_scene.active())
+
+
+## ¿Toca la oferta de Ángel? Espera lo mismo que la huelga y que no estés en la computadora.
+func _want_angel(g: Game) -> bool:
+	return g.angel != null and not in_cutscene() and not g.game_over and not tutorial.active and app.modal == null and not tower.busy() and pc_phase == "" and not overlays.open() and not _want_finale(g)
 
 
 func _want_power_scene(g: Game) -> bool:
@@ -1433,6 +1441,8 @@ func reset_world(g) -> void:
 	rank_wait = null
 	sky.blackout = 0.0   # la otra partida puede no tener apagón
 	strike_scene.clear()
+	if angel_scene != null:
+		angel_scene.clear()
 	for i in house_signs:
 		house_signs[i].root.queue_free()
 	house_signs.clear()
@@ -2376,6 +2386,9 @@ func update(dt: float) -> void:
 		if not power_scene.active() and _want_strike_scene(g):
 			strike_scene.start()
 		strike_scene.update(dt)
+		if _want_angel(g):
+			angel_scene.start()
+		angel_scene.update(dt)
 		if power_scene.active():
 			power_scene.update(dt)
 		else:
@@ -2463,7 +2476,7 @@ func update(dt: float) -> void:
 		b.rotation.z = deg_to_rad(sin(t * 0.9 + ph) * 4)
 	hud.update(dt)
 	hud.update_danger(g, dt)
-	if overlays.mode in ["personaje", "decorar", "pc", "confirmar"] or tutorial.active or power_scene.active() or strike_scene.active():   # el mentor también es una foto
+	if overlays.mode in ["personaje", "decorar", "pc", "confirmar"] or tutorial.active or power_scene.active() or strike_scene.active() or angel_scene.active():   # el mentor también es una foto
 		thumbs.step()
 	advance_sky(dt)
 	sky.moon_phase = fmod(game.day + 15.0, 29.5) / 29.5 if game != null else 0.5  # una fase por mes de juego
@@ -2586,6 +2599,12 @@ func _key(e: InputEventKey) -> void:
 			toggle_fullscreen()
 			return
 		strike_scene.key(e)
+		return
+	if angel_scene != null and angel_scene.active():   # Ángel: 1/S sí, 2/N no
+		if Keys.is_event(e, "fullscreen"):
+			toggle_fullscreen()
+			return
+		angel_scene.key(e)
 		return
 	# En la computadora: durante la transición nada; en el escritorio, Esc cierra lo de arriba o te levanta
 	if pc_phase != "" and (pc_phase != "os" or overlays.mode == "pc"):

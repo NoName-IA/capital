@@ -122,6 +122,13 @@ const POWER := {"value": 400000.0, "min_day": 20, "days": 105, "cash_k": 0.05, "
 ## subir sueldos (`raise`, para siempre, y el ánimo sube `morale`) o despedir a todos (indemnización + contratar de
 ## nuevo; los locales quedan sin gente `rehire_days` días y la fama baja `rep`).
 const STRIKE := {"at": 50.0, "decay": 0.08, "warn": [25.0, 40.0], "raise": 0.15, "morale": 25.0, "rehire_days": 5, "rep": 4.0}
+## Ángel (solo modo normal): a los `stuck_min` minutos de juego (el reloj de arriba), un inversionista extranjero
+## te ofrece capital: al menos `capital` ($2 millones; la mitad de lo que te falta para el siguiente rango si es más),
+## y con su respaldo el valor de tu empresa sube al menos `value` ($3 millones). No es préstamo y queda para
+## siempre: a cambio se lleva `share` (el 1 %) de la utilidad neta de cada mes durante `months` meses (si un mes
+## pierdes, no le pagas nada). Ofrece una sola vez por partida, sea que aceptes o no.
+const ANGEL := {"stuck_min": 10.0, "gap": 0.5, "capital": 2000000.0, "value": 3000000.0, "share": 0.01, "months": 12,
+		"name": "Mark Sudenber", "from": "Estados Unidos"}
 const HOUSE := {"count": 8, "cost": 40000.0, "step": 0.15, "rent": 0.02}
 # Fondo de inversión en bolsa: rendimiento anual esperado según la fase del ciclo (con mucha volatilidad diaria).
 const FUND_RETURN := {"expansion": 0.10, "auge": 0.18, "recesion": -0.20, "recuperacion": 0.22}

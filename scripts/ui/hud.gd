@@ -82,7 +82,7 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 	ui.place_fill(size)
 	ui.begin(mouse_window, clicked, 0, false)
 	var g = city.game
-	var visible: bool = g != null and not city.overlays.mode in ["personaje", "decorar"] and city.pc_phase == "" 			and not city.tower.busy() and not city.finale.active() 			and not city.power_scene.active() and not city.strike_scene.active()
+	var visible: bool = g != null and not city.overlays.mode in ["personaje", "decorar"] and city.pc_phase == "" 			and not city.tower.busy() and not city.finale.active() 			and not city.power_scene.active() and not city.strike_scene.active() and not city.angel_scene.active()
 	if visible:
 		if city.weather.flash > 0.01 and not city.camera_indoors():  # relámpago de la tormenta
 			ui.rect(Rect2(0, 0, ui.W, ui.H), Color(0.9, 0.93, 1.0, city.weather.flash * 0.35))
@@ -104,6 +104,7 @@ func draw(mouse_window: Vector2, clicked: bool, size: Vector2) -> void:
 		city.finale.draw(ui)
 		city.power_scene.draw(ui)
 		city.strike_scene.draw(ui)
+		city.angel_scene.draw(ui)
 	city.finale.draw_menu_in(ui)   # el menú aparece desde el negro al terminar el final
 	var fade: float = city.pc_fade()   # la pantalla de la computadora "se prende" (ver City._pc_camera)
 	if fade > 0.0:

@@ -14,7 +14,7 @@ func _ready() -> void:
 			"test_weather_moves_demand", "test_stars", "test_city_activities", "test_decor", "test_solar",
 			"test_labor", "test_every_micro_is_booked", "test_rivals_alive", "test_buy_that_building", "test_old_saves",
 			"test_mall_and_franchises", "test_homeless_become_franchises", "test_beach_mall_and_rival_shops",
-			"test_new_game_without_stall", "test_normal_mode_has_no_investments", "test_key_decisions", "test_every_blueprint_is_whole", "test_office_looks", "test_barrio_houses", "test_buy_all_decor", "test_power_plant", "test_strike"]:
+			"test_new_game_without_stall", "test_normal_mode_has_no_investments", "test_key_decisions", "test_every_blueprint_is_whole", "test_office_looks", "test_barrio_houses", "test_buy_all_decor", "test_power_plant", "test_strike", "test_angel", "test_value_never_drops"]:
 		var before := failures
 		call(t)
 		print(("OK    " if failures == before else "FALLA ") + t)
@@ -763,6 +763,9 @@ func test_power_plant() -> void:
 	g.step_day()
 	check(not g.power_fail, "antes del día mínimo la planta no falla aunque vayas bien")
 	g.cash = 1500.0
+	g.peak_value = 0.0   # el valor nunca baja: se borra el millón de prueba
+	g.value_bonus = 0.0
+	g.last_market = -1.0
 	g.day = 30
 	check(not g.pay_power()[0], "si la planta funciona no hay nada que pagar")
 	# Recién cuando tu empresa vale unos $400.000 empieza a fallar
@@ -880,3 +883,67 @@ func test_strike() -> void:
 	for i in int(D.STRIKE.rehire_days):
 		g.step_day()
 	check(not g.staff_out() and g.capacity(loc) > 0.0, "llega el personal nuevo")
+
+
+func test_angel() -> void:
+	var g := Game.new(21)
+	g.tutorial_step = -1
+	g.cash = 30000.0
+	g.step_day()
+	check(g.angel == null, "recién empezado no aparece Ángel")
+	g.play_seconds += float(D.ANGEL.stuck_min) * 60.0 + 1.0
+	g.step_day()
+	check(g.angel != null and g.angel.amount > 0.0, "a los 10 minutos de juego, Ángel ofrece")
+	var gap: float = float(g.rank_info()[2][0]) - g.valuation()
+	check(g.angel.amount >= maxf(float(D.ANGEL.capital), gap * 0.45), "ofrece al menos $2 millones (o la mitad de lo que falta)")
+	var back := Game.from_json(g.to_json())
+	check(back.angel != null, "la oferta queda guardada")
+	var cash0 := g.cash
+	var amount: float = g.angel.amount
+	var v0 := g.valuation()
+	check(g.angel_resolve(true)[0] and g.angel == null, "aceptar cierra la oferta")
+	check(g.valuation() >= v0 + float(D.ANGEL.value) - 0.01, "su respaldo sube el valor al menos $3 millones")
+	near(g.cash, cash0 + amount, 0.01, "el capital entra a la caja")
+	check(g.angel_months == int(D.ANGEL.months), "el trato dura 12 meses")
+	var c := g.cash
+	g._angel_month(10000.0)
+	near(c - g.cash, 100.0, 0.01, "un mes con utilidad: le pagas el 1 %")
+	c = g.cash
+	g._angel_month(-5000.0)
+	near(c - g.cash, 0.0, 0.001, "un mes con pérdida: no le pagas nada")
+	for i in 20:
+		g.step_day()
+	check(g.angel == null, "no vuelve a ofrecer mientras dura el trato")
+	# En otra partida: decir que no
+	var h := Game.from_json(back.to_json())
+	check(h.angel_resolve(false)[0] and h.angel == null and h.angel_months == 0, "decir que no: no pasa nada")
+	h = Game.from_json(h.to_json())
+	h.play_seconds += 9999.0
+	h.step_day()
+	check(h.angel == null, "no vuelve a ofrecer en la misma partida")
+	var inv := Game.new(21, "inversionista")
+	inv.tutorial_step = -1
+	inv.play_seconds = 99999.0
+	inv.step_day()
+	check(inv.angel == null, "en el modo inversionista no hay Ángel")
+
+
+func test_value_never_drops() -> void:
+	var g := Game.new(21)
+	g.tutorial_step = -1
+	g.cash = 200000.0
+	g.step_day()
+	var high := g.valuation()
+	g.cash = 2000.0
+	g.step_day()
+	check(g.market_value() < high, "lo que vale hoy sí baja al perder caja")
+	near(g.valuation(), high, 0.01, "pero el valor de la empresa se queda en lo más alto")
+	var back := Game.from_json(g.to_json())
+	near(back.valuation(), high, 0.01, "el valor más alto queda guardado")
+	var low := g.valuation()
+	g.cash = 52000.0
+	g.step_day()
+	check(g.valuation() > low + 40000.0, "cada mejora se nota al tiro, aunque todavía no recupere lo de antes")
+	g.cash = 400000.0
+	g.step_day()
+	check(g.valuation() > high, "si vuelve a subir, sube")

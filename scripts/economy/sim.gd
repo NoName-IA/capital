@@ -90,6 +90,15 @@ var houses := {}          # casas del barrio que compraste para alquilar: "índi
 var office_decor := []    # lo que compraste para la fachada de la oficina (D.OFFICE_DECOR)
 var hold_dilemma := false   # la tablet pide esperar (hace poco salió el aviso de nuevo rango); no se guarda
 var tutorial_step := -1  # paso del tutorial guiado en el que vas (-1: terminado o saltado)
+# Ángel (D.ANGEL): la oferta en pantalla, los meses que le quedan por cobrar, lo que ya cobró y en qué rangos ofreció
+var angel = null            # {"amount", "rank"} mientras esperas responder
+var angel_months := 0
+var angel_paid := 0.0
+var angel_ranks := []
+var rank_since := 0.0       # segundos de juego en que subiste al rango actual
+var peak_value := 0.0       # el valor de la empresa al cerrar el último día (valuation nunca baja de aquí)
+var value_bonus := 0.0      # lo que el valor no perdió en los días malos, más el respaldo de Ángel (se suma siempre)
+var last_market := -1.0     # lo que valía de verdad al cerrar el día anterior (-1: todavía no se sabe)
 var office_look := 0      # aspecto de la oficina (D.OFFICE_LOOKS); las partidas de antes tienen el 2 (el de siempre)
 var path := {}            # decisiones importantes tomadas: {"rumbo": "premium"/"masivo", "rivales": "alianza"/"guerra"}
 var rival_mall := {}      # "vitrina" -> negocio del rival que la arrienda en tu centro comercial (te paga alquiler)
@@ -122,7 +131,8 @@ const SAVED := ["day", "cash", "bonds", "products", "locations", "loans", "asset
 		"labor", "morale", "micro", "next_micro_day", "rivals", "plot_owner", "passed", "mall", "franchises", "mall2", "rival_mall", "path", "office_look", "office_offered", "office_decor", "tutorial_step", "houses",
 		"finale_seen", "best_month", "worst_choice",
 		"power_fail", "power_until", "power_paid", "power_intro", "blackout", "blackout_days",
-		"grudge", "strike", "strike_scene", "strike_warn", "strikes", "strike_days", "wage_raise", "rehire_until"]
+		"grudge", "strike", "strike_scene", "strike_warn", "strikes", "strike_days", "wage_raise", "rehire_until",
+		"angel", "angel_months", "angel_paid", "angel_ranks", "rank_since", "peak_value", "value_bonus", "last_market"]
 
 
 static func new_ledger() -> Dictionary:
@@ -553,7 +563,24 @@ func valuation_multiple() -> float:
 	return 2.0 + 2.5 * clampf((econ_index - 0.8) / 0.35, 0.0, 1.0)
 
 
+## El valor de tu empresa nunca baja, y sube cada vez que tu empresa mejora de verdad: es lo que vale hoy
+## (market_value) más value_bonus, que guarda todo lo que se perdió en los días malos (recesión, un mes flojo, una
+## compra grande) y el respaldo de Ángel. Así los días malos no te quitan nada y cada día bueno se nota al tiro.
 func valuation() -> float:
+	return maxf(market_value() + value_bonus, peak_value)
+
+
+## Al cerrar el día: si lo que vale de verdad bajó, esa baja pasa al bono (el valor que ves no baja).
+func _value_day() -> void:
+	var mv := market_value()
+	if last_market >= 0.0 and mv < last_market:
+		value_bonus += last_market - mv
+	last_market = mv
+	peak_value = valuation()
+
+
+## Lo que vale la empresa hoy: sube y baja con las ganancias, la economía, la caja y las deudas.
+func market_value() -> float:
 	var b := balance()
 	var ev: float = max(0.0, recent_ebitda() * 12.0 * valuation_multiple())
 	var market: float = ev + cash + bonds + fund + b.inventario + houses_value() - b.deuda
@@ -1459,6 +1486,7 @@ func step_day() -> void:
 	_events()
 	_maybe_dilemma()
 	_maybe_micro()
+	_angel_day()
 	_staff_day()
 	_rival_ai()
 	for key in D.PRODUCT_ORDER:
@@ -1525,6 +1553,7 @@ func step_day() -> void:
 			add_news(Lang.f("¡Récord de ventas en un día: %s!", Fmt.money(rev)), "good", "record", rev)
 		best_day = rev
 
+	_value_day()   # el valor no baja: lo que se perdió hoy queda guardado en el bono
 	series.caja.append(cash)
 	series.ingresos.append(rev)
 	series.utilidad.append(statement(ledger).ebitda - before)
@@ -1816,6 +1845,7 @@ func _end_month() -> void:
 		add_news(Lang.f("Ciclo económico: la economía entra en %s.", Lang.noun(D.PHASES[phase].name)), kind)
 
 	var net: float = statement(L).utilidad_neta
+	_angel_month(net)
 	add_news(Lang.f("Cierre de %s: utilidad neta %s.", [D.MONTHS[(month_index() - 1) % 12], Fmt.money(net)]),
 			"good" if net >= 0 else "bad", "month", net)
 	if net >= 0:
@@ -1834,6 +1864,7 @@ func _end_month() -> void:
 	if idx > rank:
 		for r in ranks().slice(rank + 1, idx + 1):
 			rank_log[r[1]] = [day, play_seconds]
+		rank_since = play_seconds
 		rank = idx
 		add_news(Lang.f("¡Nuevo rango: %s! Tu empresa vale %s.", [info[1], Fmt.money(info[3])]), "good", "rank", info[1])
 		for i in D.OFFICE_LOOKS.size():
@@ -3136,6 +3167,11 @@ static func from_json(text: String) -> Game:
 			if k in INT_KEYS:
 				v = int(v)
 			g.set(k, v)
+	if not state.has("rank_since"):   # partidas de antes de Ángel: cuenta desde que la cargas
+		g.rank_since = g.play_seconds
+	if not state.has("value_bonus"):   # partidas de antes: el valor que se veía queda, y desde ahí sube con cada mejora
+		g.last_market = g.market_value()
+		g.value_bonus = maxf(0.0, g.peak_value - g.last_market)
 	if not state.has("office_look"):   # partidas de antes: la oficina que ya tenían
 		g.office_look = 2
 	g.office_look = int(g.office_look)
@@ -3148,7 +3184,7 @@ static func from_json(text: String) -> Game:
 const INT_KEYS := ["day", "next_id", "phase_months_left", "overdraft_days", "rank", "next_choice_day",
 		"profit_streak", "last_record_day", "hq_level", "strategy_ready_day", "weather", "weather_next", "weather_days",
 		"beach_boost_days", "labor", "next_micro_day",
-		"strike_warn", "strikes", "strike_days", "rehire_until"]
+		"strike_warn", "strikes", "strike_days", "rehire_until", "angel_months"]
 
 
 ## JSON guarda todos los números como decimales: los que son índices o contadores vuelven a ser enteros.
@@ -3391,3 +3427,72 @@ func buy_office_decor(key: String) -> Array:
 	for k in products:
 		_rep(k, float(u.rep))
 	return [true, Lang.f("Instalaste %s en tu oficina.", Lang.noun(u.name))]
+
+
+# ---------- Ángel: el inversionista que ayuda al que se estancó (D.ANGEL) ----------
+## Cada día: a los 10 minutos de juego te hace la oferta (una sola vez por partida, solo en el modo normal).
+func _angel_day() -> void:
+	# Una sola vez por partida (angel_ranks guarda el rango en que ofreció): a los 10 minutos del reloj de juego
+	if angel != null or not angel_ranks.is_empty() or mode != "normal" or won or game_over or tutorial_step >= 0 			or locations.is_empty():
+		return
+	if play_seconds < float(D.ANGEL.stuck_min) * 60.0:
+		return
+	var amount := angel_amount()
+	if amount <= 0:
+		return
+	angel = {"amount": amount, "rank": rank}
+	add_news(Lang.f("%s, inversionista de %s, quiere invertir en tu empresa.", [D.ANGEL.name, D.ANGEL.from]), "good", "quiet")
+
+
+## El capital que te da: al menos D.ANGEL.capital ($2 millones), o la mitad de lo que te falta para el siguiente
+## rango si es más, redondeado a dos cifras.
+func angel_amount() -> float:
+	var info := rank_info()
+	var raw := 0.0
+	if info[2] != null:
+		raw = maxf(0.0, float(info[2][0]) - float(info[3])) * float(D.ANGEL.gap)
+	if raw > 0.0:
+		var step := pow(10.0, floorf(log(raw) / log(10.0)) - 1)   # dos cifras significativas
+		raw = ceilf(raw / step) * step
+	return maxf(float(D.ANGEL.capital), raw)
+
+
+## Cuánto sube el valor de tu empresa con su respaldo: al menos D.ANGEL.value ($3 millones).
+func angel_value_boost(amount: float) -> float:
+	return maxf(float(D.ANGEL.value), amount)
+
+
+## Aceptar (true) o no (false) la oferta en pantalla. Devuelve [ok, mensaje].
+func angel_resolve(accept: bool) -> Array:
+	if angel == null:
+		return [false, ""]
+	var amount: float = angel.amount
+	var before := valuation()
+	angel_ranks.append(int(angel.rank))
+	angel = null
+	if not accept:
+		var msg := Lang.f("Le dijiste que no a %s.", D.ANGEL.name)
+		add_news(msg, "info", "quiet")
+		return [true, msg]
+	cash += amount
+	# Su respaldo sube el valor de la empresa para siempre: la plata entra a la caja y el resto queda como bono fijo
+	value_bonus += maxf(0.0, before + angel_value_boost(amount) - (market_value() + value_bonus))
+	peak_value = maxf(peak_value, valuation())
+	angel_months = int(D.ANGEL.months)
+	var msg := Lang.f("%s invirtió %s en tu empresa y su respaldo suma %s a su valor: le darás el %d %% de tus ganancias por %d meses.",
+			[D.ANGEL.name, Fmt.money(amount), Fmt.money(angel_value_boost(amount)), roundi(float(D.ANGEL.share) * 100), int(D.ANGEL.months)])
+	add_news(msg, "good", "quiet")
+	autosave_due = true
+	return [true, msg]
+
+
+## Al cerrar el mes: le pagas su parte de la utilidad (nada si perdiste).
+func _angel_month(net: float) -> void:
+	if angel_months <= 0:
+		return
+	var pay := maxf(0.0, net) * float(D.ANGEL.share)
+	cash -= pay
+	angel_paid += pay
+	angel_months -= 1
+	if angel_months == 0:
+		add_news(Lang.f("Terminó el trato con %s: le pagaste %s en total.", [D.ANGEL.name, Fmt.money(angel_paid)]), "good")
