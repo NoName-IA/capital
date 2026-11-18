@@ -1,8 +1,8 @@
 class_name CityMap
 extends RefCounted
 ## El mapa de la ciudad visto desde arriba: el minimapa de abajo a la izquierda y el mapa grande que se abre con la
-## tecla M. Cada edificio es un rectángulo con su tamaño real: tus locales en dorado, los de la competencia en rojo,
-## los terrenos en venta punteados y los lugares de la ciudad (oficina, parque, playa...) con su ícono. En el mapa
+## tecla M. Cada edificio es una mancha plana con su tamaño real y un ícono redondo: tus locales en dorado, los de la
+## competencia con su logo, los terrenos en venta con un «$» y los lugares de la ciudad (oficina, parque, playa...). En el mapa
 ## grande, al pasar el mouse un edificio se agranda y muestra sus datos; con un clic te lleva hasta él. El mapa grande
 ## además nombra todo: cada local con su número («Café #1»), los rivales con su logo y su marca, los terrenos «En
 ## venta», los lugares y las zonas de la ciudad (Distrito Financiero, Parque industrial, el mar...).
@@ -105,7 +105,7 @@ static func items(city) -> Array:
 			out.append({"id": id, "kind": "lot", "rect": Mall.world_rect(mi), "name": Lang.f("Terreno: %s", Lang.noun(mname)),
 					"sub": Lang.f("%d vitrinas · cómpralo por %s", [int(D.MALL.slots), Fmt.short(g.mall_cost(mi))]),
 					"color": LOT, "icon": "box", "target": mall_t, "yaw": yaw, "clients": 0.0, "lost": 0.0,
-					"label": Lang.f("%s · en venta", Lang.t(mname))})
+					"label": "Centro comercial · en venta"})   # corto: el nombre completo sale al pasar el mouse
 	# Tu oficina central
 	var hq_t := Blueprints.to_world(City.HQ, 0, -2.5)
 	out.append({"id": "hq", "kind": "place", "rect": Rect2(City.HQ[0] - 9, 11, 18, 16), "name": "Tu oficina central",
@@ -161,115 +161,151 @@ static func rect_to_screen(view: Rect2, center: Vector2, scale: float, r: Rect2)
 	return Rect2(a, r.size * scale)
 
 
+## Estilo (como los mapas de los juegos de ciudad más jugados y el modo noche de los mapas del teléfono): una base
+## plana y apagada, calles con jerarquía (la avenida clara y ancha, los pasajes finos), edificios como manchas planas sin
+## contorno claro, cada cosa importante con un ícono redondo de un solo color por categoría (borde fino oscuro, sin
+## brillo ni halo) y el texto con contorno oscuro en vez de cajitas: zonas grandes y tenues, calles medianas y lugares
+## chicos.
+const C_LAND := Color8(36, 42, 39)
+const C_HILLS := Color8(44, 46, 44)
+const C_PARK := Color8(42, 70, 50)
+const C_SAND := Color8(104, 95, 74)
+const C_SEA := Color8(26, 48, 70)
+const C_POND := Color8(42, 78, 108)
+const C_BLOCK := Color8(56, 61, 70)      # edificios del fondo
+const C_HOME := Color8(80, 74, 70)       # casas del barrio
+const C_LANE := Color8(70, 74, 82)       # pasajes
+const C_WALK := Color8(78, 82, 89)       # veredas
+const C_ROAD := Color8(98, 102, 110)     # la avenida (la calle más importante, la más clara)
+const C_PIER := Color8(96, 80, 60)
+const C_INK := Color(0.05, 0.06, 0.08)   # bordes y contornos
+
+
 ## El fondo: pasto, cerros, barrio, parque, arena, mar, la avenida y el túnel.
 static func draw_ground(ui: ImUI, view: Rect2, center: Vector2, scale: float) -> void:
 	var f := func(r: Rect2) -> Rect2: return rect_to_screen(view, center, scale, r)
-	ui.rect(view, Color8(52, 78, 58))
-	ui.rect(f.call(Rect2(-400, -200, 282, 400)), Color8(70, 74, 66))       # cerros del oeste
-	ui.rect(f.call(Rect2(110, -200, 50, 400)), Color8(214, 196, 150))       # arena
-	ui.rect(f.call(Rect2(160, -200, 300, 400)), Color8(44, 104, 160))       # mar
-	ui.rect(f.call(Rect2(-21, -55, 42, 42)), Color8(64, 120, 70), 4 * scale)   # parque
-	ui.circle(to_screen(view, center, scale, 0, -34), 4.5 * scale, Color8(90, 160, 210))   # fuente
+	ui.rect(view, C_LAND)
+	ui.rect(f.call(Rect2(-400, -200, 282, 400)), C_HILLS)        # cerros del oeste
+	ui.rect(f.call(Rect2(110, -200, 50, 400)), C_SAND)           # arena
+	ui.rect(f.call(Rect2(160, -200, 300, 400)), C_SEA)           # mar
+	ui.rect(f.call(Rect2(-21, -55, 42, 42)), C_PARK)             # parque
+	ui.circle(to_screen(view, center, scale, 0, -34), 4.5 * scale, C_POND)   # fuente
 	for lane in [[45.0, -40.0, 108.0], [-45.0, 28.0, 108.0]]:   # pasajes del barrio con sus casas
-		ui.rect(f.call(Rect2(lane[1], lane[0] - 2.5, lane[2] - lane[1], 5)), Color8(84, 88, 96))
+		ui.rect(f.call(Rect2(lane[1], lane[0] - 2.5, lane[2] - lane[1], 5)), C_LANE)
 		for row in [9.5, -9.5]:
 			var zc: float = lane[0] + row
 			for x in range(int(lane[1]) + 8, int(lane[2]) - 4, 13):
-				ui.rect(f.call(Rect2(x - 4, zc - 3.5, 8, 7)), Color8(196, 170, 150), 1)
+				ui.rect(f.call(Rect2(x - 4, zc - 3.5, 8, 7)), C_HOME)
 	for side in [-1, 1]:   # edificios altos del centro
 		for x in range(-130, -39, 14):
 			if side == -1 and x >= -102 and x <= -40:
 				continue
-			ui.rect(f.call(Rect2(x - 5, side * 54 - 5, 10, 10)), Color8(120, 128, 140), 1)
-	ui.rect(f.call(Rect2(150, 22.8, 55, 2.4)), Color8(150, 110, 70))                # muelle
-	ui.rect(f.call(Rect2(-400, -7.5, 600, 15)), Color8(150, 150, 146))              # veredas
-	ui.rect(f.call(Rect2(-400, -ROAD_HALF, 578, ROAD_HALF * 2)), Color8(62, 64, 70))   # avenida
+			ui.rect(f.call(Rect2(x - 5, side * 54 - 5, 10, 10)), C_BLOCK)
+	ui.rect(f.call(Rect2(150, 22.8, 55, 2.4)), C_PIER)          # muelle
+	ui.rect(f.call(Rect2(-400, -7.5, 600, 15)), C_WALK)          # veredas
+	ui.rect(f.call(Rect2(-400, -ROAD_HALF, 578, ROAD_HALF * 2)), C_ROAD)   # avenida
 	var y := to_screen(view, center, scale, 0, 0).y
 	var x := floorf((center.x - view.size.x / scale) / 8.0) * 8.0
-	while x < center.x + view.size.x / scale:   # línea discontinua del medio
+	while x < center.x + view.size.x / scale:   # línea discontinua del medio (tenue)
 		var a := to_screen(view, center, scale, x, 0)
-		ui.line(Vector2(a.x, y), Vector2(a.x + 4 * scale, y), Color8(230, 200, 90), max(1.0, 0.25 * scale))
+		ui.line(Vector2(a.x, y), Vector2(a.x + 4 * scale, y), Color(0.85, 0.75, 0.4, 0.45), max(1.0, 0.2 * scale))
 		x += 8.0
 	var tun := to_screen(view, center, scale, Terrain.TUNNEL_X, 0)
-	ui.rect(Rect2(tun.x - 3 * scale, tun.y - 9 * scale, 6 * scale, 18 * scale), Color8(40, 40, 44), 2)
+	ui.rect(Rect2(tun.x - 3 * scale, tun.y - 9 * scale, 6 * scale, 18 * scale), Color8(24, 25, 28))
 
 
-## Un edificio del mapa. `k` (0 a 1) es cuánto se agranda (mouse encima).
+## Un ícono redondo (como los de los mapas de juegos): relleno de un solo color, borde fino oscuro, sin brillo.
+## Con `icon` dibuja el ícono adentro; sin ícono, un punto del color `inner` (si hay).
+static func blip(ui: ImUI, at: Vector2, radius: float, fill: Color, icon := "", inner = null) -> void:
+	ui.circle(at, radius + 1.5, C_INK)
+	ui.circle(at, radius, fill)
+	if icon != "":
+		Icons.draw(ui, icon, at, radius * 1.15, C_INK)
+	elif inner != null:
+		ui.circle(at, radius * 0.45, inner)
+
+
+## Un edificio del mapa: su mancha plana y su ícono. `k` (0 a 1): el mouse encima (el ícono crece un poco y la mancha
+## se aclara apenas; nada de bordes que brillen).
 static func draw_item(ui: ImUI, it: Dictionary, r: Rect2, k: float, scale: float, logo := 0.0) -> void:
-	if k > 0:
-		r = r.grow_individual(r.size.x * 0.22 * k, r.size.y * 0.22 * k, r.size.x * 0.22 * k, r.size.y * 0.22 * k)
 	var kind: String = it.kind
+	var bl: float = (logo if logo > 0 else clampf(min(r.size.x, r.size.y) * 0.32, 6.0, 11.0)) * (1.0 + 0.25 * k)
+	var lift := 0.08 * k   # al pasar el mouse la mancha se aclara un poco
 	match kind:
 		"mine":
-			ui.rect(r, GOLD.darkened(0.15), 3)
-			ui.rect(r, GOLD.lerp(Color.WHITE, 0.3 + k * 0.5), 3, 2.0 + k)
-			# franja con el color del negocio
-			ui.rect(Rect2(r.position.x + r.size.x * 0.2, r.get_center().y - max(1.5, r.size.y * 0.12), r.size.x * 0.6, max(3.0, r.size.y * 0.24)), it.color, 2)
+			ui.rect(r, Color(it.color).darkened(0.45).lightened(lift), 2)
+			blip(ui, r.get_center(), bl, GOLD, "", it.color)
 		"rival":
-			ui.rect(r, Color(it.color, 0.85), 3)
-			ui.rect(r, RIVAL.lerp(Color.WHITE, k * 0.6), 3, 2.0 + k)
+			ui.rect(r, Color(it.color).darkened(0.55).lightened(lift), 2)
+			if it.has("rival") and r.size.x > 10:
+				ui.circle(r.get_center(), bl + 3.0, C_INK)
+				Admin.rival_badge(ui, it.rival, r.get_center(), bl)
+			else:
+				blip(ui, r.get_center(), bl, RIVAL)
 		"lot":
-			ui.rect(r, Color(LOT, 0.12 + 0.2 * k), 3)
-			ui.rect(r, Color(LOT, 0.7 + 0.3 * k), 3, 1.0 + k)
+			ui.rect(r, Color(1, 1, 1, 0.04 + lift), 2)
+			if str(it.icon) != "":   # el terreno de un centro comercial
+				blip(ui, r.get_center(), bl, LOT, it.icon)
 		"factory":
-			ui.rect(r, Color8(110, 120, 130), 3)
-			ui.rect(r, FACTORY.lerp(Color.WHITE, k * 0.6), 3, 2.0 + k)
+			ui.rect(r, Color8(64, 72, 80).lightened(lift), 2)
+			blip(ui, r.get_center(), bl, FACTORY, it.icon)
 		"house":
 			if it.owned:
-				ui.rect(r, HOUSE.darkened(0.1), 2)
-				ui.rect(r, HOUSE.lerp(Color.WHITE, 0.3 + k * 0.5), 2, 1.5 + k)
+				ui.rect(r, HOUSE.darkened(0.45).lightened(lift), 1)
+				blip(ui, r.get_center(), minf(bl, 7.0), HOUSE, "", C_INK)
 			else:
-				ui.rect(r, Color(HOUSE, 0.25 + 0.2 * k), 2)
-				ui.rect(r, Color(HOUSE, 0.9), 2, 1.5 + k)
+				ui.rect(r, C_HOME.lightened(lift), 1)
 		"place":
-			ui.rect(r, Color(it.color, 0.08 + 0.18 * k), 4)
-			ui.rect(r, Color(it.color, 0.45 + 0.5 * k), 4, 1.0 + k)
-	if it.has("rival") and r.size.x > 12:   # el logo del rival en su local
-		var lr := logo if logo > 0 else clampf(min(r.size.x, r.size.y) * 0.3, 5.0, 14.0)   # `logo`: radio fijo (minimapa)
-		Admin.rival_badge(ui, it.rival, r.get_center(), lr * (1.0 + 0.3 * k))
-	if it.icon:
-		var s: float = clampf(min(r.size.x, r.size.y) * 0.6, 10.0, 26.0) * (1.0 + 0.3 * k)
-		ui.circle(r.get_center(), s * 0.62, Color(0.05, 0.07, 0.1, 0.75))
-		Icons.draw(ui, it.icon, r.get_center(), s, it.color.lerp(Color.WHITE, 0.3))
+			if it.id in ["hq", "mall", "mall1"]:   # los que son un edificio: su mancha
+				ui.rect(r, Color8(78, 70, 48).lightened(lift), 2)
+			if it.icon:
+				var c: Color = GOLD if it.id in ["hq", "mall", "mall1"] else PLACE
+				var big: float = clampf(min(r.size.x, r.size.y) * 0.3, 8.0, 12.0) * (1.0 + 0.25 * k)
+				blip(ui, r.get_center(), big, c, it.icon)
 
 
 ## Zonas de la ciudad sin un edificio que las nombre: [nombre, x, z].
 const ZONES := [
 	["DISTRITO FINANCIERO", -100.0, 34.0],
-	["ENTRADA DE LA CIUDAD", -146.0, -34.0],
+	["ENTRADA DE LA CIUDAD", -140.0, -31.0],
 	["PARQUE INDUSTRIAL", -72.0, -51.0],
 	["MAR", 190.0, -30.0],
-	["TÚNEL", -165.0, 14.0],
+	["TÚNEL", -165.0, -14.0],
 ]
 
 
-## Nombres de las zonas en letras grandes y tenues, y el nombre de la avenida sobre la calle.
+## Texto con contorno oscuro (se lee sobre cualquier fondo sin necesitar una caja).
+static func label(ui: ImUI, text: String, at: Vector2, size := 11, color = Color.WHITE, bold := true, anchor := "center") -> Rect2:
+	for o in [Vector2(-1, 0), Vector2(1, 0), Vector2(0, -1), Vector2(0, 1), Vector2(1, 1)]:
+		ui.text(text, at + o, size, Color(C_INK, 0.9), bold, anchor)
+	return ui.text(text, at, size, color, bold, anchor)
+
+
+## Nombres de las zonas en letras grandes, separadas y tenues, y el nombre de la avenida sobre la calle.
 static func draw_zone_names(ui: ImUI, view: Rect2, center: Vector2, scale: float) -> void:
 	for z in ZONES:
 		var at := to_screen(view, center, scale, z[1], z[2])
-		var t: String = Lang.t(z[0])
-		ui.text(t, at + Vector2(1, 1), 13, Color(0, 0, 0, 0.55), true, "center")
-		ui.text(t, at, 13, Color(1, 1, 1, 0.62), true, "center")
+		var t: String = " ".join(Lang.t(z[0]).split(""))   # letras separadas, como en los mapas
+		label(ui, t, at, 12, Color(1, 1, 1, 0.42), true)
 	for x in [-20.0, 85.0]:
 		var at := to_screen(view, center, scale, x, 0)
 		var t := Lang.t("AVENIDA COMERCIAL")
 		var w := ui.text_size(t, 10, true).x + 14
-		ui.rect(Rect2(at.x - w / 2, at.y - 8, w, 16), Color8(62, 64, 70))
-		ui.text(t, at, 10, Color(1, 1, 1, 0.7), true, "center")
+		ui.rect(Rect2(at.x - w / 2, at.y - 7, w, 14), C_ROAD)   # tapa la línea del medio donde va el nombre
+		ui.text(t, at, 10, Color(1, 1, 1, 0.75), true, "center")
 
 
-## Etiqueta chica con fondo oscuro, centrada en `at`. Devuelve su rectángulo.
+## Etiqueta de un lugar: texto con contorno, centrado en `at` (con `dot`, un puntito de color adelante).
 static func pill(ui: ImUI, text: String, at: Vector2, dot = null, size := 11) -> Rect2:
 	var tw := ui.text_size(text, size, true).x
-	var w := tw + (24.0 if dot != null else 12.0)
-	var r := Rect2(at.x - w / 2, at.y - 8, w, 16)
-	ui.rect(r, Color(0.03, 0.04, 0.06, 0.82), 8)
-	var x := r.position.x + 6
+	var w := tw + (12.0 if dot != null else 0.0)
+	var x := at.x - w / 2
 	if dot != null:
-		ui.circle(Vector2(x + 4, r.get_center().y), 4, dot)
+		ui.circle(Vector2(x + 4, at.y), 4.5, C_INK)
+		ui.circle(Vector2(x + 4, at.y), 3.2, dot)
 		x += 12
-	ui.text(text, Vector2(x, r.get_center().y), size, Color.WHITE, true, "midleft")
-	return r
+	label(ui, text, Vector2(x, at.y), size, Color.WHITE, true, "midleft")
+	return Rect2(at.x - w / 2, at.y - 8, w, 16)
 
 
 ## El nombre de cada edificio, debajo (o adentro) de su rectángulo. Si dos se pisan, gana el más importante (tus
@@ -282,17 +318,16 @@ static func draw_item_labels(ui: ImUI, view: Rect2, center: Vector2, scale: floa
 				continue
 			var r := rect_to_screen(view, center, scale, it.rect)
 			var text: String = Lang.t(it.label)
-			var at := Vector2(r.get_center().x, r.end.y + 10)
+			var at := Vector2(r.get_center().x, r.end.y + 9)
 			var inside: bool = kind == "place" or str(it.icon) != ""
 			if inside:   # debajo del ícono, adentro del lugar
-				at = r.get_center() + Vector2(0, clampf(min(r.size.x, r.size.y) * 0.36, 12.0, 26.0) + 4)
-			if kind == "house" and not it.owned:
-				pass
-			elif kind == "lot" and not inside and r.size.x < ui.text_size(text, 10, true).x + 14:
+				at = r.get_center() + Vector2(0, clampf(min(r.size.x, r.size.y) * 0.3, 8.0, 12.0) + 11)
+			if kind == "lot" and not inside:
 				text = "$"
-			var tw := ui.text_size(text, 10 if kind == "lot" and not inside else 11, true).x + (24.0 if kind in ["mine", "rival"] else 12.0)
+				at = r.get_center()
 			if kind == "house" and not it.owned:
 				at = r.get_center()
+			var tw := ui.text_size(text, 11, true).x + 6
 			var box := Rect2(at.x - tw / 2, at.y - 8, tw, 16)
 			if not view.encloses(box):
 				continue
@@ -306,33 +341,26 @@ static func draw_item_labels(ui: ImUI, view: Rect2, center: Vector2, scale: floa
 			taken.append(box)
 			match kind:
 				"mine":
-					pill(ui, text, at, it.color)
+					label(ui, text, at, 11, Color8(250, 215, 130))
 				"rival":
-					pill(ui, text, at, RIVAL)
+					label(ui, text, at, 11, Color8(255, 160, 150))
 				"house":
-					if it.owned:
-						pill(ui, text, at, HOUSE)
-					else:
-						ui.text(text, r.get_center(), 11, Color.WHITE, true, "center")
+					label(ui, text, at, 10 if not it.owned else 11, Color(1, 1, 1, 0.5) if not it.owned else Color8(160, 230, 220))
 				"lot":
-					if inside:
-						pill(ui, text, at)
-					else:
-						ui.text(text, r.get_center(), 10, Color(1, 1, 1, 0.55), true, "center")
+					label(ui, text, at, 10, Color(1, 1, 1, 0.45) if not inside else Color(1, 1, 1, 0.75))
 				_:
-					pill(ui, text, at)
+					label(ui, text, at, 11, Color(1, 1, 1, 0.85))
 
 
-## La flecha del jugador mirando hacia donde mira la cámara.
+## La flecha del jugador mirando hacia donde mira la cámara: blanca con borde oscuro, sin halo.
 static func draw_player(ui: ImUI, at: Vector2, yaw_deg: float, size := 9.0) -> void:
 	var a := deg_to_rad(yaw_deg)
 	var fwd := Vector2(sin(a), -cos(a))   # en pantalla: +z del mundo es hacia arriba
 	var right := Vector2(-fwd.y, fwd.x)
 	var pts := PackedVector2Array([at + fwd * size, at - fwd * size * 0.6 + right * size * 0.65, at - fwd * size * 0.25,
 			at - fwd * size * 0.6 - right * size * 0.65])
-	ui.circle(at, size * 1.3, Color(1, 1, 1, 0.18))
+	ui.polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[3], pts[0]]), C_INK, 3.5)
 	ui.polygon(pts, Color.WHITE)
-	ui.polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[3], pts[0]]), Color8(30, 120, 220), 2)
 
 
 ## Minimapa de la HUD, centrado en el jugador, con el logo de cada rival en su local. Devuelve su rectángulo.
@@ -348,7 +376,7 @@ static func draw_mini(ui: ImUI, city, pos: Vector2) -> Rect2:
 			draw_item(ui, it, r, 0.0, MINI_SCALE, 9.0)
 	draw_player(ui, view.get_center(), city.yaw, 7.0)
 	ui.set_clip(null)
-	ui.rect(view.grow(3), Color(1, 1, 1, 0.14), 14, 1.5)
+	ui.rect(view.grow(3), Color(0, 0, 0, 0.5), 14, 1.5)
 	var tag := Lang.f("Mapa [%s]", Keys.label("map"))
 	var tw := ui.text_size(tag, 12, true).x + 16
 	var tr := Rect2(view.position.x + 8, view.position.y + 8, tw, 20)

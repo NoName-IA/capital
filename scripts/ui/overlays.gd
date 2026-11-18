@@ -310,7 +310,7 @@ func draw_map() -> void:
 		var k := ui.tween("map" + hot.id, 1.0, 0.3)
 		CityMap.draw_item(ui, hot, CityMap.rect_to_screen(view, center, scale, hot.rect), k, scale)
 	ui.set_clip(null)
-	ui.rect(view, Color(1, 1, 1, 0.15), 0, 1.5)
+	ui.rect(view, Color(0, 0, 0, 0.6), 0, 1.5)
 	# Ficha del edificio bajo el mouse
 	if hot != null:
 		var tw: float = maxf(ui.text_size(hot.name, 17, true).x, ui.text_size(hot.sub, 13).x) + 36
@@ -320,7 +320,7 @@ func draw_map() -> void:
 			tp.x = ui.mouse.x - tw - 18
 		var card := Rect2(tp, Vector2(tw, 84))
 		ui.rect(card, Color(0.04, 0.05, 0.07, 0.96), 12)
-		ui.rect(card, Color(hot.color, 0.8), 12, 1.5)
+		ui.rect(card, Color(1, 1, 1, 0.1), 12, 1.0)
 		ui.text(hot.name, card.position + Vector2(16, 12), 17, "text", true, "topleft", tw - 32)
 		ui.text(hot.sub, card.position + Vector2(16, 38), 13, "muted", false, "topleft", tw - 32)
 		ui.text("Clic para ir aquí", card.position + Vector2(16, 60), 13, "accent", true)
@@ -375,8 +375,9 @@ func draw_map() -> void:
 		ui.text("Todavía no tienes locales en la avenida.", Vector2(rp.position.x + 18, ty), 14, "muted")
 	var lg := ui.panel(Rect2(984, y, W - 1004, H - y - 16), "Leyenda")
 	var gy := lg.position.y + 44
-	for e in [[CityMap.GOLD, "Tus locales"], [CityMap.RIVAL, "Competencia"], [CityMap.LOT, "Terreno en venta"], [CityMap.FACTORY, "Tus fábricas"], [CityMap.HOUSE, "Casas para alquilar"], [CityMap.PLACE, "Lugares"]]:
-		ui.rect(Rect2(lg.position.x + 16, gy + 2, 14, 14), e[0], 3)
+	for e in [[CityMap.GOLD, "Tus locales", "", Color8(200, 120, 60)], [CityMap.RIVAL, "Competencia", "", null], [CityMap.LOT, "Terreno en venta", "box", null],
+			[CityMap.FACTORY, "Tus fábricas", "bolt", null], [CityMap.HOUSE, "Casas para alquilar", "", CityMap.C_INK], [CityMap.PLACE, "Lugares", "heart", null]]:
+		CityMap.blip(ui, Vector2(lg.position.x + 23, gy + 9), 7.0, e[0], e[2], e[3])
 		ui.text(e[1], Vector2(lg.position.x + 40, gy), 13, "text")
 		gy += 22
 	if ui.clicked and not view.has_point(ui.mouse) and ui.mouse.y < view.position.y - 40:
