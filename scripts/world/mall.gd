@@ -159,6 +159,7 @@ func _build_lot(g: Game) -> void:
 	# Cartel grande del proyecto
 	b.box(Vector3(0, 1.6, Z0 - 0.6), Vector3(0.15, 3.2, 0.15), Blueprints.PALETTE.wood)
 	b.box(Vector3(0, 3.6, Z0 - 0.6), Vector3(7.5, 2.4, 0.15), Color8(25, 45, 85))
+	_lot_lights(b)
 	b.node(root, Mats.standard)
 	Building.label(root, "CENTRO COMERCIAL", Vector3(0, 4.25, Z0 - 0.69), 15, Color8(240, 190, 60))
 	Building.label(root, Lang.src("%d vitrinas · cómpralo por %s", [int(D.MALL.slots), Fmt.short(g.mall_cost(idx))]),
@@ -166,6 +167,36 @@ func _build_lot(g: Game) -> void:
 	Building.label(root, "Presiona E aquí", Vector3(0, 2.95, Z0 - 0.69), 6, Color8(200, 210, 230), false)
 	lot_spot = Blueprints.to_world(plot, 0, -1.4)
 	_make_guard()
+
+
+## Focos de obra: postes con un foco que alumbran casi todo el terreno de noche, con una luz común y algo pobre (más
+## débil que la de los faroles de la calle), y una ampolleta amarilla en la mesita del guardia. Se apagan en un apagón.
+const LOT_POLES := [Vector2(-11, 7), Vector2(11, 7), Vector2(-11, 17.5), Vector2(12, 15), Vector2(-11, 28), Vector2(11, 28),
+		Vector2(-1, 6), Vector2(2, 27)]
+const LOT_POLE_H := 4.2
+const LOT_LIGHT := 11.0   # nivel de luz: como un farol común de la calle (los buenos llegan a 15)
+var lot_lamps: MeshInstance3D   # las caras de los focos (brillan; en un apagón se apagan)
+
+
+func _lot_lights(b: Boxes) -> void:
+	var heads := Boxes.new()
+	var steel := Color8(120, 122, 128)
+	for p in LOT_POLES:
+		var base_y := 0.6 if p.x > -13 and p.x < 1 and p.y > 13 and p.y < 23 else 0.0   # sobre los cimientos
+		b.box(Vector3(p.x, base_y + LOT_POLE_H / 2, p.y), Vector3(0.14, LOT_POLE_H, 0.14), steel)
+		b.box(Vector3(p.x, base_y + 0.08, p.y), Vector3(0.5, 0.16, 0.5), Color8(90, 92, 98))   # la base de concreto
+		# El foco mira hacia el centro del terreno
+		var to_center: Vector2 = (Vector2(0, (Z0 + Z1) / 2) - p).normalized() * 0.35
+		var hp := Vector3(p.x + to_center.x, base_y + LOT_POLE_H - 0.1, p.y + to_center.y)
+		b.box(hp + Vector3(0, 0.12, 0), Vector3(0.62, 0.22, 0.42), Color8(45, 47, 52))   # la carcasa
+		heads.box(hp - Vector3(0, 0.02, 0), Vector3(0.52, 0.04, 0.32), Color(1, 1, 1))  # la cara que alumbra
+		Mats.add_light(root, hp - Vector3(0, 0.6, 0), LOT_LIGHT)
+		rects.append(_world_rect(p.x - 0.25, p.x + 0.25, p.y - 0.25, p.y + 0.25, base_y + LOT_POLE_H))
+	# La ampolleta de la mesita del guardia (cálida, alumbra poco: su rincón)
+	heads.box(Vector3(GUARD_POST.x + 0.9, 1.6, GUARD_POST.y), Vector3(0.12, 0.14, 0.12), Color(1, 1, 1))
+	b.box(Vector3(GUARD_POST.x + 0.9, 1.25, GUARD_POST.y), Vector3(0.03, 0.6, 0.03), Color8(40, 40, 44))   # el cable
+	Mats.add_light(root, Vector3(GUARD_POST.x + 0.9, 1.5, GUARD_POST.y), 7.0, false, false, true)
+	lot_lamps = heads.node(root, Mats.emissive, false)
 
 
 func _world_rect(x0: float, x1: float, z0: float, z1: float, top: float) -> Array:
@@ -474,6 +505,8 @@ func _nearest_slot(at: Vector2) -> int:
 func update(dt: float) -> void:
 	if not built and root != null:
 		_update_guard(dt)
+		if lot_lamps != null and is_instance_valid(lot_lamps):   # los focos se apagan en un apagón
+			lot_lamps.material_override = Mats.standard if city.sky.blackout > 0.5 else Mats.emissive
 		return
 	if not built or root == null or slots.is_empty():
 		return
