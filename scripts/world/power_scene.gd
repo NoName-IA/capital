@@ -1,6 +1,6 @@
 class_name PowerScene
 extends RefCounted
-## Cinemática de la primera vez que falla la planta eléctrica (al 25 % de la partida, ver Game._power_day):
+## Cinemática de la primera vez que falla la planta eléctrica (cuando tu empresa vale unos $400.000, ver Game._power_day):
 ## 1) "face": primer plano de la cara del operario de la caseta, que se da vuelta asustado hacia la planta;
 ## 2) "plant": la cámara pasa por encima de su hombro a la planta: revientan chispas, titilan las ventanas, la baliza
 ##    gira y se corta la luz de la ciudad;

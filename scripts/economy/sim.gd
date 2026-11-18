@@ -94,7 +94,7 @@ var office_look := 0      # aspecto de la oficina (D.OFFICE_LOOKS); las partidas
 var path := {}            # decisiones importantes tomadas: {"rumbo": "premium"/"masivo", "rivales": "alianza"/"guerra"}
 var rival_mall := {}      # "vitrina" -> negocio del rival que la arrienda en tu centro comercial (te paga alquiler)
 # La planta eléctrica (ver D.POWER y City.power_scene)
-var power_fail := false   # ya empezó a fallar alguna vez (pasaste el 25 % de la partida)
+var power_fail := false   # ya empezó a fallar alguna vez (tu empresa llegó a valer D.POWER.value)
 var power_until := 0      # día hasta el que hay luz asegurada (lo que pagaste)
 var power_paid := 0       # cuántas veces pagaste el arreglo
 var power_intro := false  # ya viste la cinemática de cuando falló
@@ -1253,14 +1253,6 @@ func best_month_sales() -> float:
 
 
 # ---------- planta eléctrica ----------
-## Cuánto avanzaste en la partida, de 0 a 1: el valor de la empresa entre lo que vale al empezar y el valor para ganar,
-## en escala logarítmica (cada rango es varias veces el anterior: así el 25 % llega a un cuarto del camino).
-func progress() -> float:
-	var start := 4000.0
-	var v := maxf(start, valuation())
-	return clampf(log(v / start) / log(win_value() / start), 0.0, 1.0)
-
-
 ## La planta está fallando ahora: ya empezó a fallar y no hay un arreglo pagado vigente.
 func power_failing() -> bool:
 	return power_fail and day >= power_until
@@ -1291,10 +1283,10 @@ func pay_power() -> Array:
 	return [true, Lang.f("¡Volvió la luz! Pagaste %s: tienes luz asegurada por %d días.", [Fmt.money(cost), int(D.POWER.days)])]
 
 
-## Una vez al día: al llegar al 25 % la planta empieza a fallar y se corta la luz; no vuelve hasta que pagues.
+## Una vez al día: cuando tu empresa vale unos $400.000 la planta empieza a fallar y se corta la luz; no vuelve hasta que pagues.
 func _power_day() -> void:
 	if not power_fail:
-		if day >= int(D.POWER.min_day) and tutorial_step < 0 and progress() >= float(D.POWER.start):
+		if day >= int(D.POWER.min_day) and tutorial_step < 0 and valuation() >= float(D.POWER.value):
 			power_fail = true
 			power_until = day
 			add_news("La planta eléctrica de la ciudad falló: no hay luz hasta que pagues el arreglo en la planta, junto al túnel.", "bad", "quiet")

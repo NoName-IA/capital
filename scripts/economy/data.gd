@@ -112,11 +112,11 @@ const ACTIVITIES := [
 ]
 # Casas del Barrio Las Lomas que se venden para alquilar: precio base, cuánto sube cada casa que ya tienes y la
 # renta mensual (sobre lo que pagaste). Suman su precio al valor de tu empresa y la renta entra como ingreso.
-# Planta eléctrica junto al túnel: al 25 % de la partida (medido en escala logarítmica del valor de la empresa, ver
-# Game.progress) empieza a fallar y se corta la luz: el apagón dura hasta que pagues (los locales venden menos). El
+# Planta eléctrica junto al túnel: cuando tu empresa vale `value` (unos $400.000, entre Pequeño empresario y
+# Empresario) empieza a fallar y se corta la luz: el apagón dura hasta que pagues (los locales venden menos). El
 # arreglo se paga en la caseta de la planta y da luz por `days` días (unos 3 meses y medio); después se corta otra vez.
 # Cuesta siempre `cash_k` (el 5 %) de la caja que tengas al pagar.
-const POWER := {"start": 0.25, "min_day": 20, "days": 105, "cash_k": 0.05, "demand": 0.55}
+const POWER := {"value": 400000.0, "min_day": 20, "days": 105, "cash_k": 0.05, "demand": 0.55}
 ## La huelga: cada batazo a un empleado suma 1 de rencor; el rencor baja `decay` por día (un día de juego dura ~1 s),
 ## así que solo llega a `at` si les pegas mucho y seguido. Avisos al pasar `warn`. Al terminarla:
 ## subir sueldos (`raise`, para siempre, y el ánimo sube `morale`) o despedir a todos (indemnización + contratar de

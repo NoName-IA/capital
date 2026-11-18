@@ -758,18 +758,21 @@ func test_buy_all_decor() -> void:
 func test_power_plant() -> void:
 	var g := Game.new(12)
 	g.tutorial_step = -1
-	check(g.progress() < float(D.POWER.start), "al empezar vas en menos del 25 %")
+	check(g.valuation() < float(D.POWER.value), "al empezar tu empresa vale menos que el umbral del apagón")
 	g.cash = 1000000.0
 	g.step_day()
 	check(not g.power_fail, "antes del día mínimo la planta no falla aunque vayas bien")
 	g.cash = 1500.0
 	g.day = 30
 	check(not g.pay_power()[0], "si la planta funciona no hay nada que pagar")
-	# Al 25 % de la partida empieza a fallar
-	g.cash = 4000.0 * pow(g.win_value() / 4000.0, 0.3)
-	check(g.progress() >= float(D.POWER.start), "con más valor pasas el 25 %")
+	# Recién cuando tu empresa vale unos $400.000 empieza a fallar
+	g.cash = float(D.POWER.value) * 0.7
 	g.step_day()
-	check(g.power_fail and g.power_failing(), "al 25 % la planta empieza a fallar")
+	check(not g.power_fail, "con $280.000 todavía hay luz")
+	g.cash = float(D.POWER.value) * 1.1
+	check(g.valuation() >= float(D.POWER.value), "con más caja pasas el umbral")
+	g.step_day()
+	check(g.power_fail and g.power_failing(), "al valer $400.000 la planta empieza a fallar")
 	check(not g.power_intro, "la cinemática todavía no se vio")
 	# Mientras falla no hay luz ningún día: no vuelve sola
 	var dark := 0
